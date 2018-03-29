@@ -102,7 +102,7 @@ insert_new_user = function (req, res) {
                     var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
                     return users.insert(user_obj)
                         .then(function(){
-                            return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/activation/'+activation_code, email: email, user_name: user_name});
+                            return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/activation/static/?'+activation_code, email: email, user_name: user_name});
                         });
                 });
             });
