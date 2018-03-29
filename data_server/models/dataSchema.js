@@ -1,0 +1,31 @@
+'use strict';
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+var autoIncrement = require('mongoose-auto-increment')
+
+
+var dataSchema = new Schema({
+  sessionId: {
+    type: String,
+    required: 'A sessionID is required for data posts'
+  },
+  studyId: {
+    type: String,
+    required: 'A studyID is required for data posts'
+  },
+  createdDate: {
+    type: Date,
+    default: Date.now
+  },
+  data: {
+    type: Schema.Types.Mixed,
+	uniqueItems: true,
+	items: {
+	 type: Schema.Types.Mixed
+	},
+	required: 'A data array required for data posts'
+  }
+});
+
+
+module.exports = mongoose.model('Data', dataSchema);

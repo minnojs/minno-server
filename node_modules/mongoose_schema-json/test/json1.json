@@ -1,0 +1,15 @@
+{
+  "name": {
+    "type": "String",
+    "lowercase": true
+  },
+  "age": "Number",
+  "born": "Date",
+  "isActive": "Boolean",
+  "buff": "Buffer",
+  "fans": [
+    "Schema.Types.Mixed"
+  ],
+  "company_id": "Schema.Types.ObjectId"
+}
+

@@ -1,0 +1,42 @@
+{
+  "name": "pi-validator",
+  "version": "1.0.0",
+  "description": "Dashboard expanssion for PI",
+  "repository": "https://github.com/ProjectImplicit/pi-validator.git",
+  "main": "route.js",
+  "scripts": {
+    "start": "node route.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "bower": "^1.6.8",
+    "cors": "^2.8.4",
+    "ejs": "^2.5.7",
+    "email-validator": "^1.1.1",
+    "express-mailer": "^0.3.1",
+    "express-session": "^1.15.6",
+    "fetch": "^1.1.0",
+    "formidable": "^1.2.0",
+    "fs-extra": "^5.0.0",
+    "mongodb-bluebird": "^0.1.2",
+    "mongoose": "^5.0.10",
+    "mongoose-auto-increment": "^5.0.1",
+    "mongoose_schema-json": "^1.0.3",
+    "urlencode": "^1.1.0",
+    "zip-folder": "^1.0.0"
+  },
+  "devDependencies": {
+    "body-parser": "^1.18.2",
+    "buble": "^0.12.3",
+    "eslint": "^1.10.2",
+    "express": "^4.16.3",
+    "multer": "^1.1.0",
+    "node-sass": "^3.8.0",
+    "nodemon": "^1.17.2",
+    "npm-run-all": "^2.3.0",
+    "rollup": "^0.33.0",
+    "rollup-plugin-buble": "^0.12.1",
+    "rollup-watch": "^2.4.0"
+  }
+}

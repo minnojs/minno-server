@@ -1,0 +1,27 @@
+{
+  "str_simple": "String",
+  "str_lower": {
+    "type": "String",
+    "lowercase": true
+  },
+  "str_upper": {
+    "type": "String",
+    "uppercase": true
+  },
+  "str_trim": {
+    "type": "String",
+    "trim": true
+  },
+  "str_match": {
+    "type": "String",
+    "match": "/^[a-z0-9 ]+$/i"
+  },
+  "str_enum": {
+    "type": "String",
+    "enum": [
+      "cat",
+      "dog",
+      "cow"
+    ]
+  }
+}
