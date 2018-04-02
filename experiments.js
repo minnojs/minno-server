@@ -63,13 +63,14 @@ insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, re
                 .then(function (user_result) {
                     if (!user_result)
                         return Promise.reject();
-                    return res.send(JSON.stringify({}));
+                    return res.send(JSON.stringify({id: mysha1(study_id + file_id + descriptive_id),
+                        file_id: file_id, descriptive_id: descriptive_id}));
                 });
             });
         });
 };
 
-delete_experiment = function (user_id, study_id, file_id) {
+delete_experiment = function (user_id, study_id, file_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(url).then(function (db) {
@@ -78,7 +79,13 @@ delete_experiment = function (user_id, study_id, file_id) {
                         $pull: {
                             experiments: {file_id: file_id}
                         }
-                    });
+                    })
+                        .then(function (user_result) {
+                            if (!user_result)
+                                return Promise.reject();
+                            return res.send(JSON.stringify({}));
+                        });
+
                 }
             );
         });

@@ -27,7 +27,6 @@ var walkSync = function(full_path, rel_dir, server, filelist) {
         var file_str = rel_dir +  file;
         if (fs.statSync(path.join(full_path, file)).isDirectory()) {
             var nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', server, []);
-
             filelist.push({id:urlencode(file_str),
                            isDir:true,
                            path:file_str,
@@ -58,7 +57,6 @@ get_study_files = function (user_id, study_id, server, res) {
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
                         return exp.file_id == file.id});
-
                     return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, exp_data:exp_data?exp_data[0]:[]}});
                 return res.send(JSON.stringify({study_name:study_data.name,
                                                 files: files,
