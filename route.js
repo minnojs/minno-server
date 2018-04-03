@@ -51,7 +51,7 @@ var mongoose = require('mongoose'),
     Data = require('./data_server/models/dataSchema');
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/data');
+mongoose.connect(config.mongo_url);
 
 var data_controller = require('./data_server/controllers/controller');
 //

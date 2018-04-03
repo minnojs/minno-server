@@ -2,9 +2,10 @@ const fs          = require('fs-extra');
 const formidable  = require('formidable');
 var users         = require('./users');
 const crypto      = require('crypto');
+var config = require('./config');
 
 var mongo         = require('mongodb-bluebird');
-const url         = "mongodb://localhost:27017/mydb";
+const url         = config.mongo_url;
 
 
 function mysha1( data ) {

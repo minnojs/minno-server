@@ -1,4 +1,5 @@
-const url         = "mongodb://localhost:27017/mydb";
+var config = require('./config');
+const url         = config.mongo_url;
 const crypto      = require('crypto');
 const sender      = require('./sender');
 
