@@ -61,11 +61,7 @@ app.route('/data')
 /********************************************/
 
 app.get('/',function(req,res){
-    sess = req.session;
-    if(sess.user)
-        res.redirect('/studies');
-    else
-        res.render('index.html');
+    res.redirect('/static');
 });
 
 app.get('/is_loggedin',function(req,res){
