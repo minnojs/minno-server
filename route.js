@@ -54,14 +54,10 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url);
 
 var data_controller = require('./data_server/controllers/controller');
-//
 app.route('/data')
     .put(data_controller.insertData);
 app.route('/data')
     .get(data_controller.getData);
-// app.route('/study/start/:studyId')
-//     .get(data_controller.newStudyInstance);
-
 /********************************************/
 
 app.get('/',function(req,res){
@@ -434,6 +430,6 @@ app.get('/launch/:exp_id',function(req, res){
     });
 });
 
-app.listen(3001,function(){
-    console.log("App Started on PORT 3000");
+app.listen(config.port,function(){
+    console.log("App Started on PORT "+config.port);
 });

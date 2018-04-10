@@ -67,7 +67,33 @@ get_email = function (user_id, res) {
         .then(function(user_data) {
             return res.send(JSON.stringify({email: user_data.email}));
         })
+};
 
+create_admin_user = function () {
+
+    return mongo.connect(url).then(function (db) {
+            var users   = db.collection('users');
+            var counters   = db.collection('counters');
+            return counters.insert(
+                {
+                    _id: "user_id",
+                    seq: 1
+                }
+            )
+
+            .then(function (counter_data) {
+                console.log(counter_data.value);
+                var user_obj = {_id:1,
+                                user_name:'admin',
+                                first_name:'admin',
+                                last_name:'admin',
+                                email:'admin@admin.com',
+                                role:'su',
+                                pass:mysha1('admin'),
+                                studies:[],tags:[]};
+                return users.insert(user_obj)
+            });
+    });
 };
 
 insert_new_user = function (req, res) {
@@ -83,7 +109,6 @@ insert_new_user = function (req, res) {
         res.statusCode = 400;
         return res.send(JSON.stringify({message: 'Invalid email address'}));
     }
-    console.log(user_name);
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         var counters   = db.collection('counters');
@@ -143,4 +168,4 @@ set_user_by_activation_code = function (code, pass, pass_confirm, res, callback)
 
 };
 
-module.exports = {user_info, get_email, set_email, set_password, insert_new_user, check_activation_code, set_user_by_activation_code};
+module.exports = {create_admin_user, user_info, get_email, set_email, set_password, insert_new_user, check_activation_code, set_user_by_activation_code};
