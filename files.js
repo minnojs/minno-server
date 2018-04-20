@@ -300,8 +300,10 @@ upload = function (user_id, study_id, req, res) {
                             var study_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/' + prefix;
                             var file_path = study_path + files[key].name;
                             log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
-                            fs.rename(oldpath, file_path, function (err, files_arr) {
+                            fs.rename(oldpath, config.base_folder+'/'+file_path, function (err, files_arr) {
                                 if (err){
+                                    log.error(`201804201343 | failed to upload_file: ${err}`);
+
                                     console.log(err);
                                     res.statusCode = 500;
                                     return res.send(JSON.stringify({message: 'ERROR: internal error'}));
