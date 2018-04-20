@@ -276,7 +276,6 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
 };
 
 upload = function (user_id, study_id, req, res) {
-
     var form = new formidable.IncomingForm();
     form.parse(req, function (err, fields, files) {
         return have_permission(user_id, study_id)
@@ -300,7 +299,7 @@ upload = function (user_id, study_id, req, res) {
                             });
                             var study_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/' + prefix;
                             var file_path = study_path + files[key].name;
-
+                            log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
                             fs.rename(oldpath, file_path, function (err, files_arr) {
                                 if (err){
                                     console.log(err);

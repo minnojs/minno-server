@@ -5,6 +5,7 @@ var studies = require('./studies');
 var tags = require('./tags');
 var config = require('./config');
 var experiments = require('./experiments');
+var dateFormat = require('dateformat');
 
 var users = require('./users');
 
@@ -14,6 +15,16 @@ var sender  = require('./sender');
 var bodyParser = require('body-parser');
 var app = express();
 var cors = require('cors');
+
+var day=dateFormat(new Date(), "yyyy-mm-dd");
+console.log(day);
+SimpleNodeLogger = require('simple-node-logger'),
+    opts = {
+        logFilePath:`${config.logs_folder}/${day}.log`,
+        timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
+    },
+    log = SimpleNodeLogger.createSimpleLogger( opts );
+
 
 app.use('/users', express.static('users'));
 app.use('/static', express.static(config.static_path));

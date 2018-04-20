@@ -1,12 +1,11 @@
 const fs          = require('fs-extra');
 const formidable  = require('formidable');
-var users_obj         = require('./users');
+var users_obj     = require('./users');
 const crypto      = require('crypto');
-var config = require('./config');
+var config        = require('./config');
 
 var mongo         = require('mongodb-bluebird');
 const url         = config.mongo_url;
-
 
 function mysha1( data ) {
     var generator = crypto.createHash('sha1');
@@ -15,6 +14,8 @@ function mysha1( data ) {
 }
 
 exports.check = function (user_name, pass, res, callback) {
+    log.info(`201804201319 | new login: ${user_name}`);
+
     if (!user_name || !pass) {
         res.statusCode = 400;
         return res.end(JSON.stringify({message: 'missing parameters'}));

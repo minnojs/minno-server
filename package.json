@@ -12,6 +12,7 @@
   "dependencies": {
     "bower": "^1.6.8",
     "cors": "^2.8.4",
+    "dateformat": "^3.0.3",
     "ejs": "^2.5.7",
     "email-validator": "^1.1.1",
     "express-mailer": "^0.3.1",
@@ -23,6 +24,7 @@
     "mongoose": "^5.0.10",
     "mongoose-auto-increment": "^5.0.1",
     "mongoose_schema-json": "^1.0.3",
+    "simple-node-logger": "^0.93.37",
     "urlencode": "^1.1.0",
     "zip-folder": "^1.0.0"
   },

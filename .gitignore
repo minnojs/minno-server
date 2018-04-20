@@ -1,4 +1,5 @@
 /users
 .idea
 /tmp
+/logs
 config.js
