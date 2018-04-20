@@ -55,6 +55,7 @@ create_new_study = function (user_id, study_name, res) {
             return insert_obj(user_id, study_obj)
                 .then(function (study_data) {
                     try {
+                        console.log(study_data.dir);
                         if (!fs.existsSync(study_data.dir)) {
                             fs.mkdirSync(study_data.dir);
                             return res.send(JSON.stringify({study_id: study_data.study_id}));

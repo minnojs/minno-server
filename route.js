@@ -105,9 +105,7 @@ app.route('/files/:study_id').get(
             res.statusCode = 403;
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
-        var server = req.protocol+'://'+req.headers.host;
-
-        files.get_study_files(sess.user.id, parseInt(req.params.study_id), server, res);
+        files.get_study_files(sess.user.id, parseInt(req.params.study_id), res);
     })
     .delete(
         function(req, res){
@@ -150,11 +148,10 @@ app.route('/files/:study_id/file/')
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
-            var server = req.protocol+'://'+req.headers.host;
             if(req.body.isDir)
-                return files.create_folder(sess.user.id, parseInt(req.params.study_id), req.body.name, server, res);
+                return files.create_folder(sess.user.id, parseInt(req.params.study_id), req.body.name, res);
 
-            files.update_file(sess.user.id, parseInt(req.params.study_id), req.body.name, req.body.content, server, res);
+            files.update_file(sess.user.id, parseInt(req.params.study_id), req.body.name, req.body.content, res);
         });
 
 app.route('/files/:study_id/file/:file_id')
@@ -174,9 +171,8 @@ app.route('/files/:study_id/file/:file_id')
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
-            var server = req.protocol+'://'+req.headers.host;
 
-            files.update_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.content, server, res);
+            files.update_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.content, res);
         });
 
 app.route('/files/:study_id/file/:file_id/move')
@@ -187,9 +183,7 @@ app.route('/files/:study_id/file/:file_id/move')
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
-            var server = req.protocol+'://'+req.headers.host;
-
-            files.rename_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.path, server, res);
+            files.rename_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.path, res);
         });
 
 app.route('/files/:study_id/file/:file_id/copy')
@@ -424,6 +418,17 @@ app.get('/launch/:exp_id',function(req, res){
         // console.log(exp_data);
         res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.study_id});
     });
+});
+
+app.get('/users',function(req, res){
+    var sess = req.session;
+
+    if(!sess.user || sess.user.role!='su') {
+        console.log('xx');
+        return;
+    }
+    return users.get_users(res);
+
 });
 
 app.listen(config.port,function(){

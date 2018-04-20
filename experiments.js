@@ -30,7 +30,7 @@ get_experiment_url = function (req) {
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
                             var session_id = counter_data.value.seq;
-                            return Promise.resolve({study_id:exp_data._id, session_id:session_id, url:req.protocol+'://'+req.headers.host+'/users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
+                            return Promise.resolve({study_id:exp_data._id, session_id:session_id, url:config.server_url+'/users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
                         });
 
                 });

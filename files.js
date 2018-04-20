@@ -17,7 +17,8 @@ function mysha1( data ) {
 }
 
 
-var walkSync = function(full_path, rel_dir, server, filelist) {
+var walkSync = function(full_path, rel_dir, filelist) {
+    var server = config.server_url;
     if (!fs.existsSync(full_path)) {
         return console.error('Folder doesn\'t exiss');
     }
@@ -27,7 +28,7 @@ var walkSync = function(full_path, rel_dir, server, filelist) {
     files.forEach(function(file) {
         var file_str = rel_dir +  file;
         if (fs.statSync(path.join(full_path, file)).isDirectory()) {
-            var nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', server, []);
+            var nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', []);
             filelist.push({id:urlencode(file_str),
                            isDir:true,
                            path:file_str,
@@ -48,13 +49,13 @@ var walkSync = function(full_path, rel_dir, server, filelist) {
     return filelist;
 };
 
-get_study_files = function (user_id, study_id, server, res) {
+get_study_files = function (user_id, study_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
             .then(function(study_data){
                 files = [];
-                walkSync('users/'+user_data.user_name+'/'+study_data.folder_name, '', server, files);
+                walkSync('users/'+user_data.user_name+'/'+study_data.folder_name, '', files);
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
                         return exp.file_id == file.id});
@@ -70,7 +71,7 @@ get_study_files = function (user_id, study_id, server, res) {
         });
 };
 
-create_folder = function(user_id, study_id, folder_id, server, res) {
+create_folder = function(user_id, study_id, folder_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -80,7 +81,7 @@ create_folder = function(user_id, study_id, folder_id, server, res) {
                     if (!fs.existsSync(folder_path))
                         fs.mkdirSync(folder_path);
 
-                    var file_url = server+'/'+folder_path;
+                    var file_url = config.server_url+'/'+folder_path;
 
                     return studies_comp.update_modify(study_id)
                         .then(function(){
@@ -92,9 +93,9 @@ create_folder = function(user_id, study_id, folder_id, server, res) {
             res.statusCode = 403;
             res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         });
-}
+};
 
-update_file = function(user_id, study_id, file_id, content, server, res) {
+update_file = function(user_id, study_id, file_id, content, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -107,7 +108,7 @@ update_file = function(user_id, study_id, file_id, content, server, res) {
                     }
                     var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
-                    var file_url = server+'/'+new_file_path;
+                    var file_url = config.server_url+'/'+new_file_path;
                     return studies_comp.update_modify(study_id)
                         .then(function(){
                             return res.send(JSON.stringify({id: file_id, content: content, url: file_url}))});
@@ -213,7 +214,7 @@ download_files = function (user_id, study_id, files, res) {
         });
 };
 
-rename_file = function (user_id, study_id, file_id, new_path, server, res) {
+rename_file = function (user_id, study_id, file_id, new_path, res) {
     file_id = urlencode.decode(file_id);
     return have_permission(user_id, study_id)
         .then(function(user_data){
@@ -228,7 +229,7 @@ rename_file = function (user_id, study_id, file_id, new_path, server, res) {
                         }
                         return studies_comp.update_modify(study_id)
                             .then(function(){
-                                var file_url = server+'/'+new_file_path;
+                                var file_url = config.server_url+'/'+new_file_path;
                                 experiments.update_file_id(user_id, study_id, file_id, new_path, res);
 
                                 return res.send(JSON.stringify({id: file_id, url:file_url}));
@@ -290,9 +291,8 @@ upload = function (user_id, study_id, req, res) {
                             var file_id = urlencode.decode(prefix+files[key].name);
 
                             var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
-                            var server = req.protocol+'://'+req.headers.host;
 
-                            var file_url = server+'/'+new_file_path;
+                            var file_url = config.server_url+'/'+new_file_path;
 
                             filelist.push({id: file_id,
                                 path:file_id,
