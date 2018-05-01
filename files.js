@@ -59,7 +59,7 @@ get_study_files = function (user_id, study_id, res) {
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
                         return exp.file_id == file.id});
-                    return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, exp_data:exp_data?exp_data[0]:[]}});
+                    return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}});
                 return res.send(JSON.stringify({study_name:study_data.name,
                                                 files: files,
                                                 base_url: user_data.user_name+'/'+study_data.folder_name}));
@@ -232,7 +232,7 @@ rename_file = function (user_id, study_id, file_id, new_path, res) {
                                 var file_url = config.server_url+'/'+new_file_path;
                                 experiments.update_file_id(user_id, study_id, file_id, new_path, res);
 
-                                return res.send(JSON.stringify({id: file_id, url:file_url}));
+                                return res.send(JSON.stringify({id: urlencode.encode(new_path), url:file_url}));
 
                             });
                     });
@@ -258,9 +258,7 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
                             var new_file_path = 'users/'+user_data.user_name+'/'+new_study_data.folder_name+'/'+ file_id;
 
                             var exist_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
-                            console.log({new_file_path:new_file_path, exist_file_path:exist_file_path});
                             fs.copySync(exist_file_path, new_file_path);
-
                                 return studies_comp.update_modify(new_study_id)
                                     .then(function(){
                                         return res.send(JSON.stringify({}));

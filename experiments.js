@@ -13,6 +13,21 @@ function mysha1( data ) {
     return generator.digest('hex')
 }
 
+get_play_url = function (user_id, study_id, file_id) {
+    file_id = urlencode.decode(file_id);
+    return have_permission(user_id, study_id)
+        .then(function(user_data){
+            studies_comp.study_info(study_id)
+                .then(function(study_data){
+                    var file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                    return Promise.resolve({study_id:-1, session_id:-1, url:config.servser_url+file_path});
+                })
+        })
+        .catch(function(err){
+            res.statusCode = 403;
+            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+        });
+};
 
 get_experiment_url = function (req) {
     return mongo.connect(url).then(function (db) {
@@ -30,7 +45,7 @@ get_experiment_url = function (req) {
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
                             var session_id = counter_data.value.seq;
-                            return Promise.resolve({study_id:exp_data._id, session_id:session_id, url:config.server_url+'/users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
+                            return Promise.resolve({study_id:exp_data._id, session_id:session_id, url:config.servser_url+'/users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
                         });
 
                 });
@@ -136,4 +151,4 @@ is_descriptive_id_exist = function (user_id, study_id, descriptive_id) {
 };
 
 
-module.exports = {get_experiment_url:get_experiment_url, is_descriptive_id_exist:is_descriptive_id_exist, get_experiments:get_experiments, update_descriptive_id:update_descriptive_id, update_file_id:update_file_id, delete_experiment:delete_experiment, insert_new_experiment:insert_new_experiment};
+module.exports = {get_play_url:get_play_url, get_experiment_url:get_experiment_url, is_descriptive_id_exist:is_descriptive_id_exist, get_experiments:get_experiments, update_descriptive_id:update_descriptive_id, update_file_id:update_file_id, delete_experiment:delete_experiment, insert_new_experiment:insert_new_experiment};

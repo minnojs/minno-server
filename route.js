@@ -431,11 +431,21 @@ app.get('/launch/:exp_id',function(req, res){
     });
 });
 
+app.get('/play/:study_id/:file_id',function(req, res){
+    var sess = req.session;
+    if(!sess.user) {
+        return;
+    }
+    app.set('view engine', 'ejs');
+        return experiments.get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
+            res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.study_id});
+    });
+});
+
 app.get('/users',function(req, res){
     var sess = req.session;
 
     if(!sess.user || sess.user.role!='su') {
-        console.log('xx');
         return;
     }
     return users.get_users(res);

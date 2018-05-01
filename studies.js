@@ -80,6 +80,8 @@ duplicate_study = function (user_id, study_id, new_study_name, res) {
                     var study_obj = {
                         name: new_study_name,
                         folder_name: new_study_name,
+                        experiments: [],
+                        tags: [],
                         users: [{id: user_id}],
                         modify_date: Date.now()
                     };
@@ -226,7 +228,7 @@ rename_study = function (user_id, study_id, new_study_name, res) {
         res.statusCode = 400;
         return res.send(JSON.stringify({message: 'ERROR: empty study name'}));
     }
-    var study_obj = { name: new_study_name, folder_name: new_study_name ,modify_date: ''/*Date.now()*/};
+    var study_obj = { name: new_study_name, folder_name: new_study_name ,modify_date: Date.now()};
     have_permission(user_id, study_id)
         .then(function(user_data) {
                 study_exist(user_id, new_study_name)
