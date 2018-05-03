@@ -28,8 +28,8 @@ SimpleNodeLogger = require('simple-node-logger'),
 
 app.use('/users', express.static('users'));
 app.use('/static', express.static(config.static_path));
-app.use('/dist', express.static(config.manager));
-app.use('/pip', express.static(config.pip));
+app.use('/minno-manager', express.static(config['minno-manager']));
+app.use('/minno-time', express.static(config['minno-time']));
 
 
 app.use(cors({
@@ -427,7 +427,8 @@ app.post('/logout',function(req, res){
 app.get('/launch/:exp_id',function(req, res){
     app.set('view engine', 'ejs');
     return experiments.get_experiment_url(req).then(function(exp_data) {
-        // console.log(exp_data);
+        console.log(exp_data.url);
+
         res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.study_id});
     });
 });
