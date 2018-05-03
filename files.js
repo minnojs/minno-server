@@ -37,7 +37,7 @@ var walkSync = function(full_path, rel_dir, filelist) {
                           });
         }
         else {
-            var file_url = server+'/'+full_path+'/'+file;
+            var file_url = '../'+full_path+'/'+file;
 
             filelist.push({id:urlencode(file_str),
                             isDir:false,
