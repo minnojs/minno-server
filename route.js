@@ -28,7 +28,8 @@ SimpleNodeLogger = require('simple-node-logger'),
 
 app.use('/users', express.static('users'));
 app.use('/static', express.static(config.static_path));
-app.use('/dist', express.static('player'));
+app.use('/dist', express.static(config.manager));
+app.use('/pip', express.static(config.pip));
 
 
 app.use(cors({

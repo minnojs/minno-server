@@ -24,10 +24,16 @@ user_info = function (user_id) {
 };
 
 set_password = function (user_id, password, confirm, res) {
+
     if(!password || !confirm)
     {
         res.statusCode = 400;
         return res.send(JSON.stringify({message: 'Missing password / confirm password'}));
+    }
+    if(password.length<8)
+    {
+        res.statusCode = 400;
+        return res.send(JSON.stringify({message: 'Passwords must be at least 8 characters in length!'}));
     }
     if(password != confirm)
     {
@@ -167,6 +173,11 @@ check_activation_code = function (code, res) {
 };
 
 set_user_by_activation_code = function (code, pass, pass_confirm, res, callback) {
+    if(pass.length<8)
+    {
+        res.statusCode = 400;
+        return res.send(JSON.stringify({message: 'Passwords must be at least 8 characters in length!'}));
+    }
     if(pass!=pass_confirm)
     {
         res.statusCode = 400;
