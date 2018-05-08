@@ -27,7 +27,7 @@ get_studies = function (user_id, res, callback) {
                                 // is_public:false,
                                 // is_template:false,
                                 last_modified:study.modify_date,
-                                // permission:"owner",
+                                permission:"owner",
                                 study_type:"regular",
                                 base_url:user_result.user_name+'/'+study.folder_name,
                                 tags:study_tags});
