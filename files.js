@@ -18,7 +18,6 @@ function mysha1( data ) {
 
 
 var walkSync = function(full_path, rel_dir, filelist) {
-    var server = config.server_url;
     if (!fs.existsSync(full_path)) {
         return console.error('Folder doesn\'t exiss');
     }
@@ -81,7 +80,7 @@ create_folder = function(user_id, study_id, folder_id, res) {
                     if (!fs.existsSync(folder_path))
                         fs.mkdirSync(folder_path);
 
-                    var file_url = config.server_url+'/'+folder_path;
+                    var file_url = '../'+folder_path;
 
                     return studies_comp.update_modify(study_id)
                         .then(function(){
@@ -108,7 +107,7 @@ update_file = function(user_id, study_id, file_id, content, res) {
                     }
                     var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
-                    var file_url = config.server_url+'/'+new_file_path;
+                    var file_url = '../'+new_file_path;
                     return studies_comp.update_modify(study_id)
                         .then(function(){
                             return res.send(JSON.stringify({id: file_id, content: content, url: file_url}))});
@@ -229,7 +228,7 @@ rename_file = function (user_id, study_id, file_id, new_path, res) {
                         }
                         return studies_comp.update_modify(study_id)
                             .then(function(){
-                                var file_url = config.server_url+'/'+new_file_path;
+                                var file_url = '../'+new_file_path;
                                 experiments.update_file_id(user_id, study_id, file_id, new_path, res);
 
                                 return res.send(JSON.stringify({id: urlencode.encode(new_path), url:file_url}));
@@ -289,7 +288,7 @@ upload = function (user_id, study_id, req, res) {
 
                             var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
-                            var file_url = config.server_url+'/'+new_file_path;
+                            var file_url = '../'+new_file_path;
 
                             filelist.push({id: file_id,
                                 path:file_id,
