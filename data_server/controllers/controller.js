@@ -23,16 +23,10 @@ exports.insertData = function(req, res) {
     res.json(data);
   });
 };
-exports.getData = function(req, res) {
+exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	
-	var studyId= req.get('studyId');
 	if(typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
-	var fileFormat= ''+req.get('fileFormat');
-	var fileSplitVar= ''+req.get('fileSplitVar');
-	var startDate = req.get('startDate');
-	console.log("The date is "+startDate );
-	var endDate = req.get('endDate');
 	var findObject={};
     var  dataMap={};
     var processedData=[];
