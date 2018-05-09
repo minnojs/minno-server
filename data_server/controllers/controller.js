@@ -5,10 +5,13 @@ var mongoose = require('mongoose'),
    Data = mongoose.model('Data');
 var fs = require('fs');
 var convert = require('mongoose_schema-json');
+var archiver = require('archiver');
 const varSplit="\\.";
 const nullDataValue='';
 const defaultDataFilename='_data';
 const dataPrefix=''; //prefix for items in the data array
+const dataFileLocation='/home/openserver/';
+const dataFolder='data/';
 
 exports.insertData = function(req, res) {
   var newData = new Data(req.body);
@@ -70,8 +73,7 @@ exports.getData = function(req, res) {
 			 reqBody = JSON.parse(JSON.stringify(study[x]));
 		  	loadDataArray(reqBody,dataMap,processedData);
 		  }
-		  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString)
-          res.json(study);
+		  return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
       }
   });
 };
@@ -269,6 +271,59 @@ var loadRow= function(data,prefix,map,row)
 	}
 	});
 };
+var  getDateString= function(daysFromPresent)
+    {
+        var date = new Date();
+		date.setDate(date.getDate()+daysFromPresent)
+        var dd = date.getDate();
+        var mm = date.getMonth();
+        var yyyy = date.getFullYear();
+
+        var dateString= dd+'.'+mm+'.'+yyyy;
+
+        return dateString;   
+    }
+	var zipFolder= function(zipPath,zipFolder)
+	{
+		var output = fs.createWriteStream(zipPath);
+		var archive = archiver('zip', {
+		  zlib: { level: 9 } // Sets the compression level.
+		});
+ 
+		// listen for all archive data to be written
+		// 'close' event is fired only when a file descriptor is involved
+		output.on('close', function() {
+		  console.log(archive.pointer() + ' total bytes');
+		  console.log('archiver has been finalized and the output file descriptor has closed.');
+		});
+ 
+		// This event is fired when the data source is drained no matter what was the data source.
+		// It is not part of this library but rather from the NodeJS Stream API.
+		// @see: https://nodejs.org/api/stream.html#stream_event_end
+		output.on('end', function() {
+		  console.log('Data has been drained');
+		});
+ 
+		// good practice to catch warnings (ie stat failures and other non-blocking errors)
+		archive.on('warning', function(err) {
+		  if (err.code === 'ENOENT') {
+		    // log warning
+		  } else {
+		    // throw error
+		    throw err;
+		  }
+		});
+ 
+		// good practice to catch this error explicitly
+		archive.on('error', function(err) {
+		  throw err;
+		});
+ 
+		// pipe archive data to the file
+		archive.pipe(output);
+		archive.directory(zipFolder, false);
+		archive.finalize();
+	}	
 var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 {
 	
@@ -282,7 +337,17 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 		rowSplitString='\t';
 	}
 	//fileSplitVar='createdDate';
-
+	var currentDate=getDateString(0);
+	var currentTime=new Date();
+	currentTime=currentTime.getTime();
+	var dataPath=dataFolder+currentDate+'/';
+	var filePrefix=dataFileLocation+dataPath;
+	if(!fs.existsSync(filePrefix))
+	{
+		fs.mkdirSync(filePrefix);
+	}
+	filePrefix+=+ currentTime+'/';
+	fs.mkdirSync(filePrefix);
 	var reverseMap=  new Array(Object.keys(map).length);
 	Object.keys(map).forEach(function(key) {
 		reverseMap[map[key]]=key;
@@ -299,7 +364,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 				splitPos=map[fileSplitVar];
 			}
 			else{
-			    fs.writeFile("/data/"+defaultDataFilename+".txt", initialRow, function(err) {
+			    fs.writeFile(filePrefix+defaultDataFilename+".txt", initialRow, function(err) {
 			        if(err) {
 			            return console.log(err);
 			        }
@@ -321,13 +386,13 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 						{
 							filename=defaultDataFilename;
 						}
-					    fs.writeFile("/data/"+filename+".txt", initialRow, function(err) {
+					    fs.writeFile(filePrefix+filename+".txt", initialRow, function(err) {
 					        if(err) {
 					            return console.log(err);
 					        }
 					    });
 					}
-				    fs.appendFile("/data/"+filename+".txt", dataString, function(err) {
+				    fs.appendFile(filePrefix+filename+".txt", dataString, function(err) {
 				        if(err) {
 				            return console.log(err);
 				        }
@@ -335,6 +400,9 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 				        //console.log("The row was saved!");
 				    });
 					dataString='';
+					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
+					zipFolder(dateZipFile,filePrefix);
+					return dataFolder+currentDate+'/'+currentTime+'.zip';
 			}
 			
 		
