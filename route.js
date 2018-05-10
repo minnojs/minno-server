@@ -210,6 +210,15 @@ app.route('/files/:study_id/file/:file_id/copy')
 
         });
 
+app.route('/studies/:study_id/experiments')
+    .get(
+        function(req, res){
+            if(!sess.user) {
+                res.statusCode = 403;
+                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+            }
+            experiments.get_experiments(sess.user.id, parseInt(req.params.study_id), res);
+        });
 
 app.route('/files/:study_id/file/:file_id/experiment')
     .post(
@@ -220,6 +229,7 @@ app.route('/files/:study_id/file/:file_id/experiment')
             }
             experiments.insert_new_experiment(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
         })
+
     .delete(
         function(req, res){
             if(!sess.user) {

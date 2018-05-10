@@ -55,12 +55,15 @@ get_experiment_url = function (req) {
 };
 
 
-get_experiments = function (user_id, res) {
-    return mongo.connect(url).then(function (db) {
-        var users   = db.collection('users');
-        return users.findOne({_id: user_id})
-            .then(user_data=>res.send(JSON.stringify({tags: user_data.tags})));
-    });
+
+get_experiments = function (user_id, study_id, res) {
+    return have_permission(user_id, study_id)
+        .then(function() {
+            studies_comp.study_info(study_id)
+                .then(function (study_data) {
+                    res.send(JSON.stringify({experiments: study_data.experiments}));
+                });
+        });
 };
 
 insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, res) {
