@@ -67,7 +67,12 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 			 reqBody = JSON.parse(JSON.stringify(study[x]));
 		  	loadDataArray(reqBody,dataMap,processedData);
 		  }
-		  return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
+		  if(dataMap.keys(map).length>0){
+		  return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);}
+		  else
+		  {
+			  return null;
+		  }
       }
   });
 };
