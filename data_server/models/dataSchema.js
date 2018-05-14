@@ -7,11 +7,11 @@ var autoIncrement = require('mongoose-auto-increment')
 var dataSchema = new Schema({
   sessionId: {
     type: String,
-    required: 'A sessionID is required for data posts'
+    required: [true,'A sessionID is required for data posts']
   },
   studyId: {
     type: String,
-    required: 'A studyID is required for data posts'
+    required: [true,'A studyID is required for data posts']
   },
   createdDate: {
     type: Date,
@@ -23,7 +23,7 @@ var dataSchema = new Schema({
 	items: {
 	 type: Schema.Types.Mixed
 	},
-	required: 'A data array required for data posts'
+	required: [true,'A data array required for data posts']
   }
 });
 

@@ -7,7 +7,7 @@ autoIncrement.initialize(mongoose);
 var studySchema = new Schema({
   studyId: {
     type: String,
-    required: 'A studyID is required for data posts'
+    required: [true,'A studyID is required for data posts']
   },
   createdDate: {
     type: Date,

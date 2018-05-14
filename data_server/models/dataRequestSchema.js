@@ -4,11 +4,11 @@ var Schema = mongoose.Schema;
 var dataRequestSchema = new Schema({
   studyId: {
     type: String,
-    required: 'A studyId is required'
+    required: [true,'A studyId is required']
   },
   requestId: {
     type: String,
-    required: 'A requestId is required'
+    required: [true,'A requestId is required']
   },
   status: {
     type: String,
