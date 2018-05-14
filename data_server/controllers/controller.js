@@ -1,6 +1,10 @@
 'use strict';
 
 var mongoose = require('mongoose'),
+Data = require('../models/dataSchema'),
+DataRequest = require('../models/dataRequestSchema'),
+  Study = require('../models/studySchema'), //created model loading here
+Experiment = require('../models/experimentSchema'),
 DataRequest = mongoose.model('DataRequest'),
    Data = mongoose.model('Data');
    
@@ -62,7 +66,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	{
 		rowSplitString=',';
 	}
-	if(fileFormat=='tab')
+	if(fileFormat=='tsv')
 	{
 		rowSplitString='\t';
 	}
