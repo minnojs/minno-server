@@ -1,8 +1,9 @@
 'use strict';
 
-
 var mongoose = require('mongoose'),
+DataRequest = mongoose.model('DataRequest'),
    Data = mongoose.model('Data');
+   
 var fs = require('fs');
 var convert = require('mongoose_schema-json');
 var archiver = require('archiver');
@@ -23,6 +24,19 @@ exports.insertData = function(req, res) {
     res.json(data);
   });
 };
+exports.getDownloadRequests = function(studyIds) {
+	DataRequest.find({requestId: {$in:studyIds}}, (err, dataRequests) =>{  
+	    if (err) return null
+
+	    // send the list of all people in database with name of "John James" and age of 36
+	    // Very possible this will be an array with just one Person object in it.
+	    return dataRequests;
+	});
+};
+exports.getData2=function(req,res)
+{
+	res.send(exports.getData(req.get('studyId')));
+}
 exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	
 	if(typeof studyId == 'undefined' || !studyId)
@@ -52,6 +66,14 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	{
 		rowSplitString='\t';
 	}
+	var currentTime=new Date();
+	currentTime=currentTime.getTime();
+	var dataObject={studyId:studyId, details:findObject, requestId:currentTime};
+    var newDataRequest = new DataRequest(dataObject);
+    newDataRequest.save(function(err, data) {
+      if (err)
+        res.send(err);
+    });
   Data.find(findObject, function(err, study) {
       if (err) {
           return err
@@ -67,12 +89,16 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 			 reqBody = JSON.parse(JSON.stringify(study[x]));
 		  	loadDataArray(reqBody,dataMap,processedData);
 		  }
-		  if(dataMap.keys(map).length>0){
-		  return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);}
+		  if(Object.keys(dataMap).length>0){
+			  var dataUrl=writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
+		   }
 		  else
 		  {
-			  return null;
+			  var dataUrl= null;
 		  }
+		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
+		  return dataUrl;
+		  
       }
   });
 };
