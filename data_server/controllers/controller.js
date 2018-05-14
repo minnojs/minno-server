@@ -4,7 +4,6 @@ var mongoose = require('mongoose'),
 Data = require('../models/dataSchema'),
 DataRequest = require('../models/dataRequestSchema'),
   Study = require('../models/studySchema'), //created model loading here
-Experiment = require('../models/experimentSchema'),
 DataRequest = mongoose.model('DataRequest'),
    Data = mongoose.model('Data');
    
