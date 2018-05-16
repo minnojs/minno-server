@@ -32,7 +32,7 @@ exports.get_study_tags = function (user_id, study_id, res) {
                         var used = all_tags.map(function(tag){
                             var used = study_obj.tags.indexOf(tag.id)>-1;
                             return{id:tag.id, text:tag.text, color: tag.color, used:used}});
-                        return res.send(JSON.stringify({tags: used}));
+                        return res.end(JSON.stringify({tags: used}));
                     })
             })
         .catch(function(err){

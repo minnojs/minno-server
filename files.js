@@ -174,7 +174,7 @@ delete_files = function (user_id, study_id, files, res) {
 download_zip = function (path, res) {
     res.download('tmp/'+path, path, function(err){
         if (err) {
-            console.log('can not donload..')
+            console.log('can not download..')
         } else {
             fs.removeSync('tmp/'+path);
         }

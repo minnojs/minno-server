@@ -37,7 +37,7 @@ exports.check = function (user_name, pass, res, callback) {
             {
                 users_obj.create_admin_user();
             }
-            users.findOne({}).then((aa)=>console.log(aa));
+            // users.findOne({}).then((aa)=>console.log(aa));
             // users.find({}).then(usersd=>console.log(usersd));
         })
         .then(function(){

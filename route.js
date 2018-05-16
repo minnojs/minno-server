@@ -105,6 +105,7 @@ app.route('/download').get(
             res.statusCode = 403;
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
+        console.log(req.query.path);
         files.download_zip(req.query.path, res);
     }
 
@@ -218,6 +219,15 @@ app.route('/studies/:study_id/experiments')
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
             experiments.get_experiments(sess.user.id, parseInt(req.params.study_id), res);
+        })
+    .post(
+        function(req, res){
+            if(!sess.user) {
+                res.statusCode = 403;
+                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+            }
+            experiments.get_data(sess.user.id, parseInt(req.params.study_id), req.body.exp_id,
+                                    req.body.file_format, req.body.start_date, req.body.end_date, res);
         });
 
 app.route('/files/:study_id/file/:file_id/experiment')

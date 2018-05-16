@@ -3,6 +3,7 @@ var config = require('./config');
 const url         = config.mongo_url;
 const crypto      = require('crypto');
 var studies_comp = require('./studies');
+var data_server  = require('./data_server/controllers/controller');
 
 
 var mongo         = require('mongodb-bluebird');
@@ -55,14 +56,22 @@ get_experiment_url = function (req) {
 };
 
 
-
 get_experiments = function (user_id, study_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             studies_comp.study_info(study_id)
                 .then(function (study_data) {
-                    res.send(JSON.stringify({experiments: study_data.experiments}));
+                    res.end(JSON.stringify({experiments: study_data.experiments}));
                 });
+        });
+};
+
+get_data = function (user_id, study_id, exp_id, file_format, start_date, end_date, res) {
+    return have_permission(user_id, study_id)
+        .then(function() {
+            var data_file = data_server.getData(exp_id, file_format,'',start_date,end_date);
+            console.log({data_file:data_file});
+            res.send(JSON.stringify({data_file:data_file}));
         });
 };
 
@@ -154,4 +163,4 @@ is_descriptive_id_exist = function (user_id, study_id, descriptive_id) {
 };
 
 
-module.exports = {get_play_url:get_play_url, get_experiment_url:get_experiment_url, is_descriptive_id_exist:is_descriptive_id_exist, get_experiments:get_experiments, update_descriptive_id:update_descriptive_id, update_file_id:update_file_id, delete_experiment:delete_experiment, insert_new_experiment:insert_new_experiment};
+module.exports = {get_play_url, get_experiment_url, is_descriptive_id_exist, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment};
