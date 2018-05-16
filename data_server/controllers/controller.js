@@ -80,11 +80,12 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	currentTime=currentTime.getTime();
 	var dataObject={studyId:studyId, details:findObject, requestId:currentTime};
     var newDataRequest = new DataRequest(dataObject);
-    newDataRequest.save(function(err, data) {
-      if (err)
-        res.send(err);
-    });
+
 	return new Promise(function(resolve, reject) {
+	    newDataRequest.save(function(err, data) {
+	      if (err)
+	        reject(err);
+	    });
 	    Data.find(findObject, function(err, study) {
 	        if (err) {
 	            reject(err);
@@ -106,7 +107,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		  else
 	  		  {
 	  			  var dataUrl= null;
-	  		  }0
+	  		  }
 	  		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
 	  		  resolve( dataUrl);
 		  
