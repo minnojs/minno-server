@@ -28,13 +28,20 @@ exports.insertData = function(req, res) {
   });
 };
 exports.getDownloadRequests = function(studyIds) {
-	DataRequest.find({requestId: {$in:studyIds}}, (err, dataRequests) =>{  
-	    if (err) return null
+	return new Promise(function(resolve, reject) {
+		DataRequest.find({requestId: {$in:studyIds}}, (err, dataRequests) =>{  
+		    if (err) {
+				 reject(err);}
+			else
+			{
+				resolve(dataRequests);
+			}
 
-	    // send the list of all people in database with name of "John James" and age of 36
-	    // Very possible this will be an array with just one Person object in it.
-	    return dataRequests;
+		   
+		})
 	});
+
+
 };
 exports.getData2=function(req,res)
 {
@@ -77,33 +84,36 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
       if (err)
         res.send(err);
     });
-  Data.find(findObject, function(err, study) {
-      if (err) {
-          return err
-      }
-      else {
-		for(var x=0;x<study.length;x++)
-		  {
-			  var reqBody = JSON.parse(JSON.stringify(study[x]));
-		  	getInitialVarIdMap(reqBody,'',dataMap,pos);
-		  }
-		  for(var x=0;x<study.length;x++)
-		  {
-			 reqBody = JSON.parse(JSON.stringify(study[x]));
-		  	loadDataArray(reqBody,dataMap,processedData);
-		  }
-		  if(Object.keys(dataMap).length>0){
-			  var dataUrl=writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
-		   }
-		  else
-		  {
-			  var dataUrl= null;
-		  }
-		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
-		  return dataUrl;
+	return new Promise(function(resolve, reject) {
+	    Data.find(findObject, function(err, study) {
+	        if (err) {
+	            reject(err);
+	        }
+	        else {
+	  		for(var x=0;x<study.length;x++)
+	  		  {
+	  			  var reqBody = JSON.parse(JSON.stringify(study[x]));
+	  		  	getInitialVarIdMap(reqBody,'',dataMap,pos);
+	  		  }
+	  		  for(var x=0;x<study.length;x++)
+	  		  {
+	  			 reqBody = JSON.parse(JSON.stringify(study[x]));
+	  		  	loadDataArray(reqBody,dataMap,processedData);
+	  		  }
+	  		  if(Object.keys(dataMap).length>0){
+	  			  var dataUrl=writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
+	  		   }
+	  		  else
+	  		  {
+	  			  var dataUrl= null;
+	  		  }0
+	  		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
+	  		  resolve( dataUrl);
 		  
-      }
-  });
+	        }
+	    });
+	});
+ 
 };
 
 
