@@ -153,7 +153,7 @@ var getInitialVarIdMap= function(data,prefix,map,pos)
 	});
 	var item=data.data;
 	try {item= JSON.parse(item);}
-	catch(e) {console.log(e);}
+	catch(e) {}
 	item.forEach(function(row) {
 		    pos=getVarIdMap(row,dataPrefix,map,pos);
 			
