@@ -1,4 +1,6 @@
 'use strict';
+var config = require('../../config');
+
 
 var mongoose = require('mongoose'),
 Data = require('../models/dataSchema'),
@@ -14,8 +16,8 @@ const varSplit="\\.";
 const nullDataValue='';
 const defaultDataFilename='_data';
 const dataPrefix=''; //prefix for items in the data array
-const dataFileLocation='/home/openserver/';
-const dataFolder='data/';
+const dataFileLocation=config.base_folder;
+const dataFolder=config.dataFolder;
 
 exports.insertData = function(req, res) {
   var newData = new Data(req.body);

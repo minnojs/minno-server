@@ -34,7 +34,7 @@ get_experiment_url = function (req) {
     return mongo.connect(url).then(function (db) {
         var counters = db.collection('counters');
         var studies = db.collection('studies');
-        // console.log(req.params.exp_id);
+        console.log(req.params.exp_id);
         return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id } }})
             .then(function(exp_data){
                 // console.log(exp_data);
@@ -46,7 +46,7 @@ get_experiment_url = function (req) {
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
                             var session_id = counter_data.value.seq;
-                            return Promise.resolve({study_id:exp_data._id, session_id:session_id, url:'../users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
+                            return Promise.resolve({exp_id:req.params.exp_id, session_id:session_id, url:'../users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
                         });
 
                 });
@@ -69,9 +69,11 @@ get_experiments = function (user_id, study_id, res) {
 get_data = function (user_id, study_id, exp_id, file_format, start_date, end_date, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            var data_file = data_server.getData(exp_id, file_format,'',start_date,end_date);
-            console.log({data_file:data_file});
-            res.send(JSON.stringify({data_file:data_file}));
+            console.log(exp_id);
+            data_server.getData(exp_id, file_format, '', start_date, end_date)
+                .then(function(data){console.log({data:data})});
+            // console.log({data_file:data_file});
+            // res.send(JSON.stringify({data_file:data_file}));
         });
 };
 

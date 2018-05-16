@@ -448,8 +448,9 @@ app.get('/launch/:exp_id',function(req, res){
     app.set('view engine', 'ejs');
     return experiments.get_experiment_url(req).then(function(exp_data) {
         console.log(exp_data.url);
+        console.log(exp_data);
 
-        res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.study_id});
+        res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
     });
 });
 
@@ -460,7 +461,7 @@ app.get('/play/:study_id/:file_id',function(req, res){
     }
     app.set('view engine', 'ejs');
         return experiments.get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
-            res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.study_id});
+            res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
     });
 });
 
