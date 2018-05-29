@@ -23,6 +23,8 @@ exports.check = function (user_name, pass, res, callback) {
 
 
     return mongo.connect(url).then(function (db) {
+        // db.dropDatabase();
+
         var users   = db.collection('users');
 
         var studies = db.collection('studies');

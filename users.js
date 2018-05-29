@@ -1,4 +1,4 @@
-var config = require('./config');
+    var config = require('./config');
 const url         = config.mongo_url;
 const crypto      = require('crypto');
 const sender      = require('./sender');
@@ -89,15 +89,19 @@ create_admin_user = function () {
             )
             .then(function (counter_data) {
                 if (!fs.existsSync(config.user_folder))
+                {
                     fs.mkdirSync(config.user_folder);
+                    fs.mkdirSync(config.user_folder+'admin');
+                };
+
                 var user_obj = {_id:1,
-                                user_name:'admin',
-                                first_name:'admin',
-                                last_name:'admin',
-                                email:'admin@admin.com',
-                                role:'su',
-                                pass:mysha1('admin'),
-                                studies:[],tags:[]};
+                    user_name:'admin',
+                    first_name:'admin',
+                    last_name:'admin',
+                    email:'admin@admin.com',
+                    role:'su',
+                    pass:mysha1('admin123'),
+                    studies:[],tags:[]};
                 return users.insert(user_obj)
             });
     });
