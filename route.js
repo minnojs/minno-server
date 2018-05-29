@@ -1,23 +1,25 @@
-var express = require('express');
-var session = require('express-session');
-var connect = require('./connect');
-var studies = require('./studies');
-var tags = require('./tags');
-var config = require('./config');
+var express     = require('express');
+var session     = require('express-session');
+var connect     = require('./connect');
+var studies     = require('./studies');
+var tags        = require('./tags');
+var config      = require('./config');
 var experiments = require('./experiments');
-var dateFormat = require('dateformat');
+var dateFormat  = require('dateformat');
+const fs        = require('fs-extra');
 
-var users = require('./users');
+var users       = require('./users');
 
-var files   = require('./files');
-var sender  = require('./sender');
+var files       = require('./files');
+var sender      = require('./sender');
 
 var bodyParser = require('body-parser');
 var app = express();
 var cors = require('cors');
 
-var day=dateFormat(new Date(), "yyyy-mm-dd");
-console.log(day);
+var day = dateFormat(new Date(), "yyyy-mm-dd");
+if (!fs.existsSync(config.logs_folder))
+    fs.mkdirSync(config.logs_folder);
 SimpleNodeLogger = require('simple-node-logger'),
     opts = {
         logFilePath:`${config.logs_folder}/${day}.log`,

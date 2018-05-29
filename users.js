@@ -87,9 +87,9 @@ create_admin_user = function () {
                     seq: 1
                 }
             )
-
             .then(function (counter_data) {
-                console.log(counter_data.value);
+                if (!fs.existsSync(config.user_folder))
+                    fs.mkdirSync(config.user_folder);
                 var user_obj = {_id:1,
                                 user_name:'admin',
                                 first_name:'admin',
@@ -148,8 +148,8 @@ insert_new_user = function (req, res) {
                     var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
                     return users.insert(user_obj)
                         .then(function(){
-                            if (!fs.existsSync('users/'+user_name)) {
-                                fs.mkdirSync('users/'+user_name);
+                            if (!fs.existsSync(config.user_folder+user_name)) {
+                                fs.mkdirSync(config.user_folder+user_name);
                                 return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
                             }
                         });

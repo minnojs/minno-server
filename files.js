@@ -54,7 +54,7 @@ get_study_files = function (user_id, study_id, res) {
             studies_comp.study_info(study_id)
             .then(function(study_data){
                 files = [];
-                walkSync('users/'+user_data.user_name+'/'+study_data.folder_name, '', files);
+                walkSync(config.user_folder+user_data.user_name+'/'+study_data.folder_name, '', files);
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
                         return exp.file_id == file.id});
@@ -76,7 +76,7 @@ create_folder = function(user_id, study_id, folder_id, res) {
             studies_comp.study_info(study_id)
                 .then(function(study_data){
                     folder_id = urlencode.decode(folder_id);
-                    var folder_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+folder_id;
+                    var folder_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+folder_id;
                     if (!fs.existsSync(folder_path))
                         fs.mkdirSync(folder_path);
 
@@ -100,12 +100,12 @@ update_file = function(user_id, study_id, file_id, content, res) {
             studies_comp.study_info(study_id)
             .then(function(study_data){
                 file_id = urlencode.decode(file_id);
-                fs.writeFile('users/'+user_data.user_name+'/'+study_data.folder_name+'/'+file_id, content, 'utf8', function (err, content) {
+                fs.writeFile(config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+file_id, content, 'utf8', function (err, content) {
                     if (err) {
                         res.statusCode = 500;
                         return res.send(JSON.stringify({message: 'ERROR: internal error'}));
                     }
-                    var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                    var new_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
                     var file_url = '../'+new_file_path;
                     return studies_comp.update_modify(study_id)
@@ -128,7 +128,7 @@ get_file_content = function(user_id, study_id, file_id, res) {
             studies_comp.study_info(study_id)
                 .then(function(study_data){
                     file_id = urlencode.decode(file_id);
-                    fs.readFile('users/'+user_data.user_name+'/'+study_data.folder_name+'/'+file_id, 'utf8', function (err,content) {
+                    fs.readFile(config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+file_id, 'utf8', function (err,content) {
                         if (err) {
                             res.statusCode = 500;
                             return res.send(JSON.stringify({message: 'ERROR: internal error'}));
@@ -149,7 +149,7 @@ delete_files = function (user_id, study_id, files, res) {
             studies_comp.study_info(study_id)
                 .then(function(study_data){
                     files.forEach(function(file) {
-                        var path = 'users/' + user_data.user_name + '/' + study_data.folder_name+'/'+file;
+                        var path = config.user_folder + user_data.user_name + '/' + study_data.folder_name+'/'+file;
                         try {
                             fs.removeSync(path);
                             experiments.delete_experiment(user_id, study_id, file);
@@ -191,7 +191,7 @@ download_files = function (user_id, study_id, files, res) {
             studies_comp.study_info(study_id)
                 .then(function(study_data){
                     files.forEach(function(file) {
-                        var path = 'users/' + user_data.user_name + '/' + study_data.folder_name+'/'+file;
+                        var path = config.user_folder + user_data.user_name + '/' + study_data.folder_name+'/'+file;
                         fs.copySync(path, zip_path+'/'+file);
                     });
 
@@ -219,8 +219,8 @@ rename_file = function (user_id, study_id, file_id, new_path, res) {
         .then(function(user_data){
             studies_comp.study_info(study_id)
                 .then(function(study_data){
-                    var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ new_path;
-                    var exist_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                    var new_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ new_path;
+                    var exist_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
                     fs.rename(exist_file_path, new_file_path, function (err) {
                         if (err){
                             res.statusCode = 500;
@@ -254,9 +254,9 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
                         .then(function(new_study_data){
                             console.log(new_study_data);
                             // console.log({user_id, study_id, file_id, new_study_id});
-                            var new_file_path = 'users/'+user_data.user_name+'/'+new_study_data.folder_name+'/'+ file_id;
+                            var new_file_path = config.user_folder+user_data.user_name+'/'+new_study_data.folder_name+'/'+ file_id;
 
-                            var exist_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                            var exist_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
                             fs.copySync(exist_file_path, new_file_path);
                                 return studies_comp.update_modify(new_study_id)
                                     .then(function(){
@@ -286,7 +286,7 @@ upload = function (user_id, study_id, req, res) {
                             var oldpath = files[key].path;
                             var file_id = urlencode.decode(prefix+files[key].name);
 
-                            var new_file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                            var new_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
                             var file_url = '../'+new_file_path;
 
@@ -294,7 +294,7 @@ upload = function (user_id, study_id, req, res) {
                                 path:file_id,
                                 url:file_url
                             });
-                            var study_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/' + prefix;
+                            var study_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/' + prefix;
                             var file_path = study_path + files[key].name;
                             log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
                             fs.copy(oldpath, file_path, function (err, files_arr) {

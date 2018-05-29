@@ -93,7 +93,7 @@ duplicate_study = function (user_id, study_id, new_study_name, res) {
                                         .then(function(user_data) {
                                             try {
                                                 if (!fs.existsSync(study_data.dir)) {
-                                                    fs.copySync('users/' + user_data.user_name + '/' + original_study_data.folder_name, study_data.dir);
+                                                    fs.copySync(config.user_folder + user_data.user_name + '/' + original_study_data.folder_name, study_data.dir);
                                                     return res.send(JSON.stringify({study_id: study_data.study_id}));
                                                 }
                                                 } catch (err) {
@@ -116,7 +116,7 @@ delete_study = function (user_id, study_id, res) {
         .then(function(user_data) {
             delete_by_id(user_id, study_id)
                 .then(function(study_data) {
-                        var dir = 'users/' + user_data.user_name + '/' + study_data.value.folder_name;
+                        var dir = config.user_folder + user_data.user_name + '/' + study_data.value.folder_name;
                         try {
                             if (!fs.existsSync(dir)) {
                                 res.statusCode = 500;
@@ -179,7 +179,7 @@ insert_obj = function (user_id, study_obj) {
                         [],
                         {$push: {studies: {id: study_id, tags: []}}})
                         .then(function(user_data){
-                            var dir = 'users/'+user_data.value.user_name+'/'+study_obj.name;
+                            var dir = config.user_folder+user_data.value.user_name+'/'+study_obj.name;
                             return Promise.resolve({study_id, dir});
                         })
                 })
@@ -243,8 +243,8 @@ rename_study = function (user_id, study_id, new_study_name, res) {
                                     res.statusCode = 500;
                                     return res.send(JSON.stringify({message: 'ERROR: internal error'}));
                                 }
-                                var new_file_path = 'users/' + user_data.user_name + '/' + new_study_name;
-                                var file_path     = 'users/' + user_data.user_name + '/' + study_data.value.folder_name;
+                                var new_file_path = config.user_folder + user_data.user_name + '/' + new_study_name;
+                                var file_path     = config.user_folder + user_data.user_name + '/' + study_data.value.folder_name;
                                 if (!fs.existsSync(file_path)) {
                                     res.statusCode = 500;
                                     return res.send(JSON.stringify({message: 'ERROR: ERROR: Study does not exist in FS'}));

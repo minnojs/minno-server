@@ -20,7 +20,7 @@ get_play_url = function (user_id, study_id, file_id) {
         .then(function(user_data){
             studies_comp.study_info(study_id)
                 .then(function(study_data){
-                    var file_path = 'users/'+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
+                    var file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
                     return Promise.resolve({study_id:-1, session_id:-1, url:config.servser_url+file_path});
                 })
         })
@@ -71,7 +71,7 @@ get_data = function (user_id, study_id, exp_id, file_format, start_date, end_dat
         .then(function() {
             console.log(exp_id);
             data_server.getData(exp_id, file_format, '', start_date, end_date)
-                .then(function(data){console.log({data:data})});
+                .then(function(data){console.log(data)});
             // console.log({data_file:data_file});
             // res.send(JSON.stringify({data_file:data_file}));
         });
