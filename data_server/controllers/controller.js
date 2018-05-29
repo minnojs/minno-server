@@ -23,6 +23,7 @@ exports.insertData = function(req, res) {
   var newData = new Data(req.body);
   
   var reqBody=req.body;
+  console.log(reqBody.studyId +' is the study id saved');
   newData.save(function(err, data) {
     if (err)
       res.send(err);
@@ -50,9 +51,11 @@ exports.getData2=function(req,res)
 	res.send(exports.getData(req.get('studyId')));
 }
 exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
-	
+	startDate=null;
+	endDate=null;
 	if(typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
+	console.log(studyId + " is the studyId requested");
 	var findObject={};
     var  dataMap={};
     var processedData=[];
@@ -153,7 +156,7 @@ var getInitialVarIdMap= function(data,prefix,map,pos)
 	});
 	var item=data.data;
 	try {item= JSON.parse(item);}
-	catch(e) {console.log(e);}
+	catch(e) {}
 	item.forEach(function(row) {
 		    pos=getVarIdMap(row,dataPrefix,map,pos);
 			
