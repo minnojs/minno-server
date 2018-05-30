@@ -79,25 +79,29 @@ get_email = function (user_id, res) {
 create_admin_user = function () {
 
     return mongo.connect(url).then(function (db) {
-            var users   = db.collection('users');
-            var counters   = db.collection('counters');
-            return counters.insert(
-                {
-                    _id: "user_id",
-                    seq: 1
-                }
-            )
+        var users   = db.collection('users');
+        var counters   = db.collection('counters');
+        return counters.insert(
+            {
+                _id: "user_id",
+                seq: 1
+            }
+        )
             .then(function (counter_data) {
                 if (!fs.existsSync(config.user_folder))
+                {
                     fs.mkdirSync(config.user_folder);
+                    fs.mkdirSync(config.user_folder+'admin');
+                };
+
                 var user_obj = {_id:1,
-                                user_name:'admin',
-                                first_name:'admin',
-                                last_name:'admin',
-                                email:'admin@admin.com',
-                                role:'su',
-                                pass:mysha1('admin'),
-                                studies:[],tags:[]};
+                    user_name:'admin',
+                    first_name:'admin',
+                    last_name:'admin',
+                    email:'admin@admin.com',
+                    role:'su',
+                    pass:mysha1('admin123'),
+                    studies:[],tags:[]};
                 return users.insert(user_obj)
             });
     });
@@ -140,20 +144,20 @@ insert_new_user = function (req, res) {
                     return res.send(JSON.stringify({message: 'User already exist'}));
                 }
                 counters.findAndModify({_id: 'user_id'},
-                                        [],
-                                        {upsert: true, new: true, returnOriginal: false})
-                .then(function (counter_data) {
-                    var activation_code = mysha1(user_name+Math.floor(Date.now() / 1000));
-                    var user_id = counter_data.value.seq;
-                    var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
-                    return users.insert(user_obj)
-                        .then(function(){
-                            if (!fs.existsSync(config.user_folder+user_name)) {
-                                fs.mkdirSync(config.user_folder+user_name);
-                                return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
-                            }
-                        });
-                });
+                    [],
+                    {upsert: true, new: true, returnOriginal: false})
+                    .then(function (counter_data) {
+                        var activation_code = mysha1(user_name+Math.floor(Date.now() / 1000));
+                        var user_id = counter_data.value.seq;
+                        var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
+                        return users.insert(user_obj)
+                            .then(function(){
+                                if (!fs.existsSync(config.user_folder+user_name)) {
+                                    fs.mkdirSync(config.user_folder+user_name);
+                                    return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
+                                }
+                            });
+                    });
             });
     });
 };
@@ -192,7 +196,7 @@ set_user_by_activation_code = function (code, pass, pass_confirm, res, callback)
             .then(function (user_data) {
                 return res.send(JSON.stringify({}));
             });
-        });
+    });
 
 };
 
