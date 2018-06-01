@@ -113,10 +113,8 @@ get_users = function (res) {
         users.find({})
             .then(function (user_data) {
                 return res.end(JSON.stringify({user_data: user_data}));
-
             });
     });
-
 };
 
 
