@@ -16,7 +16,6 @@ var sender      = require('./sender');
 var bodyParser = require('body-parser');
 var app = express();
 var cors = require('cors');
-
 var day = dateFormat(new Date(), "yyyy-mm-dd");
 if (!fs.existsSync(config.logs_folder))
     fs.mkdirSync(config.logs_folder);
@@ -53,9 +52,14 @@ app.set('views', __dirname + '/views');
 
 app.engine('html', require('ejs').renderFile);
 
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+//
+// app.use(bodyParser.urlencoded({extended: true}));
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({limit: '50mb',extended: true}));
+app.use(bodyParser.json({limit: '50mb'}));
+
+
 
 var sess;
 

@@ -275,6 +275,7 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
 upload = function (user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();
     form.parse(req, function (err, fields, files) {
+        console.log({fields, files});
         return have_permission(user_id, study_id)
             .then(function(user_data){
                 studies_comp.study_info(study_id)
@@ -283,7 +284,9 @@ upload = function (user_id, study_id, req, res) {
                         var prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
 
                         Object.keys(files).forEach(function(key){
+
                             var oldpath = files[key].path;
+
                             var file_id = urlencode.decode(prefix+files[key].name);
 
                             var new_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
@@ -306,18 +309,19 @@ upload = function (user_id, study_id, req, res) {
                                     return res.send(JSON.stringify({message: 'ERROR: internal error'}));
                                 }
                                 fs.remove(oldpath);
-                                return studies_comp.update_modify(study_id)
-                                    .then(function(){
-                                        return res.send(JSON.stringify(filelist))
-                                    });
                             });
+                        });
+                        return studies_comp.update_modify(study_id)
+                        .then(function(){
+                            return res.send(JSON.stringify(filelist))
                         });
                     })
             })
             .catch(function(err){
                 res.statusCode = 403;
-                res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             });
+
     });
 };
 
