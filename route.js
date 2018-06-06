@@ -27,7 +27,7 @@ SimpleNodeLogger = require('simple-node-logger'),
     log = SimpleNodeLogger.createSimpleLogger( opts );
 
 
-app.use('/users', express.static('users'));
+app.use('/users', express.static(config.user_folder));
 app.use('/static', express.static(config.static_path));
 app.use('/minno-manager', express.static(config['minno-manager']));
 app.use('/minno-time', express.static(config['minno-time']));
