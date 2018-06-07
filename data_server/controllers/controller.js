@@ -408,7 +408,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 				splitPos=map[fileSplitVar];
 			}
 			else{
-			    fs.writeFile(filePrefix+defaultDataFilename+".txt", initialRow, function(err) {
+			    fs.writeFileSync(filePrefix+defaultDataFilename+".txt", initialRow, function(err) {
 			        if(err) {
 			            return console.log(err);
 			        }
@@ -430,13 +430,13 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 						{
 							filename=defaultDataFilename;
 						}
-					    fs.writeFile(filePrefix+filename+".txt", initialRow, function(err) {
+					    fs.writeFileSync(filePrefix+filename+".txt", initialRow, function(err) {
 					        if(err) {
 					            return console.log(err);
 					        }
 					    });
 					}
-				    fs.appendFile(filePrefix+filename+".txt", dataString, function(err) {
+				    fs.appendFileSync(filePrefix+filename+".txt", dataString, function(err) {
 				        if(err) {
 				            return console.log(err);
 				        }
@@ -446,7 +446,8 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 					dataString='';
 					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
 					zipFolder(dateZipFile,filePrefix);
-					return dataFolder+currentDate+'/'+currentTime+'.zip';
+					//return dataFolder+currentDate+'/'+currentTime+'.zip';
+					return dateZipFile;
 			}
 			
 		
