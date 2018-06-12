@@ -74,7 +74,7 @@ get_data = function (user_id, study_id, exp_id, file_format, start_date, end_dat
 
 
 
-            res.send(JSON.stringify({data_file:data.substring((config.base_folder+config.dataFolder).length)}))});
+            res.send(JSON.stringify({data_file:data}))});
 
             // console.log({data_file:data_file});
         });

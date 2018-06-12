@@ -446,6 +446,8 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 					dataString='';
 					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
 					zipFolder(dateZipFile,filePrefix);
+					dateZipFile=currentDate+'/'+currentTime+'.zip';
+					console.log(dateZipFile);
 					//return dataFolder+currentDate+'/'+currentTime+'.zip';
 					return dateZipFile;
 			}
