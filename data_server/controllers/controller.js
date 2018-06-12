@@ -107,14 +107,19 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		  	loadDataArray(reqBody,dataMap,processedData);
 	  		  }
 	  		  if(Object.keys(dataMap).length>0){
-	  			  var dataUrl=writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString);
+	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString)
+				   .then(function(data){
+					   DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
+					   resolve(data);
+				   });
 	  		   }
 	  		  else
 	  		  {
 	  			  var dataUrl= null;
+		  		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
+		  		  resolve( dataUrl);
 	  		  }
-	  		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
-	  		  resolve( dataUrl);
+	  		 
 		  
 	        }
 	    });
@@ -329,6 +334,7 @@ var  getDateString= function(daysFromPresent)
     }
 	var zipFolder= function(zipPath,zipFolder)
 	{
+			return new Promise(function(resolve, reject) {
 		var output = fs.createWriteStream(zipPath);
 		var archive = archiver('zip', {
 		  zlib: { level: 9 } // Sets the compression level.
@@ -354,24 +360,26 @@ var  getDateString= function(daysFromPresent)
 		    // log warning
 		  } else {
 		    // throw error
-		    throw err;
+		   reject (err);
 		  }
 		});
  
 		// good practice to catch this error explicitly
 		archive.on('error', function(err) {
-		  throw err;
+		  reject (err);
 		});
  
 		// pipe archive data to the file
 		archive.pipe(output);
 		archive.directory(zipFolder, false);
 		archive.finalize();
+		resolve(null);
+	});
 	}	
 var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 {
 	
-    
+    return new Promise(function(resolve, reject) {
 	var dataString='';
 	var headers='';
 	var splitPos=-1;
@@ -410,7 +418,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 			else{
 			    fs.writeFileSync(filePrefix+defaultDataFilename+".txt", initialRow, function(err) {
 			        if(err) {
-			            return console.log(err);
+			            reject(err);
 			        }
 			    });
 			}
@@ -432,25 +440,30 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 						}
 					    fs.writeFileSync(filePrefix+filename+".txt", initialRow, function(err) {
 					        if(err) {
-					            return console.log(err);
+					            reject(err);
 					        }
 					    });
 					}
 				    fs.appendFileSync(filePrefix+filename+".txt", dataString, function(err) {
 				        if(err) {
-				            return console.log(err);
+				            reject(err);
 				        }
 
 				        //console.log("The row was saved!");
 				    });
 					dataString='';
 					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
-					zipFolder(dateZipFile,filePrefix);
+					var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
+					zipFolder(dateZipFile,filePrefix,dataZipFilePath)
+					 .then(function () {
 					dateZipFile=currentDate+'/'+currentTime+'.zip';
-					console.log(dateZipFile);
+					console.log(dateZipFile + "is the zip");
 					//return dataFolder+currentDate+'/'+currentTime+'.zip';
-					return dateZipFile;
+					resolve (dateZipFile);
+				});
+			
 			}
+			});
 			
 		
 
