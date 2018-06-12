@@ -69,11 +69,14 @@ get_experiments = function (user_id, study_id, res) {
 get_data = function (user_id, study_id, exp_id, file_format, start_date, end_date, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            console.log(exp_id);
             data_server.getData(exp_id, file_format, '', start_date, end_date)
-                .then(function(data){console.log(data)});
+                .then(function(data){
+
+
+
+            res.send(JSON.stringify({data_file:data.substring((config.base_folder+config.dataFolder).length)}))});
+
             // console.log({data_file:data_file});
-            // res.send(JSON.stringify({data_file:data_file}));
         });
 };
 

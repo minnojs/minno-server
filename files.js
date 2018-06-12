@@ -274,7 +274,13 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
 
 upload = function (user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();
+    // console.log(form);
+    form.maxFileSize = config.maxFileSize;
+
     form.parse(req, function (err, fields, files) {
+        if (err)
+            log.error(`20180607 | error with uploading: ${err}`);
+
         console.log({fields, files});
         return have_permission(user_id, study_id)
             .then(function(user_data){
