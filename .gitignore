@@ -4,3 +4,7 @@
 /logs
 /node_modules
 config.js
+data/
+researchDashboard/
+user/
+.DS_Store
