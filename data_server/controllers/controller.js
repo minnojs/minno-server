@@ -53,15 +53,28 @@ exports.getData2=function(req,res)
 exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	startDate=null;
 	endDate=null;
+	var experimentIds=[],descriptiveIds=[];
+	
 	if(typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
-	console.log(studyId + " is the studyId requested");
+	//console.log(studyId + " is the studyId requested");
+	//console.log(Object.keys(studyId));
+	for (var x=0;x<studyId.length;x++)
+	{
+		
+		var study=studyId[x];
+		
+	//	console.log(Object.keys(study));
+		experimentIds.push(study.id);
+		descriptiveIds.push(study.descriptive_id);
+	//	console.log(study.id + " is id, and des is "+study.descriptive_id);
+	}
 	var findObject={};
     var  dataMap={};
     var processedData=[];
     var pos=0;
     var rowSplitString='\t';
-	findObject.studyId=studyId;
+	findObject.studyId=experimentIds;
 	if(typeof startDate !== 'undefined' && startDate)
 	{
 		findObject.createdDate={};
@@ -107,7 +120,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		  	loadDataArray(reqBody,dataMap,processedData);
 	  		  }
 	  		  if(Object.keys(dataMap).length>0){
-	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString)
+	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString, experimentIds,descriptiveIds)
 				   .then(function(data){
 					   DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
 					   resolve(data);
@@ -376,7 +389,14 @@ var  getDateString= function(daysFromPresent)
 		resolve(null);
 	});
 	}	
-var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
+	var massReplaceString= function(baseString,findArray,replaceValueArray)
+	{
+		for(var x=0;x<findArray.length;x++){
+		baseString=baseString.replace(findArray[x], replaceValueArray[x]);
+	}
+	return baseString;
+	}	
+var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString, findArray, replaceValueArray)
 {
 	
     return new Promise(function(resolve, reject) {
@@ -444,6 +464,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 					        }
 					    });
 					}
+					dataString=massReplaceString(dataString,findArray, replaceValueArray);
 				    fs.appendFileSync(filePrefix+filename+".txt", dataString, function(err) {
 				        if(err) {
 				            reject(err);
@@ -451,18 +472,18 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 
 				        //console.log("The row was saved!");
 				    });
-					dataString='';
-					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
-					var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
-					zipFolder(dateZipFile,filePrefix,dataZipFilePath)
-					 .then(function () {
-					dateZipFile=currentDate+'/'+currentTime+'.zip';
-					console.log(dateZipFile + "is the zip");
-					//return dataFolder+currentDate+'/'+currentTime+'.zip';
-					resolve (dateZipFile);
-				});
-			
+					dataString='';	
+					
 			}
+			var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
+			var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
+			zipFolder(dateZipFile,filePrefix,dataZipFilePath)
+			 .then(function () {
+			dateZipFile=currentDate+'/'+currentTime+'.zip';
+			console.log(dateZipFile + "is the zip");
+			//return dataFolder+currentDate+'/'+currentTime+'.zip';
+			resolve (dateZipFile);
+			});	
 			});
 			
 		
