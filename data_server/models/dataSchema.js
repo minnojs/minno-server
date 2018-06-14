@@ -25,7 +25,8 @@ var dataSchema = new Schema({
 	},
 	required: [true,'A data array required for data posts']
   }
-});
+},
+{ strict: false });
 
 
 module.exports = mongoose.model('Data', dataSchema);

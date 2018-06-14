@@ -20,9 +20,11 @@ const dataFileLocation=config.base_folder;
 const dataFolder=config.dataFolder;
 
 exports.insertData = function(req, res) {
+	
   var newData = new Data(req.body);
   
   var reqBody=req.body;
+  console.log (reqBody);
  // console.log(reqBody.studyId +' is the study id saved');
   newData.save(function(err, data) {
     if (err)
@@ -99,7 +101,8 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		for(var x=0;x<study.length;x++)
 	  		  {
 	  			  var reqBody = JSON.parse(JSON.stringify(study[x]));
-	  		  	getInitialVarIdMap(reqBody,'',dataMap,pos);
+				  console.log(reqBody);
+	  		  	pos=getInitialVarIdMap(reqBody,'',dataMap,pos);
 	  		  }
 	  		  for(var x=0;x<study.length;x++)
 	  		  {
@@ -148,7 +151,7 @@ var getInitialVarIdMap= function(data,prefix,map,pos)
 		
 		if(key[0]=='_')
 		{
-			return;
+			return pos;
 		}
 	var item = data[key];
 	if(key!='data') //TODO: what to do if collision happens
@@ -166,6 +169,7 @@ var getInitialVarIdMap= function(data,prefix,map,pos)
 		    pos=getVarIdMap(row,dataPrefix,map,pos);
 			
 		});
+		return pos;
 }
 var getVarIdMap= function(data,prefix,map,pos)
 {
@@ -237,6 +241,8 @@ var getVarIdMap= function(data,prefix,map,pos)
 	}
 var loadDataArray= function(data,map,processedData)
 {
+	console.log("keys: "+Object.keys(map));
+	console.log("values: "+Object.values(map));
 	var baseRow = new Array(Object.keys(map).length);  //row prepopulated with fields common to all rows
 	baseRow.fill(nullDataValue);
 	
