@@ -453,10 +453,8 @@ app.post('/logout',function(req, res){
 app.get('/launch/:exp_id',function(req, res){
     app.set('view engine', 'ejs');
     return experiments.get_experiment_url(req).then(function(exp_data) {
-        console.log(exp_data.url);
-        console.log(exp_data);
 
-        res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
+        res.render('launch', {descriptiveId: exp_data.descriptive_id, sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
     });
 });
 
