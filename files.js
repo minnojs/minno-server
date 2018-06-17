@@ -57,6 +57,7 @@ get_study_files = function (user_id, study_id, res) {
                 walkSync(config.user_folder+user_data.user_name+'/'+study_data.folder_name, '', files);
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
+                        var eq = exp.file_id == file.id;
                         return exp.file_id == file.id});
                     return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}});
                 return res.send(JSON.stringify({study_name:study_data.name,
@@ -274,18 +275,18 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
 
 upload = function (user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();
-    // console.log(form);
     form.maxFileSize = config.maxFileSize;
 
     form.parse(req, function (err, fields, files) {
         if (err)
             log.error(`20180607 | error with uploading: ${err}`);
-
-        console.log({fields, files});
         return have_permission(user_id, study_id)
             .then(function(user_data){
                 studies_comp.study_info(study_id)
+
                     .then(function(study_data){
+
+
                         var filelist =  [];
                         var prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
 
@@ -298,10 +299,13 @@ upload = function (user_id, study_id, req, res) {
                             var new_file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
 
                             var file_url = '../'+new_file_path;
-
+                            var exp_data = study_data.experiments.filter(function (exp) {
+                                return exp.file_id == file_id});
                             filelist.push({id: file_id,
+                                exp_data:exp_data?exp_data[0]:[],
                                 path:file_id,
-                                url:file_url
+                                url:file_url,
+                                isDir:false
                             });
                             var study_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/' + prefix;
                             var file_path = study_path + files[key].name;
@@ -322,6 +326,7 @@ upload = function (user_id, study_id, req, res) {
                             return res.send(JSON.stringify(filelist))
                         });
                     })
+
             })
             .catch(function(err){
                 res.statusCode = 403;
