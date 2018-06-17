@@ -10,6 +10,7 @@ const path         = require('path');
 var   studies_comp = require('./studies');
 var   experiments  = require('./experiments');
 
+
 function mysha1( data ) {
     var generator = crypto.createHash('sha1');
     generator.update( data );
@@ -173,11 +174,11 @@ delete_files = function (user_id, study_id, files, res) {
 };
 
 download_zip = function (path, res) {
-    res.download('tmp/'+path, path, function(err){
+    res.download(config.base_folder + config.dataFolder+path, path, function(err){
         if (err) {
             console.log('can not download..')
         } else {
-            fs.removeSync('tmp/'+path);
+            fs.removeSync(config.base_folder + config.dataFolder+path);
         }
     });
 
@@ -185,7 +186,7 @@ download_zip = function (path, res) {
 
 download_files = function (user_id, study_id, files, res) {
     var zip_name = mysha1(user_id+'*'+Math.floor(Date.now() / 1000));
-    var zip_path = 'tmp/' + zip_name;
+    var zip_path = config.base_folder + config.dataFolder + zip_name;
     var zip_file = zip_path+'.zip';
     return have_permission(user_id, study_id)
         .then(function(user_data){
