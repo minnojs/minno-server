@@ -27,8 +27,10 @@ SimpleNodeLogger = require('simple-node-logger'),
     log = SimpleNodeLogger.createSimpleLogger( opts );
 
 
-app.use('/users', express.static(config.user_folder));
+if (!fs.existsSync(config.static_path)) throw new Error(`Config: static_path folder does not exist "${config.static_path}"`);
 app.use('/static', express.static(config.static_path));
+
+app.use('/users', express.static(config.user_folder));
 app.use('/minno-manager', express.static(config['minno-manager']));
 app.use('/minno-time', express.static(config['minno-time']));
 
