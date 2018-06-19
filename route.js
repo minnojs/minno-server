@@ -74,17 +74,17 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url);
 
 var data_controller = require('./data_server/controllers/controller');
-app.route(relative_path+'/data')
+app.route(config.relative_path+'/data')
     .put(data_controller.insertData);
-app.route(relative_path+'/data')
+app.route(config.relative_path+'/data')
     .get(data_controller.getData);
 /********************************************/
 
-app.get(relative_path+'/',function(req,res){
+app.get(config.relative_path+'/',function(req,res){
     res.redirect('/static');
 });
 
-app.get(relative_path+'/is_loggedin',function(req,res){
+app.get(config.relative_path+'/is_loggedin',function(req,res){
     sess = req.session;
     if (sess.user)
         return res.end(JSON.stringify({
@@ -98,7 +98,7 @@ app.get(relative_path+'/is_loggedin',function(req,res){
 });
 
 
-app.post(relative_path+'/connect',function(req, res){
+app.post(config.relative_path+'/connect',function(req, res){
         sess = req.session;
         connect.check(req.body.username, req.body.password, res, function(user_data){
             sess.user = user_data;
@@ -106,7 +106,7 @@ app.post(relative_path+'/connect',function(req, res){
         });
     });
 
-app.route(relative_path+'/download').get(
+app.route(config.relative_path+'/download').get(
     function(req, res){
         sess = req.session;
         if(!sess.user){
@@ -119,7 +119,7 @@ app.route(relative_path+'/download').get(
 
 );
 
-app.route(relative_path+'/files/:study_id').get(
+app.route(config.relative_path+'/files/:study_id').get(
     function(req, res){
         sess = req.session;
         if(!sess.user){
@@ -147,20 +147,20 @@ app.route(relative_path+'/files/:study_id').get(
             files.download_files(sess.user.id, parseInt(req.params.study_id), req.body.files, res);
         });
 
-app.route(relative_path+'/files/:study_id/upload/')
+app.route(config.relative_path+'/files/:study_id/upload/')
     .post(
         function(req, res){
             files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
         });
 
 
-app.route(relative_path+'/files/:study_id/upload/:folder_id')
+app.route(config.relative_path+'/files/:study_id/upload/:folder_id')
     .post(
         function(req, res){
             files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
         });
 
-app.route(relative_path+'/files/:study_id/file/')
+app.route(config.relative_path+'/files/:study_id/file/')
 
     .post(
         function(req, res){
@@ -175,7 +175,7 @@ app.route(relative_path+'/files/:study_id/file/')
             files.update_file(sess.user.id, parseInt(req.params.study_id), req.body.name, req.body.content, res);
         });
 
-app.route(relative_path+'/files/:study_id/file/:file_id')
+app.route(config.relative_path+'/files/:study_id/file/:file_id')
     .get(
         function(req, res){
             sess = req.session;
@@ -196,7 +196,7 @@ app.route(relative_path+'/files/:study_id/file/:file_id')
             files.update_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.content, res);
         });
 
-app.route(relative_path+'/files/:study_id/file/:file_id/move')
+app.route(config.relative_path+'/files/:study_id/file/:file_id/move')
     .put(
         function(req, res){
             sess = req.session;
@@ -207,7 +207,7 @@ app.route(relative_path+'/files/:study_id/file/:file_id/move')
             files.rename_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.path, res);
         });
 
-app.route(relative_path+'/files/:study_id/file/:file_id/copy')
+app.route(config.relative_path+'/files/:study_id/file/:file_id/copy')
     .put(
         function(req, res){
             sess = req.session;
@@ -219,7 +219,7 @@ app.route(relative_path+'/files/:study_id/file/:file_id/copy')
 
         });
 
-app.route(relative_path+'/studies/:study_id/experiments')
+app.route(config.relative_path+'/studies/:study_id/experiments')
     .get(
         function(req, res){
             if(!sess.user) {
@@ -238,7 +238,7 @@ app.route(relative_path+'/studies/:study_id/experiments')
                                     req.body.file_format, req.body.start_date, req.body.end_date, res);
         });
 
-app.route(relative_path+'/files/:study_id/file/:file_id/experiment')
+app.route(config.relative_path+'/files/:study_id/file/:file_id/experiment')
     .post(
         function(req, res){
             if(!sess.user) {
@@ -267,7 +267,7 @@ app.route(relative_path+'/files/:study_id/file/:file_id/experiment')
         });
 
 
-app.route(relative_path+'/studies/:study_id/copy')
+app.route(config.relative_path+'/studies/:study_id/copy')
     .put(
         function(req, res){
             if(!sess.user) {
@@ -278,7 +278,7 @@ app.route(relative_path+'/studies/:study_id/copy')
         });
 
 
-app.route(relative_path+'/studies/:study_id/tags')
+app.route(config.relative_path+'/studies/:study_id/tags')
     .get(
         function(req, res){
             if(!sess.user) {
@@ -297,7 +297,7 @@ app.route(relative_path+'/studies/:study_id/tags')
         });
 
 
-app.route(relative_path+'/studies')
+app.route(config.relative_path+'/studies')
     .get(
         function(req, res){
             sess = req.session;
@@ -319,7 +319,7 @@ app.route(relative_path+'/studies')
         });
 
 
-app.route(relative_path+'/studies/:study_id')
+app.route(config.relative_path+'/studies/:study_id')
     .delete(
         function(req, res){
             sess = req.session;
@@ -341,7 +341,7 @@ app.route(relative_path+'/studies/:study_id')
 
 
 
-app.route(relative_path+'/tags')
+app.route(config.relative_path+'/tags')
     .get(
         function(req, res){
             sess = req.session;
@@ -363,7 +363,7 @@ app.route(relative_path+'/tags')
    ;
 
 
-app.route(relative_path+'/tags/:tag_id')
+app.route(config.relative_path+'/tags/:tag_id')
     .delete(
         function(req, res){
             sess = req.session;
@@ -377,7 +377,7 @@ app.route(relative_path+'/tags/:tag_id')
         tags.update_tag(sess.user.id, {id: req.params.tag_id, text: req.body.tag_text, color:req.body.tag_color}, res);
     });
 
-app.route(relative_path+'/change_email')
+app.route(config.relative_path+'/change_email')
     .get(
         function(req, res){
             sess = req.session;
@@ -400,7 +400,7 @@ app.route(relative_path+'/change_email')
         });
 
 
-app.route(relative_path+'/add_user')
+app.route(config.relative_path+'/add_user')
     .post(
         function(req, res){
             sess = req.session;
@@ -412,7 +412,7 @@ app.route(relative_path+'/add_user')
 
         });
 
-app.route(relative_path+'/change_password')
+app.route(config.relative_path+'/change_password')
     .post(
         function(req, res){
             sess = req.session;
@@ -425,7 +425,7 @@ app.route(relative_path+'/change_password')
         });
 
 
-app.route(relative_path+'/activation/:code')
+app.route(config.relative_path+'/activation/:code')
     .get(
         function(req, res){
             sess = req.session;
@@ -441,7 +441,7 @@ app.route(relative_path+'/activation/:code')
 
         });
 
-app.post(relative_path+'/logout',function(req, res){
+app.post(config.relative_path+'/logout',function(req, res){
     req.session.destroy(function(err) {
         if(err) {
             console.log(err);
@@ -452,7 +452,7 @@ app.post(relative_path+'/logout',function(req, res){
 
 });
 
-app.get(relative_path+'/launch/:exp_id',function(req, res){
+app.get(config.relative_path+'/launch/:exp_id',function(req, res){
     app.set('view engine', 'ejs');
     return experiments.get_experiment_url(req).then(function(exp_data) {
 
@@ -460,7 +460,7 @@ app.get(relative_path+'/launch/:exp_id',function(req, res){
     });
 });
 
-app.get(relative_path+'/play/:study_id/:file_id',function(req, res){
+app.get(config.relative_path+'/play/:study_id/:file_id',function(req, res){
     var sess = req.session;
     if(!sess.user) {
         return;
@@ -471,7 +471,7 @@ app.get(relative_path+'/play/:study_id/:file_id',function(req, res){
     });
 });
 
-app.get(relative_path+'/users',function(req, res){
+app.get(config.relative_path+'/users',function(req, res){
     var sess = req.session;
 
     if(!sess.user || sess.user.role!='su') {
