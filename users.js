@@ -1,4 +1,4 @@
-    var config = require('./config');
+const config      = require('./config');
 const url         = config.mongo_url;
 const crypto      = require('crypto');
 const sender      = require('./sender');
