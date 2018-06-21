@@ -66,10 +66,10 @@ get_experiments = function (user_id, study_id, res) {
         });
 };
 
-get_data = function (user_id, study_id, exp_id, file_format, start_date, end_date, res) {
+get_data = function (user_id, study_id, exp_id, file_format, file_split, start_date, end_date, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            data_server.getData(exp_id, file_format, '', start_date, end_date)
+            data_server.getData(exp_id, file_format, file_split, start_date, end_date)
                 .then(function(data){
 
 

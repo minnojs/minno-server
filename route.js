@@ -235,7 +235,7 @@ app.route(config.relative_path+'/studies/:study_id/experiments')
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
             experiments.get_data(sess.user.id, parseInt(req.params.study_id), req.body.exp_id,
-                                    req.body.file_format, req.body.start_date, req.body.end_date, res);
+                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date, res);
         });
 
 app.route(config.relative_path+'/files/:study_id/file/:file_id/experiment')
