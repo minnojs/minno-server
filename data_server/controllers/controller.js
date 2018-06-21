@@ -24,7 +24,7 @@ exports.insertData = function(req, res) {
   var newData = new Data(req.body);
   
   var reqBody=req.body;
-  console.log (reqBody);
+  
  // console.log(reqBody.studyId +' is the study id saved');
   newData.save(function(err, data) {
     if (err)
@@ -57,7 +57,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	endDate=null;
 	if(typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
-	console.log(studyId + " is the studyId requested");
+	//∂console.log(studyId + " is the studyId requested");
 	var findObject={};
     var  dataMap={};
     var processedData=[];
@@ -101,7 +101,6 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		for(var x=0;x<study.length;x++)
 	  		  {
 	  			  var reqBody = JSON.parse(JSON.stringify(study[x]));
-				  console.log(reqBody);
 	  		  	pos=getInitialVarIdMap(reqBody,'',dataMap,pos);
 	  		  }
 	  		  for(var x=0;x<study.length;x++)
@@ -241,8 +240,6 @@ var getVarIdMap= function(data,prefix,map,pos)
 	}
 var loadDataArray= function(data,map,processedData)
 {
-	console.log("keys: "+Object.keys(map));
-	console.log("values: "+Object.values(map));
 	var baseRow = new Array(Object.keys(map).length);  //row prepopulated with fields common to all rows
 	baseRow.fill(nullDataValue);
 	
@@ -458,17 +455,18 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 				        //console.log("The row was saved!");
 				    });
 					dataString='';
-					var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
-					var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
-					zipFolder(dateZipFile,filePrefix,dataZipFilePath)
-					 .then(function () {
-					dateZipFile=currentDate+'/'+currentTime+'.zip';
-					//console.log(dateZipFile + "is the zip");
-					//return dataFolder+currentDate+'/'+currentTime+'.zip';
-					resolve (dateZipFile);
-				});
+
 			
 			}
+			var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
+			var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
+			zipFolder(dateZipFile,filePrefix,dataZipFilePath)
+			 .then(function () {
+			dateZipFile=currentDate+'/'+currentTime+'.zip';
+			//console.log(dateZipFile + "is the zip");
+			//return dataFolder+currentDate+'/'+currentTime+'.zip';
+			resolve (dateZipFile);
+		});
 			});
 			
 		
