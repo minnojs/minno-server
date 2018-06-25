@@ -1,12 +1,13 @@
-var express     = require('express');
-var session     = require('express-session');
-var connect     = require('./connect');
-var studies     = require('./studies');
-var tags        = require('./tags');
-var config      = require('./config');
-var experiments = require('./experiments');
-var dateFormat  = require('dateformat');
-const fs        = require('fs-extra');
+const express     = require('express');
+const session     = require('express-session');
+const connect     = require('./connect');
+const studies     = require('./studies');
+const tags        = require('./tags');
+const config      = require('./config');
+const experiments = require('./experiments');
+const dateFormat  = require('dateformat');
+const fs          = require('fs-extra');
+const path        = require('path');
 
 var users       = require('./users');
 
@@ -28,12 +29,8 @@ SimpleNodeLogger = require('simple-node-logger'),
 
 
 if (!fs.existsSync(config.static_path)) throw new Error(`Config: static_path folder does not exist "${config.static_path}"`);
-app.use(config.relative_path+'/static', express.static(config.static_path));
-
-app.use(config.relative_path+'/users', express.static(config.user_folder));
-app.use(config.relative_path+'/minno-manager', express.static(config['minno-manager']));
-app.use(config.relative_path+'/minno-time', express.static(config['minno-time']));
-
+app.use(path.join(config.relative_path,'/static'), express.static(config.static_path));
+app.use(path.join(config.relative_path,'/users'), express.static(config.user_folder));
 
 app.use(cors({
     credentials: true, origin: true,
@@ -466,8 +463,8 @@ app.get(config.relative_path+'/play/:study_id/:file_id',function(req, res){
         return;
     }
     app.set('view engine', 'ejs');
-        return experiments.get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
-            res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
+    return experiments.get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
+        res.render('launch', {sessionId:exp_data.session_id, url: exp_data.url, studyId:exp_data.exp_id});
     });
 });
 
