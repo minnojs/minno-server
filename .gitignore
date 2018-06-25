@@ -1,4 +1,3 @@
-/users
 .idea
 /tmp
 /logs
@@ -6,5 +5,5 @@
 config.js
 data/
 researchDashboard/
-user/
+users/
 .DS_Store

@@ -3,6 +3,7 @@ const url         = config.mongo_url;
 const crypto      = require('crypto');
 const sender      = require('./sender');
 const fs          = require('fs-extra');
+const path        = require('path');
 
 var mongo         = require('mongodb-bluebird');
 var evalidator    = require("email-validator");
@@ -91,7 +92,7 @@ create_admin_user = function () {
                 if (!fs.existsSync(config.user_folder))
                 {
                     fs.mkdirSync(config.user_folder);
-                    fs.mkdirSync(config.user_folder+'admin');
+                    fs.mkdirSync(path.join(config.user_folder,'admin'));
                 };
 
                 var user_obj = {_id:1,
@@ -150,8 +151,9 @@ insert_new_user = function (req, res) {
                         var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
                         return users.insert(user_obj)
                             .then(function(){
-                                if (!fs.existsSync(config.user_folder+user_name)) {
-                                    fs.mkdirSync(config.user_folder+user_name);
+                                const userFolder = path.join(config.user_folder, user_name);
+                                if (!fs.existsSync(userFolder)) {
+                                    fs.mkdirSync(userFolder);
                                     return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
                                 }
                             });
@@ -160,7 +162,7 @@ insert_new_user = function (req, res) {
     });
 };
 
-check_activation_code = function (code, res) {
+function check_activation_code(code, res) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         return users.findOne({activation_code:code})
@@ -172,7 +174,7 @@ check_activation_code = function (code, res) {
                 return res.send(JSON.stringify({}));
             });
     });
-};
+}
 
 set_user_by_activation_code = function (code, pass, pass_confirm, res, callback) {
     if(pass.length<8)
