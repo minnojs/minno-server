@@ -63,6 +63,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
     var processedData=[];
     var pos=0;
     var rowSplitString='\t';
+	var fileSuffix='.txt';
 	findObject.studyId=studyId;
 	if(typeof startDate !== 'undefined' && startDate)
 	{
@@ -78,6 +79,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	if(fileFormat=='csv')
 	{
 		rowSplitString=',';
+		fileSuffix='.csv';
 	}
 	if(fileFormat=='tsv')
 	{
@@ -109,7 +111,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	  		  	loadDataArray(reqBody,dataMap,processedData);
 	  		  }
 	  		  if(Object.keys(dataMap).length>0){
-	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString)
+	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString,fileSuffix)
 				   .then(function(data){
 					   DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
 					   resolve(data);
@@ -379,9 +381,12 @@ var  getDateString= function(daysFromPresent)
 		resolve(null);
 	});
 	}	
-var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
+var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fileSuffix)
 {
-	
+	if(fileSuffix==null)
+	{
+		fileSuffix='.txt';
+	}
     return new Promise(function(resolve, reject) {
 	var dataString='';
 	var headers='';
@@ -419,7 +424,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 				splitPos=map[fileSplitVar];
 			}
 			else{
-			    fs.writeFileSync(filePrefix+defaultDataFilename+".txt", initialRow, function(err) {
+			    fs.writeFileSync(filePrefix+defaultDataFilename+fileSuffix, initialRow, function(err) {
 			        if(err) {
 			            reject(err);
 			        }
@@ -441,13 +446,21 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString)
 						{
 							filename=defaultDataFilename;
 						}
-					    fs.writeFileSync(filePrefix+filename+".txt", initialRow, function(err) {
+						fileMap[dataRow[splitPos]]=filename;
+					    fs.writeFileSync(filePrefix+filename+fileSuffix, initialRow, function(err) {
 					        if(err) {
 					            reject(err);
 					        }
 					    });
 					}
-				    fs.appendFileSync(filePrefix+filename+".txt", dataString, function(err) {
+					else
+					{
+						if(splitPos>-1)
+						{
+							filename=dataRow[splitPos];
+						}
+					}
+				    fs.appendFileSync(filePrefix+filename+fileSuffix, dataString, function(err) {
 				        if(err) {
 				            reject(err);
 				        }
