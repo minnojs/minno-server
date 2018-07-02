@@ -1,59 +1,66 @@
-var config = require('./config');
-
-const url         = config.mongo_url;
+const config = require('./config');
+const urljoin = require('url-join');
 const crypto      = require('crypto');
-var studies_comp = require('./studies');
-var data_server  = require('./data_server/controllers/controller');
+const studies_comp = require('./studies');
+const data_server  = require('./data_server/controllers/controller');
+const mongo         = require('mongodb-bluebird');
+const mongo_url         = config.mongo_url;
 
-
-var mongo         = require('mongodb-bluebird');
+const have_permission = studies_comp.have_permission;
 
 function mysha1( data ) {
-    var generator = crypto.createHash('sha1');
+    const generator = crypto.createHash('sha1');
     generator.update( data );
-    return generator.digest('hex')
+    return generator.digest('hex');
 }
 
-get_play_url = function (user_id, study_id, file_id) {
-    file_id = urlencode.decode(file_id);
-    return have_permission(user_id, study_id)
-        .then(function(user_data){
-            studies_comp.study_info(study_id)
-                .then(function(study_data){
-                    var file_path = config.user_folder+user_data.user_name+'/'+study_data.folder_name+'/'+ file_id;
-                    return Promise.resolve({study_id:-1, session_id:-1, url:config.servser_url+file_path});
-                })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        });
-};
+// get data for playing a file without creating an experiment
+// creates sham info for the player
+function get_play_url (user_id, study_id, file_id) {
+    return Promise.all([
+        have_permission(user_id, study_id),
+        studies_comp.study_info(study_id)
+    ])
+        .then(([user, study_data]) => {
+            if (!user) return Promise.reject({status:403, message:'Error: permission denied'});
+            if (!study_data) return Promise.reject({status:404, message:'Error: study not found'});
 
-get_experiment_url = function (req) {
-    return mongo.connect(url).then(function (db) {
-        var counters = db.collection('counters');
-        var studies = db.collection('studies');
+            const path = urljoin(config.server_url,'users',user.user_name,study_data.folder_name,decodeURI(file_id));
+
+            // set sham experiment data
+            return {
+                url:path,
+                descriptiveId: '',
+                session_id:-1
+            };
+        });
+}
+
+function get_experiment_url (req) {
+    return mongo.connect(mongo_url).then(function (db) {
+        const counters = db.collection('counters');
+        const studies = db.collection('studies');
         console.log(req.params.exp_id);
         return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id } }})
             .then(function(exp_data){
                 // console.log(exp_data);
                 return user_info(exp_data.users[0].id).then(function(user){
-                    var exp = exp_data.experiments.filter(function(exp) {return exp.id==req.params.exp_id;});
+                    const exp = exp_data.experiments.filter(function(exp) {return exp.id==req.params.exp_id;});
+                    const path = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name,exp[0].file_id);
                     return counters.findAndModify({_id:'session_id'},
                         [],
                         {"$inc": {"seq": 1}},
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
                             var session_id = counter_data.value.seq;
-                            return Promise.resolve({exp_id:req.params.exp_id, descriptive_id: exp[0].descriptive_id, session_id:session_id, url:config.server_url+'/users/'+user.user_name+'/'+exp_data.folder_name+'/'+exp[0].file_id});
+                            return Promise.resolve({exp_id:req.params.exp_id, descriptive_id: exp[0].descriptive_id, session_id:session_id, url:path});
                         });
 
                 });
             });
         }
     );
-};
+}
 
 
 get_experiments = function (user_id, study_id, res) {
@@ -83,7 +90,7 @@ get_data = function (user_id, study_id, exp_id, file_format, file_split, start_d
 insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
+            return mongo.connect(mongo_url).then(function (db) {
                 var users = db.collection('users');
                 var studies = db.collection('studies');
                 return studies.update({_id: study_id}, {
@@ -107,7 +114,7 @@ insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, re
 delete_experiment = function (user_id, study_id, file_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
+            return mongo.connect(mongo_url).then(function (db) {
                     var studies = db.collection('studies');
                     return studies.update({_id: study_id}, {
                         $pull: {
@@ -128,7 +135,7 @@ delete_experiment = function (user_id, study_id, file_id, res) {
 update_descriptive_id = function (user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
+            return mongo.connect(mongo_url).then(function (db) {
                     var studies = db.collection('studies');
                     return studies.update({_id: study_id, experiments: { $elemMatch: { file_id: file_id } }},
                     { $set: { "experiments.$.descriptive_id" : descriptive_id } }
@@ -141,7 +148,7 @@ update_descriptive_id = function (user_id, study_id, file_id, descriptive_id, re
 update_file_id = function (user_id, study_id, file_id, new_file_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
+            return mongo.connect(mongo_url).then(function (db) {
                     var studies = db.collection('studies');
                     return studies.update({_id: study_id, experiments: { $elemMatch: { file_id: file_id } }},
                     { $set: { "experiments.$.file_id" : new_file_id } }
@@ -156,13 +163,13 @@ update_file_id = function (user_id, study_id, file_id, new_file_id, res) {
 is_descriptive_id_exist = function (user_id, study_id, descriptive_id) {
     return have_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
-                    var studies = db.collection('studies');
-                    return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
-                        .then(function(study_data){
-                            return Promise.resolve(!!study_data);
-                        });
-                }
+            return mongo.connect(mongo_url).then(function (db) {
+                const studies = db.collection('studies');
+                return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
+                .then(function(study_data){
+                    return Promise.resolve(!!study_data);
+                });
+            }
             );
         });
 };

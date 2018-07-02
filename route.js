@@ -45,6 +45,7 @@ app.use(session({secret: 'ssshhhhh',
 }));
 
 app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
 
 app.engine('html', require('ejs').renderFile);
 
@@ -59,16 +60,18 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(config.relative_path, basePathRouter);
 
 if (!fs.existsSync(config.static_path)) throw new Error(`Config: static_path folder does not exist "${config.static_path}"`);
+if (!fs.existsSync(config.user_folder)) throw new Error(`Config: user_folder folder does not exist "${config.user_folder}"`);
+if (typeof config.server_url !== 'string') throw new Error(`Config: server_url is not set`);
 
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
 
-var sess;
+let sess;
 
+require('./data_server/models/dataSchema'); // @TODO: does this have side effect or can it be removed?
 
 /*****         data            *****/
-var mongoose = require('mongoose'),
-    Data = require('./data_server/models/dataSchema');
+const mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url);
@@ -441,7 +444,6 @@ basePathRouter.route('/activation/:code')
     .post(
         function(req, res){
             users.set_user_by_activation_code(req.params.code, req.body.password, req.body.confirm, res);
-
         });
 
 basePathRouter.post('/logout',function(req, res){
@@ -456,31 +458,40 @@ basePathRouter.post('/logout',function(req, res){
 });
 
 basePathRouter.get('/launch/:exp_id',function(req, res){
-    app.set('view engine', 'ejs');
     return experiments.get_experiment_url(req).then(function(exp_data) {
-
         res.render('launch', {
             minnojsUrl: config.minnojsUrl,
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
-            url: exp_data.url, studyId:exp_data.exp_id
+            url: exp_data.url,
+            studyId:exp_data.exp_id
         });
     });
 });
 
 basePathRouter.get('/play/:study_id/:file_id',function(req, res){
-    var sess = req.session;
+    const sess = req.session;
     if(!sess.user) {
-        return;
+        throw new Error('ERROR: user not logged in');
+        // @TODO: replace with appropriate error message
+        // currently, simply stays stuck
     }
-    app.set('view engine', 'ejs');
-    return experiments.get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
+    return experiments
+    .get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
         res.render('launch', {
             minnojsUrl: config.minnojsUrl,
+            descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
             url: exp_data.url, 
             studyId:exp_data.exp_id
         });
+    })
+    .catch(function(err){
+        console.error(err)
+        // @TODO: replace with proper rendered error page
+        // this page is exposed to direct viewing
+        res.statusCode = err.status || 999;
+        return res.json({message: err.message});
     });
 });
 

@@ -6,8 +6,9 @@ const fs           = require('fs-extra');
 const formidable   = require('formidable');
 const urlencode    = require('urlencode');
 const path         = require('path');
-var   studies_comp = require('./studies');
-var   experiments  = require('./experiments');
+const   studies_comp = require('./studies');
+const   experiments  = require('./experiments');
+const have_permission = studies_comp.have_permission;
 
 
 function mysha1( data ) {

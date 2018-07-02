@@ -139,26 +139,25 @@ delete_study = function (user_id, study_id, res) {
         });
 };
 
-
-have_permission = function (user_id, study_id) {
+function have_permission(user_id, study_id) {
     return mongo.connect(url).then(function (db) {
-        var users   = db.collection('users');
-        return users.findOne({_id:user_id, studies: {$elemMatch: {id:study_id}} })
-            .then(function(user_result){
-                if (!user_result)
-                    return Promise.reject();
-                return Promise.resolve(user_result);
-            })
+        const users = db.collection('users');
+        return users.findOne({_id:user_id, studies: {$elemMatch: {id:+study_id}} }); // study id must be an int
+    })
+    .then(function(user_result){
+        // why not return a boolean?
+        if (!user_result) return Promise.reject({status:403, message:'Error: permission denied'});
+        return user_result;
     });
-};
+}
 
 study_exist = function (user_id, study_name) {
     return mongo.connect(url).then(function (db) {
-        var studies   = db.collection('studies');
-        return studies.findOne({name:study_name , users: {$elemMatch: {id:user_id}}})
-            .then(function(study_data){
-                return Promise.resolve({is_exist: !!study_data});
-            })
+        const studies   = db.collection('studies');
+        return studies.findOne({name:study_name , users: {$elemMatch: {id:user_id}}});
+    })
+    .then(function(study_data){
+        return {is_exist: !!study_data};
     });
 };
 
@@ -215,15 +214,15 @@ delete_by_id = function (user_id, study_id) {
 };
 
 
-study_info = function (study_id) {
-    return mongo.connect(url).then(function (db) {
-        var studies   = db.collection('studies');
-        return studies.findOne({_id: study_id})
-            .then(function(study_data){
-                return Promise.resolve(study_data);
-            });
-    });
-};
+function study_info (study_id) {
+    return mongo
+        .connect(url)
+        .then( db => db
+            .collection('studies')
+            .findOne({_id: +study_id}) // study ids must be numbers
+        );
+}
+
 rename_study = function (user_id, study_id, new_study_name, res) {
     if (!new_study_name) {
         res.statusCode = 400;
