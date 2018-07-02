@@ -18,12 +18,12 @@ function mysha1( data ) {
 // creates sham info for the player
 function get_play_url (user_id, study_id, file_id) {
     return Promise.all([
-        have_permission(user_id, study_id),
+        have_permission(user_id, study_id).catch(() => false), // have_permission throws if there is no permission, in that case we cast it as false
         studies_comp.study_info(study_id)
     ])
         .then(([user, study_data]) => {
-            if (!user) return Promise.reject({status:403, message:'Error: permission denied'});
-            if (!study_data) return Promise.reject({status:404, message:'Error: study not found'});
+            if (!study_data) return Promise.reject({status:404, message:'Study not found'});
+            if (!user) return Promise.reject({status:403, message:'Permission denied'});
 
             const path = urljoin(config.server_url,'users',user.user_name,study_data.folder_name,decodeURI(file_id));
 

@@ -7,10 +7,9 @@ const config      = require('./config');
 const experiments = require('./experiments');
 const dateFormat  = require('dateformat');
 const fs          = require('fs-extra');
-const path        = require('path');
 
+const launchRouter = require('./routes/launchRouter');
 var users       = require('./users');
-
 var files       = require('./files');
 var sender      = require('./sender');
 
@@ -26,8 +25,6 @@ SimpleNodeLogger = require('simple-node-logger'),
         timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
     },
     log = SimpleNodeLogger.createSimpleLogger( opts );
-
-
 
 app.use(cors({
     credentials: true, origin: true,
@@ -65,6 +62,7 @@ if (typeof config.server_url !== 'string') throw new Error(`Config: server_url i
 
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
+basePathRouter.use(launchRouter);
 
 let sess;
 
@@ -456,45 +454,6 @@ basePathRouter.post('/logout',function(req, res){
     });
 
 });
-
-basePathRouter.get('/launch/:exp_id',function(req, res){
-    return experiments.get_experiment_url(req).then(function(exp_data) {
-        res.render('launch', {
-            minnojsUrl: config.minnojsUrl,
-            descriptiveId: exp_data.descriptive_id, 
-            sessionId:exp_data.session_id, 
-            url: exp_data.url,
-            studyId:exp_data.exp_id
-        });
-    });
-});
-
-basePathRouter.get('/play/:study_id/:file_id',function(req, res){
-    const sess = req.session;
-    if(!sess.user) {
-        throw new Error('ERROR: user not logged in');
-        // @TODO: replace with appropriate error message
-        // currently, simply stays stuck
-    }
-    return experiments
-    .get_play_url(sess.user.id, req.params.study_id, req.params.file_id).then(function(exp_data) {
-        res.render('launch', {
-            minnojsUrl: config.minnojsUrl,
-            descriptiveId: exp_data.descriptive_id, 
-            sessionId:exp_data.session_id, 
-            url: exp_data.url, 
-            studyId:exp_data.exp_id
-        });
-    })
-    .catch(function(err){
-        console.error(err)
-        // @TODO: replace with proper rendered error page
-        // this page is exposed to direct viewing
-        res.statusCode = err.status || 999;
-        return res.json({message: err.message});
-    });
-});
-
 basePathRouter.get('/users',function(req, res){
     var sess = req.session;
 
