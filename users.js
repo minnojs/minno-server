@@ -14,7 +14,7 @@ function mysha1( data ) {
     return generator.digest('hex')
 }
 
-user_info = function (user_id) {
+function user_info(user_id) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         return users.findOne({_id: user_id})
@@ -24,7 +24,7 @@ user_info = function (user_id) {
     });
 };
 
-set_password = function (user_id, password, confirm, res) {
+function set_password(user_id, password, confirm, res) {
 
     if(!password || !confirm)
     {
@@ -53,7 +53,7 @@ set_password = function (user_id, password, confirm, res) {
 };
 
 
-set_email = function (user_id, email, res) {
+function set_email(user_id, email, res) {
     if(!email)
     {
         res.statusCode = 400;
@@ -70,14 +70,14 @@ set_email = function (user_id, email, res) {
     });
 };
 
-get_email = function (user_id, res) {
+function get_email(user_id, res) {
     user_info(user_id)
         .then(function(user_data) {
             return res.send(JSON.stringify({email: user_data.email}));
         })
 };
 
-create_admin_user = function () {
+function create_admin_user() {
 
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
@@ -88,27 +88,27 @@ create_admin_user = function () {
                 seq: 1
             }
         )
-            .then(function (counter_data) {
-                if (!fs.existsSync(config.user_folder))
-                {
-                    fs.mkdirSync(config.user_folder);
-                    fs.mkdirSync(path.join(config.user_folder,'admin'));
-                };
+        .then(function (counter_data) {
+            if (!fs.existsSync(config.user_folder))
+            {
+                fs.mkdirSync(config.user_folder);
+                fs.mkdirSync(path.join(config.user_folder,'admin'));
+            };
 
-                var user_obj = {_id:1,
-                    user_name:'admin',
-                    first_name:'admin',
-                    last_name:'admin',
-                    email:'admin@admin.com',
-                    role:'su',
-                    pass:mysha1('admin123'),
-                    studies:[],tags:[]};
-                return users.insert(user_obj)
-            });
+            var user_obj = {_id:1,
+                user_name:'admin',
+                first_name:'admin',
+                last_name:'admin',
+                email:'admin@admin.com',
+                role:'su',
+                pass:mysha1('admin123'),
+                studies:[],tags:[]};
+            return users.insert(user_obj)
+        });
     });
 };
 
-get_users = function (res) {
+function get_users(res) {
     return mongo.connect(url).then(function (db) {
         var users = db.collection('users');
         users.find({})
@@ -119,7 +119,7 @@ get_users = function (res) {
 };
 
 
-insert_new_user = function (req, res) {
+function insert_new_user(req, res) {
     var user_name  = req.body.username;
     var first_name = req.body.first_name;
     var last_name  = req.body.last_name;
@@ -176,7 +176,7 @@ function check_activation_code(code, res) {
     });
 }
 
-set_user_by_activation_code = function (code, pass, pass_confirm, res, callback) {
+function set_user_by_activation_code(code, pass, pass_confirm, res, callback) {
     if(pass.length<8)
     {
         res.statusCode = 400;

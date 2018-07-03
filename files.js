@@ -18,7 +18,7 @@ function mysha1( data ) {
 }
 
 
-var walkSync = function(full_path, rel_dir, filelist) {
+function walkSync(full_path, rel_dir, filelist) {
     if (!fs.existsSync(full_path)) {
         return console.error('Folder doesn\'t exist');
     }
@@ -49,7 +49,7 @@ var walkSync = function(full_path, rel_dir, filelist) {
     return filelist;
 };
 
-get_study_files = function (user_id, study_id, res) {
+ function get_study_files(user_id, study_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -73,7 +73,7 @@ get_study_files = function (user_id, study_id, res) {
         });
 };
 
-create_folder = function(user_id, study_id, folder_id, res) {
+function create_folder(user_id, study_id, folder_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -97,7 +97,7 @@ create_folder = function(user_id, study_id, folder_id, res) {
         });
 };
 
-update_file = function(user_id, study_id, file_id, content, res) {
+function update_file(user_id, study_id, file_id, content, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -124,7 +124,7 @@ update_file = function(user_id, study_id, file_id, content, res) {
 
 
 
-get_file_content = function(user_id, study_id, file_id, res) {
+function get_file_content(user_id, study_id, file_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -145,7 +145,7 @@ get_file_content = function(user_id, study_id, file_id, res) {
         });
 };
 
-delete_files = function (user_id, study_id, files, res) {
+function delete_files(user_id, study_id, files, res) {
     return have_permission(user_id, study_id)
         .then(function(user_data){
             studies_comp.study_info(study_id)
@@ -173,7 +173,7 @@ delete_files = function (user_id, study_id, files, res) {
         });
 };
 
-download_zip = function (pth, res) {
+function download_zip(pth, res) {
     res.download(path.join(config.base_folder , config.dataFolder,pth), pth, function(err){
         if (err) {
             console.log('can not download..')
@@ -184,7 +184,7 @@ download_zip = function (pth, res) {
 
 };
 
-download_files = function (user_id, study_id, files, res) {
+function download_files(user_id, study_id, files, res) {
     var zip_name = mysha1(user_id+'*'+Math.floor(Date.now() / 1000));
     var zip_path = config.base_folder + config.dataFolder + zip_name;
     var zip_file = zip_path+'.zip';
@@ -215,7 +215,7 @@ download_files = function (user_id, study_id, files, res) {
         });
 };
 
-rename_file = function (user_id, study_id, file_id, new_path, res) {
+function rename_file(user_id, study_id, file_id, new_path, res) {
     file_id = urlencode.decode(file_id);
     return have_permission(user_id, study_id)
         .then(function(user_data){
@@ -245,7 +245,7 @@ rename_file = function (user_id, study_id, file_id, new_path, res) {
         });
 };
 
-copy_file = function (user_id, study_id, file_id, new_study_id, res) {
+function copy_file(user_id, study_id, file_id, new_study_id, res) {
     file_id = urlencode.decode(file_id);
     return have_permission(user_id, study_id)
         .then(function(user_data){
@@ -273,7 +273,7 @@ copy_file = function (user_id, study_id, file_id, new_study_id, res) {
         });
 };
 
-upload = function (user_id, study_id, req, res) {
+function upload(user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();
     form.maxFileSize = config.maxFileSize;
 

@@ -7,7 +7,7 @@ var mongo         = require('mongodb-bluebird');
 var users_comp    = require('./users');
 const path        = require('path');
 
-get_studies = function (user_id, res, callback) {
+function get_studies(user_id, res, callback) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         var studies   = db.collection('studies');
@@ -39,7 +39,7 @@ get_studies = function (user_id, res, callback) {
     });
 };
 
-create_new_study = function (user_id, study_name, res) {
+function create_new_study(user_id, study_name, res) {
     study_exist(user_id, study_name)
         .then(function (study) {
             if (study.is_exist) {
@@ -69,7 +69,7 @@ create_new_study = function (user_id, study_name, res) {
         });
 };
 
-duplicate_study = function (user_id, study_id, new_study_name, res) {
+function duplicate_study(user_id, study_id, new_study_name, res) {
     have_permission(user_id, study_id)
         .then(function(user_data){
             study_exist(user_id, new_study_name)
@@ -112,7 +112,7 @@ duplicate_study = function (user_id, study_id, new_study_name, res) {
     });
 };
 
-delete_study = function (user_id, study_id, res) {
+function delete_study(user_id, study_id, res) {
     have_permission(user_id, study_id)
         .then(function(user_data) {
             delete_by_id(user_id, study_id)
@@ -151,7 +151,7 @@ function have_permission(user_id, study_id) {
     });
 }
 
-study_exist = function (user_id, study_name) {
+function study_exist(user_id, study_name) {
     return mongo.connect(url).then(function (db) {
         const studies   = db.collection('studies');
         return studies.findOne({name:study_name , users: {$elemMatch: {id:user_id}}});
@@ -161,7 +161,7 @@ study_exist = function (user_id, study_name) {
     });
 };
 
-insert_obj = function (user_id, study_obj) {
+function insert_obj(user_id, study_obj) {
     return mongo.connect(url).then(function (db) {
         var counters = db.collection('counters');
         var studies  = db.collection('studies');
@@ -187,7 +187,7 @@ insert_obj = function (user_id, study_obj) {
     });
 };
 
-update_obj = function (study_id, study_obj) {
+function update_obj(study_id, study_obj) {
     return mongo.connect(url).then(function (db) {
         var studies   = db.collection('studies');
         return studies.findAndModify({_id:study_id},
@@ -199,7 +199,7 @@ update_obj = function (study_id, study_obj) {
     });
 };
 
-delete_by_id = function (user_id, study_id) {
+function delete_by_id(user_id, study_id) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         var studies   = db.collection('studies');
@@ -223,7 +223,7 @@ function study_info (study_id) {
         );
 }
 
-rename_study = function (user_id, study_id, new_study_name, res) {
+function rename_study(user_id, study_id, new_study_name, res) {
     if (!new_study_name) {
         res.statusCode = 400;
         return res.send(JSON.stringify({message: 'ERROR: empty study name'}));
@@ -270,7 +270,7 @@ rename_study = function (user_id, study_id, new_study_name, res) {
         });
 };
 
-update_modify = function (study_id) {
+function update_modify(study_id) {
     var modify_date = Date.now();
 
     return mongo.connect(url).then(function (db) {

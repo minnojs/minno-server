@@ -63,7 +63,7 @@ function get_experiment_url (req) {
 }
 
 
-get_experiments = function (user_id, study_id, res) {
+function get_experiments(user_id, study_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             studies_comp.study_info(study_id)
@@ -73,7 +73,7 @@ get_experiments = function (user_id, study_id, res) {
         });
 };
 
-get_data = function (user_id, study_id, exp_id, file_format, file_split, start_date, end_date, res) {
+function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             data_server.getData(exp_id, file_format, file_split, start_date, end_date)
@@ -87,7 +87,7 @@ get_data = function (user_id, study_id, exp_id, file_format, file_split, start_d
         });
 };
 
-insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, res) {
+function insert_new_experiment(user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
@@ -111,7 +111,7 @@ insert_new_experiment = function (user_id, study_id, file_id, descriptive_id, re
         });
 };
 
-delete_experiment = function (user_id, study_id, file_id, res) {
+function delete_experiment(user_id, study_id, file_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
@@ -132,7 +132,7 @@ delete_experiment = function (user_id, study_id, file_id, res) {
         });
 };
 
-update_descriptive_id = function (user_id, study_id, file_id, descriptive_id, res) {
+function update_descriptive_id(user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
@@ -145,7 +145,7 @@ update_descriptive_id = function (user_id, study_id, file_id, descriptive_id, re
         });
 };
 
-update_file_id = function (user_id, study_id, file_id, new_file_id, res) {
+function update_file_id(user_id, study_id, file_id, new_file_id, res) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
@@ -160,7 +160,7 @@ update_file_id = function (user_id, study_id, file_id, new_file_id, res) {
 
 
 
-is_descriptive_id_exist = function (user_id, study_id, descriptive_id) {
+function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
