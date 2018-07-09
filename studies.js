@@ -7,7 +7,7 @@ var mongo         = require('mongodb-bluebird');
 var users_comp    = require('./users');
 const path        = require('path');
 
-function get_studies(user_id, res, callback) {
+function get_studies(user_id, res) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         var studies   = db.collection('studies');
@@ -20,9 +20,7 @@ function get_studies(user_id, res, callback) {
                     .then(function(studies){
                         var studies_arr = [];
                         studies.forEach(function(study){
-                            var study_tags = user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=>
-                            user_result.tags.find(tag => tag.id === tag_id));
-
+                            const study_tags = user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=> user_result.tags.find(tag => tag.id === tag_id));
                             studies_arr.push({id: study._id,
                                 name:study.name,
                                 is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
@@ -40,7 +38,7 @@ function get_studies(user_id, res, callback) {
                     });
             });
     });
-};
+}
 
 function create_new_study(user_id, study_name, res) {
     study_exist(user_id, study_name)
@@ -70,7 +68,7 @@ function create_new_study(user_id, study_name, res) {
                     }
                 });
         });
-};
+}
 
 function duplicate_study(user_id, study_id, new_study_name, res) {
     have_permission(user_id, study_id)
@@ -113,7 +111,7 @@ function duplicate_study(user_id, study_id, new_study_name, res) {
             res.statusCode = 403;
             res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
     });
-};
+}
 
 function delete_study(user_id, study_id, res) {
     have_permission(user_id, study_id)
@@ -140,7 +138,7 @@ function delete_study(user_id, study_id, res) {
             res.statusCode = 403;
             res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         });
-};
+}
 
 function have_permission(user_id, study_id) {
     return mongo.connect(url).then(function (db) {
@@ -162,7 +160,7 @@ function study_exist(user_id, study_name) {
     .then(function(study_data){
         return {is_exist: !!study_data};
     });
-};
+}
 
 function insert_obj(user_id, study_obj) {
     return mongo.connect(url).then(function (db) {
@@ -182,31 +180,32 @@ function insert_obj(user_id, study_obj) {
                         [],
                         {$push: {studies: {id: study_id, tags: []}}})
                         .then(function(user_data){
-                            var dir = path.join(config.user_folder,user_data.value.user_name,study_obj.name);
+                            const dir = path.join(config.user_folder,user_data.value.user_name,study_obj.name);
                             return Promise.resolve({study_id, dir});
-                        })
-                })
-        })
+                        });
+                });
+        });
     });
-};
+}
 
 function update_obj(study_id, study_obj) {
     return mongo.connect(url).then(function (db) {
-        var studies   = db.collection('studies');
+        const studies   = db.collection('studies');
         return studies.findAndModify({_id:study_id},
             [],
             {$set: study_obj})
             .then(function(study_data){
                 return Promise.resolve(study_data);
-            })
+            });
     });
-};
+}
 
 function delete_by_id(user_id, study_id) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         var studies   = db.collection('studies');
-        return users.update({_id:user_id}, {$pull: {studies: {id: study_id}}})
+        return users
+            .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
             .then(function(){return studies.findAndModify({_id:study_id},
                 [],
                 {remove: true});})
@@ -214,7 +213,7 @@ function delete_by_id(user_id, study_id) {
                 return Promise.resolve(study_data);
             });
     });
-};
+}
 
 
 function study_info (study_id) {

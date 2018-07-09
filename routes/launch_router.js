@@ -1,7 +1,10 @@
 const config        = require('../config');
 const experiments   = require('../experiments');
 const express       = require('express');
+const fs            = require('fs');
+
 const router        = express.Router();
+const readFile = promisify(fs.readFile);
 
 module.exports = router;
 
@@ -28,14 +31,40 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
 function displayExperiment(res){
     return function(exp_data){
-        res.render('launch', {
+        const render = promisify(res.render,res);
+
+        if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
+            .then(transformHtml(exp_data))
+            .then(res.send.bind(res))
+            .catch(displayErrorPage(res));
+            
+        render(exp_data.type || 'launch', {
             minnojsUrl: config.minnojsUrl,
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
             url: exp_data.url, 
             studyId:exp_data.exp_id
-        });
+        })
+            .then(res.send.bind(res))
+            .catch(() => Promise.reject({status:500,message:'Unknown study type'}))
+            .catch(displayErrorPage(res));
     };
+}
+
+function transformHtml(exp_data){
+    return html => html
+        .replace('<!-- os:base -->', `<base href="${exp_data.base_url}">`)
+        .replace('<!-- os:vars -->', create_os_script(exp_data));
+
+    function create_os_script(exp_data){
+        return `<script>
+            window.osVars = {
+                sessionId:"${exp_data.session_id}",
+                studyId:"${exp_data.exp_id}",
+                descriptiveId:"${exp_data.descriptive_id}"
+            }
+        </script>`;
+    }
 }
 
 function displayErrorPage(res){
@@ -44,6 +73,23 @@ function displayErrorPage(res){
         res.render('error', {
             status: err.status || 'Error',
             message: err.message || 'An error has occured'
+        });
+    };
+}
+
+function promisify( fn, context ) {
+    return function () {
+        const slice = [].slice;
+        const args = slice.call( arguments );
+
+        return new Promise( function ( fulfil, reject ) {
+            const callback = function ( err ) {
+                if ( err ) return reject( err );
+                fulfil.apply( null, slice.call( arguments, 1 ) );
+            };
+
+            args.push( callback );
+            fn.apply( context, args );
         });
     };
 }

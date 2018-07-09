@@ -1,27 +1,26 @@
 const express     = require('express');
 const session     = require('express-session');
 const connect     = require('./connect');
-const studies     = require('./studies');
-const tags        = require('./tags');
-const versions    = require('./versions');
 const config      = require('./config');
 const users       = require('./users');
 const files       = require('./files');
 const experiments = require('./experiments');
 
 const dateFormat  = require('dateformat');
+const tags        = require('./tags');
 const fs          = require('fs-extra');
 
 const launch_router = require('./routes/launch_router');
 const lock_router   = require('./routes/lock_router');
 const publish_router   = require('./routes/publish_router');
+const studies_router = require('./routes/studies_router');
 
-var sender      = require('./sender');
+const sender      = require('./sender');
 
-var bodyParser = require('body-parser');
-var app = express();
-var cors = require('cors');
-var day = dateFormat(new Date(), "yyyy-mm-dd");
+const bodyParser = require('body-parser');
+const app = express();
+const cors = require('cors');
+const day = dateFormat(new Date(), "yyyy-mm-dd");
 
 if (!fs.existsSync(config.logs_folder))
     fs.mkdirSync(config.logs_folder);
@@ -39,7 +38,6 @@ app.use(cors({
     "preflightContinue": false,
     'Access-Control-Allow-Credentials': true,
     "optionsSuccessStatus": 204
-
 }));
 
 app.use(session({secret: 'ssshhhhh',
@@ -67,6 +65,7 @@ basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
 basePathRouter.use(lock_router);
 basePathRouter.use(publish_router);
+basePathRouter.use('/studies',studies_router);
 
 let sess;
 
@@ -226,25 +225,6 @@ basePathRouter.route('/files/:study_id/file/:file_id/copy')
 
         });
 
-basePathRouter.route('/studies/:study_id/experiments')
-    .get(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            experiments.get_experiments(sess.user.id, parseInt(req.params.study_id), res);
-        })
-    .post(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            experiments.get_data(sess.user.id, parseInt(req.params.study_id), req.body.exp_id,
-                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date, res);
-        });
-
 basePathRouter.route('/files/:study_id/file/:file_id/experiment')
     .post(
         function(req, res){
@@ -271,78 +251,6 @@ basePathRouter.route('/files/:study_id/file/:file_id/experiment')
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
             experiments.update_descriptive_id(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
-        });
-
-
-basePathRouter.route('/studies/:study_id/copy')
-    .put(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            studies.duplicate_study(sess.user.id, parseInt(req.params.study_id), req.body.study_name, res);
-        });
-
-
-basePathRouter.route('/studies/:study_id/tags')
-    .get(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            tags.get_study_tags(sess.user.id, parseInt(req.params.study_id), res);
-        })
-    .put(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            tags.update_study_tags(sess.user.id, parseInt(req.params.study_id), req.body.tags, res);
-        });
-
-
-basePathRouter.route('/studies')
-    .get(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            studies.get_studies(sess.user.id, res);
-        })
-    .post(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            studies.create_new_study(sess.user.id, req.body.study_name, res)
-
-        });
-
-basePathRouter.route('/studies/:study_id')
-    .delete(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            studies.delete_study(sess.user.id, parseInt(req.params.study_id), res)})
-    .put(
-        function(req, res){
-
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            studies.rename_study(sess.user.id, parseInt(req.params.study_id), req.body.study_name, res);
         });
 
 basePathRouter.route('/tags')
