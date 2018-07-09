@@ -1,7 +1,9 @@
 const config = require('./config');
 const urljoin = require('url-join');
+const join = require('path').join;
 const crypto      = require('crypto');
 const studies_comp = require('./studies');
+const users_comp = require('./users');
 const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url         = config.mongo_url;
@@ -25,13 +27,18 @@ function get_play_url (user_id, study_id, file_id) {
             if (!study_data) return Promise.reject({status:404, message:'Study not found'});
             if (!user) return Promise.reject({status:403, message:'Permission denied'});
 
-            const path = urljoin(config.server_url,'users',user.user_name,study_data.folder_name,decodeURI(file_id));
+            const url = urljoin(config.server_url,'users',user.user_name,study_data.folder_name,file_id);
+            const base_url = urljoin(config.server_url,'users',user.user_name,study_data.folder_name);
+            const path = join(config.user_folder,user.user_name,study_data.folder_name,file_id);
 
             // set sham experiment data
             return {
-                url:path,
-                descriptiveId: '',
-                session_id:-1
+                exp_id: -1,
+                descriptive_id: '',
+                session_id:-1,
+                url,
+                path,
+                base_url
             };
         });
 }
@@ -44,22 +51,31 @@ function get_experiment_url (req) {
         return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id } }})
             .then(function(exp_data){
                 // console.log(exp_data);
-                return user_info(exp_data.users[0].id).then(function(user){
+                return users_comp.user_info(exp_data.users[0].id).then(function(user){
                     const exp = exp_data.experiments.filter(function(exp) {return exp.id==req.params.exp_id;});
-                    const path = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name,exp[0].file_id);
+                    const url = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name,exp[0].file_id);
+                    const base_url = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name);
+                    const path = join(config.user_folder,user.user_name,exp_data.folder_name,exp[0].file_id);
+
                     return counters.findAndModify({_id:'session_id'},
                         [],
                         {"$inc": {"seq": 1}},
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
-                            var session_id = counter_data.value.seq;
-                            return Promise.resolve({exp_id:req.params.exp_id, descriptive_id: exp[0].descriptive_id, session_id:session_id, url:path});
+                            const session_id = counter_data.value.seq;
+                            return {
+                                exp_id:req.params.exp_id,
+                                descriptive_id: exp[0].descriptive_id, 
+                                session_id, 
+                                url,
+                                path,
+                                base_url
+                            };
                         });
 
                 });
             });
-        }
-    );
+    });
 }
 
 

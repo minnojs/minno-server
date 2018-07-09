@@ -14,15 +14,15 @@ function mysha1( data ) {
     return generator.digest('hex')
 }
 
-function user_info(user_id) {
+function user_info (user_id) {
     return mongo.connect(url).then(function (db) {
-        var users   = db.collection('users');
+        const users   = db.collection('users');
         return users.findOne({_id: user_id})
             .then(function(user_data){
                 return Promise.resolve(user_data);
             });
     });
-};
+}
 
 function set_password(user_id, password, confirm, res) {
 
