@@ -48,14 +48,14 @@ function get_experiment_url (req) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
         console.log(req.params.exp_id);
-        return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id } }})
+        return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id} }})
             .then(function(exp_data){
-                // console.log(exp_data);
                 return users_comp.user_info(exp_data.users[0].id).then(function(user){
-                    const exp = exp_data.experiments.filter(function(exp) {return exp.id==req.params.exp_id;});
-                    const url = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name,exp[0].file_id);
-                    const base_url = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name);
-                    const path = join(config.user_folder,user.user_name,exp_data.folder_name,exp[0].file_id);
+                    const exp       = exp_data.experiments.filter(exp => exp.id==req.params.exp_id);
+                    console.log(exp);
+                    const url       = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
+                    const base_url  = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name);
+                    const path      = join(config.user_folder, user.user_name, exp_data.folder_name,exp[0].file_id);
 
                     return counters.findAndModify({_id:'session_id'},
                         [],
