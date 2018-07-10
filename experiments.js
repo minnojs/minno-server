@@ -7,7 +7,6 @@ const users_comp = require('./users');
 const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
-const users_comp    = require('./users');
 
 const have_permission = studies_comp.have_permission;
 
