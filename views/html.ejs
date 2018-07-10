@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <title>HTML</title>
+    <script>
+        (function(){
+            window.minnoData = {
+                sessionId:"<%= sessionId %>",
+                studyId:"<%= studyId %>",
+                descriptiveId:"<%= descriptiveId %>"
+            }
+
+            var request = new XMLHttpRequest();
+            request.open('GET', '<%=url %>', true);
+            request.onload = function() {
+                document.getElementsByTagName('html')[0].innerHTML =  request.responseText;
+            };
+
+            request.send(); 
+        })();
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
