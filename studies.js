@@ -22,13 +22,16 @@ function get_studies(user_id, res, callback) {
                         studies.forEach(function(study){
                             var study_tags = user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=>
                             user_result.tags.find(tag => tag.id === tag_id));
+
                             studies_arr.push({id: study._id,
                                 name:study.name,
-                                // is_locked:false,
+                                is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
+                                is_locked:study.locked,
                                 // is_public:false,
                                 // is_template:false,
                                 last_modified:study.modify_date,
                                 permission:"owner",
+                                versions:study.versions,
                                 study_type:"regular",
                                 base_url:user_result.user_name+'/'+study.folder_name,
                                 tags:study_tags});
@@ -270,6 +273,22 @@ function rename_study(user_id, study_id, new_study_name, res) {
         });
 };
 
+
+function set_lock_status(user_id, study_id, status, res) {
+    return have_permission(user_id, study_id)
+        .then(function() {
+
+            return mongo.connect(url).then(function (db) {
+                var studies = db.collection('studies');
+                return studies.update({_id: study_id}, {$set: {locked: status}})
+                    .then(function () {
+                        return res.send(JSON.stringify({}))
+                    });
+
+            });
+        });
+}
+
 function update_modify(study_id) {
     var modify_date = Date.now();
 
@@ -279,4 +298,4 @@ function update_modify(study_id) {
     });
 }
 
-module.exports = {update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};
+module.exports = {set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};

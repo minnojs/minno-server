@@ -1,10 +1,11 @@
-const config = require('./config');
-const urljoin = require('url-join');
-const crypto      = require('crypto');
-const studies_comp = require('./studies');
-const data_server  = require('./data_server/controllers/controller');
+const config        = require('./config');
+const urljoin       = require('url-join');
+const crypto        = require('crypto');
+const studies_comp  = require('./studies');
+const data_server   = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
-const mongo_url         = config.mongo_url;
+const mongo_url     = config.mongo_url;
+const users_comp    = require('./users');
 
 const have_permission = studies_comp.have_permission;
 
@@ -44,7 +45,7 @@ function get_experiment_url (req) {
         return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id } }})
             .then(function(exp_data){
                 // console.log(exp_data);
-                return user_info(exp_data.users[0].id).then(function(user){
+                return users_comp.user_info(exp_data.users[0].id).then(function(user){
                     const exp = exp_data.experiments.filter(function(exp) {return exp.id==req.params.exp_id;});
                     const path = urljoin(config.server_url,'users',user.user_name,exp_data.folder_name,exp[0].file_id);
                     return counters.findAndModify({_id:'session_id'},
@@ -55,7 +56,6 @@ function get_experiment_url (req) {
                             var session_id = counter_data.value.seq;
                             return Promise.resolve({exp_id:req.params.exp_id, descriptive_id: exp[0].descriptive_id, session_id:session_id, url:path});
                         });
-
                 });
             });
         }
@@ -78,12 +78,7 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
         .then(function() {
             data_server.getData(exp_id, file_format, file_split, start_date, end_date)
                 .then(function(data){
-
-
-
             res.send(JSON.stringify({data_file:data}))});
-
-            // console.log({data_file:data_file});
         });
 };
 
@@ -158,8 +153,6 @@ function update_file_id(user_id, study_id, file_id, new_file_id, res) {
         });
 };
 
-
-
 function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
     return have_permission(user_id, study_id)
         .then(function() {
@@ -173,6 +166,5 @@ function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
             );
         });
 };
-
 
 module.exports = {get_play_url, get_experiment_url, is_descriptive_id_exist, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment};

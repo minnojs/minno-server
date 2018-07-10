@@ -3,22 +3,29 @@ const session     = require('express-session');
 const connect     = require('./connect');
 const studies     = require('./studies');
 const tags        = require('./tags');
+const versions    = require('./versions');
 const config      = require('./config');
+const users       = require('./users');
+const files       = require('./files');
 const experiments = require('./experiments');
+
 const dateFormat  = require('dateformat');
 const fs          = require('fs-extra');
 
-const launchRouter = require('./routes/launchRouter');
-var users       = require('./users');
-var files       = require('./files');
+const launch_router = require('./routes/launch_router');
+const lock_router   = require('./routes/lock_router');
+const publish_router   = require('./routes/publish_router');
+
 var sender      = require('./sender');
 
 var bodyParser = require('body-parser');
 var app = express();
 var cors = require('cors');
 var day = dateFormat(new Date(), "yyyy-mm-dd");
+
 if (!fs.existsSync(config.logs_folder))
     fs.mkdirSync(config.logs_folder);
+
 SimpleNodeLogger = require('simple-node-logger'),
     opts = {
         logFilePath:`${config.logs_folder}/${day}.log`,
@@ -43,12 +50,7 @@ app.use(session({secret: 'ssshhhhh',
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
-
 app.engine('html', require('ejs').renderFile);
-
-// app.use(bodyParser.json());
-//
-// app.use(bodyParser.urlencoded({extended: true}));
 
 const  basePathRouter = express.Router();
 
@@ -62,7 +64,9 @@ if (typeof config.server_url !== 'string') throw new Error(`Config: server_url i
 
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
-basePathRouter.use(launchRouter);
+basePathRouter.use(launch_router);
+basePathRouter.use(lock_router);
+basePathRouter.use(publish_router);
 
 let sess;
 
@@ -120,7 +124,6 @@ basePathRouter.route('/download').get(
         console.log(req.query.path);
         files.download_zip(req.query.path, res);
     }
-
 );
 
 basePathRouter.route('/files/:study_id').get(
@@ -322,7 +325,6 @@ basePathRouter.route('/studies')
 
         });
 
-
 basePathRouter.route('/studies/:study_id')
     .delete(
         function(req, res){
@@ -343,8 +345,6 @@ basePathRouter.route('/studies/:study_id')
             studies.rename_study(sess.user.id, parseInt(req.params.study_id), req.body.study_name, res);
         });
 
-
-
 basePathRouter.route('/tags')
     .get(
         function(req, res){
@@ -363,9 +363,7 @@ basePathRouter.route('/tags')
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
             tags.insert_new_tag(sess.user.id, req.body.tag_text, req.body.tag_color, res);
-        })
-   ;
-
+        });
 
 basePathRouter.route('/tags/:tag_id')
     .delete(
@@ -403,7 +401,6 @@ basePathRouter.route('/change_email')
 
         });
 
-
 basePathRouter.route('/add_user')
     .post(
         function(req, res){
@@ -425,7 +422,6 @@ basePathRouter.route('/change_password')
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
             users.set_password(sess.user.id, req.body.password, req.body.confirm, res);
-
         });
 
 
