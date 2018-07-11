@@ -30,6 +30,5 @@ router.route('/studies/:study_id/publish')
                 dateFormat(now, "yyyymmdd.HHMMss"),
                 version_type, update_url)
                 .then(function(version_data){
-                    console.log(version_data);
                     res.end(JSON.stringify(version_data));});
         });
