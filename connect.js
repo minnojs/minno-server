@@ -22,7 +22,10 @@ exports.check = function (user_name, pass, res, callback) {
     }
 
 
-    return mongo.connect(url).then(function (db) {
+    return mongo.connect(url).catch((err) => {
+        console.log("Not Connected to Database ERROR! ", err);
+    })
+        .then(function (db) {
         // db.dropDatabase();
 
         var users   = db.collection('users');

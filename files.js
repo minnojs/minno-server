@@ -54,7 +54,6 @@ function walkSync(full_path, rel_dir, filelist) {
         .then(function(user_data){
             studies_comp.study_info(study_id)
             .then(function(study_data){
-
                 const folderName = path.join(config.user_folder,user_data.user_name,study_data.folder_name);
                 let files = [];
                 walkSync(folderName, '', files);
@@ -66,6 +65,7 @@ function walkSync(full_path, rel_dir, filelist) {
                 return res.send(JSON.stringify({study_name:study_data.name,
                                                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
                                                 is_locked: study_data.locked,
+                                                versions: study_data.versions,
                                                 files: files,
                                                 base_url: user_data.user_name+'/'+study_data.folder_name}));
             })

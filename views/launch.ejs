@@ -38,8 +38,11 @@
     piGlobal = {$meta:{
                     sessionId:"<%= sessionId %>",
                     studyId:"<%= studyId %>",
-                    descriptiveId:"<%= descriptiveId %>"
-                }};
+                    descriptiveId:"<%= descriptiveId %>",
+                    versionId:"<%= versionId %>",
+                    version:"<%= version %>",
+                    state:"<%= state %>"
+        }};
 
     document.getElementById('dismiss-message').addEventListener('click', function(event){
         document.body.removeChild(event.target.parentElement.parentElement);

@@ -47,12 +47,18 @@ function get_experiment_url (req) {
     return mongo.connect(mongo_url).then(function (db) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
-        console.log(req.params.exp_id);
-        return studies.findOne({experiments: { $elemMatch: { id: req.params.exp_id} }})
+        return studies.findOne({experiments: { $elemMatch: {id: req.params.exp_id} }})
             .then(function(exp_data){
+                if(!exp_data)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
+
                 return users_comp.user_info(exp_data.users[0].id).then(function(user){
+
+                    const last_version = exp_data.versions ? exp_data.versions[exp_data.versions.length-1] : '';
+                    if(last_version.id !== req.params.version_id)
+                        return Promise.reject({status:400, message:'Error: Wrong version'});
+
                     const exp       = exp_data.experiments.filter(exp => exp.id==req.params.exp_id);
-                    console.log(exp);
                     const url       = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
                     const base_url  = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name);
                     const path      = join(config.user_folder, user.user_name, exp_data.folder_name,exp[0].file_id);
@@ -64,6 +70,7 @@ function get_experiment_url (req) {
                         .then(function(counter_data){
                             const session_id = counter_data.value.seq;
                             return {
+                                version_data: last_version,
                                 exp_id:req.params.exp_id,
                                 descriptive_id: exp[0].descriptive_id, 
                                 session_id, 
@@ -73,7 +80,9 @@ function get_experiment_url (req) {
                             };
                         });
                 });
-            });
+            })
+            .catch(Promise.reject({status:400, message:'Error: Wrong version'}))
+        ;
     });
 }
 

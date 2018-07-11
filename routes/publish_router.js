@@ -26,7 +26,10 @@ router.route('/studies/:study_id/publish')
             var update_url   = req.body.update_url;
 
             var now = new Date();
-            versions.insert_new_version(sess.user.id, parseInt(req.params.study_id),
+            return versions.insert_new_version(sess.user.id, parseInt(req.params.study_id),
                 dateFormat(now, "yyyymmdd.HHMMss"),
-                version_type, update_url, res);
+                version_type, update_url)
+                .then(function(version_data){
+                    console.log(version_data);
+                    res.end(JSON.stringify(version_data));});
         });

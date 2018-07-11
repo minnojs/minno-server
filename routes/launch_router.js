@@ -5,7 +5,7 @@ const router        = express.Router();
 
 module.exports = router;
 
-router.get('/launch/:exp_id',function(req, res){
+router.get('/launch/:exp_id/:version_id',function(req, res){
     return experiments
         .get_experiment_url(req)
         .then(displayExperiment(res))
@@ -33,7 +33,10 @@ function displayExperiment(res){
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
             url: exp_data.url, 
-            studyId:exp_data.exp_id
+            studyId:exp_data.exp_id,
+            versionId:exp_data.version_data.id,
+            version:exp_data.version_data.version,
+            state:exp_data.version_data.state
         });
     };
 }

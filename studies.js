@@ -5,7 +5,25 @@ const fs          = require('fs-extra');
 const formidable  = require('formidable');
 var mongo         = require('mongodb-bluebird');
 var users_comp    = require('./users');
+const dateFormat = require('dateformat');
 const path        = require('path');
+
+
+function create_version_obj(study_id, state) {
+    var now = new Date();
+    var version = dateFormat(now, "yyyymmdd.HHMMss");
+    return {id: generate_id(study_id, version, state), version: version, state: state};
+}
+
+function generate_id(study_id, version, state) {
+    return mysha1(study_id + version + state+'*');
+}
+function mysha1( data ) {
+    const generator = crypto.createHash('sha1');
+    generator.update( data );
+    return generator.digest('hex');
+}
+
 
 function get_studies(user_id, res, callback) {
     return mongo.connect(url).then(function (db) {
@@ -49,17 +67,19 @@ function create_new_study(user_id, study_name, res) {
                 res.statusCode = 400;
                 return res.send(JSON.stringify({message: 'ERROR: Study with this name already exists'}));
             }
+
+
             var study_obj = {
                 name: study_name,
                 folder_name: study_name,
                 users: [{id: user_id}],
                 experiments:[],
+                versions: [create_version_obj('*', 'Develop')],
                 modify_date: Date.now()
             };
             return insert_obj(user_id, study_obj)
                 .then(function (study_data) {
                     try {
-                        console.log(study_data.dir);
                         if (!fs.existsSync(study_data.dir)) {
                             fs.mkdirSync(study_data.dir);
                             return res.send(JSON.stringify({study_id: study_data.study_id}));
