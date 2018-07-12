@@ -61,11 +61,14 @@ function walkSync(full_path, rel_dir, filelist) {
                 files = files.map(function(file){
                     var exp_data = study_data.experiments.filter(function (exp) {
                         var eq = exp.file_id == file.id;
-                        return exp.file_id == file.id});
-                    return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}});
+                        return exp.file_id == file.id;
+                    });
+                    return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}
+                });
                 return res.send(JSON.stringify({study_name:study_data.name,
                                                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
                                                 is_locked: study_data.locked,
+                                               type: study_data.type,
                                                 files: files,
                                                 base_url: user_data.user_name+'/'+study_data.folder_name}));
             })

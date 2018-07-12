@@ -15,12 +15,18 @@ studiesRouter
     });
 
 studiesRouter.route('')
-    .get(function(req, res){
-        studies.get_studies(req.id, res);
-    })
-    .post(function(req, res){
-        studies.create_new_study(req.id, req.body.study_name, res);
-    });
+    .get(studies.get_studies)
+    .post(studies.create_new_study);
+
+studiesRouter.route('/:study_id')
+    .delete(
+        function(req, res){
+            studies.delete_study(req.id, parseInt(req.params.study_id), res);
+        })
+    .put(
+        function(req, res){
+            studies.rename_study(req.id, parseInt(req.params.study_id), req.body.study_name, res);
+        });
 
 studiesRouter.route('/:study_id/experiments')
     .get(
@@ -53,12 +59,3 @@ studiesRouter.route('/:study_id/tags')
 
 
 
-studiesRouter.route('/:study_id')
-    .delete(
-        function(req, res){
-            studies.delete_study(req.id, parseInt(req.params.study_id), res);
-        })
-    .put(
-        function(req, res){
-            studies.rename_study(req.id, parseInt(req.params.study_id), req.body.study_name, res);
-        });

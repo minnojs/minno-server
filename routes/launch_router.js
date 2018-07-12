@@ -32,13 +32,14 @@ router.get('/play/:study_id/:file_id',function(req, res){
 function displayExperiment(res){
     return function(exp_data){
         const render = promisify(res.render,res);
+        console.log(exp_data)
 
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
             .then(transformHtml(exp_data))
             .then(res.send.bind(res))
             .catch(displayErrorPage(res));
             
-        render(exp_data.type || 'launch', {
+        render(exp_data.type || 'minno02', {
             minnojsUrl: config.minnojsUrl,
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
@@ -46,7 +47,7 @@ function displayExperiment(res){
             studyId:exp_data.exp_id
         })
             .then(res.send.bind(res))
-            .catch(() => Promise.reject({status:500,message:'Unknown study type'}))
+            .catch(err => console.log(err) || Promise.reject({status:500,message:err.message}))
             .catch(displayErrorPage(res));
     };
 }

@@ -36,6 +36,7 @@ function get_play_url (user_id, study_id, file_id) {
                 exp_id: -1,
                 descriptive_id: '',
                 session_id:-1,
+                type: study_data.type,
                 url,
                 path,
                 base_url
@@ -65,6 +66,7 @@ function get_experiment_url (req) {
                                 exp_id:req.params.exp_id,
                                 descriptive_id: exp[0].descriptive_id, 
                                 session_id, 
+                                type: exp_data.type,
                                 url,
                                 path,
                                 base_url
