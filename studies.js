@@ -203,6 +203,10 @@ function insert_obj(user_id, study_obj) {
                         {$push: {studies: {id: study_id, tags: []}}})
                         .then(function(user_data){
                             var dir = path.join(config.user_folder,user_data.value.user_name,study_obj.name);
+                            return versions_comp.insert_new_version(user_id, study_id,
+                                dateFormat(now, "yyyymmdd.HHMMss"),
+                                'Develop', 'Update')
+                                .then(Promise.resolve({study_id, dir}));
                             return Promise.resolve({study_id, dir});
                         })
                 })

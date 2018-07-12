@@ -70,7 +70,7 @@ function get_experiment_url (req) {
                         .then(function(counter_data){
                             const session_id = counter_data.value.seq;
                             return {
-                                version_data: last_version,
+                                version: last_version,
                                 exp_id:req.params.exp_id,
                                 descriptive_id: exp[0].descriptive_id, 
                                 session_id, 

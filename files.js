@@ -54,6 +54,7 @@ function walkSync(full_path, rel_dir, filelist) {
         .then(function(user_data){
             studies_comp.study_info(study_id)
             .then(function(study_data){
+
                 const folderName = path.join(config.user_folder,user_data.user_name,study_data.folder_name);
                 let files = [];
                 walkSync(folderName, '', files);

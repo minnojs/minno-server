@@ -28,6 +28,8 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
 function displayExperiment(res){
     return function(exp_data){
+        console.log(exp_data);
+
         res.render('launch', {
             minnojsUrl: config.minnojsUrl,
             descriptiveId: exp_data.descriptive_id, 
