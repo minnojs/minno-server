@@ -66,6 +66,7 @@ function walkSync(full_path, rel_dir, filelist) {
                 return res.send(JSON.stringify({study_name:study_data.name,
                                                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
                                                 is_locked: study_data.locked,
+                                                type: study_data.type,
                                                 versions: study_data.versions,
                                                 files: files,
                                                 base_url: user_data.user_name+'/'+study_data.folder_name}));
