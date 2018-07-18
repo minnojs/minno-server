@@ -41,7 +41,7 @@ app.use(cors({
     "optionsSuccessStatus": 204
 }));
 
-app.use(session({secret: 'ssshhhhh',
+app.use(session({secret: config.session_secret,
     resave: true,
     saveUninitialized: true,
     cookie: { secure: false }
