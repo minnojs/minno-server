@@ -27,8 +27,8 @@ function get_play_url (user_id, study_id, file_id) {
             if (!study_data) return Promise.reject({status:404, message:'Study not found'});
             if (!user) return Promise.reject({status:403, message:'Permission denied'});
 
-            const url = urljoin(config.server_url,'users',user.user_name,study_data.folder_name,file_id);
-            const base_url = urljoin(config.server_url,'users',user.user_name,study_data.folder_name);
+            const url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name,file_id);
+            const base_url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name);
             const path = join(config.user_folder,user.user_name,study_data.folder_name,file_id);
 
             // set sham experiment data
@@ -60,8 +60,8 @@ function get_experiment_url (req) {
                         return Promise.reject({status:400, message:'Error: Wrong version'});
 
                     const exp       = exp_data.experiments.filter(exp => exp.id==req.params.exp_id);
-                    const url       = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
-                    const base_url  = urljoin(config.server_url, 'users',user.user_name, exp_data.folder_name);
+                    const url       = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
+                    const base_url  = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name);
                     const path      = join(config.user_folder, user.user_name, exp_data.folder_name,exp[0].file_id);
 
                     return counters.findAndModify({_id:'session_id'},
@@ -89,22 +89,17 @@ function get_experiment_url (req) {
 }
 
 
-function get_experiments(user_id, study_id, res) {
+function get_experiments(user_id, study_id) {
     return have_permission(user_id, study_id)
         .then(function() {
-            studies_comp.study_info(study_id)
-                .then(function (study_data) {
-                    res.end(JSON.stringify({experiments: study_data.experiments}));
-                });
+            return studies_comp.study_info(study_id);
         });
 };
 
-function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, res) {
+function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date) {
     return have_permission(user_id, study_id)
         .then(function() {
-            data_server.getData(exp_id, file_format, file_split, start_date, end_date)
-                .then(function(data){
-            res.send(JSON.stringify({data_file:data}))});
+            return data_server.getData(exp_id, file_format, file_split, start_date, end_date);
         });
 };
 

@@ -30,13 +30,21 @@ studiesRouter.route('/:study_id')
 
 studiesRouter.route('/:study_id/experiments')
     .get(
-        function(req, res){
-            experiments.get_experiments(req.user_id, parseInt(req.params.study_id), res);
+        function(req, res, next){
+            experiments.get_experiments(req.user_id, parseInt(req.params.study_id))
+                .then(function (study_data) {
+                    res.json({experiments: study_data.experiments});
+                })
+                .catch(next);
         })
     .post(
-        function(req, res){
+        function(req, res, next){
             experiments.get_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id,
-                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date, res);
+                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date)
+                                    .then(function(data){
+                                        res.json({data_file:data});
+                                    })
+                                    .catch(next);
         });
 
 
