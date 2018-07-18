@@ -12,7 +12,7 @@ DataRequest = mongoose.model('DataRequest'),
 var fs = require('fs');
 var convert = require('mongoose_schema-json');
 var archiver = require('archiver');
-const varSplit="\\.";
+const varSplit=".";
 const nullDataValue='';
 const defaultDataFilename='_data';
 const defaultValueName='data';  // name used for non json items in data arrays
@@ -54,8 +54,9 @@ exports.getData2=function(req,res)
 	res.send(exports.getData(req.get('studyId')));
 }
 exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
-	startDate=null;
-	endDate=null;
+	//startDate=null;
+	//endDate=null;
+	console.log (startDate +" is the startdate");
 	if(typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
 	//∂console.log(studyId + " is the studyId requested");
