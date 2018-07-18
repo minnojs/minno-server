@@ -72,7 +72,33 @@ function transformHtml(exp_data,vars){
 
     function create_os_script(minno){
         return `<script> 
-            window.minno = ${JSON.stringify(minno,null,2)};
+        (function(){
+            var minno = window.minno = ${JSON.stringify(minno,null,2)};
+            minno.log = log;
+                
+            function log(data, cb){
+                var request = new XMLHttpRequest();
+                cb || (cb = function(){});
+                
+                if (!data) return cb(null);
+                if (!Array.isArray(data)) throw new Error('Minno: data must be an array')
+                if (!data.length) return cb(null);
+                
+                var body = {data:data};
+                for (var k in minno.vars) body[k] = minno.vars[k];
+                
+                request.open('PUT', minno.dataUrl, true);
+                request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                request.onreadystatechange = function() {
+                    if (request.readyState === 4) {
+                        if (request.status >= 200 && request.status < 400) cb(request.responseText);
+                        else throw new Error('Failed sending to: "' + minno.dataUrl + '". ' + request.statusText + ' (' + request.status +')');
+                    }
+                };
+                request.send(JSON.stringify(body));
+            }
+        })();
+
         </script>`;
     }
 }
