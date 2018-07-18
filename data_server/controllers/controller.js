@@ -15,6 +15,7 @@ var archiver = require('archiver');
 const varSplit="\\.";
 const nullDataValue='';
 const defaultDataFilename='_data';
+const defaultValueName='data';  // name used for non json items in data arrays
 const dataPrefix=''; //prefix for items in the data array
 const dataFileLocation=config.base_folder;
 const dataFolder=config.dataFolder;
@@ -167,9 +168,19 @@ var getInitialVarIdMap= function(data,prefix,map,pos)
 	try {item= JSON.parse(item);}
 	catch(e) {}
 	item.forEach(function(row) {
-		    pos=getVarIdMap(row,dataPrefix,map,pos);
-			
-		});
+		if(Object.keys(row).length >0 && typeof row=='object'){
+			pos=getVarIdMap(row,dataPrefix,map,pos);
+	
+	}
+	else
+	{
+		if(map[defaultValueName]==null){
+		map[defaultValueName]=pos;
+		pos++;
+	}
+	}
+		
+	});
 		return pos;
 }
 var getVarIdMap= function(data,prefix,map,pos)
@@ -193,7 +204,6 @@ var getVarIdMap= function(data,prefix,map,pos)
 		});
 		return pos;
 	}
-	
 		Object.keys(data).forEach(function(key) {
 			var item = data[key];
 			if(item==null)
@@ -238,6 +248,7 @@ var getVarIdMap= function(data,prefix,map,pos)
 			}}
 		}
 		});
+
 		return pos;
 	}
 var loadDataArray= function(data,map,processedData)
@@ -257,9 +268,17 @@ var loadDataArray= function(data,map,processedData)
 	catch(e) {}
 	item.forEach(function(row) {
 		var newRow=baseRow.slice();
+		if(typeof row =='object' ){
 		loadRow(row,dataPrefix,map,newRow);
 		processedData.push(newRow);
+	}
+	else
+	{
+		newRow[map[defaultValueName]]=row;
+		processedData.push(newRow);
+	}
 	});
+
 };
 
 var loadRow= function(data,prefix,map,row)
@@ -279,7 +298,6 @@ var loadRow= function(data,prefix,map,row)
 		});
 		return;
 	}
-
 	Object.keys(data).forEach(function(key) {
 	var item = data[key];
 	try {item= JSON.parse(item);}
@@ -324,6 +342,7 @@ var loadRow= function(data,prefix,map,row)
 	}
 	}
 	});
+
 };
 var  getDateString= function(daysFromPresent)
     {
@@ -439,14 +458,18 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 				}
 				dataString+='\n';
 				var filename=defaultDataFilename;
-				if(splitPos>-1 && fileMap[dataRow[splitPos]]==null)
+				if(splitPos>-1)
+				{
+					filename=dataRow[splitPos];
+					if(filename.length==0)
 					{
-						filename=dataRow[splitPos];
-						if(filename.length==0)
-						{
-							filename=defaultDataFilename;
-						}
-						fileMap[dataRow[splitPos]]=filename;
+						filename=defaultDataFilename;
+					}
+				}
+				if(splitPos>-1 && fileMap[filename]==null)
+					{
+						
+						fileMap[filename]=filename;
 					    fs.writeFileSync(filePrefix+filename+fileSuffix, initialRow, function(err) {
 					        if(err) {
 					            reject(err);
@@ -458,6 +481,10 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 						if(splitPos>-1)
 						{
 							filename=dataRow[splitPos];
+							if(filename.length==0)
+							{
+								filename=defaultDataFilename;
+							}
 						}
 					}
 				    fs.appendFileSync(filePrefix+filename+fileSuffix, dataString, function(err) {
