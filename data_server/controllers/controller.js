@@ -443,11 +443,11 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 				splitPos=map[fileSplitVar];
 			}
 			else{
-			    fs.writeFileSync(filePrefix+defaultDataFilename+fileSuffix, initialRow, function(err) {
-			        if(err) {
-			            reject(err);
-			        }
-			    });
+                try {
+                    fs.writeFileSync(filePrefix+defaultDataFilename+fileSuffix, initialRow);
+                } catch(err){
+                    reject(err);
+                }
 			}
 	for(var x=0;x<dataArray.length;x++)
 		{
@@ -470,11 +470,12 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 					{
 						
 						fileMap[filename]=filename;
-					    fs.writeFileSync(filePrefix+filename+fileSuffix, initialRow, function(err) {
-					        if(err) {
-					            reject(err);
-					        }
-					    });
+
+                        try {
+                            fs.writeFileSync(filePrefix+filename+fileSuffix, initialRow);
+                        } catch(err){
+                            reject(err);
+                        }
 					}
 					else
 					{
@@ -487,13 +488,13 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 							}
 						}
 					}
-				    fs.appendFileSync(filePrefix+filename+fileSuffix, dataString, function(err) {
-				        if(err) {
-				            reject(err);
-				        }
+                    try {
+                        fs.appendFileSync(filePrefix+filename+fileSuffix, dataString);
+                    } catch(err){
+                        reject(err);
+                    }
 
 				        //console.log("The row was saved!");
-				    });
 					dataString='';
 
 			
@@ -507,7 +508,7 @@ var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fi
 			//return dataFolder+currentDate+'/'+currentTime+'.zip';
 			resolve (dateZipFile);
 		});
-			});
+});
 			
 		
 

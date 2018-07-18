@@ -35,14 +35,10 @@
     miManager/miQuest v0.2
 </div>
 <script>
-    piGlobal = {$meta:{
-                    sessionId:"<%= sessionId %>",
-                    studyId:"<%= studyId %>",
-                    descriptiveId:"<%= descriptiveId %>",
-                    versionId:"<%= versionId %>",
-                    version:"<%= version %>",
-                    state:"<%= state %>"
-        }};
+    window.piGlobal = {
+        $dataUrl: '<%- dataUrl %>',
+        $meta:<%- JSON.stringify(vars) %>
+    };
 
     document.getElementById('dismiss-message').addEventListener('click', function(event){
         document.body.removeChild(event.target.parentElement.parentElement);

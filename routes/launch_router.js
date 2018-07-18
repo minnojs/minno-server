@@ -1,7 +1,8 @@
 const config        = require('../config');
 const experiments   = require('../experiments');
 const express       = require('express');
-const fs            = require('fs');
+const fs            = require('fs-extra');
+const urljoin       = require('url-join');
 
 const router        = express.Router();
 const readFile = promisify(fs.readFile);
@@ -32,40 +33,72 @@ router.get('/play/:study_id/:file_id',function(req, res){
 function displayExperiment(res){
     return function(exp_data){
         const render = promisify(res.render,res);
+        const dataUrl = urljoin(config.relative_path, 'data');
 
-        if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
-            .then(transformHtml(exp_data))
-            .then(res.send.bind(res))
-            .catch(displayErrorPage(res));
-            
-        render(exp_data.type || 'minno02', {
-            minnojsUrl: config.minnojsUrl,
+        const vars = {
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
-            studyId:exp_data.exp_id,
-            url: exp_data.url, 
+            studyId:exp_data.exp_id
+        };
+
+        if (exp_data.version_data) Object.assign(vars, {
             versionId:exp_data.version_data.id,
             version:exp_data.version_data.version,
             state:exp_data.version_data.state
+        });
+
+        if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
+            .then(transformHtml(exp_data,vars))
+            .then(res.send.bind(res));
+            
+        return render(exp_data.type || 'minno02', {
+            minnojsUrl: config.minnojsUrl,
+            url: exp_data.url, 
+            dataUrl,
+            vars
         })
             .then(res.send.bind(res))
-            .catch(err => Promise.reject({status:500,message:err.message}))
-            .catch(displayErrorPage(res));
+            .catch(err => Promise.reject({status:500,message:err.message}));
     };
 }
 
-function transformHtml(exp_data){
+function transformHtml(exp_data,vars){
+    const dataUrl = urljoin(config.relative_path, 'data');
+    const minno = {dataUrl,vars};
+
     return html => html
         .replace('<!-- os:base -->', `<base href="${exp_data.base_url}">`)
-        .replace('<!-- os:vars -->', create_os_script(exp_data));
+        .replace('<!-- os:vars -->', create_os_script(minno));
 
-    function create_os_script(exp_data){
-        return `<script>
-            window.osVars = {
-                sessionId:"${exp_data.session_id}",
-                studyId:"${exp_data.exp_id}",
-                descriptiveId:"${exp_data.descriptive_id}"
+    function create_os_script(minno){
+        return `<script> 
+        (function(){
+            var minno = window.minno = ${JSON.stringify(minno,null,2)};
+            minno.log = log;
+                
+            function log(data, cb){
+                var request = new XMLHttpRequest();
+                cb || (cb = function(){});
+                
+                if (!data) return cb(null);
+                if (!Array.isArray(data)) throw new Error('Minno: data must be an array')
+                if (!data.length) return cb(null);
+                
+                var body = {data:data};
+                for (var k in minno.vars) body[k] = minno.vars[k];
+                
+                request.open('PUT', minno.dataUrl, true);
+                request.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                request.onreadystatechange = function() {
+                    if (request.readyState === 4) {
+                        if (request.status >= 200 && request.status < 400) cb(request.responseText);
+                        else throw new Error('Failed sending to: "' + minno.dataUrl + '". ' + request.statusText + ' (' + request.status +')');
+                    }
+                };
+                request.send(JSON.stringify(body));
             }
+        })();
+
         </script>`;
     }
 }

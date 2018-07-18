@@ -5,6 +5,7 @@ const config      = require('./config');
 const users       = require('./users');
 const files       = require('./files');
 const experiments = require('./experiments');
+const path        = require('path');
 
 const dateFormat  = require('dateformat');
 const tags        = require('./tags');
@@ -40,7 +41,7 @@ app.use(cors({
     "optionsSuccessStatus": 204
 }));
 
-app.use(session({secret: 'ssshhhhh',
+app.use(session({secret: config.session_secret,
     resave: true,
     saveUninitialized: true,
     cookie: { secure: false }
@@ -56,8 +57,10 @@ app.use(bodyParser.urlencoded({limit: '50mb',extended: true}));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(config.relative_path, basePathRouter);
 
+const dataFolder = path.join(config.base_folder,config.dataFolder)
 if (!fs.existsSync(config.static_path)) throw new Error(`Config: static_path folder does not exist "${config.static_path}"`);
 if (!fs.existsSync(config.user_folder)) throw new Error(`Config: user_folder folder does not exist "${config.user_folder}"`);
+if (!fs.existsSync(dataFolder)) throw new Error(`Config: dataFolder folder does not exist "${dataFolder}"`);
 if (typeof config.server_url !== 'string') throw new Error(`Config: server_url is not set`);
 
 basePathRouter.use('/static', express.static(config.static_path));
