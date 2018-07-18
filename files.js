@@ -312,7 +312,7 @@ function upload(user_id, study_id, req, res) {
                                 isDir:false
                             });
                             var study_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,prefix);
-                            var file_path = study_path + files[key].name;
+                            var file_path = path.join(study_path, files[key].name);
                             log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
                             fs.copy(oldpath, file_path, function (err, files_arr) {
                                 if (err){
