@@ -301,7 +301,7 @@ function upload(user_id, study_id, req, res) {
 
                             var file_id = urlencode.decode(prefix+files[key].name);
 
-                            var file_url = path.join('..',config.user_folder,user_data.user_name,study_data.folder_name,file_id);
+                            var file_url = path.join('..', config.user_folder, user_data.user_name, study_data.folder_name,  file_id);
 
                             var exp_data = study_data.experiments.filter(function (exp) {
                                 return exp.file_id == file_id});
@@ -311,8 +311,8 @@ function upload(user_id, study_id, req, res) {
                                 url:file_url,
                                 isDir:false
                             });
-                            var study_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,prefix);
-                            var file_path = study_path + files[key].name;
+                            var study_path = path.join(config.user_folder, user_data.user_name, study_data.folder_name, prefix);
+                            var file_path = path.join(study_path, files[key].name);
                             log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
                             fs.copy(oldpath, file_path, function (err, files_arr) {
                                 if (err){
