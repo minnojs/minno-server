@@ -24,7 +24,7 @@ function get_play_url (user_id, study_id, file_id) {
             if (!user) return Promise.reject({status:403, message:'Permission denied'});
 
             const url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name,file_id);
-            const base_url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name);
+            const base_url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name, '/');
             const path = join(config.user_folder,user.user_name,study_data.folder_name,file_id);
 
             // set sham experiment data
@@ -57,7 +57,7 @@ function get_experiment_url (req) {
 
                     const exp       = exp_data.experiments.filter(exp => exp.id==req.params.exp_id);
                     const url       = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
-                    const base_url  = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name);
+                    const base_url  = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name,'/');
                     const path      = join(config.user_folder, user.user_name, exp_data.folder_name,exp[0].file_id);
 
                     return counters.findAndModify({_id:'session_id'},
