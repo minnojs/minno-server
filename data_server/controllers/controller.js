@@ -61,7 +61,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 		throw new Error("Error: studyId must be specified");
 	//∂console.log(studyId + " is the studyId requested");
 	var findObject={};
-    var  dataMap={};
+    var dataMap={};
     var processedData=[];
     var pos=0;
     var rowSplitString='\t';
@@ -92,45 +92,25 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
 	var dataObject={studyId:studyId, details:findObject, requestId:currentTime};
     var newDataRequest = new DataRequest(dataObject);
 
-	return new Promise(function(resolve, reject) {
-	    newDataRequest.save(function(err, data) {
-	      if (err)
-	        reject(err);
-	    });
-	    Data.find(findObject, function(err, study) {
-	        if (err) {
-	            reject(err);
-	        }
-	        else {
-	  		for(var x=0;x<study.length;x++)
-	  		  {
-	  			  var reqBody = JSON.parse(JSON.stringify(study[x]));
-	  		  	pos=getInitialVarIdMap(reqBody,'',dataMap,pos);
-	  		  }
-	  		  for(var x=0;x<study.length;x++)
-	  		  {
-	  			 reqBody = JSON.parse(JSON.stringify(study[x]));
-	  		  	loadDataArray(reqBody,dataMap,processedData);
-	  		  }
-	  		  if(Object.keys(dataMap).length>0){
-	  			  writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString,fileSuffix)
-				   .then(function(data){
-					   DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
-					   resolve(data);
-				   });
-	  		   }
-	  		  else
-	  		  {
-	  			  var dataUrl= null;
-		  		  DataRequest.update({requestId:currentTime}, {status:'complete',url:dataUrl });
-		  		  resolve( dataUrl);
-	  		  }
-	  		 
-		  
-	        }
-	    });
-	});
- 
+    return Data.find(findObject).exec()
+        .then(function(err, study) {
+            for(var x=0;x<study.length;x++)
+                {
+                    var reqBody = JSON.parse(JSON.stringify(study[x]));
+                    pos=getInitialVarIdMap(reqBody,'',dataMap,pos);
+                }
+
+            for(var x=0;x<study.length;x++)
+                {
+                    reqBody = JSON.parse(JSON.stringify(study[x]));
+                    loadDataArray(reqBody,dataMap,processedData);
+                }
+
+                if(Object.keys(dataMap).length>0){
+                    return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString,fileSuffix);
+                }
+                else return null;
+        });
 };
 
 
