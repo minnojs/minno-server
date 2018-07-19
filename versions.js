@@ -20,12 +20,13 @@ function create_version_obj(study_id, state) {
     return {id: generate_id(study_id, version, state), version: version, state: state};
 }
 
-function get_versions(user_id, study_id, res) {
+function get_versions(user_id, study_id) {
     return have_permission(user_id, study_id)
         .then(function() {
             studies_comp.study_info(study_id)
                 .then(function (study_data) {
-                    res.end(JSON.stringify({versions: study_data.versions}));
+                    return Promise.resolve({versions: study_data.versions});
+
                 });
         });
 };

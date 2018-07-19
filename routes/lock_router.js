@@ -18,5 +18,7 @@ function change_lock_state(req, res, status) {
         res.statusCode = 403;
         return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
     }
-    return studies.set_lock_status(sess.user.id, parseInt(req.params.study_id), status, res);
+    return studies.set_lock_status(sess.user.id, parseInt(req.params.study_id), status)
+    .then(res.end(JSON.stringify({})));
+
 }

@@ -15,6 +15,8 @@ const launch_router = require('./routes/launch_router');
 const lock_router   = require('./routes/lock_router');
 const publish_router   = require('./routes/publish_router');
 const studies_router = require('./routes/studies_router');
+const tags_router = require('./routes/tags_router');
+
 
 const sender      = require('./sender');
 
@@ -68,7 +70,8 @@ basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
 basePathRouter.use(lock_router);
 basePathRouter.use(publish_router);
-basePathRouter.use('/studies',studies_router);
+basePathRouter.use('/tags' ,tags_router);
+basePathRouter.use('/studies' ,studies_router);
 
 let sess;
 

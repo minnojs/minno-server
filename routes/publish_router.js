@@ -13,7 +13,9 @@ router.route('/studies/:study_id/publish')
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
-            versions.get_versions(sess.user.id, parseInt(req.params.study_id), res);
+            versions.get_versions(sess.user.id, parseInt(req.params.study_id))
+                .then(data=>res.end(JSON.stringify(data)));
+
         })
     .post(
         function(req, res){
@@ -29,6 +31,5 @@ router.route('/studies/:study_id/publish')
             return versions.insert_new_version(sess.user.id, parseInt(req.params.study_id),
                 dateFormat(now, "yyyymmdd.HHMMss"),
                 version_type, update_url)
-                .then(function(version_data){
-                    res.end(JSON.stringify(version_data));});
+                .then(version_data=>res.end(JSON.stringify(version_data)));
         });

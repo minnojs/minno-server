@@ -8,24 +8,42 @@ const studiesRouter = express.Router();
 module.exports = studiesRouter;
 
 studiesRouter
-    .use(function is_logged_in(req,res,next){
+    .use(function is_logged_in(req, res, next){
         if (!req.session || !req.session.user) return res.status(403).json({message: 'ERROR: Permission denied!'});
         req.user_id = req.session.user.id;
         next();
     });
 
 studiesRouter.route('')
-    .get((req,res)=>studies.get_studies(req.user_id, res))
-    .post((req,res)=>studies.create_new_study(req.user_id, req.body.study_name, req.body.study_type, res));
+    .get(
+        function(req,res){
+            return studies.get_studies(req.user_id)
+                .then(studies_data=>res.json(studies_data));
+
+        })
+    .post(function(req,res)
+    {
+        return studies.create_new_study(req.user_id, req.body.study_name, req.body.study_type)
+            .then(studies_data=>res.json(studies_data))
+            .catch(err=>res.status(err.status || 500).json({message:err.message}));
+    });
 
 studiesRouter.route('/:study_id')
     .delete(
         function(req, res){
-            studies.delete_study(req.user_id, parseInt(req.params.study_id), res);
+            return studies.delete_study(req.user_id, parseInt(req.params.study_id))
+                .then(()=>res.json({}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+
         })
     .put(
         function(req, res){
-            studies.rename_study(req.user_id, parseInt(req.params.study_id), req.body.study_name, res);
+            studies.rename_study(req.user_id, parseInt(req.params.study_id), req.body.study_name)
+            .then(()=>res.json({}))
+            .catch(err=>
+                res.status(err.status || 500).json({message:err.message}));
+
         });
 
 studiesRouter.route('/:study_id/experiments')
@@ -51,18 +69,25 @@ studiesRouter.route('/:study_id/experiments')
 studiesRouter.route('/:study_id/copy')
     .put(
         function(req, res){
-            studies.duplicate_study(req.user_id, parseInt(req.params.study_id), req.body.study_name, res);
+            studies.duplicate_study(req.user_id, parseInt(req.params.study_id), req.body.study_name)
+                .then(data=>res.json(data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
 
 studiesRouter.route('/:study_id/tags')
     .get(
         function(req, res){
-            tags.get_study_tags(req.user_id, parseInt(req.params.study_id), res);
+            return tags.get_study_tags(req.user_id, parseInt(req.params.study_id))
+                .then(tags_data=>res.json(tags_data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
     .put(
         function(req, res){
-            tags.update_study_tags(req.user_id, parseInt(req.params.study_id), req.body.tags, res);
+            return tags.update_study_tags(req.user_id, parseInt(req.params.study_id), req.body.tags)
+            .then(tags_data=>res.json(tags_data))
+            .catch(err=>res.status(err.status || 500).json({message:err.message}));
+
         });
 
 

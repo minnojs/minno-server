@@ -1,6 +1,5 @@
 var config = require('./config');
 const url         = config.mongo_url;
-const crypto      = require('crypto');
 var studies_comp = require('./studies');
 const utils        = require('./utils');
 
@@ -8,83 +7,67 @@ var mongo         = require('mongodb-bluebird');
 
 const have_permission = studies_comp.have_permission;
 
-exports.get_tags = function (user_id, res) {
+function get_tags(user_id) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         return users.findOne({_id: user_id})
-            .then(user_data=>res.send(JSON.stringify({tags: user_data.tags})));
+            .then(user_data=>({tags: user_data.tags}));
     });
-};
+}
 
-exports.get_study_tags = function (user_id, study_id, res) {
-    have_permission(user_id, study_id)
+function get_study_tags(user_id, study_id) {
+    return have_permission(user_id, study_id)
+        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(){
             return mongo.connect(url).then(function (db) {
-                var users   = db.collection('users');
+                const users   = db.collection('users');
                 return users.findOne({_id:user_id, studies: {$elemMatch: {id:study_id}}})
                     .then(function(user_data){
-                        var study_obj = user_data.studies.find(study => study.id === study_id);
-                        var all_tags = user_data.tags;
-                        var used = all_tags.map(function(tag){
-                            var used = study_obj.tags.indexOf(tag.id)>-1;
-                            return{id:tag.id, text:tag.text, color: tag.color, used:used}});
-                        return res.end(JSON.stringify({tags: used}));
-                    })
-            })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        });
-    })
-};
+                        const study_obj = user_data.studies.find(study => study.id === study_id);
+                        const all_tags = user_data.tags;
+                        const used = all_tags.map(function(tag){
+                            const used = study_obj.tags.indexOf(tag.id)>-1;
+                            return{id:tag.id, text:tag.text, color: tag.color, used:used};
+                        });
+                        return ({tags: used});
+                    });
+            });
+    });
+}
 
-exports.update_study_tags = function (user_id, study_id, tags, res) {
+function update_study_tags(user_id, study_id, tags) {
     return have_permission(user_id, study_id)
+        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(){
             return mongo.connect(url).then(function (db) {
-                var users   = db.collection('users');
+                const users   = db.collection('users');
                 return users.findOne({_id: user_id})
                     .then(function(user_data){
-                        var study_obj = user_data.studies.find(study => study.id === study_id);
-                        var study_tags = study_obj.tags;
-                        tags.forEach(function(tag){
-                                    if(tag.used)
-                                        study_tags.push(tag.id);
-                                    else
-                                        study_tags = study_tags.filter(function(el) {
-                                            return el != tag.id;
-                                        });
-                                }
-                        );
-                        // study_tags = [];
-                        var studies = user_data.studies;
-
-                        studies.forEach(function(study) {
-                            study.id === study_id && (study.tags = study_tags);
-                        });
-                        users.findAndModify(
+                        const study_obj = user_data.studies.find(study => study.id === study_id);
+                        let study_tags = study_obj.tags;
+                        tags.forEach(tag=>tag.used ? study_tags.push(tag.id): study_tags = study_tags.filter(el=>el !== tag.id));
+                        return users.findAndModify(
                             {_id:user_id, studies: {$elemMatch: {id:study_id}} },
                             [],
-                            {$set: {studies: studies}})
-                            .then(function(){return res.send(JSON.stringify({tags:study_tags}));});
+                            {$set: {'studies.$.tags': study_tags}})
+                            .then(({tags:study_tags}));
                     });
             });
         });
-};
+}
 
-exports.insert_new_tag = function (user_id, tag_text, tag_color, res) {
+function insert_new_tag(user_id, tag_text, tag_color) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         return users.update({_id: user_id}, {$push: { tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color} } })
             .then(function(user_result){
                 if (!user_result)
-                    return Promise.reject();
-                return res.send(JSON.stringify({}));
+                    return Promise.reject({status:500, message: 'ERROR: internal error'});
             });
     });
-};
+}
 
-exports.delete_tag = function (user_id, tag_id, res) {
+function delete_tag(user_id, tag_id) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
         return users.findOne({_id: user_id}).then(function(user) {
@@ -97,25 +80,24 @@ exports.delete_tag = function (user_id, tag_id, res) {
             return users.update({_id: user_id}, {$pull: {tags: {id: tag_id}}, $set: {studies: user.studies} })
                 .then(function(user_result){
                     if (!user_result)
-                        return Promise.reject();
-                    return res.send(JSON.stringify({}));
+                        return Promise.reject({status:500, message: 'ERROR: internal error'});
                 });
         });
     });
-};
+}
+
+function update_tag(user_id, tag) {
+    return mongo.connect(url).then(function (db) {
+        var users = db.collection('users');
+        return users.update({_id: user_id, tags: { $elemMatch: { id: tag.id } }},
+            { $set: { "tags.$.text" : tag.text, "tags.$.color" : tag.color} }
+        )
+        .then(function(tag_result){
+            if (!tag_result)
+                return Promise.reject({status:500, message: 'ERROR: internal error'});
+        });
+    });
+}
 
 
-exports.update_tag = function (user_id, tag, res) {
-        return mongo.connect(url).then(function (db) {
-                var users = db.collection('users');
-                return users.update({_id: user_id, tags: { $elemMatch: { id: tag.id } }},
-                    { $set: { "tags.$.text" : tag.text, "tags.$.color" : tag.color} }
-                )
-                .then(function(tag_result){
-                    if (!tag_result)
-                        return Promise.reject();
-                    return res.send(JSON.stringify({}));
-                });
-            }
-        );
-};
+module.exports = {get_tags, get_study_tags, update_study_tags, insert_new_tag, delete_tag, update_tag};
