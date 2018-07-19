@@ -8,14 +8,8 @@ const urlencode    = require('urlencode');
 const path         = require('path');
 const   studies_comp = require('./studies');
 const   experiments  = require('./experiments');
+const utils        = require('./utils');
 const have_permission = studies_comp.have_permission;
-
-
-function mysha1( data ) {
-    var generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex')
-}
 
 
 function walkSync(full_path, rel_dir, filelist) {
@@ -190,7 +184,7 @@ function download_zip(pth, res) {
 };
 
 function download_files(user_id, study_id, files, res) {
-    var zip_name = mysha1(user_id+'*'+Math.floor(Date.now() / 1000));
+    var zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
     var zip_path = config.base_folder + config.dataFolder + zip_name;
     var zip_file = zip_path+'.zip';
     return have_permission(user_id, study_id)

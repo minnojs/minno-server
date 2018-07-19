@@ -7,7 +7,7 @@ var mongo         = require('mongodb-bluebird');
 var users_comp    = require('./users');
 const dateFormat = require('dateformat');
 const path        = require('path');
-
+const utils        = require('./utils');
 
 function create_version_obj(study_id, state) {
     var now = new Date();
@@ -16,12 +16,7 @@ function create_version_obj(study_id, state) {
 }
 
 function generate_id(study_id, version, state) {
-    return mysha1(study_id + version + state+'*');
-}
-function mysha1( data ) {
-    const generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex');
+    return utils.sha1(study_id + version + state+'*');
 }
 
 

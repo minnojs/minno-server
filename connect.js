@@ -1,17 +1,12 @@
 const fs          = require('fs-extra');
 const formidable  = require('formidable');
 var users_obj     = require('./users');
-const crypto      = require('crypto');
 var config        = require('./config');
+var utils        = require('./utils');
 
 var mongo         = require('mongodb-bluebird');
 const url         = config.mongo_url;
 
-function mysha1( data ) {
-    var generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex')
-}
 
 exports.check = function (user_name, pass, res, callback) {
     log.info(`201804201319 | new login: ${user_name}`);
@@ -31,7 +26,7 @@ exports.check = function (user_name, pass, res, callback) {
         var users   = db.collection('users');
 
         var studies = db.collection('studies');
-        var query = {user_name: user_name, pass: mysha1(pass)};
+        var query = {user_name: user_name, pass: utils.sha1(pass)};
 
         var counters   = db.collection('counters');
 

@@ -4,17 +4,13 @@ const crypto        = require('crypto');
 const studies_comp  = require('./studies');
 const join = require('path').join;
 const users_comp = require('./users');
+const utils        = require('./utils');
 const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
 
 const have_permission = studies_comp.have_permission;
 
-function mysha1( data ) {
-    const generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex');
-}
 
 // get data for playing a file without creating an experiment
 // creates sham info for the player
@@ -112,7 +108,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id, res) 
                 return studies.update({_id: study_id}, {
                     $push: {
                         experiments: {
-                            id: mysha1(study_id + file_id + descriptive_id),
+                            id: utils.sha1(study_id + file_id + descriptive_id),
                             file_id: file_id, descriptive_id: descriptive_id
                         }
                     }
@@ -120,7 +116,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id, res) 
                 .then(function (user_result) {
                     if (!user_result)
                         return Promise.reject();
-                    return res.send(JSON.stringify({id: mysha1(study_id + file_id + descriptive_id),
+                    return res.send(JSON.stringify({id: utils.sha1(study_id + file_id + descriptive_id),
                         file_id: file_id, descriptive_id: descriptive_id}));
                 });
             });

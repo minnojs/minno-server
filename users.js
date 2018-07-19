@@ -4,15 +4,12 @@ const crypto      = require('crypto');
 const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
+const utils        = require('./utils');
+
 
 var mongo         = require('mongodb-bluebird');
 var evalidator    = require("email-validator");
 
-function mysha1( data ) {
-    var generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex')
-}
 
 function user_info (user_id) {
     return mongo.connect(url).then(function (db) {
@@ -45,7 +42,7 @@ function set_password(user_id, password, confirm, res) {
         var users   = db.collection('users');
         return users.findAndModify({_id: user_id},
             [],
-            {$set: {pass: mysha1(password)}})
+            {$set: {pass: utils.sha1(password)}})
             .then(function () {
                 return res.send(JSON.stringify({}));
             });
@@ -101,7 +98,7 @@ function create_admin_user() {
                 last_name:'admin',
                 email:'admin@admin.com',
                 role:'su',
-                pass:mysha1('admin123'),
+                pass:utils.sha1('admin123'),
                 studies:[],tags:[]};
             return users.insert(user_obj)
         });
@@ -146,7 +143,7 @@ function insert_new_user(req, res) {
                     [],
                     {upsert: true, new: true, returnOriginal: false})
                     .then(function (counter_data) {
-                        var activation_code = mysha1(user_name+Math.floor(Date.now() / 1000));
+                        var activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
                         var user_id = counter_data.value.seq;
                         var user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
                         return users.insert(user_obj)
@@ -192,7 +189,7 @@ function set_user_by_activation_code(code, pass, pass_confirm, res, callback) {
         return users.findAndModify(
             {activation_code:code},
             [],
-            {$set: {pass:mysha1(pass)}, $unset: {activation_code: ""}})
+            {$set: {pass:utils.sha1(pass)}, $unset: {activation_code: ""}})
             .then(function (user_data) {
                 return res.send(JSON.stringify({}));
             });

@@ -5,18 +5,13 @@ const studies_comp = require('./studies');
 const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url         = config.mongo_url;
-
+const utils        = require('./utils');
 
 const have_permission = studies_comp.have_permission;
 
-function mysha1( data ) {
-    const generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex');
-}
 
 function generate_id(study_id, version, state) {
-    return mysha1(study_id + version + state+'*');
+    return utils.sha1(study_id + version + state+'*');
 }
 
 function create_version_obj(study_id, state) {

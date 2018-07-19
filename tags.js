@@ -2,15 +2,11 @@ var config = require('./config');
 const url         = config.mongo_url;
 const crypto      = require('crypto');
 var studies_comp = require('./studies');
-
+const utils        = require('./utils');
 
 var mongo         = require('mongodb-bluebird');
 
-function mysha1( data ) {
-    var generator = crypto.createHash('sha1');
-    generator.update( data );
-    return generator.digest('hex')
-}
+const have_permission = studies_comp.have_permission;
 
 exports.get_tags = function (user_id, res) {
     return mongo.connect(url).then(function (db) {
@@ -79,7 +75,7 @@ exports.update_study_tags = function (user_id, study_id, tags, res) {
 exports.insert_new_tag = function (user_id, tag_text, tag_color, res) {
     return mongo.connect(url).then(function (db) {
         var users   = db.collection('users');
-        return users.update({_id: user_id}, {$push: { tags:{id:mysha1(tag_text+tag_color), text:tag_text, color:tag_color} } })
+        return users.update({_id: user_id}, {$push: { tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color} } })
             .then(function(user_result){
                 if (!user_result)
                     return Promise.reject();
