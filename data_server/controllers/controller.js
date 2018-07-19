@@ -93,7 +93,7 @@ exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
     var newDataRequest = new DataRequest(dataObject);
 
     return Data.find(findObject).exec()
-        .then(function(err, study) {
+        .then(function(study) {
             for(var x=0;x<study.length;x++)
                 {
                     var reqBody = JSON.parse(JSON.stringify(study[x]));
