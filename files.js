@@ -43,32 +43,30 @@ function walkSync(full_path, rel_dir, filelist) {
     return filelist;
 };
 
- function get_study_files(user_id, study_id, res) {
-    have_permission(user_id, study_id)
+function get_study_files(user_id, study_id) {
+    return have_permission(user_id, study_id)
         .then(function(user_data){
-            studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
             .then(function(study_data){
-
                 const folderName = path.join(config.user_folder,user_data.user_name,study_data.folder_name);
                 let files = [];
                 walkSync(folderName, '', files);
-                files = files.map(function(file){
-                    var exp_data = study_data.experiments.filter(function (exp) {
-                        var eq = exp.file_id == file.id;
-                        return exp.file_id == file.id});
-                    return{id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}});
-                return res.send(JSON.stringify({study_name:study_data.name,
-                                                is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
-                                                is_locked: study_data.locked,
-                                                type: study_data.type,
-                                                versions: study_data.versions,
-                                                files: files,
-                                                base_url: user_data.user_name+'/'+study_data.folder_name}));
+                files = files
+                    .map(function(file){
+                        const exp_data = study_data.experiments.filter(exp => exp.file_id == file.id);
+                        return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}
+                    });
+
+                return {
+                    study_name:study_data.name,
+                    is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
+                    is_locked: study_data.locked,
+                    type: study_data.type,
+                    versions: study_data.versions,
+                    files: files,
+                    base_url: user_data.user_name+'/'+study_data.folder_name
+                };
             })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         });
 };
 
@@ -275,6 +273,7 @@ function copy_file(user_id, study_id, file_id, new_study_id, res) {
 function upload(user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();
     form.maxFileSize = config.maxFileSize;
+    form.multiples = true;
 
     form.parse(req, function (err, fields, files) {
         if (err)
@@ -282,57 +281,37 @@ function upload(user_id, study_id, req, res) {
         return have_permission(user_id, study_id)
             .then(function(user_data){
                 studies_comp.study_info(study_id)
-
                     .then(function(study_data){
+                        const uploadedFiles = Array.isArray(files['files[]']) ? files['files[]'] : [files['files[]']];
+                        const prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
+                        const study_path = path.join(config.user_folder, user_data.user_name, study_data.folder_name, prefix);
 
+                        const create_file_promises = uploadedFiles
+                            .map(function(file){
+                                const oldpath = file.path;
+                                const file_path = path.join(study_path, file.name);
 
-                        var filelist =  [];
-                        var prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
+                                log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
 
-                        Object.keys(files).forEach(function(key){
-
-                            var oldpath = files[key].path;
-
-                            var file_id = urlencode.decode(prefix+files[key].name);
-
-                            var file_url = path.join('..', config.user_folder, user_data.user_name, study_data.folder_name,  file_id);
-
-                            var exp_data = study_data.experiments.filter(function (exp) {
-                                return exp.file_id == file_id});
-                            filelist.push({id: file_id,
-                                exp_data:exp_data?exp_data[0]:[],
-                                path:file_id,
-                                url:file_url,
-                                isDir:false
+                                return fs
+                                    .copy(oldpath, file_path)
+                                    .then(() => fs.remove(oldpath));
                             });
-                            var study_path = path.join(config.user_folder, user_data.user_name, study_data.folder_name, prefix);
 
-                            var file_path = path.join(study_path, files[key].name);
-                            log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
-                            fs.copy(oldpath, file_path, function (err, files_arr) {
-                                if (err){
-                                    log.error(`201804201343 | failed to upload_file: ${err}`);
-
-                                    console.log(err);
-                                    res.statusCode = 500;
-                                    return res.send(JSON.stringify({message: 'ERROR: internal error'}));
-                                }
-                                fs.remove(oldpath);
-                            });
-                        });
-                        return studies_comp.update_modify(study_id)
-                        .then(function(){
-                            return res.send(JSON.stringify(filelist))
-                        });
-                    })
-
+                        return Promise.all(create_file_promises);
+                    });
             })
-            .catch(function(err){
+            .then(() => Promise.all([
+                get_study_files(user_id, study_id),
+                studies_comp.update_modify(study_id)
+            ]))
+            .then(function([study_data]){ return study_data.files; })
+            .then(files => res.json(files))
+            .catch(function(){
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             });
-
     });
-};
+}
 
 module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, rename_file, copy_file, upload};

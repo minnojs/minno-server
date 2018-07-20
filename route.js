@@ -138,7 +138,13 @@ basePathRouter.route('/files/:study_id').get(
             res.statusCode = 403;
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
-        files.get_study_files(sess.user.id, parseInt(req.params.study_id), res);
+
+        files
+            .get_study_files(sess.user.id, parseInt(req.params.study_id))
+            .then(response => res.json(response))
+            .catch(function(err){
+                res.status(err.status || 500).json({message:err.message});
+            });
     })
     .delete(
         function(req, res){
@@ -162,6 +168,7 @@ basePathRouter.route('/files/:study_id').get(
 basePathRouter.route('/files/:study_id/upload/')
     .post(
         function(req, res){
+            // @TODO: crashes when user is not logged in
             files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
         });
 

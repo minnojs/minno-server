@@ -134,8 +134,7 @@ function delete_experiment(user_id, study_id, file_id, res) {
                         }
                     })
                         .then(function (user_result) {
-                            if (!user_result)
-                                return Promise.reject();
+                            if (!user_result) return Promise.reject();
                             return res.send(JSON.stringify({}));
                         });
 
