@@ -1,21 +1,20 @@
-var config = require('./config');
+const config = require('./config');
 const url         = config.mongo_url;
 const fs          = require('fs-extra');
-var mongo         = require('mongodb-bluebird');
+const mongo         = require('mongodb-bluebird');
 const dateFormat = require('dateformat');
 const path        = require('path');
 const utils        = require('./utils');
 
 function create_version_obj(study_id, state) {
-    var now = new Date();
-    var version = dateFormat(now, "yyyymmdd.HHMMss");
+    const now = new Date();
+    const version = dateFormat(now, 'yyyymmdd.HHMMss');
     return {id: generate_id(study_id, version, state), version: version, state: state};
 }
 
 function generate_id(study_id, version, state) {
     return utils.sha1(study_id + version + state+'*');
 }
-
 
 function get_studies(user_id) {
     return mongo.connect(url).then(function (db) {
@@ -103,7 +102,7 @@ function duplicate_study(user_id, study_id, new_study_name) {
                                 .catch(() => Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'}));
                     });
             });
-        });
+    });
 }
 
 function delete_study(user_id, study_id) {
@@ -114,7 +113,7 @@ function delete_study(user_id, study_id) {
         .then(function(user_data) {
             return delete_by_id(user_id, study_id)
                 .then(function(study_data) {
-                    var dir = path.join(config.user_folder, user_data.user_name , study_data.value.folder_name);
+                    const dir = path.join(config.user_folder, user_data.user_name , study_data.value.folder_name);
                     return fs.pathExists(dir)
                         .then(existing => !existing
                                     ?
@@ -200,8 +199,8 @@ function update_obj(study_id, study_obj) {
 
 function delete_by_id(user_id, study_id) {
     return mongo.connect(url).then(function (db) {
-        var users   = db.collection('users');
-        var studies   = db.collection('studies');
+        const users   = db.collection('users');
+        const studies   = db.collection('studies');
         return users
             .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
             .then(function(){return studies.findAndModify({_id:study_id},
@@ -232,28 +231,28 @@ function rename_study(user_id, study_id, new_study_name) {
             return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
         })
         .then(function(user_data) {
-                return study_exist(user_id, new_study_name)
-                    .then(function (study) {
-                        if (study.is_exist)
-                            return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
-                        return update_obj(study_id, study_obj)
-                            .then(function (study_data) {
-                                if (!study_data.ok)
-                                    return Promise.reject({status:500, message: 'ERROR: internal error'});
+            return study_exist(user_id, new_study_name)
+                .then(function (study) {
+                    if (study.is_exist)
+                        return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
+                    return update_obj(study_id, study_obj)
+                        .then(function (study_data) {
+                            if (!study_data.ok)
+                                return Promise.reject({status:500, message: 'ERROR: internal error'});
 
-                                const new_file_path = path.join(config.user_folder , user_data.user_name , new_study_name);
-                                const file_path     = path.join(config.user_folder , user_data.user_name , study_data.value.folder_name);
+                            const new_file_path = path.join(config.user_folder , user_data.user_name , new_study_name);
+                            const file_path     = path.join(config.user_folder , user_data.user_name , study_data.value.folder_name);
 
-                                return fs.pathExists(file_path)
-                                    .then(existing => !existing
-                                        ?
-                                        Promise.reject({status: 500, message: 'ERROR: Study does not exist in FS!'})
-                                        :
-                                        fs.rename(file_path, new_file_path)
-                                    );
-                            });
-                    });
-            });
+                            return fs.pathExists(file_path)
+                                .then(existing => !existing
+                                    ?
+                                    Promise.reject({status: 500, message: 'ERROR: Study does not exist in FS!'})
+                                    :
+                                    fs.rename(file_path, new_file_path)
+                                );
+                        });
+                });
+        });
 }
 
 

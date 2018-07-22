@@ -1,23 +1,15 @@
-const config = require('./config');
-const urljoin = require('url-join');
-const crypto      = require('crypto');
-const studies_comp = require('./studies');
-const data_server  = require('./data_server/controllers/controller');
+const config        = require('./config');
+const studies_comp  = require('./studies');
+const utils         = require('./utils');
 const mongo         = require('mongodb-bluebird');
-const mongo_url         = config.mongo_url;
-const utils        = require('./utils');
+const mongo_url     = config.mongo_url;
+
 
 const have_permission = studies_comp.have_permission;
 
 
 function generate_id(study_id, version, state) {
     return utils.sha1(study_id + version + state+'*');
-}
-
-function create_version_obj(study_id, state) {
-    var now = new Date();
-    var version = dateFormat(now, "yyyymmdd.HHMMss");
-    return {id: generate_id(study_id, version, state), version: version, state: state};
 }
 
 function get_versions(user_id, study_id) {
@@ -29,18 +21,18 @@ function get_versions(user_id, study_id) {
 
                 });
         });
-};
+}
 
 function insert_new_version(user_id, study_id, version, state, update_url) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
-                var version_id = generate_id(study_id, version, state);
+                const version_id = generate_id(study_id, version, state);
                 if(update_url==='update')
                     return push_new_version(study_id, version, state, version_id);
                 return studies_comp.study_info(study_id)
                     .then(function (study_data) {
-                        var versions = study_data.versions;
+                        let versions = study_data.versions;
                         if(update_url==='keep')
                             return push_new_version(study_id, version, state, versions[versions.length-1].id);
                         versions = versions.filter(version=>version.state==='Published');
@@ -48,12 +40,11 @@ function insert_new_version(user_id, study_id, version, state, update_url) {
                     });
             });
         });
-};
-
+}
 
 function push_new_version(study_id, version, state, version_id){
     return mongo.connect(mongo_url).then(function (db) {
-        var studies = db.collection('studies');
+        const studies = db.collection('studies');
         return studies.update({_id: study_id}, {
             $push: {
                 versions: {
@@ -75,4 +66,4 @@ function push_new_version(study_id, version, state, version_id){
 }
 
 
-module.exports = {create_version_obj, get_versions, insert_new_version};
+module.exports = {get_versions, insert_new_version};

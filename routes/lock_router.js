@@ -1,24 +1,27 @@
 const studies = require('../studies');
 const express = require('express');
-const router  = express.Router();
+const lockRouter  = express.Router();
 
-module.exports = router;
 
-router.post('/studies/:study_id/lock',function(req, res){
+module.exports   = lockRouter;
+
+lockRouter
+    .use(function is_logged_in(req, res, next){
+        if (!req.session || !req.session.user) return res.status(403).json({message: 'ERROR: Permission denied!'});
+        req.user_id = req.session.user.id;
+        next();
+    });
+
+lockRouter.post('/:study_id/lock',function(req, res){
     return change_lock_state(req, res, true);
 });
 
-router.post('/studies/:study_id/unlock',function(req, res){
+lockRouter.post('/:study_id/unlock',function(req, res){
     return change_lock_state(req, res, false);
 });
 
 function change_lock_state(req, res, status) {
-    sess = req.session;
-    if(!sess.user) {
-        res.statusCode = 403;
-        return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-    }
-    return studies.set_lock_status(sess.user.id, parseInt(req.params.study_id), status)
-    .then(res.end(JSON.stringify({})));
+    return studies.set_lock_status(req.user_id, parseInt(req.params.study_id), status)
+    .then(res.json({}));
 
 }

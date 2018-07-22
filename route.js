@@ -11,11 +11,12 @@ const dateFormat  = require('dateformat');
 const tags        = require('./tags');
 const fs          = require('fs-extra');
 
-const launch_router = require('./routes/launch_router');
-const lock_router   = require('./routes/lock_router');
-const publish_router   = require('./routes/publish_router');
-const studies_router = require('./routes/studies_router');
-const tags_router = require('./routes/tags_router');
+const launch_router     = require('./routes/launch_router');
+const lock_router       = require('./routes/lock_router');
+const publish_router    = require('./routes/publish_router');
+const studies_router    = require('./routes/studies_router');
+const tags_router       = require('./routes/tags_router');
+const files_router      = require('./routes/files_router');
 
 
 const sender      = require('./sender');
@@ -23,7 +24,7 @@ const sender      = require('./sender');
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
-const day = dateFormat(new Date(), "yyyy-mm-dd");
+const day = dateFormat(new Date(), 'yyyy-mm-dd');
 
 if (!fs.existsSync(config.logs_folder))
     fs.mkdirSync(config.logs_folder);
@@ -37,10 +38,10 @@ SimpleNodeLogger = require('simple-node-logger'),
 
 app.use(cors({
     credentials: true, origin: true,
-    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
-    "preflightContinue": false,
+    'methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    'preflightContinue': false,
     'Access-Control-Allow-Credentials': true,
-    "optionsSuccessStatus": 204
+    'optionsSuccessStatus': 204
 }));
 
 app.use(session({secret: config.session_secret,
@@ -68,10 +69,11 @@ if (typeof config.server_url !== 'string') throw new Error(`Config: server_url i
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
-basePathRouter.use(lock_router);
-basePathRouter.use(publish_router);
+basePathRouter.use('/files' ,files_router);
 basePathRouter.use('/tags' ,tags_router);
 basePathRouter.use('/studies' ,studies_router);
+basePathRouter.use('/studies', publish_router);
+basePathRouter.use('/studies', lock_router);
 
 let sess;
 
@@ -84,7 +86,7 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url);
 
 
-var data_controller = require('./data_server/controllers/controller');
+const data_controller = require('./data_server/controllers/controller');
 
 basePathRouter.route('/data')
     .put(data_controller.insertData);
@@ -112,12 +114,12 @@ basePathRouter.get('/is_loggedin',function(req,res){
 
 
 basePathRouter.post('/connect',function(req, res){
-        sess = req.session;
-        connect.check(req.body.username, req.body.password, res, function(user_data){
-            sess.user = user_data;
-            res.end(JSON.stringify(user_data._id));
-        });
+    sess = req.session;
+    connect.check(req.body.username, req.body.password, res, function(user_data){
+        sess.user = user_data;
+        res.end(JSON.stringify(user_data._id));
     });
+});
 
 basePathRouter.route('/download').get(
     function(req, res){
@@ -131,174 +133,140 @@ basePathRouter.route('/download').get(
     }
 );
 
-basePathRouter.route('/files/:study_id').get(
-    function(req, res){
-        sess = req.session;
-        if(!sess.user){
-            res.statusCode = 403;
-            return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        }
-
-        files
-            .get_study_files(sess.user.id, parseInt(req.params.study_id))
-            .then(response => res.json(response))
-            .catch(function(err){
-                res.status(err.status || 500).json({message:err.message});
-            });
-    })
-    .delete(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            files.delete_files(sess.user.id, parseInt(req.params.study_id), req.body.files, res);
-        })
-    .post(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            files.download_files(sess.user.id, parseInt(req.params.study_id), req.body.files, res);
-        });
-
-basePathRouter.route('/files/:study_id/upload/')
-    .post(
-        function(req, res){
-            // @TODO: crashes when user is not logged in
-            files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
-        });
-
-
-basePathRouter.route('/files/:study_id/upload/:folder_id')
-    .post(
-        function(req, res){
-            files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
-        });
-
-basePathRouter.route('/files/:study_id/file/')
-
-    .post(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            if(req.body.isDir)
-                return files.create_folder(sess.user.id, parseInt(req.params.study_id), req.body.name, res);
-
-            files.update_file(sess.user.id, parseInt(req.params.study_id), req.body.name, req.body.content, res);
-        });
-
-basePathRouter.route('/files/:study_id/file/:file_id')
-    .get(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            files.get_file_content(sess.user.id, parseInt(req.params.study_id), req.params.file_id, res);
-        })
-    .put(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-
-            files.update_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.content, res);
-        });
-
-basePathRouter.route('/files/:study_id/file/:file_id/move')
-    .put(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            files.rename_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.path, res);
-        });
-
-basePathRouter.route('/files/:study_id/file/:file_id/copy')
-    .put(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            files.copy_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, parseInt(req.body.new_study_id), res);
-
-        });
-
-basePathRouter.route('/files/:study_id/file/:file_id/experiment')
-    .post(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            experiments.insert_new_experiment(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
-        })
-
-    .delete(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-
-            experiments.delete_experiment(sess.user.id, parseInt(req.params.study_id), req.params.file_id, res);
-        })
-    .put(
-        function(req, res){
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            experiments.update_descriptive_id(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
-        });
-
-basePathRouter.route('/tags')
-    .get(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            tags.get_tags(sess.user.id, res);
-        })
-    .post(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            tags.insert_new_tag(sess.user.id, req.body.tag_text, req.body.tag_color, res);
-        });
-
-basePathRouter.route('/tags/:tag_id')
-    .delete(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user) {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            tags.delete_tag(sess.user.id, req.params.tag_id, res);
-        })
-    .put(function(req, res){
-        tags.update_tag(sess.user.id, {id: req.params.tag_id, text: req.body.tag_text, color:req.body.tag_color}, res);
-    });
+// basePathRouter.route('/files/:study_id').get(
+//     function(req, res){
+//         sess = req.session;
+//         if(!sess.user){
+//             res.statusCode = 403;
+//             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//         }
+//
+//         files
+//             .get_study_files(sess.user.id, parseInt(req.params.study_id))
+//             .then(response => res.json(response))
+//             .catch(function(err){
+//                 res.status(err.status || 500).json({message:err.message});
+//             });
+//     })
+//     .delete(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             files.delete_files(sess.user.id, parseInt(req.params.study_id), req.body.files, res);
+//         })
+//     .post(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             files.download_files(sess.user.id, parseInt(req.params.study_id), req.body.files, res);
+//         });
+//
+// basePathRouter.route('/files/:study_id/upload/')
+//     .post(
+//         function(req, res){
+//             // @TODO: crashes when user is not logged in
+//             files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
+//         });
+//
+//
+// basePathRouter.route('/files/:study_id/upload/:folder_id')
+//     .post(
+//         function(req, res){
+//             files.upload(sess.user.id, parseInt(req.params.study_id), req, res);
+//         });
+//
+// basePathRouter.route('/files/:study_id/file/')
+//
+//     .post(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             if(req.body.isDir)
+//                 return files.create_folder(sess.user.id, parseInt(req.params.study_id), req.body.name, res);
+//
+//             files.update_file(sess.user.id, parseInt(req.params.study_id), req.body.name, req.body.content, res);
+//         });
+//
+// basePathRouter.route('/files/:study_id/file/:file_id')
+//     .get(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             files.get_file_content(sess.user.id, parseInt(req.params.study_id), req.params.file_id, res);
+//         })
+//     .put(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//
+//             files.update_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.content, res);
+//         });
+//
+// basePathRouter.route('/files/:study_id/file/:file_id/move')
+//     .put(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             files.rename_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.path, res);
+//         });
+//
+// basePathRouter.route('/files/:study_id/file/:file_id/copy')
+//     .put(
+//         function(req, res){
+//             sess = req.session;
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             files.copy_file(sess.user.id, parseInt(req.params.study_id), req.params.file_id, parseInt(req.body.new_study_id), res);
+//
+//         });
+//
+// basePathRouter.route('/files/:study_id/file/:file_id/experiment')
+//     .post(
+//         function(req, res){
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             experiments.insert_new_experiment(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
+//         })
+//
+//     .delete(
+//         function(req, res){
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//
+//             experiments.delete_experiment(sess.user.id, parseInt(req.params.study_id), req.params.file_id, res);
+//         })
+//     .put(
+//         function(req, res){
+//             if(!sess.user) {
+//                 res.statusCode = 403;
+//                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+//             }
+//             experiments.update_descriptive_id(sess.user.id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
+//         });
 
 basePathRouter.route('/change_email')
     .get(
@@ -326,7 +294,7 @@ basePathRouter.route('/add_user')
     .post(
         function(req, res){
             sess = req.session;
-            if(!sess.user || sess.user.role!='su') {
+            if(!sess.user || sess.user.role!=='su') {
                 res.statusCode = 403;
                 return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
             }
@@ -374,7 +342,7 @@ basePathRouter.post('/logout',function(req, res){
 basePathRouter.get('/users',function(req, res){
     var sess = req.session;
 
-    if(!sess.user || sess.user.role!='su') {
+    if(!sess.user || sess.user.role!=='su') {
         return;
     }
     return users.get_users(res);
@@ -382,5 +350,5 @@ basePathRouter.get('/users',function(req, res){
 });
 
 app.listen(config.port,function(){
-    console.log("App Started on PORT "+config.port);
+    console.log('App Started on PORT '+config.port);
 });

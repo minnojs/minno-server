@@ -70,105 +70,94 @@ function get_study_files(user_id, study_id) {
         });
 };
 
-function create_folder(user_id, study_id, folder_id, res) {
-    have_permission(user_id, study_id)
+function create_folder(user_id, study_id, folder_id) {
+    return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
         .then(function(user_data){
-            studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
                 .then(function(study_data){
                     folder_id = urlencode.decode(folder_id);
-                    var folder_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,folder_id);
-                    if (!fs.existsSync(folder_path))
-                        fs.mkdirSync(folder_path);
+                    const folder_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,folder_id);
 
-                    var file_url = '../'+folder_path;
-
-                    return studies_comp.update_modify(study_id)
-                        .then(function(){
-                            return res.send(JSON.stringify({id: folder_id, url: file_url}))});
-
-                })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                    return fs.pathExists(folder_path)
+                        .then(existing => existing
+                            ?
+                            Promise.reject({status:500, message: 'ERROR: folder aleady exists in FS!'})
+                            :
+                            fs.mkdirp(folder_path))
+                            .then(function(){
+                                const file_url = path.join('../', folder_path);
+                                return studies_comp.update_modify(study_id)
+                                    .then(function(){
+                                        return ({id: folder_id, url: file_url});
+                                    });
+                            });
+                });
         });
-};
+}
 
-function update_file(user_id, study_id, file_id, content, res) {
-    have_permission(user_id, study_id)
+function update_file(user_id, study_id, file_id, content) {
+    return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
         .then(function(user_data){
-            studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
             .then(function(study_data){
                 file_id = urlencode.decode(file_id);
-                fs.writeFile(path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id), content, 'utf8', function (err, content) {
-                    if (err) {
-                        res.statusCode = 500;
-                        return res.send(JSON.stringify({message: 'ERROR: internal error'}));
-                    }
-                    var file_url = path.join('..',config.user_folder,user_data.user_name,study_data.folder_name,file_id);
-
-                    return studies_comp.update_modify(study_id)
-                        .then(function(){
-                            return res.send(JSON.stringify({id: file_id, content: content, url: file_url}))});
-                })
-            })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                return fs.writeFile(path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id), content, 'utf8')
+                    .then(function(){
+                        const file_url = path.join('..',config.user_folder,user_data.user_name,study_data.folder_name,file_id);
+                        return studies_comp.update_modify(study_id)
+                            .then(()=>({id: file_id, content: content, url: file_url}));
+                    });
+            });
         });
-};
+}
 
 
 
-function get_file_content(user_id, study_id, file_id, res) {
-    have_permission(user_id, study_id)
+
+function get_file_content(user_id, study_id, file_id) {
+    return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
         .then(function(user_data){
-            studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
                 .then(function(study_data){
                     file_id = urlencode.decode(file_id);
-                    fs.readFile(path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id), 'utf8', function (err,content) {
-                        if (err) {
-                            res.statusCode = 500;
-                            return res.send(JSON.stringify({message: 'ERROR: internal error'}));
-                        }
-                        return res.send(JSON.stringify({id: file_id, content: content}))
-                    });
-                })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                    return fs.readFile(path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id), 'utf8')
+                        .then((content)=>({id: file_id, content: content}));
+                });
         });
-};
+}
 
-function delete_files(user_id, study_id, files, res) {
+function delete_files(user_id, study_id, files) {
     return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
         .then(function(user_data){
             studies_comp.study_info(study_id)
                 .then(function(study_data){
                     files.forEach(function(file) {
                         var delPath = path.join(config.user_folder , user_data.user_name , study_data.folder_name , file);
-                        try {
-                            fs.removeSync(delPath);
-                            experiments.delete_experiment(user_id, study_id, file);
+                        return fs.pathExists(delPath)
+                            .then(existing => !existing
+                                ?
+                                Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
+                                :
+                                fs.remove(delPath))
+                                .then(()=>experiments.delete_experiment(user_id, study_id, file));
 
-                        } catch (err) {
-                            res.statusCode = 500;
-                            return res.send(JSON.stringify({message: 'ERROR: internal error'}));
-                        }
                     });
-                    return studies_comp.update_modify(study_id)
-                            .then(function(){
-                                return res.send(JSON.stringify({}))
-                            });
-                })
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                    return studies_comp.update_modify(study_id).then(()=>({}));
+                });
         });
-};
+}
 
 function download_zip(pth, res) {
     res.download(path.join(config.base_folder , config.dataFolder,pth), pth, function(err){
@@ -212,63 +201,51 @@ function download_files(user_id, study_id, files, res) {
         });
 };
 
-function rename_file(user_id, study_id, file_id, new_path, res) {
-    file_id = urlencode.decode(file_id);
+function rename_file(user_id, study_id, file_id, new_path) {
     return have_permission(user_id, study_id)
-        .then(function(user_data){
-            studies_comp.study_info(study_id)
-                .then(function(study_data){
-                    var new_file_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,new_path);
-                    var exist_file_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id);
-                    fs.rename(exist_file_path, new_file_path, function (err) {
-                        if (err){
-                            res.statusCode = 500;
-                            return res.send(JSON.stringify({message: 'ERROR: internal error'}));
-                        }
-                        return studies_comp.update_modify(study_id)
-                            .then(function(){
-                                var file_url = '../'+new_file_path;
-                                experiments.update_file_id(user_id, study_id, file_id, new_path, res);
-
-                                return res.send(JSON.stringify({id: urlencode.encode(new_path), url:file_url}));
-
-                            });
-                    });
-                })
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
         })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        });
-};
-
-function copy_file(user_id, study_id, file_id, new_study_id, res) {
-    file_id = urlencode.decode(file_id);
-    return have_permission(user_id, study_id)
         .then(function(user_data){
-             studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
                 .then(function(study_data){
+                    file_id = urlencode.decode(file_id);
+                    const new_file_path = path.join(config.user_folder, user_data.user_name, study_data.folder_name, new_path);
+                    let exist_file_path = path.join(config.user_folder, user_data.user_name, study_data.folder_name, file_id);
+                    return fs.rename(exist_file_path, new_file_path)
+                        .then(() => studies_comp.update_modify(study_id)
+                            .then(function(){
+                                const file_url = '../'+new_file_path;
+                                return experiments.update_file_id(user_id, study_id, file_id, new_path)
+                                    .then(()=>({id: urlencode.encode(new_path), url:file_url}));
+                            })
+                    );
+                });
+        });
+}
 
+function copy_file(user_id, study_id, file_id, new_study_id) {
+    return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
+        .then(function(user_data){
+            return studies_comp.study_info(study_id)
+                .then(function(study_data){
                     return studies_comp.study_info(new_study_id)
                         .then(function(new_study_data){
-                            console.log(new_study_data);
-                            // console.log({user_id, study_id, file_id, new_study_id});
-                            var new_file_path = path.join(config.user_folder,user_data.user_name,new_study_data.folder_name,file_id);
-                            var exist_file_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id);
+                            file_id = urlencode.decode(file_id);
+                            const new_file_path = path.join(config.user_folder,user_data.user_name,new_study_data.folder_name,file_id);
+                            const exist_file_path = path.join(config.user_folder,user_data.user_name,study_data.folder_name,file_id);
 
-                            fs.copySync(exist_file_path, new_file_path);
-                                return studies_comp.update_modify(new_study_id)
-                                    .then(function(){
-                                        return res.send(JSON.stringify({}));
-                                    });
-                            });
+                            return fs.copy(exist_file_path, new_file_path)
+                            .then( ()=> studies_comp.update_modify(new_study_id))
+                            .then(()=>({}));
+
                         });
-        })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+                });
         });
-};
+}
 
 function upload(user_id, study_id, req, res) {
     var form = new formidable.IncomingForm();

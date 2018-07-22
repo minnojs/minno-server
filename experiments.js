@@ -90,14 +90,14 @@ function get_experiments(user_id, study_id) {
         .then(function() {
             return studies_comp.study_info(study_id);
         });
-};
+}
 
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date) {
     return have_permission(user_id, study_id)
         .then(function() {
             return data_server.getData(exp_id, file_format, file_split, start_date, end_date);
         });
-};
+}
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
@@ -121,27 +121,29 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id, res) 
                 });
             });
         });
-};
+}
 
 function delete_experiment(user_id, study_id, file_id, res) {
     return have_permission(user_id, study_id)
+        .catch(function(){
+            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
+        })
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
-                    var studies = db.collection('studies');
-                    return studies.update({_id: study_id}, {
-                        $pull: {
-                            experiments: {file_id: file_id}
-                        }
-                    })
-                        .then(function (user_result) {
-                            if (!user_result) return Promise.reject();
-                            return res.send(JSON.stringify({}));
-                        });
+                const studies = db.collection('studies');
+                return studies.update({_id: study_id}, {
+                    $pull: {
+                        experiments: {file_id: file_id}
+                    }
+                })
+                .then(function (user_result) {
+                    if (!user_result) return Promise.reject();
+                    return res.send(JSON.stringify({}));
+                });
 
-                }
-            );
+            });
         });
-};
+}
 
 function update_descriptive_id(user_id, study_id, file_id, descriptive_id, res) {
     return have_permission(user_id, study_id)
@@ -154,9 +156,9 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id, res) 
                 }
             );
         });
-};
+}
 
-function update_file_id(user_id, study_id, file_id, new_file_id, res) {
+function update_file_id(user_id, study_id, file_id, new_file_id) {
     return have_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
@@ -167,7 +169,7 @@ function update_file_id(user_id, study_id, file_id, new_file_id, res) {
                 }
             );
         });
-};
+}
 
 function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
     return have_permission(user_id, study_id)
