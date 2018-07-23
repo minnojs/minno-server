@@ -4,12 +4,7 @@ const connect     = require('./connect');
 const config      = require('./config');
 const users       = require('./users');
 const files       = require('./files');
-const experiments = require('./experiments');
-const path        = require('path');
-
 const dateFormat  = require('dateformat');
-const tags        = require('./tags');
-const fs          = require('fs-extra');
 
 const launch_router     = require('./routes/launch_router');
 const lock_router       = require('./routes/lock_router');
@@ -25,9 +20,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
 const day = dateFormat(new Date(), 'yyyy-mm-dd');
-
-if (!fs.existsSync(config.logs_folder))
-    fs.mkdirSync(config.logs_folder);
+require('./config_validation');
 
 SimpleNodeLogger = require('simple-node-logger'),
     opts = {
@@ -60,11 +53,6 @@ app.use(bodyParser.urlencoded({limit: '50mb',extended: true}));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(config.relative_path, basePathRouter);
 
-const dataFolder = path.join(config.base_folder,config.dataFolder)
-if (!fs.existsSync(config.static_path)) throw new Error(`Config: static_path folder does not exist "${config.static_path}"`);
-if (!fs.existsSync(config.user_folder)) throw new Error(`Config: user_folder folder does not exist "${config.user_folder}"`);
-if (!fs.existsSync(dataFolder)) throw new Error(`Config: dataFolder folder does not exist "${dataFolder}"`);
-if (typeof config.server_url !== 'string') throw new Error(`Config: server_url is not set`);
 
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
@@ -85,14 +73,12 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url);
 
-
 const data_controller = require('./data_server/controllers/controller');
 
 basePathRouter.route('/data')
-    .put(data_controller.insertData);
-
-basePathRouter.route('/data')
+    .put(data_controller.insertData)
     .get(data_controller.getData);
+
 /********************************************/
 
 basePathRouter.get('/',function(req,res){
@@ -216,4 +202,9 @@ basePathRouter.get('/users',function(req, res){
 
 app.listen(config.port,function(){
     console.log('App Started on PORT '+config.port);
+});
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
 });

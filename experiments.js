@@ -78,11 +78,10 @@ function get_experiment_url (req) {
                             });
                     });
             })
-            .catch(Promise.reject({status:400, message:'Error: Wrong version'}))
-        ;
+            .catch(Promise.reject({status:400, message:'Error: Wrong version'}));
+
     });
 }
-
 
 function get_experiments(user_id, study_id) {
     return have_permission(user_id, study_id)
