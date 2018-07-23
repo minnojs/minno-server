@@ -352,3 +352,8 @@ basePathRouter.get('/users',function(req, res){
 app.listen(config.port,function(){
     console.log('App Started on PORT '+config.port);
 });
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});

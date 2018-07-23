@@ -62,7 +62,7 @@ function get_experiment_url (req) {
 
                     return counters.findAndModify({_id:'session_id'},
                         [],
-                        {"$inc": {"seq": 1}},
+                        {'$inc': {'seq': 1}},
                         {upsert: true, new: true, returnOriginal: false})
                         .then(function(counter_data){
                             const session_id = counter_data.value.seq;
@@ -78,12 +78,9 @@ function get_experiment_url (req) {
                             };
                         });
                 });
-            })
-            .catch(Promise.reject({status:400, message:'Error: Wrong version'}))
-        ;
+            });
     });
 }
-
 
 function get_experiments(user_id, study_id) {
     return have_permission(user_id, study_id)

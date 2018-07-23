@@ -5,7 +5,8 @@
   "repository": "https://github.com/ProjectImplicit/pi-validator.git",
   "main": "route.js",
   "scripts": {
-    "start": "node route.js"
+    "start": "node route.js",
+    "dev": "node --trace-warnings --inspect route.js"
   },
   "author": "",
   "license": "Apache-2.0",
