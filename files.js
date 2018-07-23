@@ -160,46 +160,43 @@ function delete_files(user_id, study_id, files) {
 }
 
 function download_zip(pth, res) {
-    res.download(path.join(config.base_folder , config.dataFolder,pth), pth, function(err){
+    return res.download(path.join(config.base_folder , config.dataFolder,pth), pth, function(err){
         if (err) {
-            console.log('can not download..')
+            return res.status(err.status || 500).json({message:err.message});
         } else {
-            fs.removeSync(path.join(config.base_folder , config.dataFolder,pth));
+            fs.remove(path.join(config.base_folder , config.dataFolder,pth));
         }
     });
 
-};
+}
 
-function download_files(user_id, study_id, files, res) {
-    var zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
-    var zip_path = config.base_folder + config.dataFolder + zip_name;
-    var zip_file = zip_path+'.zip';
+function download_files(user_id, study_id, files) {
+    const zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
+    const zip_path = config.base_folder + config.dataFolder + zip_name;
+    const zip_file = zip_path+'.zip';
     return have_permission(user_id, study_id)
+        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(user_data){
-            studies_comp.study_info(study_id)
+            return studies_comp.study_info(study_id)
                 .then(function(study_data){
-                    files.forEach(function(file) {
-                        var path = path.join(config.user_folder , user_data.user_name, study_data.folder_name,file);
-                        fs.copySync(path, zip_path+'/'+file);
-                    });
-
-                    zipFolder(zip_path, zip_file, function(err) {
-                        if(err)
-                            return console.log('oh no!', err);
-                            fs.removeSync(zip_path);
-
-                            res.send(JSON.stringify({zip_file: zip_name+'.zip'}));
-
-                    });
-
-
-                })
+                    return Promise.all(files.map(function(file) {
+                        const path2copy = path.join(config.user_folder, user_data.user_name, study_data.folder_name, file);
+                        return fs.copy(path2copy, zip_path + '/' + file);
+                    }));
+                });
         })
-        .catch(function(err){
-            res.statusCode = 403;
-            res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        });
-};
+        .then(() => new Promise(function(resolve, reject) {
+                zipFolder(zip_path, zip_file, function (err) {
+                    if (err)
+                        return reject(err);
+                    resolve();
+                });
+            }))
+            .then(function(){
+                fs.remove(zip_path);
+                return ({zip_file: zip_name + '.zip'});
+            });
+}
 
 function rename_file(user_id, study_id, file_id, new_path) {
     return have_permission(user_id, study_id)

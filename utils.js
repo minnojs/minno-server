@@ -1,12 +1,11 @@
 const crypto      = require('crypto');
-var config        = require('./config');
+const config        = require('./config');
 
 
 function sha1(data) {
-    var generator = crypto.createHash('sha1');
+    const generator = crypto.createHash('sha1');
     generator.update(data+config.hash_salt);
-    return generator.digest('hex')
+    return generator.digest('hex');
 }
-
 
 module.exports = {sha1};

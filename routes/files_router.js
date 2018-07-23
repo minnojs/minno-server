@@ -32,7 +32,12 @@ filesRouter.route('/:study_id').get(
         })
     .post(
         function(req, res){
-            files.download_files(req.user_id, parseInt(req.params.study_id), req.body.files, res);
+            return files.download_files(req.user_id, parseInt(req.params.study_id), req.body.files)
+            .then(response=>res.json(response))
+            .catch(function(err){
+                res.status(err.status || 500).json({message:err.message});
+            });
+
         });
 
 filesRouter.route('/:study_id/upload/')
@@ -96,14 +101,21 @@ filesRouter.route('/:study_id/file/:file_id/copy')
 filesRouter.route('/:study_id/file/:file_id/experiment')
     .post(
         function(req, res){
-            return experiments.insert_new_experiment(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
+            return experiments.insert_new_experiment(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id)
+                .then(result=>res.json(result))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+
         })
 
     .delete(
         function(req, res){
-            return experiments.delete_experiment(req.user_id, parseInt(req.params.study_id), req.params.file_id, res);
+            return experiments.delete_experiment(req.user_id, parseInt(req.params.study_id), req.params.file_id)
+                .then(()=>res.json({}))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
     .put(
         function(req, res){
-            return experiments.update_descriptive_id(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id, res);
+            return experiments.update_descriptive_id(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.descriptive_id)
+                .then(()=>res.json({}))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });

@@ -107,9 +107,7 @@ function duplicate_study(user_id, study_id, new_study_name) {
 
 function delete_study(user_id, study_id) {
     return have_permission(user_id, study_id)
-        .catch(function(){
-            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
-        })
+        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(user_data) {
             return delete_by_id(user_id, study_id)
                 .then(function(study_data) {
