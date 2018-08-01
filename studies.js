@@ -24,10 +24,10 @@ function get_studies(user_id) {
             .then(function(user_result){
                 if(!user_result.studies)
                     return Promise.resolve({studies: []});
-                var study_ids = user_result.studies.map(function(obj) {return obj.id;});
+                const study_ids = user_result.studies.map(function(obj) {return obj.id;});
                 return studies.find({ _id: { $in: study_ids } })
                     .then(function(studies){
-                        var studies_arr = [];
+                        let studies_arr = [];
                         studies.forEach(function(study){
                             const study_tags = user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=> user_result.tags.find(tag => tag.id === tag_id));
                             studies_arr.push({id: study._id,
@@ -35,6 +35,7 @@ function get_studies(user_id) {
                                 is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
                                 is_locked:study.locked,
                                 type:study.type,
+                                is_public: study.is_public,
                                 // is_template:false,
                                 last_modified:study.modify_date,
                                 permission:'owner',
@@ -273,4 +274,14 @@ function update_modify(study_id) {
     });
 }
 
-module.exports = {set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};
+function make_public(user_id, study_id, is_public) {
+    return have_permission(user_id, study_id)
+        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+        .then(()=> mongo.connect(url).then(function (db) {
+                const studies = db.collection('studies');
+                return studies.update({_id: study_id}, {$set: {is_public: is_public}});
+            })
+        );
+}
+
+module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};

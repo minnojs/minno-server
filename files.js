@@ -31,7 +31,6 @@ function walkSync(full_path, rel_dir, filelist) {
                           });
         }
         else {
-            var file_id= '../'+full_path+'/'+file;
             var file_url = config.server_url+'/'+full_path+'/'+file;
             filelist.push({id:urlencode(file_str),
                             isDir:false,
@@ -41,10 +40,11 @@ function walkSync(full_path, rel_dir, filelist) {
         }
     });
     return filelist;
-};
+}
 
 function get_study_files(user_id, study_id) {
     return have_permission(user_id, study_id)
+        .catch(()=> Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(user_data){
             return studies_comp.study_info(study_id)
             .then(function(study_data){
@@ -53,7 +53,7 @@ function get_study_files(user_id, study_id) {
                 walkSync(folderName, '', files);
                 files = files
                     .map(function(file){
-                        const exp_data = study_data.experiments.filter(exp => exp.file_id == file.id);
+                        const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
                         return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}
                     });
 
@@ -62,19 +62,19 @@ function get_study_files(user_id, study_id) {
                     is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
                     is_locked: study_data.locked,
                     type: study_data.type,
+                    is_public: study_data.is_public,
+
                     versions: study_data.versions,
                     files: files,
                     base_url: user_data.user_name+'/'+study_data.folder_name
                 };
-            })
+            });
         });
-};
+}
 
 function create_folder(user_id, study_id, folder_id) {
     return have_permission(user_id, study_id)
-        .catch(function(){
-            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
-        })
+        .catch(()=> Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(function(user_data){
             return studies_comp.study_info(study_id)
                 .then(function(study_data){

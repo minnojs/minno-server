@@ -12,6 +12,7 @@ const publish_router    = require('./routes/publish_router');
 const studies_router    = require('./routes/studies_router');
 const tags_router       = require('./routes/tags_router');
 const files_router      = require('./routes/files_router');
+const sharing_router      = require('./routes/sharing_router');
 
 
 const sender      = require('./sender');
@@ -62,6 +63,7 @@ basePathRouter.use('/tags' ,tags_router);
 basePathRouter.use('/studies' ,studies_router);
 basePathRouter.use('/studies', publish_router);
 basePathRouter.use('/studies', lock_router);
+basePathRouter.use('/studies', sharing_router);
 
 let sess;
 
