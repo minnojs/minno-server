@@ -1,498 +1,412 @@
 'use strict';
-var config = require('../../config');
+var config = require('../../config'),
+	mongoose = require('mongoose'),
+	Data = require('../models/dataSchema'),
+	DataRequest = require('../models/dataRequestSchema'),
+	Study = require('../models/studySchema'), //created model loading here
+	DataRequest = mongoose.model('DataRequest'),
+	Data = mongoose.model('Data'),
+	sanitize = require("sanitize-filename");
 
-
-var mongoose = require('mongoose'),
-Data = require('../models/dataSchema'),
-DataRequest = require('../models/dataRequestSchema'),
-  Study = require('../models/studySchema'), //created model loading here
-DataRequest = mongoose.model('DataRequest'),
-   Data = mongoose.model('Data');
-   
-var fs = require('fs');
+var fs = require('fs-extra');
 var convert = require('mongoose_schema-json');
-var archiver = require('archiver');
-const varSplit=".";
-const nullDataValue='';
-const defaultDataFilename='_data';
-const defaultValueName='data';  // name used for non json items in data arrays
-const dataPrefix=''; //prefix for items in the data array
-const dataFileLocation=config.base_folder;
-const dataFolder=config.dataFolder;
+var archiver = require('archiver-promise');
+const varSplit = ".";
+const nullDataValue = '';
+const defaultDataFilename = '_data';
+const defaultValueName = 'data'; // name used for non json items in data arrays
+const dataPrefix = ''; //prefix for items in the data array
+const dataFileLocation = config.base_folder;
+const dataFolder = config.dataFolder;
 
 exports.insertData = function(req, res) {
-	
-  var newData = new Data(req.body);
-  
-  var reqBody=req.body;
-  
- // console.log(reqBody.studyId +' is the study id saved');
-  newData.save(function(err, data) {
-    if (err)
-      res.send(err);
-    res.json(data);
-  });
+	var newData = new Data(req.body);
+	var reqBody = req.body;
+	newData.save(function(err, data) {
+		if (err)
+			res.send(err);
+		res.json(data);
+	});
 };
 exports.getDownloadRequests = function(studyIds) {
 	return new Promise(function(resolve, reject) {
-		DataRequest.find({requestId: {$in:studyIds}}, (err, dataRequests) =>{  
-		    if (err) {
-				 reject(err);}
-			else
-			{
+		DataRequest.find({
+			requestId: {
+				$in: studyIds
+			}
+		}, (err, dataRequests) => {
+			if (err) {
+				reject(err);
+			} else {
 				resolve(dataRequests);
 			}
 
-		   
+
 		})
 	});
 
 
 };
-exports.getData2=function(req,res)
-{
+exports.getData2 = function(req, res) {
 	res.send(exports.getData(req.get('studyId')));
 }
-exports.getData = function(studyId,fileFormat,fileSplitVar,startDate,endDate) {
+exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate) {
 	//startDate=null;
 	//endDate=null;
-	console.log (startDate +" is the startdate");
-	if(typeof studyId == 'undefined' || !studyId)
+
+	if (typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
 	//∂console.log(studyId + " is the studyId requested");
-	var findObject={};
-    var dataMap={};
-    var processedData=[];
-    var pos=0;
-    var rowSplitString='\t';
-	var fileSuffix='.txt';
-	findObject.studyId=studyId;
-	if(typeof startDate !== 'undefined' && startDate)
-	{
-		findObject.createdDate={};
-		findObject.createdDate.$gt=new Date(startDate);
+	var findObject = {};
+	var files = {};
+	var dataMaps = {};
+	var processedData = [];
+	var pos = 0;
+	var rowSplitString = '\t';
+	var fileSuffix = '.txt';
+	var fileConfig = {};
+	findObject.studyId = studyId;
+	if (typeof startDate !== 'undefined' && startDate) {
+		findObject.createdDate = {};
+		findObject.createdDate.$gt = new Date(startDate);
 	}
-	if( typeof endDate !== 'undefined' && endDate)
-	{
-		if(typeof findObject.createdDate == 'undefined' || !findObject.createdDate){
-		findObject.createdDate={};}
-		findObject.createdDate.$lt=new Date(endDate);
+	if (typeof endDate !== 'undefined' && endDate) {
+		if (typeof findObject.createdDate == 'undefined' || !findObject.createdDate) {
+			findObject.createdDate = {};
+		}
+		findObject.createdDate.$lt = new Date(endDate);
 	}
-	if(fileFormat=='csv')
-	{
-		rowSplitString=',';
-		fileSuffix='.csv';
+	if (fileFormat == 'csv') {
+		rowSplitString = ',';
+		fileSuffix = '.csv';
 	}
-	if(fileFormat=='tsv')
-	{
-		rowSplitString='\t';
+	if (fileFormat == 'tsv') {
+		rowSplitString = '\t';
 	}
-	var currentTime=new Date();
-	currentTime=currentTime.getTime();
-	var dataObject={studyId:studyId, details:findObject, requestId:currentTime};
-    var newDataRequest = new DataRequest(dataObject);
+	var currentTime = new Date();
+	currentTime = currentTime.getTime();
+	var dataObject = {
+		studyId: studyId,
+		details: findObject,
+		requestId: currentTime
+	};
+	var newDataRequest = new DataRequest(dataObject);
+	var cursor = Data.find(findObject).cursor();
+	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		dataEntry = JSON.parse(JSON.stringify(dataEntry));
+		var newMaps = getInitialVarMap(dataEntry);
+		newMaps.forEach(function(newMap) {
+			updateMap(dataMaps, newMap, fileSplitVar);
+		});
 
-    return Data.find(findObject).exec()
-        .then(function(study) {
-            for(var x=0;x<study.length;x++)
-                {
-                    var reqBody = JSON.parse(JSON.stringify(study[x]));
-                    pos=getInitialVarIdMap(reqBody,'',dataMap,pos);
-                }
+	}
+	if (Object.keys(dataMaps).length == 0) {
+		return null; //no data
+	}
+	await fileSetup(fileConfig);
 
-            for(var x=0;x<study.length;x++)
-                {
-                    reqBody = JSON.parse(JSON.stringify(study[x]));
-                    loadDataArray(reqBody,dataMap,processedData);
-                }
+	cursor = Data.find(findObject).cursor();
+	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		dataEntry = JSON.parse(JSON.stringify(dataEntry));
+		newMaps = getInitialVarMap(dataEntry);
+		await asyncForEach(newMaps, async function(newMap) {
+			if (!fileSplitVar || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+				var filename = defaultDataFilename;
+			} else {
+				var filename = newMap[fileSplitVar];
+			}
+			var dataMap = dataMaps[filename];
+			var row = mapToRow(dataMap, newMap, filename);
+			await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+		});
+	}
+	return zipFiles(fileConfig);
 
-                if(Object.keys(dataMap).length>0){
-                    return writeDataArrayToFile(processedData,dataMap,fileSplitVar,rowSplitString,fileSuffix);
-                }
-                else return null;
-        });
+
 };
+var asyncForEach = async function(array, callback) {
+	for (let index = 0; index < array.length; index++) {
+		await callback(array[index], index, array)
+	}
+}
+var mapToRow = function(dataMap, newMap, filename) {
 
-
+	var row = new Array(Object.keys(dataMap).length);
+	Object.keys(newMap).forEach(function(key) {
+		row[dataMap[key]] = newMap[key];
+	});
+	return row;
+}
 exports.newStudyInstance = function(req, res) {
-	var study ={
+	var study = {
 		studyId: req.params.studyId,
 		conditions: req.params.conditions,
 		userAgent: req.headers['user-agent'],
-		referrer : req.header('Referer')
+		referrer: req.header('Referer')
 	};
-  var newStudy = new Study(study);
-  newStudy.save(function(err, study) {
-    if (err)
-      res.send(err);
-    res.json(study);
-  });
+	var newStudy = new Study(study);
+	newStudy.save(function(err, study) {
+		if (err)
+			res.send(err);
+		res.json(study);
+	});
 };
-var getInitialVarIdMap= function(data,prefix,map,pos)
-{
+var getInitialVarMap = function(data) {
+	var varMap = {};
+	var varMaps = [];
+
 	Object.keys(data).forEach(function(key) {
-		
-		if(key[0]=='_')
-		{
-			return pos;
+
+		if (key[0] == '_') {
+			return varMap;
 		}
-	var item = data[key];
-	if(key!='data') //TODO: what to do if collision happens
+		var item = data[key];
+		if (key != 'data') //TODO: what to do if collision happens
 		{
-			if(map[key]==null){
-			map[key]=pos;
-			pos++;	
+			if (varMap[key] == null) {
+				varMap[key] = item;
+			}
 		}
-		}	
 	});
-	var item=data.data;
-	try {item= JSON.parse(item);}
-	catch(e) {}
-	item.forEach(function(row) {
-		if(Object.keys(row).length >0 && typeof row=='object'){
-			pos=getVarIdMap(row,dataPrefix,map,pos);
-	
+	var item = data.data;
+	try {
+		item = JSON.parse(item);
+	} catch (e) {}
+	var pushVarMaps = false;
+	if ((item.length > 0 && typeof item == 'object')) {
+		item.forEach(function(row, index) {
+			if (Object.keys(row).length > 0 && typeof row == 'object') {
+				varMaps.push(getVarMap(row, dataPrefix, varMap));
+
+			} else {
+				if (varMap[defaultValueName + varSplit + index] == null) {
+					varMap[defaultValueName + varSplit + index] = row;
+					pushVarMaps = true;
+				}
+			}
+
+		});
+	} else {
+		varMap[defaultValueName] = item;
+		pushVarMaps = true;
 	}
-	else
-	{
-		if(map[defaultValueName]==null){
-		map[defaultValueName]=pos;
-		pos++;
+	if (pushVarMaps) {
+		varMaps.push(varMap);
 	}
-	}
-		
-	});
-		return pos;
+	return varMaps;
 }
-var getVarIdMap= function(data,prefix,map,pos)
-{
-	if(Array.isArray(data)  )
-	{
-		var x=1;
+var getVarMap = function(data, prefix, map) {
+	if (Array.isArray(data)) {
+		var x = 1;
 		data.forEach(function(row) {
-			if(Object.keys(row).length >0 && typeof row=='object'){
-		    pos=getVarIdMap(row,prefix+x+varSplit,map,pos);
-		
-		}
-		else
-		{
-			if(map[prefix+x]==null){
-			map[prefix+x]=pos;
-			pos++;
-		}
-		}
+			if (Object.keys(row).length > 0 && typeof row == 'object') {
+				map = getVarMap(row, prefix + x + varSplit, map);
+
+			} else {
+				if (map[prefix + x] == null) {
+					map[prefix + x] = row;
+				}
+			}
 			x++;
 		});
-		return pos;
+		return map;
 	}
-		Object.keys(data).forEach(function(key) {
-			var item = data[key];
-			if(item==null)
-			{
-				return pos;
-			}
-			
-		
-		try {item= JSON.parse(item);}
-		catch(e) {}
-		/*if(JSON.parse(item))
-		{
-			item=JSON.parse(item);
-		}*/
-		if(Array.isArray(item))
-		{
-			    pos=getVarIdMap(item,prefix+key+varSplit,map,pos);
+	Object.keys(data).forEach(function(key) {
+		var item = data[key];
+		if (item == null) {
+			return;
 		}
-		else
-		{
-			if(typeof item =='object' )
-			{
+
+
+		try {
+			item = JSON.parse(item);
+		} catch (e) {}
+		if (Array.isArray(item)) {
+			map = getVarMap(item, prefix + key + varSplit, map);
+		} else {
+			if (typeof item == 'object') {
 				Object.keys(item).forEach(function(key2) {
 					var item2 = item[key2];
-					if(typeof item2 =='object' ){
-				pos=getVarIdMap(item[key2],prefix+key+varSplit+key2+varSplit,map,pos);}
-				else
-				{
-					if(map[prefix+key+varSplit+key2]==null){
-					map[prefix+key+varSplit+key2]=pos;
-					pos++;}
-				}
-				});
-			}
-				else
-				{
-			if(map[prefix+key]==null) //TODO: what to do if collision happens
-			{
-				map[prefix+key]=pos;
-				pos++;
-				
-			}}
-		}
-		});
-
-		return pos;
-	}
-var loadDataArray= function(data,map,processedData)
-{
-	var baseRow = new Array(Object.keys(map).length);  //row prepopulated with fields common to all rows
-	baseRow.fill(nullDataValue);
-	
-	Object.keys(data).forEach(function(key) 
-	{
-		if( key!='data')
-		{
-			baseRow[map[key]]=data[key];
-		}
-	});	
-	var item=data.data;
-	try {item= JSON.parse(item);}
-	catch(e) {}
-	item.forEach(function(row) {
-		var newRow=baseRow.slice();
-		if(typeof row =='object' ){
-		loadRow(row,dataPrefix,map,newRow);
-		processedData.push(newRow);
-	}
-	else
-	{
-		newRow[map[defaultValueName]]=row;
-		processedData.push(newRow);
-	}
-	});
-
-};
-
-var loadRow= function(data,prefix,map,row)
-{
-	if( Array.isArray(data))
-	{
-		var x=1;
-		data.forEach(function(element) {
-			if(typeof element !='object')
-			{
-				var mapResult=map[prefix+x];
-				row[mapResult]=element;
-			}
-			else{
-		    loadRow(element,prefix+x+varSplit,map,row);}
-			x++;
-		});
-		return;
-	}
-	Object.keys(data).forEach(function(key) {
-	var item = data[key];
-	try {item= JSON.parse(item);}
-	catch(e) {}
-	if(item==null)
-	{
-		return;
-	}
-	/*if(JSON.parse(item))
-	{
-		item=JSON.parse(item);
-	}*/
-	if(Array.isArray(item))
-	{
-		  loadRow(item,prefix+key+varSplit,map,row);
-	}
-	else
-	{
-		if(typeof item =='object' )
-		{
-			Object.keys(item).forEach(function(key2) {
-				var item2=item[key2];
-				if(typeof item2 !='object')
-				{
-					if(map[prefix+key+varSplit+key2]!=null) //TODO: what to do if collision happens
-					{
-						var mapResult=map[prefix+key+varSplit+key2];
-						row[mapResult]=item2;
-					}
-				}
-				else{
-				loadRow(item2,prefix+key+varSplit+key2+varSplit,map,row);}
-			});
-		}
-			else
-			{
-				if(map[prefix+key]!=null) //TODO: what to do if collision happens
-				{
-					var mapResult=map[prefix+key];
-					row[mapResult]=item;
-				}
-	}
-	}
-	});
-
-};
-var  getDateString= function(daysFromPresent)
-    {
-        var date = new Date();
-		date.setDate(date.getDate()+daysFromPresent)
-        var dd = date.getDate();
-        var mm = date.getMonth();
-        var yyyy = date.getFullYear();
-
-        var dateString= dd+'.'+mm+'.'+yyyy;
-
-        return dateString;   
-    }
-	var zipFolder= function(zipPath,zipFolder)
-	{
-			return new Promise(function(resolve, reject) {
-		var output = fs.createWriteStream(zipPath);
-		var archive = archiver('zip', {
-		  zlib: { level: 9 } // Sets the compression level.
-		});
- 
-		// listen for all archive data to be written
-		// 'close' event is fired only when a file descriptor is involved
-		output.on('close', function() {
-		  console.log(archive.pointer() + ' total bytes');
-		  console.log('archiver has been finalized and the output file descriptor has closed.');
-		});
- 
-		// This event is fired when the data source is drained no matter what was the data source.
-		// It is not part of this library but rather from the NodeJS Stream API.
-		// @see: https://nodejs.org/api/stream.html#stream_event_end
-		output.on('end', function() {
-		  console.log('Data has been drained');
-		});
- 
-		// good practice to catch warnings (ie stat failures and other non-blocking errors)
-		archive.on('warning', function(err) {
-		  if (err.code === 'ENOENT') {
-		    // log warning
-		  } else {
-		    // throw error
-		   reject (err);
-		  }
-		});
- 
-		// good practice to catch this error explicitly
-		archive.on('error', function(err) {
-		  reject (err);
-		});
- 
-		// pipe archive data to the file
-		archive.pipe(output);
-		archive.directory(zipFolder, false);
-		archive.finalize();
-		resolve(null);
-	});
-	}	
-var writeDataArrayToFile= function(dataArray,map,fileSplitVar, rowSplitString,fileSuffix)
-{
-	if(fileSuffix==null)
-	{
-		fileSuffix='.txt';
-	}
-    return new Promise(function(resolve, reject) {
-	var dataString='';
-	var headers='';
-	var splitPos=-1;
-	var fileMap={};
-	if(rowSplitString==null)
-	{
-		rowSplitString='\t';
-	}
-	//fileSplitVar='createdDate';
-	var currentDate=getDateString(0);
-	var currentTime=new Date();
-	currentTime=currentTime.getTime();
-	var dataPath=dataFolder+currentDate+'/';
-	var filePrefix=dataFileLocation+dataPath;
-	if(!fs.existsSync(filePrefix))
-	{
-		fs.mkdirSync(filePrefix);
-	}
-	filePrefix+=+ currentTime+'/';
-	fs.mkdirSync(filePrefix);
-	var reverseMap=  new Array(Object.keys(map).length);
-	Object.keys(map).forEach(function(key) {
-		reverseMap[map[key]]=key;
-	});
-		//dataArray.unshift(reverseMap);
-		var initialRow='';
-		for(var y=0;y<reverseMap.length;y++)
-			{
-				initialRow+=reverseMap[y]+rowSplitString;
-			}
-			initialRow+='\n';
-			if(fileSplitVar!=null && fileSplitVar.length>0 && map[fileSplitVar]!=null)
-			{
-				splitPos=map[fileSplitVar];
-			}
-			else{
-                try {
-                    fs.writeFileSync(filePrefix+defaultDataFilename+fileSuffix, initialRow);
-                } catch(err){
-                    reject(err);
-                }
-			}
-	for(var x=0;x<dataArray.length;x++)
-		{
-			var dataRow=dataArray[x];
-			for(var y=0;y<dataRow.length;y++)
-				{
-					dataString+=dataRow[y]+rowSplitString;
-				}
-				dataString+='\n';
-				var filename=defaultDataFilename;
-				if(splitPos>-1)
-				{
-					filename=dataRow[splitPos];
-					if(filename.length==0)
-					{
-						filename=defaultDataFilename;
-					}
-				}
-				if(splitPos>-1 && fileMap[filename]==null)
-					{
-						
-						fileMap[filename]=filename;
-
-                        try {
-                            fs.writeFileSync(filePrefix+filename+fileSuffix, initialRow);
-                        } catch(err){
-                            reject(err);
-                        }
-					}
-					else
-					{
-						if(splitPos>-1)
-						{
-							filename=dataRow[splitPos];
-							if(filename.length==0)
-							{
-								filename=defaultDataFilename;
-							}
+					if (typeof item2 == 'object') {
+						map = getVarMap(item[key2], prefix + key + varSplit + key2 + varSplit, map);
+					} else {
+						if (map[prefix + key + varSplit + key2] == null) {
+							map[prefix + key + varSplit + key2] = item2;
 						}
 					}
-                    try {
-                        fs.appendFileSync(filePrefix+filename+fileSuffix, dataString);
-                    } catch(err){
-                        reject(err);
-                    }
+				});
+			} else {
+				if (map[prefix + key] == null) //TODO: what to do if collision happens
+				{
+					map[prefix + key] = item;
 
-				        //console.log("The row was saved!");
-					dataString='';
-
-			
+				}
 			}
-			var dateZipFile=dataFileLocation+dataFolder+currentDate+'/'+currentTime+'.zip';
-			var dataZipFilePath=currentDate+'/'+currentTime+'.zip';
-			zipFolder(dateZipFile,filePrefix,dataZipFilePath)
-			 .then(function () {
-			dateZipFile=currentDate+'/'+currentTime+'.zip';
-			//console.log(dateZipFile + "is the zip");
-			//return dataFolder+currentDate+'/'+currentTime+'.zip';
-			resolve (dateZipFile);
-		});
-});
-			
-		
+		}
+	});
 
-   
-	
-};
+	return map;
+}
+var updateMap = function(dataMaps, newMap, splitVar) {
+	var filename, dataMap;
+	if (!splitVar || splitVar == '' || newMap[splitVar] == null || newMap[splitVar] == '') {
+		filename = defaultDataFilename;
+	} else {
+		filename = newMap[splitVar];
+	}
+	if (dataMaps[filename] == null) {
+		dataMap = {};
+	} else {
+		dataMap = dataMaps[filename];
+	}
+	var pos = Object.keys(dataMap).length;
+	Object.keys(newMap).forEach(function(key) {
+		if (dataMap[key] == null) {
+			dataMap[key] = pos;
+			pos++;
+		}
+	});
+	dataMaps[filename] = dataMap;
+}
+
+var getDateString = function(daysFromPresent) {
+	var date = new Date();
+	date.setDate(date.getDate() + daysFromPresent)
+	var dd = date.getDate();
+	var mm = date.getMonth();
+	var yyyy = date.getFullYear();
+
+	var dateString = dd + '.' + mm + '.' + yyyy;
+
+	return dateString;
+}
+var zipFolder = async function(zipPath, zipFolder) {
+	var output = fs.createWriteStream(zipPath);
+	var archive = archiver('zip', {
+		zlib: {
+			level: 9
+		} // Sets the compression level.
+	});
+
+	// listen for all archive data to be written
+	// 'close' event is fired only when a file descriptor is involved
+	output.on('close', function() {
+		console.log(archive.pointer() + ' total bytes');
+		console.log('archiver has been finalized and the output file descriptor has closed.');
+	});
+
+	// This event is fired when the data source is drained no matter what was the data source.
+	// It is not part of this library but rather from the NodeJS Stream API.
+	// @see: https://nodejs.org/api/stream.html#stream_event_end
+	output.on('end', function() {
+		console.log('Data has been drained');
+	});
+
+	// good practice to catch warnings (ie stat failures and other non-blocking errors)
+	archive.on('warning', function(err) {
+		if (err.code === 'ENOENT') {
+			// log warning
+		} else {
+			// throw error
+			throw new Error(err);
+		}
+	});
+
+	// good practice to catch this error explicitly
+	archive.on('error', function(err) {
+		throw new Error(err);
+	});
+
+	// pipe archive data to the file
+	await archive.pipe(output);
+	await archive.directory(zipFolder, false);
+	await archive.finalize();
+}
+var fileSetup = async function(fileConfig) {
+	var currentDate = getDateString(0);
+	var currentTime = new Date();
+	currentTime = currentTime.getTime();
+	var dataPath = dataFolder + currentDate + '/';
+	var filePrefix = dataFileLocation + dataPath;
+	if (!fs.existsSync(filePrefix)) {
+		await fs.mkdir(filePrefix);
+	}
+	fileConfig.zipPath = filePrefix + currentTime + '.zip';
+	filePrefix += +currentTime + '/';
+	await fs.mkdir(filePrefix);
+	fileConfig.filePrefix = filePrefix;
+	fileConfig.zipName = currentDate + '/' + currentTime + '.zip';
+}
+var writeDataRowToFile = async function(row, map, filename, rowSplitString, fileSuffix, files, fileConfig) {
+	if (fileSuffix == null) {
+		fileSuffix = '.txt';
+	}
+	if (rowSplitString == null) {
+		rowSplitString = '\t';
+	}
+	var headers = '';
+	var splitPos = -1;
+	var fileMap = {};
+	filename = sanitize(filename);
+	filename = fileConfig.filePrefix + filename + fileSuffix;
+	if (!files[filename]) {
+		var initialRow = '';
+		var reverseMap = new Array(Object.keys(map).length);
+		Object.keys(map).forEach(function(key) {
+			reverseMap[map[key]] = key;
+		});
+		initialRow += reverseMap[0];
+		for (var y = 1; y < reverseMap.length; y++) {
+			initialRow += rowSplitString + reverseMap[y];
+		}
+		initialRow += '\n';
+		var wstream = fs.createWriteStream(filename);
+		files[filename] = wstream;
+		await wstream.write(initialRow);
+	}
+	var csvRow = arrayToCsvString(row, rowSplitString);
+	await files[filename].write(csvRow);
+}
+
+var zipFiles = async function(fileConfig) {
+	await zipFolder(fileConfig.zipPath, fileConfig.filePrefix);
+	fs.remove(fileConfig.filePrefix); //don't need to wait on folder to be deleted after it has been zipped
+	return fileConfig.zipName;
+}
+
+var csvEscape = function(theString) {
+	if (theString) {
+		theString = theString + '';
+	} else {
+		return '';
+	}
+	var needToEscape = false;
+	if (theString.includes("\"") || theString.includes(",") || theString.includes("\n") || theString.includes("\t")) {
+		var newString = '';
+		newString += '"';
+		for (var x = 0; x < theString.length; x++) {
+			newString += theString[x];
+			if (theString[x] == '"') {
+				newString += '"'; //escape double quotes this way
+			}
+		}
+
+		newString += '"';
+		return newString;
+	} else {
+		return theString
+	}
+}
+
+var arrayToCsvString = function(theArray, separator) {
+	var newString = '';
+	if (theArray.length == 0) {
+		return '';
+	}
+	newString += csvEscape(theArray[0]);
+	for (var x = 1; x < theArray.length; x++) {
+		newString += separator + csvEscape(theArray[x]);
+	}
+	newString += '\n';
+	return newString;
+}
