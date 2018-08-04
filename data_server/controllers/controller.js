@@ -176,7 +176,7 @@ var getInitialVarMap = function(data) {
 	if ((item.length > 0 && typeof item == 'object')) {
 		item.forEach(function(row, index) {
 			if (Object.keys(row).length > 0 && typeof row == 'object') {
-				varMaps.push(getVarMap(row, dataPrefix, varMap));
+				varMaps.push(getVarMap(row, dataPrefix, JSON.parse(JSON.stringify(varMap))));
 
 			} else {
 				if (varMap[defaultValueName + varSplit + index] == null) {
