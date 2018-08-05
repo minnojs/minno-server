@@ -14,6 +14,7 @@ const tags_router       = require('./routes/tags_router');
 const files_router      = require('./routes/files_router');
 const sharing_router      = require('./routes/sharing_router');
 const settings_router      = require('./routes/settings_router');
+const users_router      = require('./routes/users_router');
 
 const bodyParser = require('body-parser');
 const app = express();
@@ -52,21 +53,6 @@ app.use(bodyParser.urlencoded({limit: '50mb',extended: true}));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(config.relative_path, basePathRouter);
 
-
-basePathRouter.use('/static', express.static(config.static_path));
-basePathRouter.use('/users', express.static(config.user_folder));
-basePathRouter.use(launch_router);
-basePathRouter.use(connections_router);
-basePathRouter.use(settings_router);
-basePathRouter.use('/files' ,files_router);
-basePathRouter.use('/tags' ,tags_router);
-basePathRouter.use('/studies' ,studies_router);
-basePathRouter.use('/studies', publish_router);
-basePathRouter.use('/studies', lock_router);
-basePathRouter.use('/studies', sharing_router);
-
-let sess;
-
 require('./data_server/models/dataSchema'); // @TODO: does this have side effect or can it be removed?
 
 /*****         data            *****/
@@ -77,9 +63,30 @@ mongoose.connect(config.mongo_url);
 
 const data_controller = require('./data_server/controllers/controller');
 
+
 basePathRouter.route('/data')
     .put(data_controller.insertData)
     .get(data_controller.getData);
+
+
+
+basePathRouter.use('/static', express.static(config.static_path));
+basePathRouter.use('/users', express.static(config.user_folder));
+basePathRouter.use(launch_router);
+
+basePathRouter.use(connections_router);
+basePathRouter.use(settings_router);
+basePathRouter.use('/files' ,files_router);
+basePathRouter.use('/tags' ,tags_router);
+basePathRouter.use('/studies' ,studies_router);
+basePathRouter.use('/studies', publish_router);
+basePathRouter.use('/studies', lock_router);
+basePathRouter.use('/studies', sharing_router);
+
+basePathRouter.use('/users', users_router);
+
+let sess;
+
 
 /********************************************/
 
@@ -109,14 +116,7 @@ basePathRouter.route('/add_user')
             users.insert_new_user(req, res);
         });
 
-basePathRouter.get('/users',function(req, res){
-    const sess = req.session;
-    if(!sess.user || sess.user.role!=='su') {
-        return;
-    }
-    return users.get_users(res);
 
-});
 
 app.listen(config.port,function(){
     console.log('App Started on PORT '+config.port);

@@ -85,13 +85,31 @@ function create_admin_user() {
     });
 }
 
-function get_users(res) {
+function get_users() {
     return mongo.connect(url).then(function (db) {
-        var users = db.collection('users');
-        users.find({})
-            .then(function (user_data) {
-                return res.end(JSON.stringify({user_data: user_data}));
+        const users = db.collection('users');
+        return users.find({})
+            .then(function(user_data)
+            {
+                return (user_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role})));
             });
+    });
+}
+
+function update_role(user_id, role) {
+    return mongo.connect(url).then(function (db) {
+        const users = db.collection('users');
+        return users.update({_id: user_id}, {$set: {role: role}})
+            .then(user_data => (user_data));
+    });
+}
+
+
+function remove_user(user_id) {
+    return mongo.connect(url).then(function (db) {
+        const users = db.collection('users');
+        return users.remove({_id: user_id})
+            .then(user_data => (user_data));
     });
 }
 
@@ -247,4 +265,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, create_admin_user, user_info, get_email, set_email, set_password, insert_new_user, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, create_admin_user, user_info, get_email, set_email, set_password, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
