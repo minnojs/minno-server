@@ -110,7 +110,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 		dataEntry = JSON.parse(JSON.stringify(dataEntry));
 		newMaps = getInitialVarMap(dataEntry);
 		await asyncForEach(newMaps, async function(newMap) {
-			if (!fileSplitVar || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+			if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
 				var filename = defaultDataFilename;
 			} else {
 				var filename = newMap[fileSplitVar];
@@ -130,8 +130,9 @@ var asyncForEach = async function(array, callback) {
 	}
 }
 var mapToRow = function(dataMap, newMap, filename) {
-
+	
 	var row = new Array(Object.keys(dataMap).length);
+	row.fill(nullDataValue);
 	Object.keys(newMap).forEach(function(key) {
 		row[dataMap[key]] = newMap[key];
 	});
@@ -213,13 +214,14 @@ var getVarMap = function(data, prefix, map) {
 	}
 	Object.keys(data).forEach(function(key) {
 		var item = data[key];
-		if (item == null) {
+		if (typeof(item)== 'undefined' || item === null) {
 			return;
 		}
 
 
 		try {
-			item = JSON.parse(item);
+			if (typeof item == 'object'){
+			item = JSON.parse(item);}
 		} catch (e) {}
 		if (Array.isArray(item)) {
 			map = getVarMap(item, prefix + key + varSplit, map);
@@ -230,13 +232,13 @@ var getVarMap = function(data, prefix, map) {
 					if (typeof item2 == 'object') {
 						map = getVarMap(item[key2], prefix + key + varSplit + key2 + varSplit, map);
 					} else {
-						if (map[prefix + key + varSplit + key2] == null) {
+						if (typeof(map[prefix + key + varSplit + key2])=='undefined' || map[prefix + key + varSplit + key2] === null) {
 							map[prefix + key + varSplit + key2] = item2;
 						}
 					}
 				});
 			} else {
-				if (map[prefix + key] == null) //TODO: what to do if collision happens
+				if (typeof(map[prefix + key])=='undefined' || map[prefix + key] === null) //TODO: what to do if collision happens
 				{
 					map[prefix + key] = item;
 
@@ -261,7 +263,7 @@ var updateMap = function(dataMaps, newMap, splitVar) {
 	}
 	var pos = Object.keys(dataMap).length;
 	Object.keys(newMap).forEach(function(key) {
-		if (dataMap[key] == null) {
+		if (typeof(dataMap[key])== 'undefined' || dataMap[key] === null) {
 			dataMap[key] = pos;
 			pos++;
 		}
@@ -375,7 +377,7 @@ var zipFiles = async function(fileConfig) {
 }
 
 var csvEscape = function(theString) {
-	if (theString) {
+	if (typeof(theString)!=undefined && theString!==null) {
 		theString = theString + '';
 	} else {
 		return '';
