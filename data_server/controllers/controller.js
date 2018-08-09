@@ -101,7 +101,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
 	}
 	if (Object.keys(dataMaps).length == 0) {
-		return null; //no data
+		throw "No data"
 	}
 	await fileSetup(fileConfig);
 
