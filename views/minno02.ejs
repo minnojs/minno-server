@@ -56,7 +56,10 @@
 
 </body>
 
-<script type="text/javascript"> window.DEBUG = true; </script>
-<script src="<%= minnojsUrl %>/minno-debug.js" type="text/javascript"></script>
+<% if (isDev) { %>
+    <script type="text/javascript"> window.DEBUG = true; </script>
+    <script src="<%= minnojsUrl %>/minno-debug.js" type="text/javascript"></script>
+<% } %>
+
 <script src="<%= minnojsUrl %>/pi-minno.js" type="text/javascript"></script>
 </html>

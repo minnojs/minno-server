@@ -48,6 +48,7 @@ function get_experiment_url (req) {
             .then(function(exp_data){
                 if(!exp_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
+
                 return users_comp.user_info(exp_data.users[0].id)
                     .then(function(user){
                         const last_version = exp_data.versions ? exp_data.versions[exp_data.versions.length-1] : '';

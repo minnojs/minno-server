@@ -52,6 +52,7 @@ function displayExperiment(res){
             .then(res.send.bind(res));
             
         return render(exp_data.type || 'minno02', {
+            isDev: vars.state === 'Develop',
             minnojsUrl: config.minnojsUrl,
             url: exp_data.url, 
             dataUrl,
