@@ -33,3 +33,14 @@ usersRouter.route('')
     });
 
 
+usersRouter.route('/add_user')
+    .post(
+        function(req, res){
+
+            return users.insert_new_user(req)
+                .then(()=>res.json({}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+
+
+        });

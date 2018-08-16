@@ -1,8 +1,14 @@
+const request_promise = require('request-promise');
+const path         = require('path');
+const fs           = require('fs-extra');
+
+
 const express     = require('express');
 const session     = require('express-session');
 const config      = require('./config');
 const users       = require('./users');
 const files       = require('./files');
+const dropbox     = require('./dropbox');
 const dateFormat  = require('dateformat');
 
 const launch_router     = require('./routes/launch_router');
@@ -63,7 +69,6 @@ mongoose.connect(config.mongo_url);
 
 const data_controller = require('./data_server/controllers/controller');
 
-
 basePathRouter.route('/data')
     .put(data_controller.insertData)
     .get(data_controller.getData);
@@ -74,6 +79,30 @@ basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
 
+
+basePathRouter.route('/dropbox')
+    .get(
+        function(req, res){
+            const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='+config.dropbox.client_id+'&redirect_uri='+config.server_url +'/dropbox/set';
+            return res.json({auth_link});
+        });
+
+
+basePathRouter.route('/dropbox/set')
+    .get(
+        function(req, res){
+            const user_id = req.session.user.id;
+            const code = req.query.code;
+            return dropbox.get_access_token(code)
+                .then(body=>dropbox.add_user_folder(user_id, body.access_token))
+                .then(() => {console.log('yey!'); return res.redirect('/static');});
+        });
+
+
+
+
+
+
 basePathRouter.use(connections_router);
 basePathRouter.use(settings_router);
 basePathRouter.use('/files' ,files_router);
@@ -83,6 +112,7 @@ basePathRouter.use('/studies', publish_router);
 basePathRouter.use('/studies', lock_router);
 basePathRouter.use('/studies', sharing_router);
 
+basePathRouter.use('/users', users_router);
 basePathRouter.use('/users', users_router);
 
 let sess;
@@ -105,16 +135,9 @@ basePathRouter.route('/download').get(
     }
 );
 
-basePathRouter.route('/add_user')
-    .post(
-        function(req, res){
-            sess = req.session;
-            if(!sess.user || sess.user.role!=='su') {
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            }
-            users.insert_new_user(req, res);
-        });
+
+
+
 
 
 

@@ -113,28 +113,25 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user(req, res) {
+function insert_new_user(req) {
     const user_name  = req.body.username;
     const first_name = req.body.first_name;
     const last_name  = req.body.last_name;
     const email      = req.body.email;
     const server     = config.server_url;
 
-    if (!evalidator.validate(email)){
-        res.statusCode = 400;
-        return res.send(JSON.stringify({message: 'Invalid email address'}));
-    }
+    if (!evalidator.validate(email))
+        return Promise.reject({status:400, message: 'Invalid email address'});
+
     return mongo.connect(url).then(function (db) {
         const users   = db.collection('users');
         const counters   = db.collection('counters');
         return users.findOne({$or: [{user_name:user_name}, {email:email}]})
             .then(function(user_data){
                 if (!!user_data)
-                {
-                    res.statusCode = 400;
-                    return res.send(JSON.stringify({message: 'User already exist'}));
-                }
-                counters.findAndModify({_id: 'user_id'},
+                    return Promise.reject({status:400, message: 'User already exist'});
+
+                return counters.findAndModify({_id: 'user_id'},
                     [],
                     {upsert: true, new: true, returnOriginal: false})
                     .then(function (counter_data) {
@@ -144,10 +141,17 @@ function insert_new_user(req, res) {
                         return users.insert(user_obj)
                             .then(function(){
                                 const userFolder = path.join(config.user_folder, user_name);
-                                if (!fs.existsSync(userFolder)) {
-                                    fs.mkdirSync(userFolder);
-                                    return sender.send_mail('ronenhe.pi@gmail.com', 'welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
-                                }
+
+                                return fs.pathExists(userFolder)
+                                    .then(existing => existing
+                                        ?
+                                        Promise.reject({status:500, message: 'ERROR: folder aleady exists in FS!'})
+                                        :
+                                        fs.mkdirp(userFolder))
+                                    .then(function(){
+                                        sender.send_mail('ronenhe.pi@gmail.com', 'Welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
+                                        return ({});
+                                    });
                             });
                     });
             });

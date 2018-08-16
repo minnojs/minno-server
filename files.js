@@ -1,5 +1,4 @@
 const config = require('./config');
-const crypto       = require('crypto');
 const zipFolder    = require('zip-folder');
 
 const fs           = require('fs-extra');
@@ -11,18 +10,22 @@ const   experiments  = require('./experiments');
 const utils        = require('./utils');
 const have_permission = studies_comp.have_permission;
 
-
 function walkSync(full_path, rel_dir, filelist) {
+    // walk(full_path, function(path, stat) {
+    //     console.log(path);
+    // });
+
     if (!fs.existsSync(full_path)) {
         return console.error('Folder doesn\'t exist');
     }
-    var path = path || require('path');
-    var files = fs.readdirSync(full_path);
+
+    const files = fs.readdirSync(full_path);
     filelist = filelist || [];
     files.forEach(function(file) {
-        var file_str = rel_dir +  file;
+        const file_str = rel_dir +  file;
+        // fs.stat(path.join(full_path, file)).then(data=>console.log(data.isDirectory));
         if (fs.statSync(path.join(full_path, file)).isDirectory()) {
-            var nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', []);
+            const nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', []);
             filelist.push({id:urlencode(file_str),
                            isDir:true,
                            path:file_str,
@@ -31,7 +34,7 @@ function walkSync(full_path, rel_dir, filelist) {
                           });
         }
         else {
-            var file_url = config.server_url+'/'+full_path+'/'+file;
+            const file_url = config.server_url+'/'+full_path+'/'+file;
             filelist.push({id:urlencode(file_str),
                             isDir:false,
                             path:file_str,
