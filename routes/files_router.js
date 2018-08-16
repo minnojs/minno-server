@@ -18,7 +18,7 @@ filesRouter.route('/:study_id').get(
         files.get_study_files(req.user_id, parseInt(req.params.study_id))
              .then(response => res.json(response))
              .catch(function(err){
-                res.status(err.status || 500).json({message:err.message});
+                 res.status(err.status || 500).json({message:err.message});
              });
     })
     .delete(

@@ -9,40 +9,41 @@ const   studies_comp = require('./studies');
 const   experiments  = require('./experiments');
 const utils        = require('./utils');
 const have_permission = studies_comp.have_permission;
+const urljoin       = require('url-join');
 
-function walkSync(full_path, rel_dir, filelist) {
-    // walk(full_path, function(path, stat) {
-    //     console.log(path);
-    // });
+function walk(full_path, base_path = full_path){
+    const file_path = full_path.slice(base_path.length+1);
+    const file_url = urljoin(config.server_url, full_path);
 
-    if (!fs.existsSync(full_path)) {
-        return console.error('Folder doesn\'t exist');
+    return fs.stat(full_path)
+        .then(res => res.isDirectory() ? dir() : file());
+
+
+    function dir(){
+        return fs.readdir(full_path)
+            .then(files => files.map(getFiles))
+            .then(Promise.all.bind(Promise))
+            .then(files => ({
+                id:urlencode(file_path),
+                isDir:true,
+                path:file_path,
+                url:file_url,
+                files
+            }));
     }
 
-    const files = fs.readdirSync(full_path);
-    filelist = filelist || [];
-    files.forEach(function(file) {
-        const file_str = rel_dir +  file;
-        // fs.stat(path.join(full_path, file)).then(data=>console.log(data.isDirectory));
-        if (fs.statSync(path.join(full_path, file)).isDirectory()) {
-            const nested_filelist = walkSync(path.join(full_path, file), rel_dir  + file + '/', []);
-            filelist.push({id:urlencode(file_str),
-                           isDir:true,
-                           path:file_str,
-                           url:file_str,
-                           files:nested_filelist
-                          });
-        }
-        else {
-            const file_url = config.server_url+'/'+full_path+'/'+file;
-            filelist.push({id:urlencode(file_str),
-                            isDir:false,
-                            path:file_str,
-                            url:file_url
-            });
-        }
-    });
-    return filelist;
+    function getFiles(file){
+        return walk(path.join(full_path, file), base_path);
+    }
+
+    function file(){
+        return {
+            id:urlencode(file_path),
+            isDir:false,
+            path:file_path,
+            url: file_url
+        };
+    }
 }
 
 function get_study_files(user_id, study_id) {
@@ -52,25 +53,25 @@ function get_study_files(user_id, study_id) {
             return studies_comp.study_info(study_id)
             .then(function(study_data){
                 const folderName = path.join(config.user_folder,user_data.user_name,study_data.folder_name);
-                let files = [];
-                walkSync(folderName, '', files);
-                files = files
-                    .map(function(file){
-                        const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
-                        return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]}
+                return walk(folderName)
+                    .then(files => {
+                        return {
+                            study_name:study_data.name,
+                            is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
+                            is_locked: study_data.locked,
+                            type: study_data.type,
+                            is_public: study_data.is_public,
+
+                            versions: study_data.versions,
+                            files: files.files
+                                // TODO: this applies only to root. should add this to deep files as well.
+                                .map(function(file){
+                                    const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
+                                    return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};
+                                }),
+                            base_url: user_data.user_name+'/'+study_data.folder_name
+                        };
                     });
-
-                return {
-                    study_name:study_data.name,
-                    is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
-                    is_locked: study_data.locked,
-                    type: study_data.type,
-                    is_public: study_data.is_public,
-
-                    versions: study_data.versions,
-                    files: files,
-                    base_url: user_data.user_name+'/'+study_data.folder_name
-                };
             });
         });
 }
