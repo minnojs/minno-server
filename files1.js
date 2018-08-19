@@ -11,19 +11,19 @@ const utils        = require('./utils');
 const have_permission = studies_comp.have_permission;
 const urljoin       = require('url-join');
 
-function walk(full_path, base_path = full_path){
-    const file_path = full_path.slice(base_path.length+1);
-    const file_url = urljoin(config.server_url, full_path);
+function walk(full_path, rel_dir){
+    const file_path = path.join(rel_dir, file);
+    const file_url = urljoin(config.server_url, full_path, file);
 
     return fs.stat(full_path)
         .then(res => res.isDirectory() ? dir() : file());
+
 
     function dir(){
         return fs.readdir(full_path)
             .then(files => files.map(getFiles))
             .then(Promise.all.bind(Promise))
             .then(files => ({
-                id:urlencode(file_path),
                 isDir:true,
                 path:file_path,
                 url:file_url,
@@ -32,7 +32,7 @@ function walk(full_path, base_path = full_path){
     }
 
     function getFiles(file){
-        return walk(path.join(full_path, file), base_path);
+        return walk(path.join(full_path, file), path.join(rel_dir, file));
     }
 
     function file(){
@@ -51,8 +51,8 @@ function get_study_files(user_id, study_id) {
         .then(function(user_data){
             return studies_comp.study_info(study_id)
             .then(function(study_data){
-                const folderName = path.join(config.user_folder,user_data.user_name,study_data.folder_name);
-                return walk(folderName)
+                const folderName = path.join(config.user_folder, user_data.user_name, study_data.folder_name);
+                return walk(folderName, '')
                     .then(files => {
                         return {
                             study_name:study_data.name,
@@ -60,9 +60,9 @@ function get_study_files(user_id, study_id) {
                             is_locked: study_data.locked,
                             type: study_data.type,
                             is_public: study_data.is_public,
+
                             versions: study_data.versions,
-                            files: files.files
-                                // TODO: this applies only to root. should add this to deep files as well.
+                            files: files
                                 .map(function(file){
                                     const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
                                     return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};

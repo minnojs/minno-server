@@ -12,7 +12,7 @@ module.exports = router;
 router.get('/launch/:exp_id/:version_id',function(req, res){
     return experiments
         .get_experiment_url(req)
-        .then(displayExperiment(res))
+        .then(displayExperiment(req.query, res))
         .catch(displayErrorPage(res));
 });
 
@@ -23,23 +23,25 @@ router.get('/play/:study_id/:file_id',function(req, res){
         status: 401,
         message: 'You must be logged in to access this page'
     });
-
     return experiments
         .get_play_url(sess.user.id, req.params.study_id, req.params.file_id)
-        .then(displayExperiment(res))
+        .then(displayExperiment(req.query, res))
         .catch(displayErrorPage(res));
 });
 
-function displayExperiment(res){
+function displayExperiment(params, res){
     return function(exp_data){
         const render = promisify(res.render,res);
         const dataUrl = urljoin(config.relative_path, 'data');
 
-        const vars = {
+        let vars = {
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
             studyId:exp_data.exp_id
         };
+        vars = Object.assign(params, vars);
+
+
 
         if (exp_data.version_data) Object.assign(vars, {
             versionId:exp_data.version_data.id,

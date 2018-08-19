@@ -78,9 +78,7 @@ function get_experiment_url (req) {
                                 };
                             });
                     });
-            })
-            .catch(Promise.reject({status:400, message:'Error: Wrong version'}));
-
+            });
     });
 }
 
