@@ -17,7 +17,6 @@ function user_info (user_id) {
 }
 
 function set_password(user_id, password, confirm) {
-    console.log({user_id, password, confirm})
     if(!password || !confirm)
         return Promise.reject({status:400, message: 'ERROR: Missing password / confirm password'});
     if(password.length<8)
@@ -55,35 +54,6 @@ function get_email(user_id) {
         });
 }
 
-function create_admin_user() {
-    return mongo.connect(url).then(function (db) {
-        const users   = db.collection('users');
-        const counters   = db.collection('counters');
-        return counters.insert(
-            {
-                _id: 'user_id',
-                seq: 1
-            }
-        )
-        .then(function () {
-            if (!fs.existsSync(config.user_folder))
-            {
-                fs.mkdirSync(config.user_folder);
-                fs.mkdirSync(path.join(config.user_folder,'admin'));
-            }
-
-            const user_obj = {_id:1,
-                user_name:'admin',
-                first_name:'admin',
-                last_name:'admin',
-                email:'admin@admin.com',
-                role:'su',
-                pass:utils.sha1('admin123'),
-                studies:[],tags:[]};
-            return users.insert(user_obj);
-        });
-    });
-}
 
 function get_users() {
     return mongo.connect(url).then(function (db) {
@@ -113,12 +83,10 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user(req) {
-    const user_name  = req.body.username;
-    const first_name = req.body.first_name;
-    const last_name  = req.body.last_name;
-    const email      = req.body.email;
-    const server     = config.server_url;
+function insert_new_user({username, first_name, last_name, email, role}) {
+    const user_name  = username;
+    const userFolder = path.join(config.user_folder, user_name);
+    const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
 
     if (!evalidator.validate(email))
         return Promise.reject({status:400, message: 'Invalid email address'});
@@ -126,35 +94,28 @@ function insert_new_user(req) {
     return mongo.connect(url).then(function (db) {
         const users   = db.collection('users');
         const counters   = db.collection('counters');
-        return users.findOne({$or: [{user_name:user_name}, {email:email}]})
+        return users.findOne({$or: [{user_name}, {email}]})
             .then(function(user_data){
-                if (!!user_data)
-                    return Promise.reject({status:400, message: 'User already exist'});
-
-                return counters.findAndModify({_id: 'user_id'},
-                    [],
-                    {upsert: true, new: true, returnOriginal: false})
-                    .then(function (counter_data) {
-                        const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
-                        const user_id = counter_data.value.seq;
-                        const user_obj = {_id:user_id, activation_code:activation_code, user_name:user_name, first_name:first_name, last_name:last_name, email:email, email:email, studies:[],tags:[]}
-                        return users.insert(user_obj)
-                            .then(function(){
-                                const userFolder = path.join(config.user_folder, user_name);
-
-                                return fs.pathExists(userFolder)
-                                    .then(existing => existing
-                                        ?
-                                        Promise.reject({status:500, message: 'ERROR: folder aleady exists in FS!'})
-                                        :
-                                        fs.mkdirp(userFolder))
-                                    .then(function(){
-                                        sender.send_mail('ronenhe.pi@gmail.com', 'Welcome', 'email', {url: server+'/static/?/activation/'+activation_code, email: email, user_name: user_name});
-                                        return ({});
-                                    });
-                            });
-                    });
-            });
+                if (user_data) return Promise.reject({status:400, message: 'User already exists'});
+            })
+            .then(() => fs.ensureDir(userFolder))
+            .then(function(){
+                // don't wait for this
+                // @TODO: remove hardcoded email
+                sender.send_mail('ronenhe.pi@gmail.com', 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`})
+            })
+            .then(() => counters.findAndModify(
+                {_id: 'user_id'},
+                [],
+                {$inc: {'seq': 1}},
+                {upsert: true, new: true, returnOriginal:false}
+            ))
+            .then(function (counter_data) {
+                const user_id = counter_data.value.seq;
+                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role, studies:[],tags:[]};
+                return users.insert(user_obj);
+            })
+            .then(response => response.ops[0]);
     });
 }
 
@@ -238,35 +199,28 @@ function reset_password(reset_code, password, confirm) {
 function connect(user_name, pass) {
     if (!user_name || !pass)
         return Promise.reject({status:400, message: 'missing parameters!'});
+
     return mongo.connect(url).then(function (db) {
-        // db.dropDatabase();
-        const counters = db.collection('counters');
         const users    = db.collection('users');
         const studies  = db.collection('studies');
 
-        return counters.findOne({_id: 'user_id'})
-            .then(function(user_data){
-                if(!user_data)
-                    return create_admin_user();
-            })
-            .then(()=>users.findOne({user_name: user_name, pass: utils.sha1(pass)})
+        return users.findOne({user_name, pass: utils.sha1(pass)})
                 .then(function (user_data) {
                     if (!user_data)
                         return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
 
                     user_data.id = user_data._id;
-                    if (!user_data.studies)
-                        return (user_data);
+                    if (!user_data.studies) user_data.studies = [];
+                    
                     const study_ids = user_data.studies.map(obj=>obj.id);
                     return studies.find({_id: {$in: study_ids}})
                         .then(function (studies) {
                             user_data.studies = studies;
-                            return (user_data);
+                            return user_data;
                         });
-                })
-            );
+                });
     });
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, create_admin_user, user_info, get_email, set_email, set_password, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};

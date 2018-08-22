@@ -6,6 +6,9 @@ const dateFormat = require('dateformat');
 const path        = require('path');
 const utils        = require('./utils');
 
+const PERMISSION_OWNER = 'owner';
+const PERMISSION_READ_ONLY = 'read only';
+
 function create_version_obj(study_id, state) {
     const now = new Date();
     const version = dateFormat(now, 'yyyymmdd.HHMMss');
@@ -20,72 +23,93 @@ function get_studies(user_id) {
     return mongo.connect(url).then(function (db) {
         const users   = db.collection('users');
         const studies   = db.collection('studies');
-        return users.findOne({_id:user_id})
-            .then(function(user_result){
-                if(!user_result.studies)
-                    return Promise.resolve({studies: []});
-                const study_ids = user_result.studies.map(function(obj) {return obj.id;});
-                return studies.find({ _id: { $in: study_ids } })
-                    .then(function(studies){
-                        let studies_arr = [];
-                        studies.forEach(function(study){
-                            const study_tags = user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=> user_result.tags.find(tag => tag.id === tag_id));
-                            studies_arr.push({id: study._id,
-                                name:study.name,
-                                is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
-                                is_locked:study.locked,
-                                type:study.type,
-                                is_public: study.is_public,
-                                // is_template:false,
-                                last_modified:study.modify_date,
-                                permission:'owner',
-                                versions:study.versions,
-                                study_type:'regular',
-                                base_url:user_result.user_name+'/'+study.folder_name,
-                                tags:study_tags});
-                        });
-                        return Promise.resolve({studies: studies_arr});
-                    });
+
+        return Promise.all([
+            get_user_studies(),
+            get_bank_studies()
+        ])
+            .then(studyArr => [].concat.apply([], studyArr));
+
+        function get_user_studies(){
+            return users.findOne({_id:user_id})
+            .then(user_result => {
+                const study_ids = user_result.studies.map(study => study.id);
+                return studies
+                .find({ _id: { $in: study_ids } })
+                .then(studies => studies.map(study => composeStudy(study, {
+                    permission: PERMISSION_OWNER,
+                    study_type:'regular',
+                    base_url:user_result.user_name+'/'+study.folder_name,
+                    tags: get_tags(user_result, study)
+                })));
             });
+        }
+
+        function get_bank_studies(){
+            return users.findOne({user_name:'bank'})
+            .then(user_result => {
+                const study_ids = user_result.studies.map(study => study.id);
+                return studies
+                .find({ _id: { $in: study_ids } })
+                .then(studies => studies.map(study => composeStudy(study, {
+                    is_bank: true,
+                    permission: PERMISSION_READ_ONLY,
+                    study_type:'regular',
+                    base_url:user_result.user_name+'/'+study.folder_name,
+                    tags: get_tags(user_result, study)
+                })));
+            });
+        }
+
     });
+
+    function get_tags(user_result, study){ return user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=> user_result.tags.find(tag => tag.id === tag_id)); }
+
+    function composeStudy(study, overide){
+        return Object.assign({
+            id: study._id,
+            name:study.name,
+            type:study.type,
+            versions:study.versions,
+            is_public: study.is_public,
+
+            is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
+            is_locked:study.locked,
+            // is_template:false,
+            last_modified:study.modify_date
+        }, overide);
+    }
 }
 
-function create_new_study(user_id, study_name, study_type) {
-    return study_exist(user_id, study_name)
-        .then(function (study) {
-            if (study.is_exist)
-                return Promise.reject({status: 400, message: 'ERROR: Study with this name already exists'});
-            const study_obj = {
+function create_new_study({user_id, study_name, study_type = 'minnoj0.2', study_description = '', is_public = false}, additional_params) {
+    return ensure_study_not_exist(user_id, study_name)
+        .then(function () {
+            const study_obj = Object.assign({
                 name: study_name,
                 folder_name: study_name,
                 type: study_type,
+                description: study_description,
                 users: [{id: user_id}],
                 experiments: [],
                 versions: [create_version_obj('*', 'Develop')],
                 modify_date: Date.now()
-            };
+            }, additional_params);
+
             return insert_obj(user_id, study_obj)
-                .then(function (study_data) {
-                    return fs.pathExists(study_data.dir)
-                        .then(existing => existing
-                            ?
-                            Promise.reject({status: 500, message: 'ERROR: Study already exists in FS!'})
-                            :
-                            fs.mkdirp(study_data.dir)
-                        )
-                        .then(() => ({study_id: study_data.study_id}));
+                .then(study => {
+                    return  fs.mkdirp(study.dir).then(() => study);
                 });
         });
 }
 
+
 function duplicate_study(user_id, study_id, new_study_name) {
     return Promise.all([
         have_permission(user_id, study_id),
-        study_exist(user_id, new_study_name),
-        study_info(study_id)
+        study_info(study_id),
+        ensure_study_not_exist(user_id, new_study_name)
     ])
-    .then(function([user_data, {is_exist}, original_study]){
-        if (is_exist) return Promise.reject({status:400, message: `ERROR: Study with this name already exists:${new_study_name}`});
+    .then(function([user_data, original_study]){
         const study_obj = {
             name: new_study_name,
             folder_name: new_study_name,
@@ -115,10 +139,8 @@ function delete_study(user_id, study_id) {
                     const dir = path.join(config.user_folder, user_data.user_name , study_data.value.folder_name);
                     return fs.pathExists(dir)
                         .then(existing => !existing
-                                    ?
-                                    Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
-                                    :
-                                    fs.remove(dir));
+                                    ?  Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
+                                    : fs.remove(dir));
                 }
             );
         });
@@ -136,13 +158,24 @@ function have_permission(user_id, study_id) {
     });
 }
 
-function study_exist(user_id, study_name) {
+function ensure_study_not_exist(user_id, study_name) {
     return mongo.connect(url).then(function (db) {
         const studies   = db.collection('studies');
-        return studies.findOne({name:study_name , users: {$elemMatch: {id:user_id}}});
+        const users = db.collection('users');
+
+        return Promise.all([
+            studies.findOne({name:study_name , users: {$elemMatch: {id:user_id}}}),
+            users
+                .findOne({_id:user_id})
+                .then(user_data => {
+                    return fs.pathExists(path.join(config.user_folder,user_data.user_name,study_name));
+                })
+                
+        ]);
     })
-    .then(function(study_data){
-        return {is_exist: !!study_data};
+    .then(function([study_data, path_exists]){
+        if (study_data) return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
+        if (path_exists) return Promise.reject({status: 500, message: 'ERROR: Study already exists in FS!'});
     });
 }
 
@@ -163,10 +196,12 @@ function insert_obj(user_id, study_props) {
         const counters = db.collection('counters');
         const studies  = db.collection('studies');
         const users    = db.collection('users');
-        return counters.findAndModify({_id:'study_id'},
+        return counters.findAndModify(
+            {_id:'study_id'},
             [],
-            {'$inc': {'seq': 1}},
-            {upsert: true, new: true, returnOriginal: false})
+            {$inc: {seq: 1}},
+            {upsert: true, new: true, returnOriginal: false}
+        )
         .then(function(counter_data){
             study_obj._id = counter_data.value.seq;
             return studies.insert(study_obj);
@@ -230,10 +265,8 @@ function rename_study(user_id, study_id, new_study_name) {
             return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
         })
         .then(function(user_data) {
-            return study_exist(user_id, new_study_name)
-                .then(function (study) {
-                    if (study.is_exist)
-                        return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
+            return ensure_study_not_exist(user_id, new_study_name)
+                .then(function() {
                     return update_obj(study_id, study_obj)
                         .then(function (study_data) {
                             if (!study_data.ok)
@@ -278,10 +311,9 @@ function make_public(user_id, study_id, is_public) {
     return have_permission(user_id, study_id)
         .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
         .then(()=> mongo.connect(url).then(function (db) {
-                const studies = db.collection('studies');
-                return studies.update({_id: study_id}, {$set: {is_public: is_public}});
-            })
-        );
+            const studies = db.collection('studies');
+            return studies.update({_id: study_id}, {$set: {is_public}});
+        }));
 }
 
 module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};

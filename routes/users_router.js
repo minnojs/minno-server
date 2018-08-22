@@ -37,7 +37,7 @@ usersRouter.route('/add_user')
     .post(
         function(req, res){
 
-            return users.insert_new_user(req)
+            return users.insert_new_user(req.body)
                 .then(()=>res.json({}))
                 .catch(err=>
                     res.status(err.status || 500).json({message:err.message}));

@@ -5,10 +5,10 @@ const fs           = require('fs-extra');
 const formidable   = require('formidable');
 const urlencode    = require('urlencode');
 const path         = require('path');
-const   studies_comp = require('./studies');
-const   experiments  = require('./experiments');
+const studies_comp = require('./studies');
+const experiments  = require('./experiments');
 const utils        = require('./utils');
-const have_permission = studies_comp.have_permission;
+const {have_permission} = studies_comp;
 const urljoin       = require('url-join');
 
 function walk(full_path, base_path = full_path){

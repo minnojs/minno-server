@@ -18,13 +18,13 @@ studiesRouter.route('')
     .get(
         function(req,res){
             return studies.get_studies(req.user_id)
-                .then(studies_data=>res.json(studies_data));
+                .then(studies_data=>res.json({studies:studies_data}));
 
         })
     .post(function(req,res)
     {
-        return studies.create_new_study(req.user_id, req.body.study_name, req.body.study_type)
-            .then(studies_data=>res.json(studies_data))
+        return studies.create_new_study({user_id: req.user_id, study_name: req.body.study_name, study_type: req.body.study_type})
+            .then(study_data=>res.json({study_id: study_data.study_id}))
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
 
