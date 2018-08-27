@@ -72,6 +72,7 @@ function get_studies(user_id) {
             type:study.type,
             versions:study.versions,
             is_public: study.is_public,
+            description: study.description,
 
             is_published: study.versions && study.versions.length>1 && study.versions[study.versions.length-1].state==='Published',
             is_locked:study.locked,
