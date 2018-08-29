@@ -5,6 +5,7 @@ const mongo         = require('mongodb-bluebird');
 const dateFormat = require('dateformat');
 const path        = require('path');
 const utils        = require('./utils');
+const {user_info} = require('./users');
 
 const PERMISSION_OWNER = 'owner';
 const PERMISSION_READ_ONLY = 'read only';
@@ -39,7 +40,7 @@ function get_studies(user_id) {
                 .then(studies => studies.map(study => composeStudy(study, {
                     permission: PERMISSION_OWNER,
                     study_type:'regular',
-                    base_url:user_result.user_name+'/'+study.folder_name,
+                    base_url:study.folder_name,
                     tags: get_tags(user_result, study)
                 })));
             });
@@ -55,7 +56,7 @@ function get_studies(user_id) {
                     is_bank: true,
                     permission: PERMISSION_READ_ONLY,
                     study_type:'regular',
-                    base_url:user_result.user_name+'/'+study.folder_name,
+                    base_url:study.folder_name,
                     tags: get_tags(user_result, study)
                 })));
             });
@@ -84,10 +85,11 @@ function get_studies(user_id) {
 
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', study_description = '', is_public = false}, additional_params) {
     return ensure_study_not_exist(user_id, study_name)
-        .then(function () {
+        .then(() => user_info(user_id))
+        .then(function ({user_name}) {
             const study_obj = Object.assign({
                 name: study_name,
-                folder_name: study_name,
+                folder_name: path.join(user_name,study_name),
                 type: study_type,
                 description: study_description,
                 users: [{id: user_id}],
@@ -106,20 +108,19 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', study_
 
 function duplicate_study(user_id, study_id, new_study_name) {
     return Promise.all([
-        have_permission(user_id, study_id),
-        study_info(study_id),
+        has_read_permission(user_id, study_id),
         ensure_study_not_exist(user_id, new_study_name)
     ])
-    .then(function([user_data, original_study]){
+    .then(function([{user_data, study_data: original_study}]){
         const study_obj = {
             name: new_study_name,
-            folder_name: new_study_name,
+            folder_name: path.join(user_data.user_name, new_study_name),
             type: original_study.type
         };
 
         return insert_obj(user_id, study_obj)
             .then(function (study_data) {
-                const originalPath = path.join(config.user_folder ,user_data.user_name, original_study.folder_name);
+                const originalPath = path.join(config.user_folder ,original_study.folder_name);
                 return fs.pathExists(study_data.dir)
                     .then(exists => {
                         if (!exists)
@@ -137,7 +138,7 @@ function delete_study(user_id, study_id) {
         .then(function(user_data) {
             return delete_by_id(user_id, study_id)
                 .then(function(study_data) {
-                    const dir = path.join(config.user_folder, user_data.user_name , study_data.value.folder_name);
+                    const dir = path.join(config.user_folder, study_data.value.folder_name);
                     return fs.pathExists(dir)
                         .then(existing => !existing
                                     ?  Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
@@ -148,6 +149,8 @@ function delete_study(user_id, study_id) {
 }
 
 function have_permission(user_id, study_id) {
+    console.log('\x1b[36m%s\x1b[0m','---- studies.have_permission is deprecated. Use studies.has_read/write_permission instead --------');  //cyan
+
     return mongo.connect(url).then(function (db) {
         const users = db.collection('users');
         return users.findOne({_id:user_id, studies: {$elemMatch: {id:+study_id}} }); // study id must be an int
@@ -156,6 +159,36 @@ function have_permission(user_id, study_id) {
         // why not return a boolean?
         if (!user_result) return Promise.reject({status:403, message:'Error: permission denied'});
         return user_result;
+    });
+}
+
+function has_read_permission(user_id, study_id){
+    return get_user_study(user_id, study_id)
+        .then(result => result.can_read ? result : Promise.reject({status:403, message:'Permission denied'}));
+}
+
+function has_write_permission(user_id, study_id){
+    return get_user_study(user_id, study_id)
+        .then(result => result.can_write ? result : Promise.reject({status:403, message:'Permission denied'}));
+}
+
+function get_user_study(user_id, study_id){
+    return mongo.connect(url).then(function (db) {
+        const users = db.collection('users');
+        const studies = db.collection('studies');
+        return Promise.all([
+            users.findOne({_id:user_id}),
+            studies.findOne({_id:study_id})
+        ]);
+    })
+    .then(function([user_data, study_data]){
+        // why not return a boolean?
+        if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
+        if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
+
+        const can_write = user_data.studies.some(study => study.id === study_id);
+        const can_read = can_write || study_data.is_public;
+        return {user_data, study_data, can_read, can_write};
     });
 }
 
@@ -212,10 +245,10 @@ function insert_obj(user_id, study_props) {
                         [],
                         {$push: {studies: {id: study_obj._id, tags: []}}});
         })
-        .then(function(user_data){
-            const dir = path.join(config.user_folder,user_data.value.user_name,study_obj.name);
+        .then(function(){
+            const dir = path.join(config.user_folder, study_obj.folder_name);
             const study_id = study_obj._id;
-            return Promise.resolve({study_id, dir});
+            return {study_id, dir};
         });
     });
 }
@@ -260,7 +293,6 @@ function study_info (study_id) {
 function rename_study(user_id, study_id, new_study_name) {
     if (!new_study_name)
         return Promise.reject({status:400, message: 'ERROR: empty study name'});
-    const study_obj = { name: new_study_name, folder_name: new_study_name ,modify_date: Date.now()};
     return have_permission(user_id, study_id)
         .catch(function(){
             return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
@@ -268,13 +300,14 @@ function rename_study(user_id, study_id, new_study_name) {
         .then(function(user_data) {
             return ensure_study_not_exist(user_id, new_study_name)
                 .then(function() {
+                    const study_obj = { name: new_study_name, folder_name: path.join(user_data.user_name, new_study_name) ,modify_date: Date.now()};
                     return update_obj(study_id, study_obj)
                         .then(function (study_data) {
                             if (!study_data.ok)
                                 return Promise.reject({status:500, message: 'ERROR: internal error'});
 
-                            const new_file_path = path.join(config.user_folder , user_data.user_name , new_study_name);
-                            const file_path     = path.join(config.user_folder , user_data.user_name , study_data.value.folder_name);
+                            const new_file_path = path.join(config.user_folder , study_obj.folder_name);
+                            const file_path     = path.join(config.user_folder , study_data.value.folder_name);
 
                             return fs.pathExists(file_path)
                                 .then(existing => !existing
@@ -317,4 +350,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study};
+module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};

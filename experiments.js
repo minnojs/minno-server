@@ -23,9 +23,9 @@ function get_play_url (user_id, study_id, file_id) {
             if (!study_data) return Promise.reject({status:404, message:'Study not found'});
             if (!user) return Promise.reject({status:403, message:'Permission denied'});
 
-            const url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name,file_id);
-            const base_url = urljoin(config.relative_path,'users',user.user_name,study_data.folder_name, '/');
-            const path = join(config.user_folder,user.user_name,study_data.folder_name,file_id);
+            const url = urljoin(config.relative_path,'users',study_data.folder_name,file_id);
+            const base_url = urljoin(config.relative_path,'users',study_data.folder_name, '/');
+            const path = join(config.user_folder,study_data.folder_name,file_id);
 
             // set sham experiment data
             return {
@@ -50,15 +50,15 @@ function get_experiment_url (req) {
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
 
                 return users_comp.user_info(exp_data.users[0].id)
-                    .then(function(user){
+                    .then(function(){
                         const last_version = exp_data.versions ? exp_data.versions[exp_data.versions.length-1] : '';
                         if(last_version.id !== req.params.version_id)
                             return Promise.reject({status:400, message:'Error: Wrong version'});
 
                         const exp       = exp_data.experiments.filter(exp => exp.id===req.params.exp_id);
-                        const url       = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name, exp[0].file_id);
-                        const base_url  = urljoin(config.relative_path, 'users',user.user_name, exp_data.folder_name,'/');
-                        const path      = join(config.user_folder, user.user_name, exp_data.folder_name,exp[0].file_id);
+                        const url       = urljoin(config.relative_path, 'users', exp_data.folder_name, exp[0].file_id);
+                        const base_url  = urljoin(config.relative_path, 'users', exp_data.folder_name,'/');
+                        const path      = join(config.user_folder,  exp_data.folder_name,exp[0].file_id);
 
                         return counters.findAndModify({_id:'session_id'},
                             [],
