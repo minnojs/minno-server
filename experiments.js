@@ -1,6 +1,5 @@
 const config        = require('./config');
 const urljoin       = require('url-join');
-const crypto        = require('crypto');
 const studies_comp  = require('./studies');
 const join = require('path').join;
 const users_comp = require('./users');
@@ -9,22 +8,16 @@ const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
 
-const have_permission = studies_comp.have_permission;
+const {have_permission, has_read_permission} = studies_comp;
 
 
 // get data for playing a file without creating an experiment
 // creates sham info for the player
 function get_play_url (user_id, study_id, file_id) {
-    return Promise.all([
-        have_permission(user_id, study_id).catch(() => false), // have_permission throws if there is no permission, in that case we cast it as false
-        studies_comp.study_info(study_id)
-    ])
-        .then(([user, study_data]) => {
-            if (!study_data) return Promise.reject({status:404, message:'Study not found'});
-            if (!user) return Promise.reject({status:403, message:'Permission denied'});
-
-            const url = urljoin(config.relative_path,'users',study_data.folder_name,file_id);
-            const base_url = urljoin(config.relative_path,'users',study_data.folder_name, '/');
+    return has_read_permission(user_id, study_id)
+        .then(({study_data})  => {
+            const url = urljoin(config.relative_path,config.user_folder,study_data.folder_name,file_id);
+            const base_url = urljoin(config.relative_path,config.user_folder,study_data.folder_name, '/');
             const path = join(config.user_folder,study_data.folder_name,file_id);
 
             // set sham experiment data

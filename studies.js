@@ -177,8 +177,8 @@ function get_user_study(user_id, study_id){
         const users = db.collection('users');
         const studies = db.collection('studies');
         return Promise.all([
-            users.findOne({_id:user_id}),
-            studies.findOne({_id:study_id})
+            users.findOne({_id:+user_id}),
+            studies.findOne({_id:+study_id})
         ]);
     })
     .then(function([user_data, study_data]){

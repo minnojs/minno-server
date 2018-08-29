@@ -42,7 +42,6 @@ function displayExperiment(params, res){
         vars = Object.assign(params, vars);
 
 
-
         if (exp_data.version_data) Object.assign(vars, {
             versionId:exp_data.version_data.id,
             version:exp_data.version_data.version,
@@ -108,6 +107,7 @@ function transformHtml(exp_data,vars){
 
 function displayErrorPage(res){
     return function(err){
+        //console.log(err)
         return res
             .status(err.status || 500)
             .render('error', {
