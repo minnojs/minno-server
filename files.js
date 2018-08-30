@@ -201,44 +201,43 @@ function copy_file(user_id, study_id, file_id, new_study_id) {
     });
 }
 
-function upload(user_id, study_id, req, res) {
+function upload(user_id, study_id, req) {
     const form = new formidable.IncomingForm();
     form.maxFileSize = config.maxFileSize;
     form.multiples = true;
 
-    form.parse(req, function (err, fields, files) {
-        if (err)
-            log.error(`20180607 | error with uploading: ${err}`);
-        return has_write_permission(user_id, study_id)
-        .then(function({user_data, study_data}){
-            const uploadedFiles = Array.isArray(files['files[]']) ? files['files[]'] : [files['files[]']];
-            const prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
-            const study_path = path.join(config.user_folder,  study_data.folder_name, prefix);
+    return new Promise(function(resolve, reject){
+        form.parse(req, function (err, fields, files) {
+            if (err) log.error(`20180607 | error with uploading: ${err}`);
 
-            const create_file_promises = uploadedFiles
-            .map(function(file){
-                const oldpath = file.path;
-                const file_path = path.join(study_path, file.name);
+            return has_write_permission(user_id, study_id)
+            .then(function({study_data}){
+                const uploadedFiles = Array.isArray(files['files[]']) ? files['files[]'] : [files['files[]']];
+                const prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
+                const study_path = path.join(config.user_folder,  study_data.folder_name, prefix);
 
-                log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
+                const create_file_promises = uploadedFiles
+                .map(function(file){
+                    const oldpath = file.path;
+                    const file_path = path.join(study_path, file.name);
 
-                return fs
-                .copy(oldpath, file_path)
-                .then(() => fs.remove(oldpath));
-            });
+                    log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
 
-            return Promise.all(create_file_promises);
-        })
+                    return fs
+                    .copy(oldpath, file_path)
+                    .then(() => fs.remove(oldpath));
+                });
+
+                return Promise.all(create_file_promises);
+            })
             .then(() => Promise.all([
                 get_study_files(user_id, study_id),
                 studies_comp.update_modify(study_id)
             ]))
             .then(function([study_data]){ return study_data.files; })
-            .then(files => res.json(files))
-            .catch(function(){
-                res.statusCode = 403;
-                return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-            });
+            .then(resolve)
+            .catch(reject);
+        });
     });
 }
 

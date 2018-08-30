@@ -43,14 +43,18 @@ filesRouter.route('/:study_id').get(
 filesRouter.route('/:study_id/upload/')
     .post(
         function(req, res){
-            return files.upload(req.user_id, parseInt(req.params.study_id), req, res);
+            return files.upload(req.user_id, parseInt(req.params.study_id), req)
+                .then(files => res.json(files))
+                .catch(() => res.status(403).json({message: 'ERROR: Permission denied!'}));
         });
 
 
 filesRouter.route('/:study_id/upload/:folder_id')
     .post(
         function(req, res){
-            return files.upload(req.user_id, parseInt(req.params.study_id), req, res);
+            return files.upload(req.user_id, parseInt(req.params.study_id), req)
+                .then(files => res.json(files))
+                .catch(() => res.status(403).json({message: 'ERROR: Permission denied!'}));
         });
 
 filesRouter.route('/:study_id/file/')
