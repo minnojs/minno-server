@@ -133,9 +133,8 @@ function duplicate_study(user_id, study_id, new_study_name) {
 }
 
 function delete_study(user_id, study_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
-        .then(function(user_data) {
+    return has_write_permission(user_id, study_id)
+        .then(function() {
             return delete_by_id(user_id, study_id)
                 .then(function(study_data) {
                     const dir = path.join(config.user_folder, study_data.value.folder_name);
@@ -146,20 +145,6 @@ function delete_study(user_id, study_id) {
                 }
             );
         });
-}
-
-function have_permission(user_id, study_id) {
-    console.log('\x1b[36m%s\x1b[0m','---- studies.have_permission is deprecated. Use studies.has_read/write_permission instead --------');  //cyan
-
-    return mongo.connect(url).then(function (db) {
-        const users = db.collection('users');
-        return users.findOne({_id:user_id, studies: {$elemMatch: {id:+study_id}} }); // study id must be an int
-    })
-    .then(function(user_result){
-        // why not return a boolean?
-        if (!user_result) return Promise.reject({status:403, message:'Error: permission denied'});
-        return user_result;
-    });
 }
 
 function has_read_permission(user_id, study_id){
@@ -291,13 +276,9 @@ function study_info (study_id) {
 }
 
 function rename_study(user_id, study_id, new_study_name) {
-    if (!new_study_name)
-        return Promise.reject({status:400, message: 'ERROR: empty study name'});
-    return have_permission(user_id, study_id)
-        .catch(function(){
-            return Promise.reject({status:403, message: 'ERROR: Permission denied!'});
-        })
-        .then(function(user_data) {
+    if (!new_study_name) return Promise.reject({status:400, message: 'ERROR: empty study name'});
+    return has_write_permission(user_id, study_id)
+        .then(function({user_data}) {
             return ensure_study_not_exist(user_id, new_study_name)
                 .then(function() {
                     const study_obj = { name: new_study_name, folder_name: path.join(user_data.user_name, new_study_name) ,modify_date: Date.now()};
@@ -323,7 +304,7 @@ function rename_study(user_id, study_id, new_study_name) {
 
 
 function set_lock_status(user_id, study_id, status) {
-    return have_permission(user_id, study_id)
+    return has_write_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(url).then(function (db) {
                 const studies = db.collection('studies');
@@ -342,12 +323,11 @@ function update_modify(study_id) {
 }
 
 function make_public(user_id, study_id, is_public) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_write_permission(user_id, study_id)
         .then(()=> mongo.connect(url).then(function (db) {
             const studies = db.collection('studies');
             return studies.update({_id: study_id}, {$set: {is_public}});
         }));
 }
 
-module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, have_permission, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};

@@ -8,7 +8,7 @@ const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
 
-const {have_permission, has_read_permission} = studies_comp;
+const {has_read_permission, has_write_permission} = studies_comp;
 
 
 // get data for playing a file without creating an experiment
@@ -76,20 +76,17 @@ function get_experiment_url (req) {
 }
 
 function get_experiments(user_id, study_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
-        .then(()=>studies_comp.study_info(study_id));
+    return has_read_permission(user_id, study_id)
+        .then(({study_data})=>study_data);
 }
 
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_read_permission(user_id, study_id)
         .then(()=> data_server.getData(exp_id, file_format, file_split, start_date, end_date));
 }
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_write_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
                 const studies = db.collection('studies');
@@ -114,8 +111,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
 }
 
 function delete_experiment(user_id, study_id, file_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_write_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
                 const studies = db.collection('studies');
@@ -135,8 +131,7 @@ function delete_experiment(user_id, study_id, file_id) {
 }
 
 function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_write_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
                 const studies = db.collection('studies');
@@ -148,8 +143,7 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
 }
 
 function update_file_id(user_id, study_id, file_id, new_file_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_write_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
                 const studies = db.collection('studies');
@@ -161,17 +155,13 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
 }
 
 function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_read_permission(user_id, study_id)
         .then(function() {
             return mongo.connect(mongo_url).then(function (db) {
                 const studies = db.collection('studies');
                 return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
-                .then(function(study_data){
-                    return Promise.resolve(!!study_data);
-                });
-            }
-            );
+                .then(study_data => !!study_data);
+            });
         });
 }
 

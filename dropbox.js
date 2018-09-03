@@ -9,8 +9,6 @@ const data_server  = require('./data_server/controllers/controller');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
 
-const have_permission = studies_comp.have_permission;
-
 const request_promise = require('request-promise');
 const path         = require('path');
 const fs           = require('fs-extra');

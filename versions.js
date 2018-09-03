@@ -1,11 +1,9 @@
 const config        = require('./config');
-const studies_comp  = require('./studies');
 const utils         = require('./utils');
 const mongo         = require('mongodb-bluebird');
 const mongo_url     = config.mongo_url;
 
-
-const have_permission = studies_comp.have_permission;
+const {has_read_permission, has_write_permission} = require('./studies');
 
 
 function generate_id(study_id, version, state) {
@@ -13,33 +11,21 @@ function generate_id(study_id, version, state) {
 }
 
 function get_versions(user_id, study_id) {
-    return have_permission(user_id, study_id)
-        .then(function() {
-            studies_comp.study_info(study_id)
-                .then(function (study_data) {
-                    return Promise.resolve({versions: study_data.versions});
-
-                });
-        });
+    return has_read_permission(user_id, study_id)
+        .then(({study_data}) => ({versions: study_data.versions}));
 }
 
 function insert_new_version(user_id, study_id, version, state, update_url) {
-    return have_permission(user_id, study_id)
-        .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
-                const version_id = generate_id(study_id, version, state);
-                if(update_url==='update')
-                    return push_new_version(study_id, version, state, version_id);
-                return studies_comp.study_info(study_id)
-                    .then(function (study_data) {
-                        let versions = study_data.versions;
-                        if(update_url==='keep')
-                            return push_new_version(study_id, version, state, versions[versions.length-1].id);
-                        versions = versions.filter(version=>version.state==='Published');
-                        return push_new_version(study_id, version, state, versions[versions.length-1].id);
-                    });
-            });
-        });
+    return has_write_permission(user_id, study_id)
+    .then(function({study_data}) {
+        const version_id = generate_id(study_id, version, state);
+
+        if (update_url==='update') return push_new_version(study_id, version, state, version_id);
+        if (update_url==='keep') return push_new_version(study_id, version, state, versions[versions.length-1].id);
+
+        const versions = study_data.versions.filter(version=>version.state==='Published');
+        return push_new_version(study_id, version, state, versions[versions.length-1].id);
+    });
 }
 
 function push_new_version(study_id, version, state, version_id){
@@ -64,6 +50,5 @@ function push_new_version(study_id, version, state, version_id){
         });
     });
 }
-
 
 module.exports = {get_versions, insert_new_version};

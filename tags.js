@@ -1,10 +1,9 @@
 const config        = require('./config');
 const url           = config.mongo_url;
-const studies_comp  = require('./studies');
 const utils         = require('./utils');
 const mongo         = require('mongodb-bluebird');
 
-const have_permission = studies_comp.have_permission;
+const {has_read_permission, has_write_permission} = require('./studies');
 
 function get_tags(user_id) {
     return mongo.connect(url).then(function (db) {
@@ -15,8 +14,7 @@ function get_tags(user_id) {
 }
 
 function get_study_tags(user_id, study_id) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
+    return has_read_permission(user_id, study_id)
         .then(function(){
             return mongo.connect(url).then(function (db) {
                 const users   = db.collection('users');
@@ -35,24 +33,20 @@ function get_study_tags(user_id, study_id) {
 }
 
 function update_study_tags(user_id, study_id, tags) {
-    return have_permission(user_id, study_id)
-        .catch(()=>Promise.reject({status:403, message: 'ERROR: Permission denied!'}))
-        .then(function(){
-            return mongo.connect(url).then(function (db) {
-                const users   = db.collection('users');
-                return users.findOne({_id: user_id})
-                    .then(function(user_data){
-                        const study_obj = user_data.studies.find(study => study.id === study_id);
-                        let study_tags = study_obj.tags;
-                        tags.forEach(tag=>tag.used ? study_tags.push(tag.id): study_tags = study_tags.filter(el=>el !== tag.id));
-                        return users.findAndModify(
-                            {_id:user_id, studies: {$elemMatch: {id:study_id}} },
-                            [],
-                            {$set: {'studies.$.tags': study_tags}})
-                            .then(({tags:study_tags}));
-                    });
-            });
+    return has_write_permission(user_id, study_id)
+    .then(function({user_data}){
+        return mongo.connect(url).then(function (db) {
+            const users   = db.collection('users');
+            const study_obj = user_data.studies.find(study => study.id === study_id);
+            let study_tags = study_obj.tags;
+            tags.forEach(tag=>tag.used ? study_tags.push(tag.id): study_tags = study_tags.filter(el=>el !== tag.id));
+            return users.findAndModify(
+                {_id:user_id, studies: {$elemMatch: {id:study_id}} },
+                [],
+                {$set: {'studies.$.tags': study_tags}})
+                .then(({tags:study_tags}));
         });
+    });
 }
 
 function insert_new_tag(user_id, tag_text, tag_color) {

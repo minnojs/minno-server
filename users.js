@@ -11,8 +11,7 @@ const evalidator  = require('email-validator');
 function user_info (user_id) {
     return mongo.connect(url).then(function (db) {
         const users   = db.collection('users');
-        return users.findOne({_id: user_id})
-            .then(user_data=>user_data);
+        return users.findOne({_id: user_id});
     });
 }
 
