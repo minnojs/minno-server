@@ -83,15 +83,15 @@ function get_studies(user_id) {
     }
 }
 
-function create_new_study({user_id, study_name, study_type = 'minnoj0.2', study_description = '', is_public = false}, additional_params) {
+function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
     return ensure_study_not_exist(user_id, study_name)
         .then(() => user_info(user_id))
         .then(function ({user_name}) {
             const study_obj = Object.assign({
                 name: study_name,
+                description,
                 folder_name: path.join(user_name,study_name),
                 type: study_type,
-                description: study_description,
                 users: [{id: user_id}],
                 experiments: [],
                 versions: [create_version_obj('*', 'Develop')],
@@ -243,10 +243,7 @@ function update_obj(study_id, study_obj) {
         const studies   = db.collection('studies');
         return studies.findAndModify({_id:study_id},
             [],
-            {$set: study_obj})
-            .then(function(study_data){
-                return Promise.resolve(study_data);
-            });
+            {$set: study_obj});
     });
 }
 
@@ -273,6 +270,20 @@ function study_info (study_id) {
             .collection('studies')
             .findOne({_id: +study_id}) // study ids must be numbers
         );
+}
+
+function update_study(user_id, study_id, update_body) {
+    const modify_date = Date.now();
+    const white_list = ['description', 'study_type'];
+    const clean_update_body = white_list.reduce((acc, key) => {
+        if (key in update_body) acc[key] = update_body[key];
+        return acc;
+    }, {modify_date});
+
+    return has_write_permission(user_id, study_id)
+        .then(function() {
+            return update_obj(study_id, clean_update_body);
+        });
 }
 
 function rename_study(user_id, study_id, new_study_name) {
@@ -318,7 +329,7 @@ function update_modify(study_id) {
 
     return mongo.connect(url).then(function (db) {
         const studies   = db.collection('studies');
-        return studies.update({_id: study_id}, {$set: {modify_date: modify_date}});
+        return studies.update({_id: study_id}, {$set: {modify_date}});
     });
 }
 
@@ -330,4 +341,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};

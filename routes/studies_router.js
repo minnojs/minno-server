@@ -23,7 +23,7 @@ studiesRouter.route('')
         })
     .post(function(req,res)
     {
-        return studies.create_new_study({user_id: req.user_id, study_name: req.body.study_name, study_type: req.body.study_type})
+        return studies.create_new_study({user_id: req.user_id, study_name: req.body.study_name, study_type: req.body.study_type, description: req.body.description})
             .then(study_data=>res.json({study_id: study_data.study_id}))
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
@@ -33,10 +33,18 @@ studiesRouter.route('/:study_id')
         function(req, res){
             return studies.delete_study(req.user_id, parseInt(req.params.study_id))
                 .then(()=>res.json({}))
-                .catch(err=>
-                    res.status(err.status || 500).json({message:err.message}));
-
+                .catch(err=> res.status(err.status || 500).json({message:err.message}));
         })
+    .put(
+        function(req, res){
+            return studies.update_study(req.user_id, +req.params.study_id, req.body)
+                .then(() => res.json({}))
+                .catch(err=> res.status(err.status || 500).json({message:err.message}));
+        });
+
+
+
+studiesRouter.route('/:study_id/rename')
     .put(
         function(req, res){
             studies.rename_study(req.user_id, parseInt(req.params.study_id), req.body.study_name)
