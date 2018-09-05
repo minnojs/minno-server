@@ -30,7 +30,7 @@ function create_users(){
         .then(function (db) {
             const users = db.collection('users');
             return Promise.all([
-                createUser('admin', 'admin123', 'su'),
+                createUser('admin', config.admin_default_pass, 'su'),
                 createUser('bank', Math.random(), 'u')
             ]);
 
