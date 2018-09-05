@@ -16,6 +16,7 @@ function user_info (user_id) {
 }
 
 function set_password(user_id, password, confirm) {
+
     if(!password || !confirm)
         return Promise.reject({status:400, message: 'ERROR: Missing password / confirm password'});
     if(password.length<8)
@@ -45,6 +46,22 @@ function set_email(user_id, email) {
 
     });
 }
+
+
+function set_dbx_token(user_id, access_token) {
+    if(!access_token)
+        return Promise.reject({status:400, message: 'Missing access_token'});
+    return mongo.connect(url).then(function (db) {
+        const users   = db.collection('users');
+        return users.findAndModify({_id: user_id},
+            [],
+            {$set: {dbx_token: access_token}})
+            .then(()=>({}));
+
+    });
+}
+
+
 
 function get_email(user_id) {
     return user_info(user_id)
@@ -82,7 +99,8 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user({username, first_name, last_name, email, role}) {
+function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
+    console.log({password, confirm});
     const user_name  = username;
     const userFolder = path.join(config.user_folder, user_name);
     const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
@@ -99,9 +117,8 @@ function insert_new_user({username, first_name, last_name, email, role}) {
             })
             .then(() => fs.ensureDir(userFolder))
             .then(function(){
-                // don't wait for this
-                // @TODO: remove hardcoded email
-                sender.send_mail('ronenhe.pi@gmail.com', 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`})
+                if(!password)
+                    sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`})
             })
             .then(() => counters.findAndModify(
                 {_id: 'user_id'},
@@ -114,7 +131,14 @@ function insert_new_user({username, first_name, last_name, email, role}) {
                 const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role, studies:[],tags:[]};
                 return users.insert(user_obj);
             })
-            .then(response => response.ops[0]);
+            .then(response => {
+                const user_data = response.ops[0];
+                if(password){
+
+                }
+                    set_password(user_data._id, password, confirm);
+                return user_data;
+            });
     });
 }
 
@@ -222,4 +246,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, set_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};

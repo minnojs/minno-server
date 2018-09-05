@@ -7,6 +7,7 @@ const urlencode    = require('urlencode');
 const path         = require('path');
 const studies_comp = require('./studies');
 const experiments  = require('./experiments');
+const dropbox      = require('./dropbox');
 const utils        = require('./utils');
 const {has_read_permission, has_write_permission} = studies_comp;
 const urljoin       = require('url-join');
@@ -99,13 +100,11 @@ function update_file(user_id, study_id, file_id, content) {
         .then(function(){
             const file_url = path.join('..',config.user_folder,study_data.folder_name,file_id);
             return studies_comp.update_modify(study_id)
+            .then(dropbox.upload_user_file(user_id, path.resolve(path.join(config.user_folder,study_data.folder_name,file_id))))
             .then(()=>({id: file_id, content: content, url: file_url}));
         });
     });
 }
-
-
-
 
 function get_file_content(user_id, study_id, file_id) {
     return has_read_permission(user_id, study_id)

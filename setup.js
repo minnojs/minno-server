@@ -30,18 +30,17 @@ function create_users(){
         .then(function (db) {
             const users = db.collection('users');
             return Promise.all([
-                createUser('admin')
-                    .then(user_result => user_result && set_password(user_result._id, 'admin123', 'admin123')),
-                createUser('bank')
+                createUser('admin', 'admin123', 'su'),
+                createUser('bank', Math.random(), 'u')
             ]);
 
-            function createUser(user_name){
+            function createUser(user_name, password, role){
                 return users
                 .findOne({user_name})
                 .then(user => {
                     if (user) return console.log(`-- Creating ${user_name}: user found`);
 
-                    return insert_new_user({username:user_name, first_name:user_name, last_name:user_name, email:`${user_name}@admin.com`})
+                    return insert_new_user({username:user_name, first_name:user_name, last_name:user_name, email:config.email_auth.user, role, password, confirm:password})
                         .then(user_data => {
                             console.log(`-- Creating ${user_name}: user created`);
                             return user_data;

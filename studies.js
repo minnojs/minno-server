@@ -1,17 +1,17 @@
-const config = require('./config');
-const url         = config.mongo_url;
-const fs          = require('fs-extra');
+const config        = require('./config');
+const url           = config.mongo_url;
+const fs            = require('fs-extra');
 const mongo         = require('mongodb-bluebird');
-const dateFormat = require('dateformat');
-const path        = require('path');
-const utils        = require('./utils');
-const {user_info} = require('./users');
+const dateFormat    = require('dateformat');
+const path          = require('path');
+const utils         = require('./utils');
+const {user_info}   = require('./users');
 
-const PERMISSION_OWNER = 'owner';
+const PERMISSION_OWNER     = 'owner';
 const PERMISSION_READ_ONLY = 'read only';
 
 function create_version_obj(study_id, state) {
-    const now = new Date();
+    const now     = new Date();
     const version = dateFormat(now, 'yyyymmdd.HHMMss');
     return {id: generate_id(study_id, version, state), version: version, state: state};
 }
@@ -29,7 +29,7 @@ function get_studies(user_id) {
             get_user_studies(),
             get_bank_studies()
         ])
-            .then(studyArr => [].concat.apply([], studyArr));
+        .then(studyArr => [].concat.apply([], studyArr));
 
         function get_user_studies(){
             return users.findOne({_id:user_id})
