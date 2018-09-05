@@ -61,6 +61,17 @@ function set_dbx_token(user_id, access_token) {
     });
 }
 
+function revoke_dbx_token(user_id) {
+    return mongo.connect(url).then(function (db) {
+        const users   = db.collection('users');
+        return users.findAndModify({_id: user_id},
+            [],
+            {$unset: {dbx_token: ''}})
+            .then(()=>({}));
+
+    });
+}
+
 
 
 function get_email(user_id) {
@@ -246,4 +257,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, set_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
