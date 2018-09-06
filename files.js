@@ -66,7 +66,7 @@ function get_study_files(user_id, study_id) {
                     const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
                     return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};
                 }),
-                base_url: study_data.folder_name
+                base_url: urljoin(config.server_url, config.user_folder, study_data.folder_name, '/images/')
             };
         });
     });
