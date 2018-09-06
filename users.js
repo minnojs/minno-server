@@ -242,10 +242,9 @@ function connect(user_name, pass) {
                 .then(function (user_data) {
                     if (!user_data)
                         return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-
                     user_data.id = user_data._id;
                     if (!user_data.studies) user_data.studies = [];
-                    
+
                     const study_ids = user_data.studies.map(obj=>obj.id);
                     return studies.find({_id: {$in: study_ids}})
                         .then(function (studies) {

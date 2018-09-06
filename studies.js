@@ -161,20 +161,22 @@ function get_user_study(user_id, study_id){
     return mongo.connect(url).then(function (db) {
         const users = db.collection('users');
         const studies = db.collection('studies');
+
         return Promise.all([
             users.findOne({_id:+user_id}),
             studies.findOne({_id:+study_id})
         ]);
     })
-    .then(function([user_data, study_data]){
-        // why not return a boolean?
-        if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
-        if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
+        .then(function([user_data, study_data]){
+            // why not return a boolean?
 
-        const can_write = user_data.studies.some(study => study.id === study_id);
-        const can_read = can_write || study_data.is_public;
-        return {user_data, study_data, can_read, can_write};
-    });
+            if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
+            if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
+
+            const can_write = user_data.studies.some(study => study.id === study_id);
+            const can_read = can_write || study_data.is_public;
+            return {user_data, study_data, can_read, can_write};
+        });
 }
 
 function ensure_study_not_exist(user_id, study_name) {

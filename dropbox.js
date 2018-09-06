@@ -14,11 +14,13 @@ const path         = require('path');
 const fs           = require('fs-extra');
 const walk         = require('walkdir');
 
-const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='+config.dropbox.client_id+'&redirect_uri='+config.server_url +'/dropbox/set';
-const token_url = 'https://api.dropbox.com/1/oauth2/token';
 
 
 function get_auth_link(user_id){
+    if ( typeof config.dropbox === 'undefined' )
+        return Promise.resolve({});
+    const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='+config.dropbox.client_id+'&redirect_uri='+config.server_url +'/dropbox/set';
+
     return get_user_token(user_id)
         .then(access_token => access_token ? {auth_link:'', is_synchronized:true} : {auth_link, is_synchronized:false});
 
