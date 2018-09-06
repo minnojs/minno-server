@@ -23,6 +23,7 @@ router.get('/play/:study_id/:file_id',function(req, res){
         status: 401,
         message: 'You must be logged in to access this page'
     });
+
     return experiments
         .get_play_url(sess.user.id, req.params.study_id, req.params.file_id)
         .then(displayExperiment(req.query, res))

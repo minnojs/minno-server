@@ -168,12 +168,10 @@ function get_user_study(user_id, study_id){
         ]);
     })
         .then(function([user_data, study_data]){
-            // why not return a boolean?
-
             if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
             if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
 
-            const can_write = user_data.studies.some(study => study.id === study_id);
+            const can_write = user_data.studies.some(study => study.id === +study_id);
             const can_read = can_write || study_data.is_public;
             return {user_data, study_data, can_read, can_write};
         });
@@ -194,10 +192,10 @@ function ensure_study_not_exist(user_id, study_name) {
                 
         ]);
     })
-    .then(function([study_data, path_exists]){
-        if (study_data) return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
-        if (path_exists) return Promise.reject({status: 500, message: 'ERROR: Study already exists in FS!'});
-    });
+        .then(function([study_data, path_exists]){
+            if (study_data) return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
+            if (path_exists) return Promise.reject({status: 500, message: 'ERROR: Study already exists in FS!'});
+        });
 }
 
 function insert_obj(user_id, study_props) {
@@ -211,7 +209,7 @@ function insert_obj(user_id, study_props) {
         modify_date: Date.now()
     };
 
-    const study_obj = Object.assign(dflt_study_props, study_props);
+    const study_obj = Object.assign({}, study_props, dflt_study_props);
 
     return mongo.connect(url).then(function (db) {
         const counters = db.collection('counters');
@@ -223,20 +221,22 @@ function insert_obj(user_id, study_props) {
             {$inc: {seq: 1}},
             {upsert: true, new: true, returnOriginal: false}
         )
-        .then(function(counter_data){
-            study_obj._id = counter_data.value.seq;
-            return studies.insert(study_obj);
-        })
-        .then(function(){
-            return users.findAndModify({_id: user_id},
-                        [],
-                        {$push: {studies: {id: study_obj._id, tags: []}}});
-        })
-        .then(function(){
-            const dir = path.join(config.user_folder, study_obj.folder_name);
-            const study_id = study_obj._id;
-            return {study_id, dir};
-        });
+            .then(function(counter_data){
+                study_obj._id = counter_data.value.seq;
+                return studies.insert(study_obj);
+            })
+            .then(function(){
+                return users.findAndModify(
+                    {_id: user_id},
+                    [],
+                    {$push: {studies: {id: study_obj._id, tags: []}}}
+                );
+            })
+            .then(function(){
+                const dir = path.join(config.user_folder, study_obj.folder_name);
+                const study_id = study_obj._id;
+                return {study_id, dir};
+            });
     });
 }
 
