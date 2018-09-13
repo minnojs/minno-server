@@ -237,21 +237,40 @@ function connect(user_name, pass) {
     return mongo.connect(url).then(function (db) {
         const users    = db.collection('users');
         const studies  = db.collection('studies');
+        let query = {user_name, pass: utils.sha1(pass)};
 
-        return users.findOne({user_name, pass: utils.sha1(pass)})
+        if (!user_name.includes('_'))
+            return user_obj();
+
+        const users_names = user_name.split('_');
+        query = {user_name: users_names[0], pass: utils.sha1(pass)};
+
+        return user_obj()
+            .then(function(user_data){
+                if(user_data.role!=='su')
+                    return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
+                query = {user_name: users_names[1]};
+                return user_obj();
+            });
+
+        function user_obj()
+        {
+            return users.findOne(query)
                 .then(function (user_data) {
                     if (!user_data)
                         return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
                     user_data.id = user_data._id;
                     if (!user_data.studies) user_data.studies = [];
-
+                    if(user_name == pass)
+                        user_data.first_login = true;
                     const study_ids = user_data.studies.map(obj=>obj.id);
                     return studies.find({_id: {$in: study_ids}})
                         .then(function (studies) {
                             user_data.studies = studies;
                             return user_data;
                         });
-                });
+            });
+        }
     });
 }
 

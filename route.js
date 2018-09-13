@@ -1,14 +1,7 @@
-const request_promise = require('request-promise');
-const path         = require('path');
-const fs           = require('fs-extra');
-
-
 const express     = require('express');
 const session     = require('express-session');
 const config      = require('./config');
-const users       = require('./users');
 const files       = require('./files');
-const dropbox     = require('./dropbox');
 const dateFormat  = require('dateformat');
 
 const launch_router     = require('./routes/launch_router');
