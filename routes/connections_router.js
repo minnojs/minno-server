@@ -1,6 +1,6 @@
 const express     = require('express');
 const users     = require('../users');
-
+const utils = require('../utils');
 const connectionsRouter = express.Router();
 
 module.exports = connectionsRouter;

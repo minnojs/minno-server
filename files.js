@@ -60,6 +60,8 @@ function get_study_files(user_id, study_id) {
                 is_public: study_data.is_public,
                 is_readonly: !can_write,
                 versions: study_data.versions,
+                permission: study_data.users.find(user=>user.user_id===user_id).permission,
+
                 files: files.files
                 // TODO: this applies only to root. should add this to deep files as well.
                 .map(function(file){

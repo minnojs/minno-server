@@ -5,7 +5,9 @@ const mongo         = require('mongodb-bluebird');
 const dateFormat    = require('dateformat');
 const path          = require('path');
 const utils         = require('./utils');
-const {user_info}   = require('./users');
+const sender      = require('./sender');
+
+const {user_info, user_info_by_name}   = require('./users');
 
 const PERMISSION_OWNER     = 'owner';
 const PERMISSION_READ_ONLY = 'read only';
@@ -34,15 +36,19 @@ function get_studies(user_id) {
         function get_user_studies(){
             return users.findOne({_id:user_id})
             .then(user_result => {
+
                 const study_ids = user_result.studies.map(study => study.id);
                 return studies
                 .find({ _id: { $in: study_ids } })
-                .then(studies => studies.map(study => composeStudy(study, {
-                    permission: PERMISSION_OWNER,
-                    study_type:'regular',
-                    base_url:study.folder_name,
-                    tags: get_tags(user_result, study)
-                })));
+
+                .then(user_studies =>  user_studies.map(study =>
+                    composeStudy(study, {
+                        permission: study.users.find(user=>user.user_id===user_id).permission,
+                        study_type:'regular',
+                        base_url:study.folder_name,
+                        tags: get_tags(user_result, study)
+                    })
+                ));
             });
         }
 
@@ -64,6 +70,7 @@ function get_studies(user_id) {
 
     });
 
+
     function get_tags(user_result, study){ return user_result.studies.find(study2 => study2.id === study._id).tags.map(tag_id=> user_result.tags.find(tag => tag.id === tag_id)); }
 
     function composeStudy(study, overide){
@@ -82,6 +89,54 @@ function get_studies(user_id) {
         }, overide);
     }
 }
+
+function get_collaborations(user_id, study_id){
+    return has_read_permission(user_id, study_id)
+        .then(data=>
+        {
+            console.log(data.study_data.users);
+            const users = data.study_data.users.filter(user=>user.user_id!==user_id);
+            return users;
+        });
+}
+
+
+function remove_collaboration(user_id, study_id, collaboration_user_id){
+    return mongo.connect(url).then(function (db) {
+        const studies   = db.collection('studies');
+        return has_read_permission(user_id, study_id)
+            .then(()=>studies.update({_id: study_id},
+                {$pull: {users: {user_id: collaboration_user_id}}}));
+    });
+}
+
+
+function add_collaboration(user_id, study_id, user_name, permission){
+    return mongo.connect(url).then(function (db) {
+        const studies   = db.collection('studies');
+        const users   = db.collection('users');
+        const accept = utils.sha1(study_id + user_name +'accept*');
+        const reject = utils.sha1(study_id + user_name +'reject*');
+        return has_read_permission(user_id, study_id)
+            .then(()=>user_info_by_name(user_name)
+                    .then(user=>Promise.all([
+                        studies.update({_id: study_id},
+                            {$push: {users: {user_id: user._id, user_name:user.user_name, permission: permission}}}),
+                        users.update({_id: user._id},
+                            {$push: {studies: {id:study_id, tags:[], accept, reject}}}),
+                        sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration_edit', {accept: config.server_url+'/static/?/collaboration/'+accept,
+                                                                                                                                 reject: config.server_url+'/static/?/collaboration/'+reject,
+                                                                                                                                 collaborator_name:user.first_name,
+                                                                                                                                 owner_name: user_id,
+                                                                                                                                 study_name:study_id})
+
+                    ])
+
+
+            ));
+    });
+}
+
 
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
     return ensure_study_not_exist(user_id, study_name)
@@ -171,8 +226,8 @@ function get_user_study(user_id, study_id){
             if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
             if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
 
-            const can_write = user_data.studies.some(study => study.id === +study_id);
-            const can_read = can_write || study_data.is_public;
+            const can_write = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
+            const can_read = study_data.users.find(user=>user.user_id===user_id) || study_data.is_public;
             return {user_data, study_data, can_read, can_write};
         });
 }
@@ -343,4 +398,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, study_info, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, duplicate_study, has_read_permission, has_write_permission};

@@ -15,6 +15,14 @@ function user_info (user_id) {
     });
 }
 
+function user_info_by_name (user_name) {
+    return mongo.connect(url).then(function (db) {
+        const users   = db.collection('users');
+        return users.findOne({user_name})
+            .then(user_data => user_data ? user_data : Promise.reject({status:400, message: `ERROR: ${user_name} does not exist`}));
+    });
+}
+
 function set_password(user_id, password, confirm) {
 
     if(!password || !confirm)
@@ -111,7 +119,6 @@ function remove_user(user_id) {
 }
 
 function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
-    console.log({password, confirm});
     const user_name  = username;
     const userFolder = path.join(config.user_folder, user_name);
     const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
@@ -275,4 +282,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, user_info_by_name, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};

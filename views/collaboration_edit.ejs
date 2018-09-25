@@ -1,0 +1,27 @@
+<html>
+
+<body>
+
+Dear <%= data.collaborator_name %>,
+<br/>
+<%= data.owner_name %> asked to share with you the study '<%= data.study_name %>'.
+<br/>
+If you agree to become a collaborattor on that study please click <a href="<%= data.accept %>">here</a>.
+<br/><br/>
+<strong> What happens if I agree to become a collaborator?</strong> As a collaborator, you will see the study under your list of studies'.
+<br/>
+In addition, you would be able to edit the files. If you're using dropbox to backup your studies, this study will be added to your archive as well.
+<br/><br/>
+If you do not want to become a collaborator on that study please click <a href="<%= data.reject %>">here</a>.
+<br/><br/>
+<strong>What happens if I do not agree to become a collaborator?</strong> Nothing. You will not see the study in your list of studies, and will not have access to that study.
+<br/><br/>
+<strong>Will <%= data.owner_name %>  see my response?</strong> Yes, the owner of the study can see in the Researcher Dashboard who joined the collaboration.
+<br/><br/><br/><br/>
+
+Thanks,
+<br/>
+The Researcher Dashboard Automatic Mailing Service
+
+</body>
+</html>

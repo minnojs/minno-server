@@ -87,11 +87,40 @@ studiesRouter.route('/:study_id/experiments')
     .post(
         function(req, res, next){
             experiments.get_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id,
-                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date)
+                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date, req.body.version_id)
                                     .then(function(data){
                                         res.json({data_file:data});
                                     })
                                     .catch(next);
+        });
+
+
+studiesRouter.route('/:study_id/collaboration')
+    .delete(
+        function(req, res, next){
+            studies.remove_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_id)
+                .then(function (users) {
+                    res.json({users: users, is_public: false, link_data: {link: '', link_type: '', link_list: []}, study_name: "aa"
+                    });
+                })
+                .catch(next);
+        })
+    .get(
+        function(req, res, next){
+            studies.get_collaborations(req.user_id, parseInt(req.params.study_id))
+                .then(function (users) {
+                    res.json({users: users, is_public: false, link_data: {link: '', link_type: '', link_list: []}, study_name: "aa"
+                    });
+                })
+                .catch(next);
+        })
+    .post(
+        function(req, res, next){
+            studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission)
+                .then(function(data){
+                    res.json({data_file:data});
+                })
+                .catch(next);
         });
 
 
