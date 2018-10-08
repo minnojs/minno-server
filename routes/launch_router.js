@@ -35,6 +35,10 @@ function displayExperiment(params, res){
         const render = promisify(res.render,res);
         const dataUrl = urljoin(config.relative_path, 'data');
 
+        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        res.header('Expires', '-1');
+        res.header('Pragma', 'no-cache');
+
         let vars = {
             descriptiveId: exp_data.descriptive_id, 
             sessionId:exp_data.session_id, 
