@@ -60,6 +60,7 @@ function displayExperiment(params, res){
         return render(exp_data.type || 'minno02', {
             isDev: vars.state === 'Develop',
             minnojsUrl: config.minnojsUrl,
+            errorception: config.errorception,
             url: exp_data.url, 
             dataUrl,
             vars
