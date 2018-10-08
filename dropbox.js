@@ -37,12 +37,10 @@ function revoke_user(user_id){
                     'Authorization': 'Bearer ' + access_token
                 }
             };
-            console.log(options);
-
             return request_promise.post(options)
             .then(()=>users_comp.revoke_dbx_token(user_id));
 
-    });
+        });
 }
 
 
@@ -79,6 +77,16 @@ function get_user_token(user_id){
             .then(function(info){
                 return info.dbx_token;
             });
+}
+
+
+function upload_users_file(user_id, study_id, path){
+    return studies_comp.has_read_permission(user_id, study_id)
+        .then(data=>
+        {
+            const users = data.study_data.users.filter(user=>!user.status);
+            return users.map(user=>upload_user_file(user.user_id, path));
+        });
 }
 
 function upload_user_file(user_id, path){
@@ -118,6 +126,14 @@ function upload_file(access_token, path){
         });
 }
 
+function rename_users_file(user_id, study_id, path2rename, new_name){
+    return studies_comp.has_read_permission(user_id, study_id)
+        .then(data=>
+        {
+            const users = data.study_data.users.filter(user=>!user.status);
+            return users.map(user=>rename_user_file(user.user_id, path2rename, new_name));
+        });
+}
 
 function rename_user_file(user_id, path2rename, new_name){
     return get_user_token(user_id)
@@ -153,6 +169,14 @@ function rename_file(access_token, path2rename, new_name){
 }
 
 
+function delete_users_file(user_id, study_id, path){
+    return studies_comp.has_read_permission(user_id, study_id)
+        .then(data=>
+        {
+            const users = data.study_data.users.filter(user=>!user.status);
+            return users.map(user=>delete_user_file(user.user_id, path));
+        });
+}
 function delete_user_file(user_id, path){
     return get_user_token(user_id)
         .then(function(access_token) {
@@ -186,4 +210,4 @@ function delete_file(access_token, path2delete){
         });
 }
 
-module.exports = {get_auth_link, rename_user_file, rename_file, delete_user_file, delete_file, upload_user_file, upload_file, get_access_token, revoke_user, add_user_folder};
+module.exports = {get_auth_link, rename_users_file, rename_user_file, rename_file, delete_users_file, delete_user_file, delete_file, upload_user_file, upload_users_file, upload_file, get_access_token, revoke_user, add_user_folder};

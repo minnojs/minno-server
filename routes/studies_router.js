@@ -120,7 +120,7 @@ studiesRouter.route('/:study_id/collaboration')
                 .then(function(data){
                     res.json({data_file:data});
                 })
-                .catch(next);
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
 

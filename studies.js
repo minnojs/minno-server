@@ -42,12 +42,15 @@ function get_studies(user_id) {
                 .find({ _id: { $in: study_ids } })
 
                 .then(user_studies =>  user_studies.map(study =>
-                    composeStudy(study, {
+                    {
+                        console.log(study.users);
+                    return composeStudy(study, {
                         permission: study.users.find(user=>user.user_id===user_id).permission,
                         study_type:'regular',
                         base_url:study.folder_name,
                         tags: get_tags(user_result, study)
-                    })
+                    });
+                }
                 ));
             });
         }
@@ -94,8 +97,7 @@ function get_collaborations(user_id, study_id){
     return has_read_permission(user_id, study_id)
         .then(data=>
         {
-            console.log(data.study_data.users);
-            const users = data.study_data.users.filter(user=>user.user_id!==user_id);
+            const users = data.study_data.users.filter(user=>user.user_id!==user_id && user.permission!=='owner');
             return users;
         });
 }
@@ -104,35 +106,45 @@ function get_collaborations(user_id, study_id){
 function remove_collaboration(user_id, study_id, collaboration_user_id){
     return mongo.connect(url).then(function (db) {
         const studies   = db.collection('studies');
+        const users   = db.collection('users');
         return has_read_permission(user_id, study_id)
-            .then(()=>studies.update({_id: study_id},
-                {$pull: {users: {user_id: collaboration_user_id}}}));
+            .then(()=>
+                Promise.all([
+                studies.update({_id: study_id},
+                {$pull: {users: {user_id: collaboration_user_id}}}),
+                    users.update({_id: collaboration_user_id},
+                        {$pull: {studies: {id: study_id}}}),
+                    users.update({_id: collaboration_user_id},
+                        {$pull: {pending_studies: {id: study_id}}})
+                ]));
     });
 }
 
 
-function add_collaboration(user_id, study_id, user_name, permission){
+function add_collaboration(user_id, study_id, collaborator_name, permission){
     return mongo.connect(url).then(function (db) {
         const studies   = db.collection('studies');
         const users   = db.collection('users');
-        const accept = utils.sha1(study_id + user_name +'accept*');
-        const reject = utils.sha1(study_id + user_name +'reject*');
+        const accept = utils.sha1(study_id + collaborator_name +'accept*'+Math.random());
+        const reject = utils.sha1(study_id + collaborator_name +'reject*'+Math.random());
         return has_read_permission(user_id, study_id)
-            .then(()=>user_info_by_name(user_name)
-                    .then(user=>Promise.all([
-                        studies.update({_id: study_id},
-                            {$push: {users: {user_id: user._id, user_name:user.user_name, permission: permission}}}),
-                        users.update({_id: user._id},
-                            {$push: {studies: {id:study_id, tags:[], accept, reject}}}),
-                        sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration_edit', {accept: config.server_url+'/static/?/collaboration/'+accept,
-                                                                                                                                 reject: config.server_url+'/static/?/collaboration/'+reject,
-                                                                                                                                 collaborator_name:user.first_name,
-                                                                                                                                 owner_name: user_id,
-                                                                                                                                 study_name:study_id})
-
-                    ])
-
-
+            .then((full_data)=>user_info_by_name(collaborator_name)
+                    .then(function(collaborator_data)
+                    {
+                        return studies.findOne({_id: study_id, users:{ $elemMatch: {user_id:collaborator_data._id}}})
+                            .then(data=> data ? Promise.reject({status:500, message: 'ERROR: user already collaborated'}) :
+                        Promise.all([
+                            studies.update({_id: study_id},
+                                {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission: permission, status:'pending'}}}),
+                            users.update({_id: collaborator_data._id},
+                                {$push: {pending_studies: {id:study_id, accept, reject}}}),
+                            sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration_edit', {accept: config.server_url+'/static/?/collaboration/'+accept,
+                                                                                                                                     reject: config.server_url+'/static/?/collaboration/'+reject,
+                                                                                                                                     collaborator_name:collaborator_name,
+                                                                                                                                     owner_name: full_data.user_data.first_name,
+                                                                                                                                     study_name:full_data.study_data.name})
+                        ]));
+                    }
             ));
     });
 }

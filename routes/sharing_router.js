@@ -20,4 +20,3 @@ sharingRouter.route('/:study_id/public')
                 .then(res.json({}));
 
         });
-

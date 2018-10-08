@@ -15,6 +15,7 @@ const sharing_router    = require('./routes/sharing_router');
 const settings_router   = require('./routes/settings_router');
 const users_router      = require('./routes/users_router');
 const dropbox_router    = require('./routes/dropbox_router');
+const collaboration_router    = require('./routes/collaboration_router');
 
 const bodyParser = require('body-parser');
 const app = express();
@@ -83,6 +84,7 @@ basePathRouter.use('/studies' ,studies_router);
 basePathRouter.use('/studies', publish_router);
 basePathRouter.use('/studies', lock_router);
 basePathRouter.use('/studies', sharing_router);
+basePathRouter.use('/collaboration', collaboration_router);
 
 basePathRouter.use('/users', users_router);
 basePathRouter.use('/dropbox', dropbox_router);

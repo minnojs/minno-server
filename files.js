@@ -102,7 +102,8 @@ function update_file(user_id, study_id, file_id, content) {
         .then(function(){
             const file_url = path.join('..',config.user_folder,study_data.folder_name,file_id);
             return studies_comp.update_modify(study_id)
-            .then(dropbox.upload_user_file(user_id, path.resolve(path.join(config.user_folder,study_data.folder_name,file_id))))
+
+                .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name,file_id))))
             .then(()=>({id: file_id, content: content, url: file_url}));
         });
     });
@@ -127,7 +128,7 @@ function delete_files(user_id, study_id, files) {
                 ? Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
                 : fs.remove(delPath))
                     .then(()=>experiments.delete_experiment(user_id, study_id, file))
-                .then(()=>dropbox.delete_user_file(user_id, delPath));
+                .then(()=>dropbox.delete_users_file(user_id, study_id, delPath));
         });
         return studies_comp.update_modify(study_id).then(()=>({}));
     });
@@ -179,7 +180,7 @@ function rename_file(user_id, study_id, file_id, new_path) {
               .then(function(){
                   const file_url = '../'+new_file_path;
                   return experiments.update_file_id(user_id, study_id, file_id, new_path)
-                  .then(()=>dropbox.rename_user_file(user_id, exist_file_path, new_file_path))
+                  .then(()=>dropbox.rename_users_file(user_id, study_id, exist_file_path, new_file_path))
                   .then(()=>({id: urlencode.encode(new_path), url:file_url}));
               }));
     });
@@ -228,7 +229,7 @@ function upload(user_id, study_id, req) {
                     return fs
                     .copy(oldpath, file_path)
                     .then(() => fs.remove(oldpath))
-                    .then(dropbox.upload_user_file(user_id, path.resolve(file_path)));
+                    .then(dropbox.upload_users_file(user_id, study_id, path.resolve(file_path)));
                 });
 
                 return Promise.all(create_file_promises);
