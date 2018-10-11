@@ -43,7 +43,6 @@ function get_studies(user_id) {
 
                 .then(user_studies =>  user_studies.map(study =>
                     {
-                        console.log(study.users);
                     return composeStudy(study, {
                         permission: study.users.find(user=>user.user_id===user_id).permission,
                         study_type:'regular',
@@ -271,7 +270,7 @@ function insert_obj(user_id, study_props) {
     if (!study_props.folder_name) return Promise.reject({status:500, message: 'Error: creating a new study requires the study folder_name'});
 
     const dflt_study_props = {
-        users: [{id: user_id}],
+        users: [{user_id: user_id, permission:PERMISSION_OWNER}],
         experiments:[],
         modify_date: Date.now()
     };

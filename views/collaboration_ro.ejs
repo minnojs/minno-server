@@ -1,19 +1,27 @@
 <html>
 
 <body>
-Hi
+
+Dear <%= data.collaborator_name %>,
 <br/>
-Have you requested help because you forgot your password to the Researcher Dashboard?
+<%= data.owner_name %> asked to share with you the study '<%= data.study_name %>'.
 <br/>
-If you did NOT request that help, then someone entered your email address and requested to reset your password. No need to reset the password in that case.
+If you agree to become a collaborattor on that study please click <a href="<%= data.accept %>">here</a>.
+<br/><br/>
+<strong> What happens if I agree to become a collaborator?</strong> As a collaborator, you will see the study under your list of studies.
 <br/>
-If you requested help because you forgot your password, please click <a href="<%= data.url %>">here</a>, or paste the following url into the address bar of your browser to reset your password: <%= data.url %>.
-<br/>
-If you have any questions, please email the Researcher Dashboard Admin at andydzik@gmail.com.
-<br/>
+In addition, you would be able to edit the files. If you're using dropbox to backup your studies, this study will be added to your archive as well.
+<br/><br/>
+If you do not want to become a collaborator on that study please click <a href="<%= data.reject %>">here</a>.
+<br/><br/>
+<strong>What happens if I do not agree to become a collaborator?</strong> Nothing. You will not see the study in your list of studies, and will not have access to that study.
+<br/><br/>
+<strong>Will <%= data.owner_name %>  see my response?</strong> Yes, the owner of the study can see in the Researcher Dashboard who joined the collaboration.
+<br/><br/><br/><br/>
+
 Thanks,
 <br/>
-The Researcher Dashboard Automatic Password Recovery Service
+The Researcher Dashboard Automatic Mailing Service
 
 </body>
 </html>
