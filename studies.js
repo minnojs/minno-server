@@ -137,9 +137,10 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
                                 {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission: permission, status:'pending'}}}),
                             users.update({_id: collaborator_data._id},
                                 {$push: {pending_studies: {id:study_id, accept, reject}}}),
-                            sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration_edit', {accept: config.server_url+'/static/?/collaboration/'+accept,
+                            sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/static/?/collaboration/'+accept,
                                                                                                                                      reject: config.server_url+'/static/?/collaboration/'+reject,
                                                                                                                                      collaborator_name:collaborator_name,
+                                                                                                                                     permission:permission,
                                                                                                                                      owner_name: full_data.user_data.first_name,
                                                                                                                                      study_name:full_data.study_data.name})
                         ]));

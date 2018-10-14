@@ -10,7 +10,7 @@ If you agree to become a collaborattor on that study please click <a href="<%= d
 <br/><br/>
 <strong> What happens if I agree to become a collaborator?</strong> As a collaborator, you will see the study under your list of studies.
 <br/>
-In addition, you would be able to edit the files. If you're using dropbox to backup your studies, this study will be added to your archive as well.
+In addition, you would be able to <%= data.permission ==='can edit' ? 'edit' : 'see' %> the files. If you're using dropbox to backup your studies, this study will be added to your archive as well.
 <br/><br/>
 If you do not want to become a collaborator on that study please click <a href="<%= data.reject %>">here</a>.
 <br/><br/>
