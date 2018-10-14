@@ -151,9 +151,6 @@ function insert_new_user({username, first_name, last_name, email, role, password
             })
             .then(response => {
                 const user_data = response.ops[0];
-                if(password){
-
-                }
                     set_password(user_data._id, password, confirm);
                 return user_data;
             });

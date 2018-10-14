@@ -109,13 +109,13 @@ function remove_collaboration(user_id, study_id, collaboration_user_id){
         return has_read_permission(user_id, study_id)
             .then(()=>
                 Promise.all([
-                studies.update({_id: study_id},
-                {$pull: {users: {user_id: collaboration_user_id}}}),
-                    users.update({_id: collaboration_user_id},
-                        {$pull: {studies: {id: study_id}}}),
-                    users.update({_id: collaboration_user_id},
-                        {$pull: {pending_studies: {id: study_id}}})
-                ]));
+                    studies.update({_id: study_id},
+                    {$pull: {users: {user_id: collaboration_user_id}}}),
+                        users.update({_id: collaboration_user_id},
+                            {$pull: {studies: {id: study_id}}}),
+                        users.update({_id: collaboration_user_id},
+                            {$pull: {pending_studies: {id: study_id}}})
+                    ]));
     });
 }
 
@@ -141,13 +141,44 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
                                                                                                                                      reject: config.server_url+'/static/?/collaboration/'+reject,
                                                                                                                                      collaborator_name:collaborator_name,
                                                                                                                                      permission:permission,
-                                                                                                                                     owner_name: full_data.user_data.first_name,
+                                                                                                                                     owner_name: `${full_data.user_data.first_name} ${full_data.user_data.last_name}`,
                                                                                                                                      study_name:full_data.study_data.name})
                         ]));
                     }
             ));
     });
 }
+
+function make_collaboration(user_id, code){
+    return mongo.connect(url).then(function (db) {
+        const users   = db.collection('users');
+        const studies   = db.collection('studies');
+        return users.findOne({pending_studies: { $elemMatch: {$or: [{accept:code}, {reject:code}]}}})
+            .then(user_data=>{
+                if (!user_data)
+                    return Promise.reject({status:400, message:'wrong code'});
+
+                if(user_data._id!==user_id)
+                    return Promise.reject({status:400, message:'wrong user'});
+
+                const study = user_data.pending_studies.filter(study=>study.accept===code || study.reject===code)[0];
+                return users.update({_id: user_data._id},
+                    {$pull: {pending_studies: {id: study.id}}})
+                    .then(function() {
+                        if (study.accept === code)
+                            return Promise.all([
+                                users.update({_id: user_data._id},
+                                    {$push: {studies: {id: study.id, tags: []}}}),
+                                studies.update({_id: study.id, 'users.user_id':user_data._id},
+                                    {$unset: {'users.$.status': ''}})
+                            ]);
+                        return studies.update({_id: study.id, 'users.user_id':user_data._id},
+                            {$set: {'users.$.status': 'reject'}});
+                    });
+            });
+    });
+}
+
 
 
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
@@ -410,4 +441,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission};
