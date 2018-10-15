@@ -26,7 +26,7 @@ define(['managerAPI'], function(Manager) {
     API.addGlobal({
         raceiat:{},
         //YBYB: change when copying back to the correct folder
-        baseURL: '/users/admin/111%20-%20demo.race/images/',
+        baseURL: './images/',
         raceSet:raceSet,
         blackLabels:blackLabels,
         whiteLabels:whiteLabels,
