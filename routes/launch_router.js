@@ -62,6 +62,7 @@ function displayExperiment(params, res){
             minnojsUrl: config.minnojsUrl,
             errorception: config.errorception,
             url: exp_data.url, 
+            base_url: exp_data.base_url, 
             dataUrl,
             vars
         })
