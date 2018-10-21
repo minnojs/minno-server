@@ -45,7 +45,7 @@ filesRouter.route('/:study_id/upload/')
         function(req, res){
             return files.upload(req.user_id, parseInt(req.params.study_id), req)
                 .then(files => res.json(files))
-                .catch(() => res.status(403).json({message: 'ERROR: Permission denied!'}));
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
 

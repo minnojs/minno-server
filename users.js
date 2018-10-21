@@ -94,9 +94,10 @@ function get_users() {
     return mongo.connect(url).then(function (db) {
         const users = db.collection('users');
         return users.find({})
-            .then(function(user_data)
+            .then(function(users_data)
             {
-                return (user_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role})));
+                users_data = users_data.filter(user=>user.user_name!=='bank');
+                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role})));
             });
     });
 }

@@ -52,6 +52,7 @@ function get_study_files(user_id, study_id) {
         const folderName = path.join(config.user_folder,study_data.folder_name);
         return walk(folderName)
         .then(files => {
+
             return {
                 study_name:study_data.name,
                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
@@ -60,8 +61,7 @@ function get_study_files(user_id, study_id) {
                 is_public: study_data.is_public,
                 is_readonly: !can_write,
                 versions: study_data.versions,
-                permission: study_data.users.find(user=>user.user_id===user_id).permission,
-
+                permission: study_data.users.find(user=>user.user_id===user_id) ? study_data.users.find(user=>user.user_id===user_id).permission :'read only',
                 files: files.files
                 // TODO: this applies only to root. should add this to deep files as well.
                 .map(function(file){
@@ -208,10 +208,10 @@ function upload(user_id, study_id, req) {
     const form = new formidable.IncomingForm();
     form.maxFileSize = config.maxFileSize;
     form.multiples = true;
-
     return new Promise(function(resolve, reject){
         form.parse(req, function (err, fields, files) {
-            if (err) log.error(`20180607 | error with uploading: ${err}`);
+            if (err)
+                return Promise.reject({status:500, message: `Error: ${err}`});
 
             return has_write_permission(user_id, study_id)
             .then(function({study_data}){

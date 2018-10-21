@@ -5,7 +5,9 @@ const mongo         = require('mongodb-bluebird');
 const dateFormat    = require('dateformat');
 const path          = require('path');
 const utils         = require('./utils');
-const sender      = require('./sender');
+const sender        = require('./sender');
+const sanitize      = require("sanitize-filename");
+
 
 const {user_info, user_info_by_name}   = require('./users');
 
@@ -22,6 +24,16 @@ function generate_id(study_id, version, state) {
     return utils.sha1(study_id + version + state+'*');
 }
 
+function get_pending_studies(user_id) {
+    return mongo.connect(url).then(function (db) {
+        const users = db.collection('users');
+        return users.findOne({_id:user_id})
+            .then(user_result => user_result.pending_studies);
+
+    });
+}
+
+
 function get_studies(user_id) {
     return mongo.connect(url).then(function (db) {
         const users   = db.collection('users');
@@ -29,6 +41,7 @@ function get_studies(user_id) {
 
         return Promise.all([
             get_user_studies(),
+            get_public_studies(),
             get_bank_studies()
         ])
         .then(studyArr => [].concat.apply([], studyArr));
@@ -69,7 +82,18 @@ function get_studies(user_id) {
                 })));
             });
         }
-
+        function get_public_studies(){
+            return studies
+            .find({$and: [{is_public: true}, {users: {$not: {$elemMatch: {user_id: user_id } } }}] })
+            .then(studies => studies.map(study => composeStudy(study, {
+                is_public: true,
+                users: study.users,
+                permission: PERMISSION_READ_ONLY,
+                study_type:'regular',
+                base_url:study.folder_name,
+                tags: []
+            })));
+        }
     });
 
 
@@ -180,8 +204,10 @@ function make_collaboration(user_id, code){
 }
 
 
-
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
+    const sanitize_study_name = sanitize(study_name);
+    if(study_name!==sanitize_study_name || study_name[0]=='.')
+        return Promise.reject({status:400, message: 'ERROR: wrong study name'});
     return ensure_study_not_exist(user_id, study_name)
         .then(() => user_info(user_id))
         .then(function ({user_name}) {
@@ -268,9 +294,16 @@ function get_user_study(user_id, study_id){
         .then(function([user_data, study_data]){
             if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
             if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
+            if (study_data.users.find(user=>user.user_id===user_id))
+            {
 
-            const can_write = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
-            const can_read = study_data.users.find(user=>user.user_id===user_id) || study_data.is_public;
+                const can_write = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
+                const can_read = study_data.users.find(user=>user.user_id===user_id);
+                return {user_data, study_data, can_read, can_write};
+            }
+            const can_write = false;
+            const can_read = study_data.is_bank || study_data.is_public;
+
             return {user_data, study_data, can_read, can_write};
         });
 }
@@ -441,4 +474,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission};

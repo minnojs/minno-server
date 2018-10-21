@@ -44,7 +44,7 @@ function update_study_tags(user_id, study_id, tags) {
                 {_id:user_id, studies: {$elemMatch: {id:study_id}} },
                 [],
                 {$set: {'studies.$.tags': study_tags}})
-                .then(({tags:study_tags}));
+                .then(()=>({tags:study_tags}));
         });
     });
 }
@@ -56,7 +56,10 @@ function insert_new_tag(user_id, tag_text, tag_color) {
             .then(function(user_result){
                 if (!user_result)
                     return Promise.reject({status:500, message: 'ERROR: internal error'});
-            });
+
+            })
+            .then(()=>({id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}));
+
     });
 }
 

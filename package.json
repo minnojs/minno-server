@@ -37,6 +37,7 @@
     "simple-node-logger": "^0.93.37",
     "through2": "^2.0.3",
     "urlencode": "^1.1.0",
+    "valid-filename": "^2.0.1",
     "walkdir": "0.0.12",
     "zip-dir": "^1.0.2",
     "zip-folder": "^1.0.0"

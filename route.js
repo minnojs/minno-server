@@ -13,6 +13,7 @@ const tags_router       = require('./routes/tags_router');
 const files_router      = require('./routes/files_router');
 const sharing_router    = require('./routes/sharing_router');
 const settings_router   = require('./routes/settings_router');
+const messages_router   = require('./routes/messages_router');
 const users_router      = require('./routes/users_router');
 const dropbox_router    = require('./routes/dropbox_router');
 const collaboration_router    = require('./routes/collaboration_router');
@@ -76,6 +77,7 @@ basePathRouter.use(launch_router);
 
 
 basePathRouter.use(connections_router);
+basePathRouter.use(messages_router);
 basePathRouter.use(settings_router);
 basePathRouter.use('/files' ,files_router);
 basePathRouter.use('/tags' ,tags_router);

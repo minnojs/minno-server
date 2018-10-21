@@ -4,7 +4,7 @@ const app = express();
 const config = require('./config');
 
 mailer.extend(app, {
-    from: 'implicit.dashboard@gmail.com',
+    from: config.email_auth.user,
     secureConnection: true, // use SSL
 
     host: 'smtp.gmail.com', // hostname

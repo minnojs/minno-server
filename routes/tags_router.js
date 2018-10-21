@@ -23,16 +23,15 @@ tagsRouter.route('')
     .post(
         function(req, res){
             return tags.insert_new_tag(req.user_id, req.body.tag_text, req.body.tag_color)
-                .then(()=>res.json({}))
+                .then(tag_data => res.json(tag_data))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
-
         });
 
 tagsRouter.route('/:tag_id')
     .delete(function(req, res){
-            return tags.delete_tag(req.user_id, req.params.tag_id)
-                .then(()=>res.json({}))
-                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        return tags.delete_tag(req.user_id, req.params.tag_id)
+            .then(()=>res.json({}))
+            .catch(err=>res.status(err.status || 500).json({message:err.message}));
 
     })
     .put(function(req, res){
