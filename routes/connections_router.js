@@ -69,7 +69,8 @@ connectionsRouter.route('/activation/:code')
     .get(
         function(req, res){
             if(req.session.user)
-                return res.redirect('/');
+                return res.status(400).json({message:'user already logged in. Please logout and try again'});
+
             return users.check_activation_code(req.params.code)
                 .then(()=>res.json({}))
                 .catch(err=>

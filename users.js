@@ -137,7 +137,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
             .then(() => fs.ensureDir(userFolder))
             .then(function(){
                 if(!password)
-                    sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`})
+                    sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`});
             })
             .then(() => counters.findAndModify(
                 {_id: 'user_id'},
@@ -147,7 +147,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
             ))
             .then(function (counter_data) {
                 const user_id = counter_data.value.seq;
-                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role, studies:[],tags:[]};
+                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:'u', studies:[],tags:[]};
                 return users.insert(user_obj);
             })
             .then(response => {
