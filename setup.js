@@ -1,13 +1,12 @@
 /* eslint no-console:0 */
 require('./config_validation');
 const config        = require('./config');
-const url           = config.mongo_url;
 const fs            = require('fs-extra');
-const mongo         = require('mongodb-bluebird');
-const {insert_new_user,set_password} = require('./users');
+const {insert_new_user} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
 const study_list = require('./bank/studyList');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 
 console.log('Setting up MinnoJS server');
@@ -26,7 +25,7 @@ function create_dirs(){
 
 function create_users(){
     console.log('Creating defaul users:');
-    return mongo.connect(url)
+    return connection
         .then(function (db) {
             const users = db.collection('users');
             return Promise.all([
@@ -36,16 +35,16 @@ function create_users(){
 
             function createUser(user_name, password, role){
                 return users
-                .findOne({user_name})
-                .then(user => {
-                    if (user) return console.log(`-- Creating ${user_name}: user found`);
+                    .findOne({user_name})
+                    .then(user => {
+                        if (user) return console.log(`-- Creating ${user_name}: user found`);
 
-                    return insert_new_user({username:user_name, first_name:user_name, last_name:user_name, email:config.email_auth.user, role, password, confirm:password})
-                        .then(user_data => {
-                            console.log(`-- Creating ${user_name}: user created`);
-                            return user_data;
-                        });
-                });
+                        return insert_new_user({username:user_name, first_name:user_name, last_name:user_name, email:config.email_auth.user, role, password, confirm:password})
+                            .then(user_data => {
+                                console.log(`-- Creating ${user_name}: user created`);
+                                return user_data;
+                            });
+                    });
             }
         })
         .then(() => console.log(`Default users created`));
@@ -54,7 +53,7 @@ function create_users(){
 
 
 function create_bank_studies(){
-    return mongo.connect(url).then(function(db){
+    return connection.then(function(db){
         const users = db.collection('users');
         const studies = db.collection('studies');
 
@@ -63,6 +62,7 @@ function create_bank_studies(){
             const study_ids = user_result.studies.map(study => study.id);
             return studies
             .find({ _id: { $in: study_ids } })
+            .toArray()
             .then(studies => [user_result, studies]);
         })
         .then(function([user_result, bank_studies]){

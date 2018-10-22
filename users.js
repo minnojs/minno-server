@@ -1,22 +1,21 @@
 const config      = require('./config');
-const url         = config.mongo_url;
 const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
 const utils       = require('./utils');
 
-const mongo       = require('mongodb-bluebird');
+const connection    = Promise.resolve(require('mongoose').connection);
 const evalidator  = require('email-validator');
 
 function user_info (user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({_id: user_id});
     });
 }
 
 function user_info_by_name (user_name) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({user_name})
             .then(user_data => user_data ? user_data : Promise.reject({status:400, message: `ERROR: ${user_name} does not exist`}));
@@ -32,7 +31,7 @@ function set_password(user_id, password, confirm) {
     if(password !== confirm)
         return Promise.reject({status:400, message: 'ERROR: Passwords do not match'});
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify({_id: user_id},
                             [],
@@ -45,7 +44,7 @@ function set_password(user_id, password, confirm) {
 function set_email(user_id, email) {
     if(!email)
         return Promise.reject({status:400, message: 'Missing email'});
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify({_id: user_id},
             [],
@@ -59,7 +58,7 @@ function set_email(user_id, email) {
 function set_dbx_token(user_id, access_token) {
     if(!access_token)
         return Promise.reject({status:400, message: 'Missing access_token'});
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify({_id: user_id},
             [],
@@ -70,7 +69,7 @@ function set_dbx_token(user_id, access_token) {
 }
 
 function revoke_dbx_token(user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify({_id: user_id},
             [],
@@ -91,9 +90,10 @@ function get_email(user_id) {
 
 
 function get_users() {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.find({})
+            .toArray()
             .then(function(users_data)
             {
                 users_data = users_data.filter(user=>user.user_name!=='bank');
@@ -103,7 +103,7 @@ function get_users() {
 }
 
 function update_role(user_id, role) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.update({_id: user_id}, {$set: {role: role}})
             .then(user_data => (user_data));
@@ -112,7 +112,7 @@ function update_role(user_id, role) {
 
 
 function remove_user(user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.remove({_id: user_id})
             .then(user_data => (user_data));
@@ -127,7 +127,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
     if (!evalidator.validate(email))
         return Promise.reject({status:400, message: 'Invalid email address'});
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         const counters   = db.collection('counters');
         return users.findOne({$or: [{user_name}, {email}]})
@@ -159,7 +159,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
 }
 
 function check_activation_code(code) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({activation_code:code})
             .then(function (user_data) {
@@ -179,7 +179,7 @@ function set_user_by_activation_code(code, pass, pass_confirm)
     if(pass !== pass_confirm)
         return Promise.reject({status:400, message: 'ERROR: Passwords do not match'});
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify(
             {activation_code:code},
@@ -195,7 +195,7 @@ function reset_password_request(user_name)
 {
     if(user_name.length<3)
         return Promise.reject({status:400, message: 'ERROR: user name / email must be at least 8 characters in length!'});
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         const reset_code = utils.sha1(user_name + Math.floor(Date.now() / 1000));
         return users.update({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
@@ -208,7 +208,7 @@ function reset_password_request(user_name)
 }
 
 function check_reset_code(code) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({reset_code:code})
             .then(function (user_data) {
@@ -220,7 +220,7 @@ function check_reset_code(code) {
 }
 
 function use_reset_code(reset_code) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.update({reset_code: reset_code}, {$unset: {reset_code: 0}})
             .then(() => ({}));
@@ -239,7 +239,7 @@ function connect(user_name, pass) {
     if (!user_name || !pass)
         return Promise.reject({status:400, message: 'missing parameters!'});
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users    = db.collection('users');
         const studies  = db.collection('studies');
         let query = {user_name, pass: utils.sha1(pass)};
@@ -269,12 +269,14 @@ function connect(user_name, pass) {
                     if(user_name == pass)
                         user_data.first_login = true;
                     const study_ids = user_data.studies.map(obj=>obj.id);
-                    return studies.find({_id: {$in: study_ids}})
+                    return studies
+                        .find({_id: {$in: study_ids}})
+                        .toArray()
                         .then(function (studies) {
                             user_data.studies = studies;
                             return user_data;
                         });
-            });
+                });
         }
     });
 }

@@ -5,8 +5,7 @@ const join = require('path').join;
 const users_comp = require('./users');
 const utils        = require('./utils');
 const data_server  = require('./data_server/controllers/controller');
-const mongo         = require('mongodb-bluebird');
-const mongo_url     = config.mongo_url;
+const connection    = Promise.resolve(require('mongoose').connection);
 
 const {has_read_permission, has_write_permission} = studies_comp;
 
@@ -34,7 +33,7 @@ function get_play_url (user_id, study_id, file_id) {
 }
 
 function get_experiment_url (req) {
-    return mongo.connect(mongo_url).then(function (db) {
+    return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
         return studies.findOne({experiments: { $elemMatch: {id: req.params.exp_id} }})
@@ -88,7 +87,7 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
     return has_write_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.update({_id: study_id}, {
                     $push: {
@@ -113,7 +112,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
 function delete_experiment(user_id, study_id, file_id) {
     return has_write_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.update({_id: study_id}, {
                     $pull: {
@@ -133,7 +132,7 @@ function delete_experiment(user_id, study_id, file_id) {
 function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
     return has_write_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.update({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
                                       {$set:{'experiments.$.descriptive_id': descriptive_id}}
@@ -145,7 +144,7 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
 function update_file_id(user_id, study_id, file_id, new_file_id) {
     return has_write_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.update({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
                 { $set:{'experiments.$.file_id':new_file_id}}
@@ -157,7 +156,7 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
 function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
     return has_read_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(mongo_url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
                 .then(study_data => !!study_data);

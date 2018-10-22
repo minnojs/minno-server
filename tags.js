@@ -1,12 +1,10 @@
-const config        = require('./config');
-const url           = config.mongo_url;
 const utils         = require('./utils');
-const mongo         = require('mongodb-bluebird');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 const {has_read_permission, has_write_permission} = require('./studies');
 
 function get_tags(user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({_id: user_id})
             .then(user_data=>({tags: user_data.tags}));
@@ -16,7 +14,7 @@ function get_tags(user_id) {
 function get_study_tags(user_id, study_id) {
     return has_read_permission(user_id, study_id)
         .then(function(){
-            return mongo.connect(url).then(function (db) {
+            return connection.then(function (db) {
                 const users   = db.collection('users');
                 return users.findOne({_id:user_id, studies: {$elemMatch: {id:study_id}}})
                     .then(function(user_data){
@@ -35,7 +33,7 @@ function get_study_tags(user_id, study_id) {
 function update_study_tags(user_id, study_id, tags) {
     return has_write_permission(user_id, study_id)
     .then(function({user_data}){
-        return mongo.connect(url).then(function (db) {
+        return connection.then(function (db) {
             const users   = db.collection('users');
             const study_obj = user_data.studies.find(study => study.id === study_id);
             let study_tags = study_obj.tags;
@@ -50,7 +48,7 @@ function update_study_tags(user_id, study_id, tags) {
 }
 
 function insert_new_tag(user_id, tag_text, tag_color) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.update({_id: user_id}, {$push: {tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}}})
             .then(function(user_result){
@@ -64,7 +62,7 @@ function insert_new_tag(user_id, tag_text, tag_color) {
 }
 
 function delete_tag(user_id, tag_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findOne({_id: user_id}).then(function(user) {
             user.studies.map(function (study) {
@@ -82,7 +80,7 @@ function delete_tag(user_id, tag_id) {
 }
 
 function update_tag(user_id, tag) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.update({_id: user_id, tags: { $elemMatch: {id:tag.id}}},
             {$set: {'tags.$.text': tag.text, 'tags.$.color': tag.color}}

@@ -1,12 +1,11 @@
-const config        = require('./config');
-const url           = config.mongo_url;
 const fs            = require('fs-extra');
-const mongo         = require('mongodb-bluebird');
+const config      = require('./config');
 const dateFormat    = require('dateformat');
 const path          = require('path');
 const utils         = require('./utils');
 const sender        = require('./sender');
-const sanitize      = require("sanitize-filename");
+const sanitize      = require('sanitize-filename');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 
 const {user_info, user_info_by_name}   = require('./users');
@@ -25,7 +24,7 @@ function generate_id(study_id, version, state) {
 }
 
 function get_pending_studies(user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         return users.findOne({_id:user_id})
             .then(user_result => user_result.pending_studies);
@@ -35,7 +34,7 @@ function get_pending_studies(user_id) {
 
 
 function get_studies(user_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         const studies   = db.collection('studies');
 
@@ -44,7 +43,7 @@ function get_studies(user_id) {
             get_public_studies(),
             get_bank_studies()
         ])
-        .then(studyArr => [].concat.apply([], studyArr));
+            .then(studyArr => [].concat.apply([], studyArr));
 
         function get_user_studies(){
             return users.findOne({_id:user_id})
@@ -53,6 +52,7 @@ function get_studies(user_id) {
                 const study_ids = user_result.studies.map(study => study.id);
                 return studies
                 .find({ _id: { $in: study_ids } })
+                .toArray()
 
                 .then(user_studies =>  user_studies.map(study =>
                     {
@@ -73,6 +73,7 @@ function get_studies(user_id) {
                 const study_ids = user_result.studies.map(study => study.id);
                 return studies
                 .find({ _id: { $in: study_ids } })
+                .toArray()
                 .then(studies => studies.map(study => composeStudy(study, {
                     is_bank: true,
                     permission: PERMISSION_READ_ONLY,
@@ -85,6 +86,7 @@ function get_studies(user_id) {
         function get_public_studies(){
             return studies
             .find({$and: [{is_public: true}, {users: {$not: {$elemMatch: {user_id: user_id } } }}] })
+            .toArray()
             .then(studies => studies.map(study => composeStudy(study, {
                 is_public: true,
                 users: study.users,
@@ -127,7 +129,7 @@ function get_collaborations(user_id, study_id){
 
 
 function remove_collaboration(user_id, study_id, collaboration_user_id){
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const studies   = db.collection('studies');
         const users   = db.collection('users');
         return has_read_permission(user_id, study_id)
@@ -145,7 +147,7 @@ function remove_collaboration(user_id, study_id, collaboration_user_id){
 
 
 function add_collaboration(user_id, study_id, collaborator_name, permission){
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const studies   = db.collection('studies');
         const users   = db.collection('users');
         const accept = utils.sha1(study_id + collaborator_name +'accept*'+Math.random());
@@ -174,7 +176,7 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
 }
 
 function make_collaboration(user_id, code){
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         const studies   = db.collection('studies');
         return users.findOne({pending_studies: { $elemMatch: {$or: [{accept:code}, {reject:code}]}}})
@@ -282,7 +284,7 @@ function has_write_permission(user_id, study_id){
 }
 
 function get_user_study(user_id, study_id){
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users = db.collection('users');
         const studies = db.collection('studies');
 
@@ -309,7 +311,7 @@ function get_user_study(user_id, study_id){
 }
 
 function ensure_study_not_exist(user_id, study_name) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const studies   = db.collection('studies');
         const users = db.collection('users');
 
@@ -342,7 +344,7 @@ function insert_obj(user_id, study_props) {
 
     const study_obj = Object.assign({}, study_props, dflt_study_props);
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies  = db.collection('studies');
         const users    = db.collection('users');
@@ -372,7 +374,7 @@ function insert_obj(user_id, study_props) {
 }
 
 function update_obj(study_id, study_obj) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const studies   = db.collection('studies');
         return studies.findAndModify({_id:study_id},
             [],
@@ -381,7 +383,7 @@ function update_obj(study_id, study_obj) {
 }
 
 function delete_by_id(user_id, study_id) {
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const users   = db.collection('users');
         const studies   = db.collection('studies');
         return users
@@ -393,16 +395,6 @@ function delete_by_id(user_id, study_id) {
                 return Promise.resolve(study_data);
             });
     });
-}
-
-
-function study_info (study_id) {
-    return mongo
-        .connect(url)
-        .then( db => db
-            .collection('studies')
-            .findOne({_id: +study_id}) // study ids must be numbers
-        );
 }
 
 function update_study(user_id, study_id, update_body) {
@@ -450,7 +442,7 @@ function rename_study(user_id, study_id, new_study_name) {
 function set_lock_status(user_id, study_id, status) {
     return has_write_permission(user_id, study_id)
         .then(function() {
-            return mongo.connect(url).then(function (db) {
+            return connection.then(function (db) {
                 const studies = db.collection('studies');
                 return studies.update({_id: study_id}, {$set: {locked: status}});
             });
@@ -460,7 +452,7 @@ function set_lock_status(user_id, study_id, status) {
 function update_modify(study_id) {
     const modify_date = Date.now();
 
-    return mongo.connect(url).then(function (db) {
+    return connection.then(function (db) {
         const studies   = db.collection('studies');
         return studies.update({_id: study_id}, {$set: {modify_date}});
     });
@@ -468,7 +460,7 @@ function update_modify(study_id) {
 
 function make_public(user_id, study_id, is_public) {
     return has_write_permission(user_id, study_id)
-        .then(()=> mongo.connect(url).then(function (db) {
+        .then(()=> connection.then(function (db) {
             const studies = db.collection('studies');
             return studies.update({_id: study_id}, {$set: {is_public}});
         }));

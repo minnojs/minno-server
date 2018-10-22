@@ -1,9 +1,5 @@
 const express     = require('express');
-const mongo         = require('mongodb-bluebird');
-const config        = require('../config');
 const studies     = require('../studies');
-
-const url           = config.mongo_url;
 
 const messagesRouter = express.Router();
 

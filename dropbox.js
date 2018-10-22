@@ -1,20 +1,11 @@
 const config        = require('./config');
-const urljoin       = require('url-join');
-const crypto        = require('crypto');
 const studies_comp  = require('./studies');
-const join = require('path').join;
 const users_comp = require('./users');
-const utils        = require('./utils');
-const data_server  = require('./data_server/controllers/controller');
-const mongo         = require('mongodb-bluebird');
-const mongo_url     = config.mongo_url;
 
 const request_promise = require('request-promise');
 const path         = require('path');
 const fs           = require('fs-extra');
 const walk         = require('walkdir');
-
-
 
 function get_auth_link(user_id){
     if ( typeof config.dropbox === 'undefined' )

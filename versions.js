@@ -1,9 +1,6 @@
-const config        = require('./config');
 const utils         = require('./utils');
-const mongo         = require('mongodb-bluebird');
-const mongo_url     = config.mongo_url;
-
 const {has_read_permission, has_write_permission} = require('./studies');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 
 function generate_id(study_id, version, state) {
@@ -29,7 +26,7 @@ function insert_new_version(user_id, study_id, version, state, update_url) {
 }
 
 function push_new_version(study_id, version, state, version_id){
-    return mongo.connect(mongo_url).then(function (db) {
+    return connection.then(function (db) {
         const studies = db.collection('studies');
         return studies.update({_id: study_id}, {
             $push: {
