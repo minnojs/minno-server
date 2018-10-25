@@ -50,7 +50,7 @@ exports.getDownloadRequests = function(studyIds) {
 exports.getData2 = function(req, res) {
 	res.send(exports.getData(req.get('studyId')));
 }
-exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate) {
+exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate,versionId) {
 	//startDate=null;
 	//endDate=null;
 
@@ -76,6 +76,11 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 		}
 		findObject.createdDate.$lt = new Date(endDate);
 	}
+	if(typeof versionId !== 'undefined' && versionId)
+	{
+		findObject.versionId=versionId.toString();	
+		console.log("version is "+findObject.versionId);
+	}
 	if (fileFormat == 'csv') {
 		rowSplitString = ',';
 		fileSuffix = '.csv';
@@ -83,6 +88,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	if (fileFormat == 'tsv') {
 		rowSplitString = '\t';
 	}
+	
 	var currentTime = new Date();
 	currentTime = currentTime.getTime();
 	var dataObject = {
@@ -90,6 +96,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 		details: findObject,
 		requestId: currentTime
 	};
+
 	var newDataRequest = new DataRequest(dataObject);
 	var cursor = Data.find(findObject).cursor();
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
@@ -107,6 +114,12 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
 	cursor = Data.find(findObject).cursor();
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		
+		if(typeof fileFormat !== 'undefined' && fileFormat=='json')
+		{
+			await writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
+			continue;
+		}
 		dataEntry = JSON.parse(JSON.stringify(dataEntry));
 		newMaps = getInitialVarMap(dataEntry);
 		await asyncForEach(newMaps, async function(newMap) {
@@ -116,10 +129,11 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 				var filename = newMap[fileSplitVar];
 			}
 			var dataMap = dataMaps[filename];
-			var row = mapToRow(dataMap, newMap, filename);
+			var row = mapToRow(dataMap, newMap, filename);			
 			await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
 		});
 	}
+	closeFiles(files);
 	return zipFiles(fileConfig);
 
 
@@ -338,6 +352,25 @@ var fileSetup = async function(fileConfig) {
 	await fs.mkdir(filePrefix);
 	fileConfig.filePrefix = filePrefix;
 	fileConfig.zipName = currentDate + '/' + currentTime + '.zip';
+}
+var closeFiles= function(files)
+{
+	for (var key in files) {
+	    files[key].close();
+	};
+}
+var writeDataFile = async function(data, filename, fileSuffix, files, fileConfig) {
+	if (fileSuffix == null) {
+		fileSuffix = '.txt';
+	}
+	filename = sanitize(filename);
+	filename = fileConfig.filePrefix + filename + fileSuffix;
+		if (!files[filename])
+		{
+		var wstream = fs.createWriteStream(filename);
+		files[filename] = wstream;
+	}
+		await files[filename].write(data);		
 }
 var writeDataRowToFile = async function(row, map, filename, rowSplitString, fileSuffix, files, fileConfig) {
 	if (fileSuffix == null) {
