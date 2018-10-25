@@ -81,7 +81,9 @@ function get_experiments(user_id, study_id) {
 
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
     return has_read_permission(user_id, study_id)
-        .then(()=> data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id));
+        .then(()=> data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id))
+        .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
+
 }
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {

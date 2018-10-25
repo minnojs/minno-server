@@ -108,7 +108,8 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
 	}
 	if (Object.keys(dataMaps).length == 0) {
-		throw "No data"
+
+        throw {status:500, message: 'ERROR: No data!'};
 	}
 	await fileSetup(fileConfig);
 

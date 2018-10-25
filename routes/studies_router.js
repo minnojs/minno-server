@@ -95,7 +95,9 @@ studiesRouter.route('/:study_id/experiments')
                 .then(function (study_data) {
                     res.json({experiments: study_data.experiments});
                 })
-                .catch(next);
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
         })
     .post(
         function(req, res, next){
@@ -104,7 +106,9 @@ studiesRouter.route('/:study_id/experiments')
                                     .then(function(data){
                                         res.json({data_file:data});
                                     })
-                                    .catch(next);
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
         });
 
 
