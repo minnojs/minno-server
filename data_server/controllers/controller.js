@@ -56,7 +56,6 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
 	if (typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
-	//∂console.log(studyId + " is the studyId requested");
 	var findObject = {};
 	var files = {};
 	var dataMaps = {};
@@ -66,6 +65,11 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	var fileSuffix = '.txt';
 	var fileConfig = {};
 	findObject.studyId = studyId;
+	if(Array.isArray(studyId))
+	{
+		findObject.studyId ={};
+		findObject.studyId.$in=studyId;
+	}
 	if (typeof startDate !== 'undefined' && startDate) {
 		findObject.createdDate = {};
 		findObject.createdDate.$gt = new Date(startDate);
@@ -78,8 +82,18 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	}
 	if(typeof versionId !== 'undefined' && versionId)
 	{
-		findObject.versionId=versionId.toString();	
-		console.log("version is "+findObject.versionId);
+		if(Array.isArray(versionId))
+		{
+			versionId.forEach(function(vId) {
+				vId=vId.toString();
+			});
+			findObject.versionId={};
+			findObject.versionId.$in=versionId;
+		}
+			else
+			{
+				findObject.versionId==versionId.toString();
+	}
 	}
 	if (fileFormat == 'csv') {
 		rowSplitString = ',';
