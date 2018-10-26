@@ -209,7 +209,7 @@ function make_collaboration(user_id, code){
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
     const sanitize_study_name = sanitize(study_name);
     if(study_name!==sanitize_study_name || study_name[0]=='.')
-        return Promise.reject({status:400, message: 'ERROR: wrong study name'});
+        return Promise.reject({status:400, message: 'ERROR: illegal characters in study name.  Also, study name cannot start with a period.'});
     return ensure_study_not_exist(user_id, study_name)
         .then(() => user_info(user_id))
         .then(function ({user_name}) {
