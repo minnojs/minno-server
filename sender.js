@@ -16,6 +16,8 @@ mailer.extend(app, {
 app.set('view engine', 'ejs');
 
 exports.send_mail = function (to, subject, body, data) {
+    if(config.debug_mode)
+        to = config.email_auth.user;
     return app.mailer.send(body, { to, subject, data }, function (err) {
         if (err) {
             console.log(err);

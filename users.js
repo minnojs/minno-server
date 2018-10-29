@@ -198,10 +198,10 @@ function reset_password_request(user_name)
     return connection.then(function (db) {
         const users = db.collection('users');
         const reset_code = utils.sha1(user_name + Math.floor(Date.now() / 1000));
-        return users.update({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
-            .then(function()
+        return users.findAndModify({$or: [{user_name: user_name}, {email: user_name}]}, [], {$set: {reset_code: reset_code}})
+            .then(function(user_data)
             {
-                sender.send_mail('ronenhe.pi@gmail.com', 'Restore password', 'reset_password', {url: config.server_url+'/static/?/reset_password/'+reset_code});
+                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password', {url: config.server_url+'/static/?/reset_password/'+reset_code});
                 return ({});
             });
     });

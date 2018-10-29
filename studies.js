@@ -163,7 +163,7 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
                                 {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission: permission, status:'pending'}}}),
                             users.update({_id: collaborator_data._id},
                                 {$push: {pending_studies: {id:study_id, accept, reject}}}),
-                            sender.send_mail('ronenhe.pi@gmail.com', 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/static/?/collaboration/'+accept,
+                            sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/static/?/collaboration/'+accept,
                                                                                                                                      reject: config.server_url+'/static/?/collaboration/'+reject,
                                                                                                                                      collaborator_name:collaborator_name,
                                                                                                                                      permission:permission,
@@ -220,7 +220,6 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
                 type: study_type,
                 users: [{id: user_id}],
                 experiments: [],
-                versions: [create_version_obj('*', 'Develop')],
                 modify_date: Date.now()
             }, additional_params);
 
@@ -356,6 +355,8 @@ function insert_obj(user_id, study_props) {
         )
             .then(function(counter_data){
                 study_obj._id = counter_data.value.seq;
+                study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
+
                 return studies.insert(study_obj);
             })
             .then(function(){
