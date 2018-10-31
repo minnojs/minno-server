@@ -1,0 +1,72 @@
+<%
+iat = global.arabiat;
+category1 = iat.category1.name;
+category2 = iat.category2.name;
+%>
+<p>Thank you for participating!</p> 
+<p>
+    The sorting test you just took is called the Implicit Association Test (IAT). 
+    You categorized good and bad words with images of <%= category1 %> and <%= category2 %>.
+</p>
+
+<div class="jumbotron jumbotron-dark">
+    <h2>Here are your results:</h2>
+    <p><%= iat.feedback %></p>
+</div>
+
+<h3>Interpreting your results</h3>
+<p>
+    Your result is described as an "Automatic preference for <%= category1 %> over <%= category2 %>" 
+    if you were faster responding when <i><%= category1 %></i> and <i>Good</i> are assigned to the same response key than when <i><%= category2 %></i> and <i>Good</i> were classified with the same key.
+    Your score is described as an "Automatic preference for <%= category2 %> over <%= category1 %>" if the opposite occurred.
+</p>
+<p>
+    Your automatic preference may be described as "slight", "moderate", "strong", or "no preference". 
+    This indicates the <i>strength</i> of your automatic preference.
+</p>
+<p>
+    The IAT requires a certain number of correct responses in order to get results.
+    If you made too many errors while completing the test you will get the feedback that there were too many errors to determine a result.
+</p>
+<p>
+    <strong>Note that your IAT result is based only on the categorization task and not on the questions that you answered.</strong>
+</p>
+<p>
+    <strong>Disclaimer: </strong>
+    These results are not a definitive assessment of your implicit preference.
+    The results may be influenced by variables related to the test (e.g., the category labels or particular items used to represent the categories on the IAT) 
+    or the person (e.g., how tired you are).
+    The results are provided for educational purposes only.
+<p>
+
+<h3>How Does The IAT Work?</h3>
+<p>
+    The IAT measures the strength of associations between concepts (e.g., <%= category1 %>, <%= category2 %>) and attributes (e.g., Good and Bad). 
+    The main idea is that making a response is easier when closely related items share the same response key. 
+    We would say that one has an implicit preference for <%= category1 %> relative to <%= category2 %>if they are faster to categorize words when <%= category1 %> and Good share a response key relative to when <%= category1 %> and Bad share a response key.
+</p>
+<p>
+    Any single IAT is unlikely to predict behavior well for a specific individual.
+    In the aggregate, the IAT can predict behavior such as discrimination in hiring and promotion, medical treatment, and decisions related to criminal justice.
+</p>
+
+<h3> Does The Order In Which I Took The IAT Matter?</h3>
+<p>
+    Yes, the order in which you take the IAT can influence your overall results. 
+    But, the effect is very small.
+    So if you first pair <%= category1 %> + Good / <%= category2 %> + Bad and then pair <%= category2 %> + Bad / <%= category1 %>+ Good, 
+    your results might be a just a tiny bit different than they would be if you had done the reverse pairing first. 
+    To minimize the order effect, we give more practice trials before the second pairing than we did before the first pairing. 
+    We also randomly assign participants to one of the two possible orderings, 
+    so half of the test-takers complete 
+    <%= category1 %> + Good / <%= category2 %> + Bad and then <%= category2 %> + Bad / <%= category1 %>+ Good, 
+    and the other half get the opposite order.
+</p>
+
+<h3>I Still Have Questions About The Study.</h3>
+If you have questions about the IAT, please check out our Frequently Asked Questions (FAQ). 
+If you have any questions or comments about the study, please email the lead investigator NAME (<a href="mailto:EMAIL@EMAIL.EDU">EMAIL@EMAIL.EDU</a>).
+
+<h3>Your Participation is Important!</h3>
+Thank you again for participating in this research!
+We have learned so much from people like you taking the time to be part of our work. 

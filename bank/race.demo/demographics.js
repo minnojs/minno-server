@@ -1,7 +1,7 @@
 define(['questAPI','underscore'], function(Quest,_){
 
     var API = new Quest();
-    var isTouch = API.getGlobal().isTouch;
+    var isTouch = API.getGlobal().$isTouch;
 
     /**
 	* Settings

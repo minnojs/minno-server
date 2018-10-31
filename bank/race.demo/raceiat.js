@@ -82,7 +82,7 @@ define(['pipAPI','https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.1/IAT/iat6.j
         base_url : {//Where are your images at?
             image : global.baseURL
         },
-        isTouch : global.isTouch
+        isTouch : global.$isTouch
     });
 });
 

@@ -1,7 +1,7 @@
 define(['questAPI'], function(Quest){
 
     var API = new Quest();
-    var isTouch = API.getGlobal().isTouch;
+    var isTouch = API.getGlobal().$isTouch;
 
     API.addQuestionsSet('iatEval',{
         type: 'selectOne',

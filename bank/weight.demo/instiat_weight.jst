@@ -1,0 +1,62 @@
+<%
+    var respInst = "you will use the 'E' and 'I' computer keys to";
+    if (global.$isTouch) respInst = "you will";
+%>
+<p class="lead">Next, <%=respInst%> categorize items into groups as fast as you can. 
+These are the four groups and the items that belong to each:</p>
+
+<table class="table table-bordered">
+	<tr class="active">
+		<th>Category</th>
+		<th>Items</th>
+	</tr>
+	<tr>
+		<th>Good</th>
+		<td><%=global.posWords[0]%>, <%=global.posWords[1]%>, <%=global.posWords[2]%>, 
+		<%=global.posWords[3]%>, <%=global.posWords[4]%>, <%=global.posWords[5]%>, 
+		<%=global.posWords[6]%>, <%=global.posWords[7]%></td>
+	</tr>
+	<tr>
+		<th>Bad</th>
+		<td><%=global.negWords[0]%>, <%=global.negWords[1]%>, <%=global.negWords[2]%>, 
+		<%=global.negWords[3]%>, <%=global.negWords[4]%>, <%=global.negWords[5]%>, 
+		<%=global.negWords[6]%>, <%=global.negWords[7]%></td>
+	</tr>
+	<tr>
+		<th>Fat People</th>
+<td>
+	  <img src="<%=global.baseURL%>fatman1.jpg" height=60>
+          <img src="<%=global.baseURL%>fatman3.jpg" height=60>
+          <img src="<%=global.baseURL%>fatman4.jpg" height=60>
+          <img src="<%=global.baseURL%>fatman5.jpg" height=60>
+          <img src="<%=global.baseURL%>fatman6.jpg" height=60>
+          <img src="<%=global.baseURL%>fatwoman1.jpg" height=60>
+          <img src="<%=global.baseURL%>fatwoman2.jpg" height=60>
+          <img src="<%=global.baseURL%>fatwoman3.jpg" height=60>
+          <img src="<%=global.baseURL%>fatwoman4.jpg" height=60>
+          <img src="<%=global.baseURL%>fatwoman6.jpg" height=60>
+		  </td>
+	</tr>
+	<tr>
+		<th>Thin People</th>
+		<td>    
+		  <img src="<%=global.baseURL%>thinman1.jpg" height=60>
+          <img src="<%=global.baseURL%>thinman2.jpg" height=60>
+          <img src="<%=global.baseURL%>thinman3.jpg" height=60>
+          <img src="<%=global.baseURL%>thinman5.jpg" height=60>
+          <img src="<%=global.baseURL%>thinman6.jpg" height=60>
+          <img src="<%=global.baseURL%>thinwoman1.jpg" height=60>
+          <img src="<%=global.baseURL%>thinwoman2.jpg" height=60>
+          <img src="<%=global.baseURL%>thinwoman3.jpg" height=60>
+          <img src="<%=global.baseURL%>thinwoman5.jpg" height=60>
+          <img src="<%=global.baseURL%>thinwoman6.jpg" height=60>
+		  </td>
+	</tr>
+</table>
+
+<p class="lead">There are seven parts.  The instructions change for each part.  Pay attention!<p>
+
+
+
+
+

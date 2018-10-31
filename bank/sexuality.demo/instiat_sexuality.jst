@@ -1,9 +1,15 @@
 <%
-    var respInst = "you will use the 'E' and 'I' computer keys to";
-    if (global.isTouch)
+    ////Create the HTML of the items of the gay category.
+    var gayItems = ''; 
+    for (var iImage = 0; iImage < global.gayImages.length; iImage++)
     {
-        respInst = "you will";
+        gayItems += '<img src="' + global.baseURL + global.gayImages[iImage] + '" height=60>';
     }
+    //Add a string formed from all the items in the array, with ', ' between them.
+    gayItems += global.gayWords.join(', ') 
+
+   var respInst = "you will use the 'E' and 'I' computer keys to";
+    if (global.$isTouch) respInst = "you will";
 %>
 <p class="lead">Next, <%=respInst%> categorize items into groups as fast as you can. 
 These are the four groups and the items that belong to each:</p>
@@ -26,32 +32,30 @@ These are the four groups and the items that belong to each:</p>
 		<%=global.negWords[6]%>, <%=global.negWords[7]%></td>
 	</tr>
 	<tr>
-		<th><%=global.blackLabels%></th>
-<td>
-	  <img src="<%=global.baseURL%>bm1_nc.jpg" height=60>
-	  <img src="<%=global.baseURL%>bm2_nc.jpg" height=60>
-	  <img src="<%=global.baseURL%>bm3_nc.jpg" height=60>
-	  <img src="<%=global.baseURL%>bf1_nc.jpg" height=60>
-          <img src="<%=global.baseURL%>bf2_nc.jpg" height=60>
-          <img src="<%=global.baseURL%>bf3_nc.jpg" height=60>
-
-   
-		  </td>
+		<th>Gay people</th>
+        <td><%=gayItems%></td>
 	</tr>
 	<tr>
-		<th><%=global.whiteLabels%></th>
+		<th>Straight people</th>
 		<td>    
-		  <img src="<%=global.baseURL%>wm1_nc.jpg" height=60>
-		  <img src="<%=global.baseURL%>wm2_nc.jpg" height=60>
-		  <img src="<%=global.baseURL%>wm3_nc.jpg" height=60>
-		  <img src="<%=global.baseURL%>wf1_nc.jpg" height=60>
-                  <img src="<%=global.baseURL%>wf2_nc.jpg" height=60>
-		  <img src="<%=global.baseURL%>wf3_nc.jpg" height=60>
-
-        
+		  <img src="<%=global.baseURL%>06_hetero.jpg" height=60>
+		  Straight, Straight People, Heterosexual
 		  </td>
 	</tr>
 </table>
 
 <p class="lead">There are seven parts.  The instructions change for each part.  Pay attention!<p>
+
+
+
+
+
+
+
+
+
+
+
+
+
 

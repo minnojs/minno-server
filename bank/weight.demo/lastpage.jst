@@ -1,19 +1,24 @@
+<%
+iat = global.weightiat;
+category1 = iat.category1.name;
+category2 = iat.category2.name;
+%>
 <p>Thank you for participating!</p> 
 <p>
     The sorting test you just took is called the Implicit Association Test (IAT). 
-    You categorized good and bad words with images of <%= global.blackLabels %> and <%= global.whiteLabels %>.
+    You categorized good and bad words with images of <%= category1 %> and <%= category2 %>.
 </p>
 
 <div class="jumbotron jumbotron-dark">
     <h2>Here are your results:</h2>
-    <p><%= global.raceiat.feedback %></p>
+    <p><%= iat.feedback %></p>
 </div>
 
 <h3>Interpreting your results</h3>
 <p>
-    Your result is described as an "Automatic preference for <%= global.blackLabels %> over <%= global.whiteLabels %>" 
-    if you were faster responding when <i><%= global.blackLabels %></i> and <i>Good</i> are assigned to the same response key than when <i><%= global.whiteLabels %></i> and <i>Good</i> were classified with the same key.
-    Your score is described as an "Automatic preference for <%= global.whiteLabels %> over <%= global.blackLabels %>" if the opposite occurred.
+    Your result is described as an "Automatic preference for <%= category1 %> over <%= category2 %>" 
+    if you were faster responding when <i><%= category1 %></i> and <i>Good</i> are assigned to the same response key than when <i><%= category2 %></i> and <i>Good</i> were classified with the same key.
+    Your score is described as an "Automatic preference for <%= category2 %> over <%= category1 %>" if the opposite occurred.
 </p>
 <p>
     Your automatic preference may be described as "slight", "moderate", "strong", or "no preference". 
@@ -36,9 +41,9 @@
 
 <h3>How Does The IAT Work?</h3>
 <p>
-    The IAT measures the strength of associations between concepts (e.g., <%= global.blackLabels %>, <%= global.whiteLabels %>) and attributes (e.g., Good and Bad). 
+    The IAT measures the strength of associations between concepts (e.g., <%= category1 %>, <%= category2 %>) and attributes (e.g., Good and Bad). 
     The main idea is that making a response is easier when closely related items share the same response key. 
-    We would say that one has an implicit preference for <%= global.blackLabels %> relative to <%= global.whiteLabels %>if they are faster to categorize words when <%= global.blackLabels %> and Good share a response key relative to when <%= global.blackLabels %> and Bad share a response key.
+    We would say that one has an implicit preference for <%= category1 %> relative to <%= category2 %>if they are faster to categorize words when <%= category1 %> and Good share a response key relative to when <%= category1 %> and Bad share a response key.
 </p>
 <p>
     Any single IAT is unlikely to predict behavior well for a specific individual.
@@ -49,12 +54,12 @@
 <p>
     Yes, the order in which you take the IAT can influence your overall results. 
     But, the effect is very small.
-    So if you first pair <%= global.blackLabels %> + Good / <%= global.whiteLabels %> + Bad and then pair <%= global.whiteLabels %> + Bad / <%= global.blackLabels %>+ Good, 
+    So if you first pair <%= category1 %> + Good / <%= category2 %> + Bad and then pair <%= category2 %> + Bad / <%= category1 %>+ Good, 
     your results might be a just a tiny bit different than they would be if you had done the reverse pairing first. 
     To minimize the order effect, we give more practice trials before the second pairing than we did before the first pairing. 
     We also randomly assign participants to one of the two possible orderings, 
     so half of the test-takers complete 
-    <%= global.blackLabels %> + Good / <%= global.whiteLabels %> + Bad and then <%= global.whiteLabels %> + Bad / <%= global.blackLabels %>+ Good, 
+    <%= category1 %> + Good / <%= category2 %> + Bad and then <%= category2 %> + Bad / <%= category1 %>+ Good, 
     and the other half get the opposite order.
 </p>
 
