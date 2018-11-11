@@ -23,7 +23,6 @@ function user_info_by_name (user_name) {
 }
 
 function set_password(user_id, password, confirm) {
-
     if(!password || !confirm)
         return Promise.reject({status:400, message: 'ERROR: Missing password / confirm password'});
     if(password.length<8)
@@ -97,7 +96,7 @@ function get_users() {
             .then(function(users_data)
             {
                 users_data = users_data.filter(user=>user.user_name!=='bank');
-                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role})));
+                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role, reset_code:user.reset_code})));
             });
     });
 }

@@ -27,7 +27,7 @@ function get_pending_studies(user_id) {
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.findOne({_id:user_id})
-            .then(user_result => user_result.pending_studies);
+            .then(user_result =>user_result.pending_studies);
 
     });
 }
@@ -123,7 +123,9 @@ function get_collaborations(user_id, study_id){
         .then(data=>
         {
             const users = data.study_data.users.filter(user=>user.user_id!==user_id && user.permission!=='owner');
-            return users;
+            const study_name = data.study_data.name;
+            const is_public = data.study_data.is_public;
+            return {users, study_name, is_public};
         });
 }
 
@@ -156,19 +158,21 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
             .then((full_data)=>user_info_by_name(collaborator_name)
                     .then(function(collaborator_data)
                     {
+                        const owner_name = `${full_data.user_data.first_name} ${full_data.user_data.last_name}`;
+                        const study_name = full_data.study_data.name;
                         return studies.findOne({_id: study_id, users:{ $elemMatch: {user_id:collaborator_data._id}}})
                             .then(data=> data ? Promise.reject({status:500, message: 'ERROR: user already collaborated'}) :
                         Promise.all([
                             studies.update({_id: study_id},
                                 {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission: permission, status:'pending'}}}),
                             users.update({_id: collaborator_data._id},
-                                {$push: {pending_studies: {id:study_id, accept, reject}}}),
+                                {$push: {pending_studies: {id:study_id, accept, reject, permission, study_name:full_data.study_data.name, owner_name}}}),
                             sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/static/?/collaboration/'+accept,
                                                                                                                                      reject: config.server_url+'/static/?/collaboration/'+reject,
-                                                                                                                                     collaborator_name:collaborator_name,
-                                                                                                                                     permission:permission,
-                                                                                                                                     owner_name: `${full_data.user_data.first_name} ${full_data.user_data.last_name}`,
-                                                                                                                                     study_name:full_data.study_data.name})
+                                                                                                                                     collaborator_name,
+                                                                                                                                     permission,
+                                                                                                                                     owner_name,
+                                                                                                                                     study_name})
                         ]));
                     }
             ));

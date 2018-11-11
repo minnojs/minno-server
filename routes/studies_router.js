@@ -116,17 +116,14 @@ studiesRouter.route('/:study_id/collaboration')
     .delete(
         function(req, res, next){
             studies.remove_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_id)
-                .then(function (users) {
-                    res.json({users: users, is_public: false, link_data: {link: '', link_type: '', link_list: []}, study_name: "aa"
-                    });
-                })
+                .then(()=>res.json({}))
                 .catch(next);
         })
     .get(
         function(req, res, next){
             studies.get_collaborations(req.user_id, parseInt(req.params.study_id))
-                .then(function (users) {
-                    res.json({users: users, is_public: false, link_data: {link: '', link_type: '', link_list: []}, study_name: "aa"
+                .then(function ({users, study_name, is_public}) {
+                    res.json({users, is_public, link_data: {link: '', link_type: '', link_list: []}, study_name
                     });
                 })
                 .catch(next);

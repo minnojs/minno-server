@@ -26,10 +26,15 @@ usersRouter.route('')
                 res.status(err.status || 500).json({message:err.message}));
     })
     .put(function(req, res){
-        return users.update_role(req.body.user_id, req.body.role)
-            .then(user_data=>res.json({users:user_data}))
-            .catch(err=>
-                res.status(err.status || 500).json({message:err.message}));
+        if (req.body.role)
+            return users.update_role(req.body.user_id, req.body.role)
+                .then(user_data=>res.json({users:user_data}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+        return users.set_password(req.body.user_id, req.body.password, req.body.password)
+                .then(user_data=>res.json({users:user_data}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
     });
 
 
