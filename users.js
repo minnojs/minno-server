@@ -39,7 +39,6 @@ function set_password(user_id, password, confirm) {
     });
 }
 
-
 function set_email(user_id, email) {
     if(!email)
         return Promise.reject({status:400, message: 'Missing email'});
@@ -151,7 +150,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
             })
             .then(response => {
                 const user_data = response.ops[0];
-                    set_password(user_data._id, password, confirm);
+                set_password(user_data._id, password, confirm);
                 return user_data;
             });
     });

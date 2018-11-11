@@ -209,10 +209,9 @@ function upload(user_id, study_id, req) {
     form.maxFileSize = config.maxFileSize;
     form.multiples = true;
     return new Promise(function(resolve, reject){
-        form.parse(req, function (err, fields, files) {
+        return form.parse(req, function (err, fields, files) {
             if (err)
-                return Promise.reject({status:500, message: `Error: ${err}`});
-
+                return reject({status:500, message: `${err}`});
             return has_write_permission(user_id, study_id)
             .then(function({study_data}){
                 const uploadedFiles = Array.isArray(files['files[]']) ? files['files[]'] : [files['files[]']];
@@ -231,7 +230,6 @@ function upload(user_id, study_id, req) {
                     .then(() => fs.remove(oldpath))
                     .then(dropbox.upload_users_file(user_id, study_id, path.resolve(file_path)));
                 });
-
                 return Promise.all(create_file_promises);
             })
             .then(() => Promise.all([
