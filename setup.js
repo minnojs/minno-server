@@ -6,7 +6,10 @@ const {insert_new_user} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
 const study_list = require('./bank/studyList');
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+mongoose.connect(config.mongo_url);
+const connection    = Promise.resolve(mongoose.connection);
 
 
 console.log('Setting up MinnoJS server');
