@@ -121,17 +121,19 @@ function get_file_content(user_id, study_id, file_id) {
 function delete_files(user_id, study_id, files) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
-        files.forEach(function(file) {
-            const delPath = path.join(config.user_folder ,  study_data.folder_name , file);
-            return fs.pathExists(delPath)
-            .then(existing => !existing
-                ? Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
-                : fs.remove(delPath))
-                    .then(()=>experiments.delete_experiment(user_id, study_id, file))
-                .then(()=>dropbox.delete_users_file(user_id, study_id, delPath));
+        return files.map(function(file) {
+            const delPath = path.join(config.user_folder,  study_data.folder_name, file);
+            return Promise.all([
+                fs.remove(delPath),
+                experiments.delete_experiment(user_id, study_id, file),
+                dropbox.delete_users_file(user_id, study_id, delPath),
+                studies_comp.update_modify(study_id)
+            ]);
         });
-        return studies_comp.update_modify(study_id).then(()=>({}));
-    });
+    })
+    // must happen after all delete stuff
+    .then(() => get_study_files(user_id, study_id))
+    .then(study => study.files);
 }
 
 function download_zip(pth, res) {
@@ -172,18 +174,19 @@ function download_files(user_id, study_id, files) {
 function rename_file(user_id, study_id, file_id, new_path) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
-        file_id = urlencode.decode(file_id);
+        const fid = urlencode.decode(file_id);
         const new_file_path = path.join(config.user_folder, study_data.folder_name, new_path);
-        let exist_file_path = path.join(config.user_folder, study_data.folder_name, file_id);
-        return fs.rename(exist_file_path, new_file_path)
-        .then(() => studies_comp.update_modify(study_id)
-              .then(function(){
-                  const file_url = '../'+new_file_path;
-                  return experiments.update_file_id(user_id, study_id, file_id, new_path)
-                  .then(()=>dropbox.rename_users_file(user_id, study_id, exist_file_path, new_file_path))
-                  .then(()=>({id: urlencode.encode(new_path), url:file_url}));
-              }));
-    });
+        const exist_file_path = path.join(config.user_folder, study_data.folder_name, fid);
+
+        return Promise.all([
+            fs.rename(exist_file_path, new_file_path),
+            studies_comp.update_modify(study_id),
+            experiments.update_file_id(user_id, study_id, fid, new_path),
+            dropbox.rename_users_file(user_id, study_id, exist_file_path, new_file_path)
+        ]);
+    })
+    .then(() => get_study_files(user_id, study_id))
+    .then(study => study.files);
 }
 
 function copy_file(user_id, study_id, file_id, new_study_id) {
