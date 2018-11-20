@@ -148,7 +148,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 			await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
 		});
 	}
-	closeFiles(files);
+	await closeFiles(files);
 	return zipFiles(fileConfig);
 
 
@@ -368,10 +368,10 @@ var fileSetup = async function(fileConfig) {
 	fileConfig.filePrefix = filePrefix;
 	fileConfig.zipName = currentDate + '/' + currentTime + '.zip';
 }
-var closeFiles= function(files)
+var closeFiles= async function(files)
 {
 	for (var key in files) {
-	    files[key].close();
+	    await files[key].end();
 	};
 }
 var writeDataFile = async function(data, filename, fileSuffix, files, fileConfig) {
