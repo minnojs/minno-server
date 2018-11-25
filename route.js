@@ -15,6 +15,7 @@ const sharing_router    = require('./routes/sharing_router');
 const settings_router   = require('./routes/settings_router');
 const messages_router   = require('./routes/messages_router');
 const users_router      = require('./routes/users_router');
+const config_router      = require('./routes/config_router');
 const dropbox_router    = require('./routes/dropbox_router');
 const collaboration_router    = require('./routes/collaboration_router');
 
@@ -89,6 +90,7 @@ basePathRouter.use('/studies', sharing_router);
 basePathRouter.use('/collaboration', collaboration_router);
 
 basePathRouter.use('/users', users_router);
+basePathRouter.use('/config', config_router);
 basePathRouter.use('/dropbox', dropbox_router);
 
 let sess;

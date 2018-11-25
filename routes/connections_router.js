@@ -9,10 +9,14 @@ module.exports = connectionsRouter;
 connectionsRouter.get('/is_loggedin',function(req, res){
     if (!req.session || !req.session.user)
         return res.json({isloggedin: false, timeoutInSeconds: 0});
-    return res.json({
-        isloggedin:true,
-        role:req.session.user.role
-    });
+
+    return users.new_msgs(req.session.user._id).then(new_msgs=>
+        res.json({
+            new_msgs: new_msgs,
+            isloggedin: true,
+            role: req.session.user.role
+
+        }));
 });
 
 

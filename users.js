@@ -14,6 +14,16 @@ function user_info (user_id) {
     });
 }
 
+function new_msgs (user_id) {
+    return user_info(user_id)
+        // .then(function(user_data) {
+        //     console.log(user_data.pending_studies.length)
+        //     return user_data.pending_studies;
+        // });
+.then(user_data => user_data.pending_studies.length>0);
+
+}
+
 function user_info_by_name (user_name) {
     return connection.then(function (db) {
         const users   = db.collection('users');
@@ -95,7 +105,7 @@ function get_users() {
             .then(function(users_data)
             {
                 users_data = users_data.filter(user=>user.user_name!=='bank');
-                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role, reset_code:user.reset_code})));
+                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role, reset_code: !user.reset_code ? '' : config.server_url+'/static/?/reset_password/' + user.reset_code})));
             });
     });
 }
@@ -117,7 +127,7 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
+function insert_new_user({username, first_name, last_name, email}) {
     const user_name  = username;
     const userFolder = path.join(config.user_folder, user_name);
     const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
@@ -133,10 +143,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
                 if (user_data) return Promise.reject({status:400, message: 'User already exists'});
             })
             .then(() => fs.ensureDir(userFolder))
-            .then(function(){
-                if(!password)
-                    sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`});
-            })
+
             .then(() => counters.findAndModify(
                 {_id: 'user_id'},
                 [],
@@ -148,11 +155,8 @@ function insert_new_user({username, first_name, last_name, email, role, password
                 const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:'u', studies:[],tags:[]};
                 return users.insert(user_obj);
             })
-            .then(response => {
-                const user_data = response.ops[0];
-                set_password(user_data._id, password, confirm);
-                return user_data;
-            });
+            .then(()=>sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`}))
+            .then(sent=>sent ? ({}) : ({activation_code}));
     });
 }
 
@@ -280,4 +284,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, user_info_by_name, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, new_msgs, user_info_by_name, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};

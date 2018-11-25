@@ -43,9 +43,7 @@ usersRouter.route('/add_user')
         function(req, res){
 
             return users.insert_new_user(req.body)
-                .then(()=>res.json({}))
+                .then((data)=> data  ? res.json(data) : res.json({}))
                 .catch(err=>
                     res.status(err.status || 500).json({message:err.message}));
-
-
         });

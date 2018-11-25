@@ -1,27 +1,37 @@
 const mailer = require('express-mailer');
 const express = require('express');
 const app = express();
+const config_db = require('./config_db');
 const config = require('./config');
-
-mailer.extend(app, {
-    from: config.email_auth.user,
-    secureConnection: true, // use SSL
-
-    host: 'smtp.gmail.com', // hostname
-    port: 465, // port for secure SMTP
-    transportMethod: 'SMTP', // default is SMTP. Accepts anything that nodemailer accepts
-    auth: config.email_auth
-});
 
 app.set('view engine', 'ejs');
 
+let extended = false;
 exports.send_mail = function (to, subject, body, data) {
-    if(config.debug_mode)
-        to = config.email_auth.user;
-    return app.mailer.send(body, { to, subject, data }, function (err) {
-        if (err) {
-            console.log(err);
-            return;
-        }
+    return new Promise(function(resolve, reject) {
+        config_db.get_gmail().then(function (gmail_details) {
+            if (!gmail_details)
+                return resolve(false);
+
+            if (config.debug_mode)
+                to = gmail_details.email;
+            if (!extended) {
+                mailer.extend(app, {
+                    secureConnection: true,
+                    host: 'smtp.gmail.com',
+                    port: 465,
+                    auth: {user: gmail_details.email, pass: gmail_details.password}
+                });
+                extended = true;
+            }
+        })
+        .then(() => {
+            app.mailer.send(body, {to, subject, data}, function (err) {
+                if (err)
+                    return reject(err);
+                return resolve(true);
+            });
+        })
+        .then(data => (data));
     });
 };
