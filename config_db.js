@@ -20,6 +20,7 @@ function get_gmail () {
     return get_config ()
         .then(config=>config.gmail);
 }
+
 function set_gmail (email, password) {
     if(!password)
         return Promise.reject({status:400, message: 'ERROR: Missing password'});
@@ -67,4 +68,10 @@ function unset_dbx() {
 }
 
 
-module.exports = {get_config, set_gmail, unset_gmail, get_gmail, set_dbx, unset_dbx};
+function get_dbx() {
+    return get_config ()
+        .then(config=>config.dbx);
+}
+
+
+module.exports = {get_config, set_gmail, unset_gmail, get_gmail, set_dbx, unset_dbx, get_dbx};

@@ -1,4 +1,6 @@
 const config        = require('./config');
+const config_db     = require('./config_db');
+
 const studies_comp  = require('./studies');
 const users_comp = require('./users');
 
@@ -8,13 +10,16 @@ const fs           = require('fs-extra');
 const walk         = require('walkdir');
 
 function get_auth_link(user_id){
-    if ( typeof config.dropbox === 'undefined' )
-        return Promise.resolve({});
-    const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id='+config.dropbox.client_id+'&redirect_uri='+config.server_url +'/dropbox/set';
-
-    return get_user_token(user_id)
-        .then(access_token => access_token ? {auth_link:'', is_synchronized:true} : {auth_link, is_synchronized:false});
-
+    return config_db.get_dbx().then(function (dbx_details) {
+        if (!dbx_details)
+            return Promise.resolve({});
+        const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=' + dbx_details.client_id + '&redirect_uri=' + config.server_url + '/dropbox/set';
+        return get_user_token(user_id)
+            .then(access_token => access_token ? {auth_link: '', is_synchronized: true} : {
+                auth_link,
+                is_synchronized: false
+            });
+    });
 }
 
 function revoke_user(user_id){
@@ -34,17 +39,18 @@ function revoke_user(user_id){
         });
 }
 
-
 function get_access_token(code){
     const url = 'https://api.dropbox.com/1/oauth2/token';
-    const body = {
-        code: code,
-        grant_type: 'authorization_code',
-        redirect_uri: config.server_url +'/dropbox/set',
-        client_id: config.dropbox.client_id,
-        client_secret: config.dropbox.client_secret
-    };
-    return request_promise.post(url, {form: body, json: true});
+    return config_db.get_dbx().then(function (dbx_details) {
+        const body = {
+            code: code,
+            grant_type: 'authorization_code',
+            redirect_uri: config.server_url + '/dropbox/set',
+            client_id: dbx_details.client_id,
+            client_secret: dbx_details.client_secret
+        };
+        return request_promise.post(url, {form: body, json: true});
+    });
 }
 
 function add_user_folder(user_id, access_token){
@@ -62,14 +68,17 @@ function add_user_folder(user_id, access_token){
 }
 
 function get_user_token(user_id){
-    if (!config.dropbox)
-        return false;
-    return users_comp.user_info(user_id)
-            .then(function(info){
-                return info.dbx_token;
-            });
+    return config_db.get_dbx().then(function (dbx_details) {
+        if (!dbx_details)
+            return false;
+    })
+    .then(()=>
+         users_comp.user_info(user_id)
+                .then(function(info){
+                    return info.dbx_token;
+                })
+        );
 }
-
 
 function upload_users_file(user_id, study_id, path){
     return studies_comp.has_read_permission(user_id, study_id)
@@ -89,8 +98,6 @@ function upload_user_file(user_id, path){
         });
 }
 
-
-
 function upload_file(access_token, path){
     const rel_path = path.slice(config.base_folder.length);
     const readStream = fs.createReadStream(path);
@@ -100,7 +107,6 @@ function upload_file(access_token, path){
         mute: false};
     const options={
         url: 'https://content.dropboxapi.com/2/files/upload',
-
         headers: {
             'Authorization': 'Bearer ' + access_token,
             'Content-Type': 'application/octet-stream',
@@ -143,13 +149,11 @@ function rename_file(access_token, path2rename, new_name){
     const data = {from_path: path2rename, to_path:new_name};
     const options={
         url: 'https://api.dropboxapi.com/2/files/move_v2',
-
         headers: {
             'Authorization': 'Bearer ' + access_token,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-
     };
     return request_promise.post(options)
         .catch(err=>{
@@ -177,9 +181,7 @@ function delete_user_file(user_id, path){
         });
 }
 
-
 function delete_file(access_token, path2delete){
-
     path2delete = path.resolve(path2delete).slice(config.base_folder.length);
     const rel_path = {path: path2delete};
     const options={
