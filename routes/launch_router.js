@@ -6,7 +6,6 @@ const urljoin       = require('url-join');
 
 const router        = express.Router();
 const readFile = promisify(fs.readFile);
-
 module.exports = router;
 
 router.get('/launch/:exp_id/:version_id',function(req, res){

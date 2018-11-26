@@ -21,6 +21,17 @@ const collaboration_router    = require('./routes/collaboration_router');
 
 const bodyParser = require('body-parser');
 const app = express();
+
+const mailer = require('express-mailer');
+
+mailer.extend(app, {
+    secureConnection: true,
+    host: 'smtp.gmail.com',
+    port: 465
+});
+
+module.exports = {app};
+
 const cors = require('cors');
 const day = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
@@ -127,3 +138,5 @@ process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
 });
+
+
