@@ -5,5 +5,6 @@ module.exports =  [
     {name:'weight.demo', description: 'In a randomized order, participants complete a Weight IAT (Fat people / Thin people, Good/Bad) and a measure of explicit weight attitudes', study_type: 'minno02'},
     {name:'skin.demo', description: 'In a randomized order, participants complete a Skin Tone IAT (Dark Skinned people / Light Skinned people, Good/Bad) and a measure of explicit skin tone attitudes.', study_type: 'minno02'},
     {name:'arab.demo', description: 'In a randomized order, participants complete an Arab Muslims IAT (Arab Muslims / Other people, Good/Bad) and a measure of explicit Arab Muslim attitudes', study_type: 'minno02'},
+    {name:'time.examples', description: 'A collection of advanced minno-time tasks', study_type: 'minno02'},
     {name:'jspsych', description: 'How to run a jspsych study', study_type: 'html'}
 ];

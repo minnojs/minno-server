@@ -329,8 +329,8 @@ function ensure_study_not_exist(user_id, study_name) {
         ]);
     })
         .then(function([study_data, path_exists]){
-            if (study_data) return Promise.reject({status:400, message: 'ERROR: Study with this name already exists'});
-            if (path_exists) return Promise.reject({status: 500, message: 'ERROR: Study already exists in FS!'});
+            if (study_data) return Promise.reject({status:400, message: `ERROR: Study ${study_name} already exists`});
+            if (path_exists) return Promise.reject({status: 500, message: `ERROR: Study ${study_name} already exists in FS!`});
         });
 }
 
