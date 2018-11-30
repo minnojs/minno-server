@@ -127,7 +127,7 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user({username, first_name, last_name, email}) {
+function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
     const user_name  = username;
     const userFolder = path.join(config.user_folder, user_name);
     const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
@@ -152,8 +152,14 @@ function insert_new_user({username, first_name, last_name, email}) {
             ))
             .then(function (counter_data) {
                 const user_id = counter_data.value.seq;
-                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:'u', studies:[],tags:[]};
-                return users.insert(user_obj);
+                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
+                return users.insert(user_obj)
+                    .then(response => {
+                        if(password && confirm){
+                            set_password(response.ops[0]._id, password, confirm);
+                        }
+
+                    });
             })
             .then(()=>sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`}))
             .then(sent=>sent ? ({}) : ({activation_code}));

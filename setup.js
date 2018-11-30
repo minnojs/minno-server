@@ -2,7 +2,7 @@
 require('./config_validation');
 const config        = require('./config');
 const fs            = require('fs-extra');
-const {insert_new_user} = require('./users');
+const {insert_new_user, update_role} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
 const study_list = require('./bank/studyList');
@@ -18,12 +18,25 @@ Promise.resolve()
     .then(create_dirs)
     .then(create_users)
     .then(create_bank_studies)
+    .then(update_admin_role)
     .then(process.exit.bind(process));
 
 function create_dirs(){
     console.log('Creating directories');
     return fs.ensureDir(config.user_folder)
         .then(() => console.log(`User folder created at "${config.user_folder}"`));
+}
+
+function update_admin_role(){
+    console.log('Updating admin rule (su)');
+    return connection
+        .then(function (db) {
+            const users = db.collection('users');
+            return users
+                .findOne({user_name: 'admin'})
+                .then(admin_data => update_role(admin_data._id, 'su'));
+        });
+
 }
 
 function create_users(){
