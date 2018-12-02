@@ -6,6 +6,7 @@ const utils       = require('./utils');
 
 const connection    = Promise.resolve(require('mongoose').connection);
 const evalidator  = require('email-validator');
+const Validator = require('node-input-validator');
 
 function user_info (user_id) {
     return connection.then(function (db) {
@@ -128,42 +129,64 @@ function remove_user(user_id) {
 }
 
 function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
-    const user_name  = username;
-    const userFolder = path.join(config.user_folder, user_name);
-    const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
 
-    if (!evalidator.validate(email))
-        return Promise.reject({status:400, message: 'Invalid email address'});
 
-    return connection.then(function (db) {
-        const users   = db.collection('users');
-        const counters   = db.collection('counters');
-        return users.findOne({$or: [{user_name}, {email}]})
-            .then(function(user_data){
-                if (user_data) return Promise.reject({status:400, message: 'User already exists'});
-            })
-            .then(() => fs.ensureDir(userFolder))
+    let validator = new Validator({username, email, first_name, last_name},
+                                  {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'});
 
-            .then(() => counters.findAndModify(
-                {_id: 'user_id'},
-                [],
-                {$inc: {'seq': 1}},
-                {upsert: true, new: true, returnOriginal:false}
-            ))
-            .then(function (counter_data) {
-                const user_id = counter_data.value.seq;
-                const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
-                return users.insert(user_obj)
-                    .then(response => {
-                        if(password && confirm){
-                            set_password(response.ops[0]._id, password, confirm);
-                        }
+    return validator.check()
+    .then(function () {
+        if (!Object.keys(validator.errors).length==0)
+        {
+            let error = '';
+            if(validator.errors.username)
+                error = validator.errors.username.message;
+            else if(validator.errors.first_name)
+                error = validator.errors.first_name.message;
+            else if(validator.errors.last_name)
+                error = validator.errors.last_name.message;
+            else
+                error = validator.errors.email.message;
+            return Promise.reject({status:400, message: error});
+        }
+        const user_name  = username.toLowerCase();
 
-                    });
-            })
-            .then(()=>sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`}))
-            .then(sent=>sent ? ({}) : ({activation_code}));
+
+        const userFolder = path.join(config.user_folder, user_name);
+        const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
+
+
+        return connection.then(function (db) {
+            const users   = db.collection('users');
+            const counters   = db.collection('counters');
+            return users.findOne({$or: [{user_name}, {email}]})
+                .then(function(user_data){
+                    if (user_data) return Promise.reject({status:400, message: 'User already exists'});
+                })
+                .then(() => fs.ensureDir(userFolder))
+
+                .then(() => counters.findAndModify(
+                    {_id: 'user_id'},
+                    [],
+                    {$inc: {'seq': 1}},
+                    {upsert: true, new: true, returnOriginal:false}
+                ))
+                .then(function (counter_data) {
+                    const user_id = counter_data.value.seq;
+                    const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
+                    return users.insert(user_obj)
+                        .then(response => {
+                            if(password && confirm){
+                                set_password(response.ops[0]._id, password, confirm);
+                            }
+
+                        });
+                })
+                .then(()=>sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`}))
+                .then(sent=>sent ? ({}) : ({activation_code}));
+        });
     });
+
 }
 
 function check_activation_code(code) {
@@ -252,10 +275,10 @@ function connect(user_name, pass) {
         const studies  = db.collection('studies');
         let query = {user_name, pass: utils.sha1(pass)};
 
-        if (!user_name.includes('_'))
+        if (!user_name.includes('#'))
             return user_obj();
 
-        const users_names = user_name.split('_');
+        const users_names = user_name.split('#');
         query = {user_name: users_names[0], pass: utils.sha1(pass)};
 
         return user_obj()

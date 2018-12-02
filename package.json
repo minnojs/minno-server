@@ -31,6 +31,7 @@
     "mongoose_schema-json": "^1.0.3",
     "node-dropbox": "^0.1.8",
     "node-fetch": "^2.2.0",
+    "node-input-validator": "^2.3.3",
     "nodemailer-promise": "^2.0.0",
     "promisify-node": "^0.5.0",
     "request-promise": "^4.2.2",
