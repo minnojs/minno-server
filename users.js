@@ -5,7 +5,6 @@ const path        = require('path');
 const utils       = require('./utils');
 
 const connection    = Promise.resolve(require('mongoose').connection);
-const evalidator  = require('email-validator');
 const Validator = require('node-input-validator');
 
 function user_info (user_id) {
@@ -106,7 +105,15 @@ function get_users() {
             .then(function(users_data)
             {
                 users_data = users_data.filter(user=>user.user_name!=='bank');
-                return (users_data.map(user=>({id:user._id, user_name: user.user_name, first_name:user.first_name, last_name: user.last_name, email:user.email, role:user.role, reset_code: !user.reset_code ? '' : config.server_url+'/static/?/reset_password/' + user.reset_code})));
+                return (users_data.map(user=>({id:user._id,
+                                               user_name: user.user_name,
+                                               first_name:user.first_name,
+                                               last_name: user.last_name,
+                                               email:user.email,
+                                               role:user.role,
+                                               activation_code: !user.activation_code ? '' : `${config.server_url}/static/?/activation/${user.activation_code}`,
+                                               reset_code: !user.reset_code ? '' : `${config.server_url}/static/?/reset_password/${user.reset_code}`
+                                              })));
             });
     });
 }
