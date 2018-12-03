@@ -104,7 +104,7 @@ function get_users() {
             .toArray()
             .then(function(users_data)
             {
-                users_data = users_data.filter(user=>user.user_name!=='bank');
+                users_data = users_data.filter(user=>user.user_name!=='bank' && user.user_name!=='admin');
                 return (users_data.map(user=>({id:user._id,
                                                user_name: user.user_name,
                                                first_name:user.first_name,
