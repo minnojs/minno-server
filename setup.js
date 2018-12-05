@@ -18,7 +18,6 @@ Promise.resolve()
     .then(create_dirs)
     .then(create_users)
     .then(create_bank_studies)
-    .then(create_bank_studies)
     .then(update_admin_role)
     .then(process.exit.bind(process));
 
@@ -55,6 +54,7 @@ function create_users(){
                     .findOne({user_name})
                     .then(user => {
                         if (user) return console.log(`-- Creating ${user_name}: user found`);
+
                         return insert_new_user({username:user_name, first_name:user_name, last_name:user_name, email:'admin@admin.com', role, password, confirm:password})
                             .then(user_data => {
                                 console.log(`-- Creating ${user_name}: user created`);
