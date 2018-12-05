@@ -84,12 +84,11 @@ function create_bank_studies(){
         .then(function([user_result, bank_studies]){
             const study_list_names = study_list.map(study => study.name);
             const bank_names = bank_studies.map(study => study.name);
-
             const new_studies = study_list.filter(study => !bank_names.includes(study.name));
             const del_studies = bank_studies.filter(study => !study_list_names.includes(study.name));
 
             console.log('Updating bank studies:');
-            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}));
+            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).catch(err=>console.log(err.message)));
             const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
             return Promise.all([].concat(new_promises, del_promises));
 
