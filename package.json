@@ -5,8 +5,10 @@
   "repository": "https://github.com/ProjectImplicit/pi-validator.git",
   "main": "route.js",
   "scripts": {
-    "start": "node route.js",
-    "setup": "node setup",
+    "start": "node app/route.js",
+    "setup": "node app/setup",
+    "image": "docker build -t minnoserver .",
+    "dockerup": "docker-compose up",
     "dev": "node --trace-warnings --inspect route.js"
   },
   "author": "",
@@ -14,6 +16,7 @@
   "dependencies": {
     "archiver": "^2.1.1",
     "archiver-promise": "^1.0.0",
+    "express": "^4.16.3",
     "bower": "^1.6.8",
     "cors": "^2.8.4",
     "csv-stringify": "^3.1.1",
@@ -26,7 +29,6 @@
     "fetch": "^1.1.0",
     "formidable": "^1.2.0",
     "fs-extra": "^5.0.0",
-    "klaw": "^3.0.0",
     "mongoose": "^5.0.10",
     "mongoose_schema-json": "^1.0.3",
     "node-dropbox": "^0.1.8",
@@ -46,11 +48,8 @@
   },
   "devDependencies": {
     "body-parser": "^1.18.2",
-    "buble": "^0.12.3",
     "eslint": "^1.10.2",
-    "express": "^4.16.3",
     "multer": "^1.1.0",
-    "node-sass": "^3.8.0",
     "nodemon": "^1.17.2",
     "npm-run-all": "^2.3.0",
     "rollup": "^0.33.0",

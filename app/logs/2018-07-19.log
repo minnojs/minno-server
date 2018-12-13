@@ -1,0 +1,60 @@
+2018-07-19 08:40:47.463 INFO  201804201319 | new login: admin 
+2018-07-19 08:41:12.964 INFO  201804201319 | new login: admin 
+2018-07-19 08:48:26.325 ERROR 20180607 | error with uploading: Error: Request aborted 
+2018-07-19 10:05:41.951 INFO  201804201319 | new login: admin 
+2018-07-19 10:06:33.158 INFO  201804201319 | new login: admin 
+2018-07-19 10:08:50.428 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_3b09e5dee53ece287219189eb7ff8fb4, file_path:users/admin/jspsych/img/orange.png 
+2018-07-19 10:08:50.430 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_ce49c527ed5fbaf44171b63fde6e3586, file_path:users/admin/jspsych/img/blue.png 
+2018-07-19 10:18:13.160 INFO  201804201319 | new login: admin 
+2018-07-19 10:32:39.244 INFO  201804201319 | new login: admin 
+2018-07-19 15:46:41.242 INFO  201804201319 | new login: admin 
+2018-07-19 16:13:05.024 INFO  201804201319 | new login: admin 
+2018-07-19 16:14:35.164 INFO  201804201319 | new login: admin 
+2018-07-19 19:44:36.464 INFO  201804201319 | new login: admin 
+2018-07-19 19:46:21.943 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_f433a006da1acdc2438aa8450fef798b, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 19:48:47.590 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_806f849c2b97921c4500b0efb6233a42, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 21:27:37.201 INFO  201804201319 | new login: admin 
+2018-07-19 21:45:04.095 INFO  201804201319 | new login: admin 
+2018-07-19 21:46:15.939 INFO  201804201319 | new login: admin 
+2018-07-19 21:47:24.547 INFO  201804201319 | new login: admin 
+2018-07-19 21:47:32.500 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_385375130fca54cae26bc7a98be3fd39, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 21:47:32.501 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_aa7e1b2009f702bd09d0c41a65cd4c6b, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 21:47:51.943 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_4cdac95185a482cc4f2a3cdcac7d3e95, file_path:users/admin/jspsych/img/sun/אישור זכויות 1.jpeg 
+2018-07-19 21:47:51.943 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_d50843b18642e3ee666d09ebb72960d2, file_path:users/admin/jspsych/img/sun/אישור זכויות 2.jpeg 
+2018-07-19 21:57:34.315 INFO  201804201319 | new login: admin 
+2018-07-19 21:58:44.927 INFO  201804201319 | new login: admin 
+2018-07-19 22:02:30.613 INFO  201804201319 | new login: admin 
+2018-07-19 22:02:37.243 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_36de227183ede27d3a69fb7cde7b1403, file_path:users/admin/jspsych/טופס.pdf 
+2018-07-19 22:02:54.707 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_85b1608b8cc9c899d3f4607351b4a4a9, file_path:users/admin/jspsych/001.pdf 
+2018-07-19 22:02:54.707 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_288d0f9e045d06b885e168190f8593b7, file_path:users/admin/jspsych/טופס.pdf 
+2018-07-19 22:03:14.651 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_4a56b76f5ce3426c02b8c15d3f536a85, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:03:14.651 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_f95b0a1c8442e2954e4261bb42b18999, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:06:22.854 INFO  201804201319 | new login: admin 
+2018-07-19 22:06:43.152 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_46facd8faee090a143a371e7a39b9c94, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:06:43.153 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_ef31c50790d0125fd7fed40cd6bab5b6, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:13:09.555 INFO  201804201319 | new login: admin 
+2018-07-19 22:13:20.944 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_c916aca4c0fcdb799cfd8c4abeb53328, file_path:users/admin/jspsych/sun/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:13:20.945 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_fe74736166af7a64d18a88d820e016e7, file_path:users/admin/jspsych/sun/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:27:12.338 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_e3d2400ba9922986416b7ce73a5d0817, file_path:users/admin/jspsych/jspsych-6.0.4/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:27:12.338 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_edcc6316dd1b3b197acce947ce90b988, file_path:users/admin/jspsych/jspsych-6.0.4/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:27:45.815 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_3b48b01f482c4ce5541698c0afb33680, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:27:45.815 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_57fdbc22f8566271dd87cecc95365749, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:32:46.005 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_cfc74b0871ac97d0f5a13c958c3bd975, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:32:46.005 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_80fc6ec24a48948b97b32394572ad23f, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:35:56.226 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_bf2d1c9c8d0c596620965cbb0914a8db, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 22:35:56.227 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_a9a2a63006ae1230fede484c938848c8, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 22:36:50.277 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_62d0441ed24239c097090e0d3423ae29, file_path:users/admin/jspsych/001.pdf 
+2018-07-19 23:31:50.028 INFO  201804201319 | new login: admin 
+2018-07-19 23:34:54.140 INFO  201804201319 | new login: admin 
+2018-07-19 23:36:44.517 INFO  201804201319 | new login: admin 
+2018-07-19 23:36:52.583 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_47954f38c74143257696c36cba1db19f, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 23:36:52.585 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_d82811e90b207f53d5c0b6feaf583029, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 23:37:50.648 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_51789f83b51ea65c25a4ea62df049f27, file_path:users/admin/jspsych/sun/.DS_Store 
+2018-07-19 23:37:50.649 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_506aa7b71b64227fd1063db2c381ac5e, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 23:37:50.649 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_bb858286f83fec7fbcdd695f56e797a8, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 23:37:50.650 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_0a68c57b786d54b365118e920578beea, file_path:users/admin/jspsych/sun/sag/זמני תפילות בהתיישבות.pdf 
+2018-07-19 23:53:24.704 INFO  201804201319 | new login: admin 
+2018-07-19 23:53:49.351 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_19f5bbd98c2dd134fee6ce7c1cb1fb61, file_path:users/admin/jspsych/sun/.DS_Store 
+2018-07-19 23:53:49.352 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_05e0b29f92e70f457ea4f8d765e4444b, file_path:users/admin/jspsych/sun/אישור זכויות 1.jpeg 
+2018-07-19 23:53:49.352 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_bfb383828d42fab3230a71deeebab64f, file_path:users/admin/jspsych/sun/אישור זכויות 2.jpeg 
+2018-07-19 23:53:49.352 INFO  201804201330 | upload_file. oldpath:/var/folders/tl/6v9jcqtn5xnbp89_r27_m8t40000gn/T/upload_cb7a64a6a07ecbf725e25ab8df90e552, file_path:users/admin/jspsych/sun/sag/זמני תפילות בהתיישבות.pdf 

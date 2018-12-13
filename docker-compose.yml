@@ -1,0 +1,39 @@
+version: '2'
+
+# Define the services/containers to be run
+services:
+
+  openserver:  #name of your service
+
+    build: .
+    #command: nodemon app/route.js
+    command: >
+      sh -c "/wait &&
+             node app/setup.js && 
+             nodemon app/route.js"
+
+    ports:
+      - "8000:8000" #specify ports forwarding
+
+    links:
+      - database # link this service to the database service
+
+    depends_on:
+      - database
+
+    volumes:
+      - ./data:/usr/src/minnoserver/data
+      - ./config.docker.js:/usr/src/minnoserver/config.js
+
+      - ./researchDashboard:/usr/src/minnoserver/researchDashboard
+      - ./app:/usr/src/minnoserver/app
+
+    environment:
+      WAIT_HOSTS: database:27017
+
+  database: # name of the service
+
+    image: mongo # specify image to build container from
+    restart: always
+    volumes:
+      - ./data/db:/data/db

@@ -3,7 +3,7 @@
 /logs
 /node_modules
 config.js
-data/
 researchDashboard/
 users/
+data/
 .DS_Store
