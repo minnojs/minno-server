@@ -65,7 +65,7 @@ function get_study_files(user_id, study_id) {
                 files: files.files
                 // TODO: this applies only to root. should add this to deep files as well.
                 .map(function(file){
-                    const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id);
+                    const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id && !exp.inactive);
                     return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};
                 }),
                 base_url: urljoin(config.server_url, config.user_folder, study_data.folder_name, '/images/')

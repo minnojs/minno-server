@@ -12,6 +12,15 @@ settingsRouter
         next();
     });
 
+settingsRouter.route('/settings')
+    .post(
+        function(req, res){
+            return users.update_details(req.user_id, req.body.params)
+                .then(data=>res.json(data))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+        });
+
 settingsRouter.route('/change_password')
     .post(
         function(req, res){

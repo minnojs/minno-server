@@ -148,7 +148,7 @@ function remove_collaboration(user_id, study_id, collaboration_user_id){
 }
 
 
-function add_collaboration(user_id, study_id, collaborator_name, permission){
+function add_collaboration(user_id, study_id, collaborator_name, permission, data_permission){
     return connection.then(function (db) {
         const studies   = db.collection('studies');
         const users   = db.collection('users');
@@ -164,13 +164,14 @@ function add_collaboration(user_id, study_id, collaborator_name, permission){
                             .then(data=> data ? Promise.reject({status:500, message: 'ERROR: user already collaborated'}) :
                         Promise.all([
                             studies.update({_id: study_id},
-                                {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission: permission, status:'pending'}}}),
+                                {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission, data_permission, status:'pending'}}}),
                             users.update({_id: collaborator_data._id},
-                                {$push: {pending_studies: {id:study_id, accept, reject, permission, study_name:full_data.study_data.name, owner_name}}}),
+                                {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
                             sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/static/?/collaboration/'+accept,
                                                                                                                                      reject: config.server_url+'/static/?/collaboration/'+reject,
                                                                                                                                      collaborator_name,
                                                                                                                                      permission,
+                                                                                                                                     data_permission,
                                                                                                                                      owner_name,
                                                                                                                                      study_name})
                         ]));
@@ -276,6 +277,11 @@ function delete_study(user_id, study_id) {
         });
 }
 
+function has_read_data_permission(user_id, study_id){
+    return get_user_study(user_id, study_id)
+        .then(result => result.can_read_data ? result : Promise.reject({status:403, message:'Permission denied'}));
+}
+
 function has_read_permission(user_id, study_id){
     return get_user_study(user_id, study_id)
         .then(result => result.can_read ? result : Promise.reject({status:403, message:'Permission denied'}));
@@ -301,10 +307,10 @@ function get_user_study(user_id, study_id){
             if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
             if (study_data.users.find(user=>user.user_id===user_id))
             {
-
-                const can_write = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
+                const can_write     = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
+                const can_read_data = study_data.users.find(user=>user.user_id===user_id).data_permission !=='invisible';
                 const can_read = study_data.users.find(user=>user.user_id===user_id);
-                return {user_data, study_data, can_read, can_write};
+                return {user_data, study_data, can_read, can_write, can_read_data};
             }
             const can_write = false;
             const can_read = study_data.is_bank || study_data.is_public;
@@ -471,4 +477,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission};

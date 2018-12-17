@@ -49,17 +49,44 @@ function set_password(user_id, password, confirm) {
     });
 }
 
-function set_email(user_id, email) {
-    if(!email)
-        return Promise.reject({status:400, message: 'Missing email'});
-    return connection.then(function (db) {
-        const users   = db.collection('users');
-        return users.findAndModify({_id: user_id},
-            [],
-            {$set: {email: email}})
-            .then(()=>({}));
+function update_details(user_id, params) {
 
-    });
+    let status = {};
+    if (params.password)
+        status.password = {};
+    if (params.email)
+        status.email = {};
+
+    return Promise.all([
+        params.password ? set_password(user_id, params.password, params.confirm).catch(err=>status.password.error = err.message) : '',
+        params.email ? set_email(user_id, params.email).catch(err=>status.email.error = err.message) : ''
+    ]).then(()=>(status));
+
+}
+
+function set_email(user_id, email) {
+
+
+    if (!email)
+        return Promise.reject({status: 400, message: 'Missing email'});
+
+
+    let validator = new Validator({email},
+        {email: 'required|email'});
+
+    return validator.check()
+        .then(function () {
+            if (!Object.keys(validator.errors).length == 0)
+                return Promise.reject({status: 400, message: validator.errors.email.message});
+            return connection.then(function (db) {
+                const users = db.collection('users');
+                return users.findAndModify({_id: user_id},
+                    [],
+                    {$set: {email: email}})
+                    .then(() => ({}));
+
+            });
+        });
 }
 
 
@@ -320,4 +347,4 @@ function connect(user_name, pass) {
 }
 
 
-module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, new_msgs, user_info_by_name, get_email, set_email, set_password, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};
+module.exports = {connect, reset_password, check_reset_code, reset_password_request, get_users, remove_user, user_info, new_msgs, user_info_by_name, get_email, set_email, set_password, update_details, set_dbx_token, revoke_dbx_token, insert_new_user, update_role, check_activation_code, set_user_by_activation_code};

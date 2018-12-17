@@ -7,8 +7,7 @@ const utils        = require('./utils');
 const data_server  = require('./data_server/controllers/controller');
 const connection    = Promise.resolve(require('mongoose').connection);
 
-const {has_read_permission, has_write_permission} = studies_comp;
-
+const {has_read_permission, has_read_data_permission, has_write_permission} = studies_comp;
 
 // get data for playing a file without creating an experiment
 // creates sham info for the player
@@ -40,7 +39,6 @@ function get_experiment_url (req) {
             .then(function(exp_data){
                 if(!exp_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
-
                 return users_comp.user_info(exp_data.users[0].id)
                     .then(function(){
                         const last_version = exp_data.versions ? exp_data.versions[exp_data.versions.length-1] : '';
@@ -80,10 +78,9 @@ function get_experiments(user_id, study_id) {
 }
 
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
-    return has_read_permission(user_id, study_id)
+    return has_read_data_permission(user_id, study_id)
         .then(()=> data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
-
 }
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
@@ -91,22 +88,30 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update({_id: study_id}, {
-                    $push: {
-                        experiments: {
-                            id: utils.sha1(study_id + file_id + descriptive_id),
-                            file_id: file_id, descriptive_id: descriptive_id
-                        }
-                    }
-                })
-                .then(function (user_result) {
-                    if (!user_result)
-                        return Promise.reject({status:500, message: 'ERROR: internal error!'});
-                    return ({id: utils.sha1(study_id + file_id + descriptive_id),
-                             file_id: file_id,
-                             descriptive_id: descriptive_id
-                        });
-                });
+                return studies.findAndModify({_id: study_id, experiments: {$elemMatch:{file_id:file_id, descriptive_id: descriptive_id}}},
+                    [],
+                    {$unset:{'experiments.$.inactive': false}},
+                    {upsert: false, new: true, returnOriginal: true})
+                    .then(function(data){
+                        if(!data.lastErrorObject.n)
+                            return studies.update({_id: study_id}, {
+                                $push: {
+                                    experiments: {
+                                        id: utils.sha1(study_id + file_id + descriptive_id + Math.random()),
+                                        file_id: file_id, descriptive_id: descriptive_id
+                                    }
+                                }
+                            })
+                            .then(function (user_result) {
+                                if (!user_result)
+                                    return Promise.reject({status:500, message: 'ERROR: internal error!'});
+                                return ({id: utils.sha1(study_id + file_id + descriptive_id),
+                                    file_id: file_id,
+                                    descriptive_id: descriptive_id
+                                });
+                            });
+                    });
+                //
             });
         });
 }
@@ -116,17 +121,16 @@ function delete_experiment(user_id, study_id, file_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update({_id: study_id}, {
-                    $pull: {
-                        experiments: {file_id: file_id}
-                    }
-                })
-                .then(function (user_result) {
-                    if (!user_result)
-                        return Promise.reject({status:500, message: 'ERROR: internal error!'});
-                    return ({});
-                });
-
+                // return studies.update({_id: study_id},
+                //     {$set:{'experiments': []}}
+                // )
+                return studies.findOne({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}})
+                    .then(function(study_data){
+                        const exps = study_data.experiments.map(exp=>exp.file_id!==file_id ? exp : {id:exp.id, file_id:exp.file_id, descriptive_id: exp.descriptive_id, inactive:true});
+                        return studies.update({_id: study_id},
+                            {$set:{experiments: exps}}
+                        );
+                    });
             });
         });
 }
