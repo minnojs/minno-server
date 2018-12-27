@@ -56,8 +56,9 @@ function get_studies(user_id) {
 
                 .then(user_studies =>  user_studies.map(study =>
                     {
+                    const user_data = study.users.find(user=>user.user_id===user_id);
                     return composeStudy(study, {
-                        permission: study.users.find(user=>user.user_id===user_id).permission,
+                        permission: user_data.deleted ? 'deleted' : user_data.permission,
                         study_type:'regular',
                         base_url:study.folder_name,
                         tags: get_tags(user_result, study)
@@ -264,17 +265,16 @@ function duplicate_study(user_id, study_id, new_study_name) {
 
 function delete_study(user_id, study_id) {
     return has_write_permission(user_id, study_id)
-        .then(function() {
-            return delete_by_id(user_id, study_id)
-                .then(function(study_data) {
-                    const dir = path.join(config.user_folder, study_data.value.folder_name);
-                    return fs.pathExists(dir)
-                        .then(existing => !existing
-                                    ?  Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
-                                    : fs.remove(dir));
-                }
+        .then(()=>delete_by_id2(user_id, study_id)
+                // .then(function(study_data) {
+                //     const dir = path.join(config.user_folder, study_data.value.folder_name);
+                //     return fs.pathExists(dir)
+                //         .then(existing => !existing
+                //                     ?  Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
+                //                     : fs.remove(dir));
+                // }
             );
-        });
+
 }
 
 function has_read_data_permission(user_id, study_id){
@@ -407,6 +407,21 @@ function delete_by_id(user_id, study_id) {
             });
     });
 }
+
+function delete_by_id2(user_id, study_id) {
+    return connection.then(function (db) {
+        const users   = db.collection('users');
+        const studies   = db.collection('studies');
+        // return users
+        //     .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
+        //     .then(function() {
+        return studies.update({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
+                    {$set: {'users.$.deleted': true}}
+                )//.then(data=>console.log(data));
+            // });
+    });
+}
+
 
 function update_study(user_id, study_id, update_body) {
     const modify_date = Date.now();
