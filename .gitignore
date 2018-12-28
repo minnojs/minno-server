@@ -1,6 +1,7 @@
 .idea
 /tmp
 /logs
+/app/logs
 /node_modules
 config.js
 researchDashboard
