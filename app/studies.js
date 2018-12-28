@@ -130,6 +130,16 @@ function get_collaborations(user_id, study_id){
         });
 }
 
+function get_owner(user_id, study_id){
+    return has_read_permission(user_id, study_id)
+        .then(data=>
+        {
+            const owner_obj = data.study_data.users.filter(user=>user.permission==='owner')[0];
+
+            return user_info(owner_obj.user_id);
+            // return {users, study_name, is_public};
+        });
+}
 
 function remove_collaboration(user_id, study_id, collaboration_user_id){
     return connection.then(function (db) {
@@ -222,7 +232,7 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
             const study_obj = Object.assign({
                 name: study_name,
                 description,
-                folder_name: path.join(user_name,study_name),
+                folder_name: path.join(user_name, study_name),
                 type: study_type,
                 users: [{id: user_id}],
                 experiments: [],
@@ -364,7 +374,9 @@ function insert_obj(user_id, study_props) {
             {upsert: true, new: true, returnOriginal: false}
         )
             .then(function(counter_data){
-                study_obj._id = counter_data.value.seq;
+                const study_id = counter_data.value.seq;
+                study_obj._id = study_id;
+                study_obj.folder_name = `${study_obj.folder_name}-${study_id}`;
                 study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
 
                 return studies.insert(study_obj);
@@ -440,18 +452,20 @@ function update_study(user_id, study_id, update_body) {
 function rename_study(user_id, study_id, new_study_name) {
     if (!new_study_name) return Promise.reject({status:400, message: 'ERROR: empty study name'});
     return has_write_permission(user_id, study_id)
-        .then(function({user_data}) {
-            return ensure_study_not_exist(user_id, new_study_name)
-                .then(function() {
-                    const study_obj = { name: new_study_name, folder_name: path.join(user_data.user_name, new_study_name) ,modify_date: Date.now()};
+        .then(function() {
+            return get_owner(user_id, study_id)
+                .then(function(owner_data) {
+                    const study_obj = {
+                        name: new_study_name,
+                        folder_name: path.join(owner_data.user_name, `${new_study_name}-${study_id}`),
+                        modify_date: Date.now()
+                    };
                     return update_obj(study_id, study_obj)
                         .then(function (study_data) {
                             if (!study_data.ok)
-                                return Promise.reject({status:500, message: 'ERROR: internal error'});
-
-                            const new_file_path = path.join(config.user_folder , study_obj.folder_name);
-                            const file_path     = path.join(config.user_folder , study_data.value.folder_name);
-
+                                return Promise.reject({status: 500, message: 'ERROR: internal error'});
+                            const new_file_path = path.join(config.user_folder, study_obj.folder_name);
+                            const file_path = path.join(config.user_folder, study_data.value.folder_name);
                             return fs.pathExists(file_path)
                                 .then(existing => !existing
                                     ?
