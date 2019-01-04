@@ -93,11 +93,12 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                     {$unset:{'experiments.$.inactive': false}},
                     {upsert: false, new: true, returnOriginal: true})
                     .then(function(data){
+                        const id = utils.sha1(study_id + file_id + descriptive_id + Math.random());
                         if(!data.lastErrorObject.n)
                             return studies.update({_id: study_id}, {
                                 $push: {
                                     experiments: {
-                                        id: utils.sha1(study_id + file_id + descriptive_id + Math.random()),
+                                        id: id,
                                         file_id: file_id, descriptive_id: descriptive_id
                                     }
                                 }
@@ -105,7 +106,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                             .then(function (user_result) {
                                 if (!user_result)
                                     return Promise.reject({status:500, message: 'ERROR: internal error!'});
-                                return ({id: utils.sha1(study_id + file_id + descriptive_id),
+                                return ({id: id,
                                     file_id: file_id,
                                     descriptive_id: descriptive_id
                                 });

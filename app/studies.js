@@ -43,7 +43,7 @@ function get_studies(user_id) {
             get_public_studies(),
             get_bank_studies()
         ])
-            .then(studyArr => [].concat.apply([], studyArr));
+        .then(studyArr => [].concat.apply([], studyArr));
 
         function get_user_studies(){
             return users.findOne({_id:user_id})
@@ -59,6 +59,7 @@ function get_studies(user_id) {
                     const user_data = study.users.find(user=>user.user_id===user_id);
                     return composeStudy(study, {
                         permission: user_data.deleted ? 'deleted' : user_data.permission,
+                        has_data_permission: user_data.permission === 'owner' || user_data.data_permission == 'visible',
                         study_type:'regular',
                         base_url:study.folder_name,
                         tags: get_tags(user_result, study)
