@@ -19,6 +19,7 @@ const config_router      = require('./routes/config_router');
 const dropbox_router    = require('./routes/dropbox_router');
 const collaboration_router    = require('./routes/collaboration_router');
 const mongoose = require('mongoose');
+const urljoin       = require('url-join');
 
 const bodyParser = require('body-parser');
 const app = express();
@@ -81,11 +82,10 @@ basePathRouter.route('/data')
 
 
 
-basePathRouter.get('/',function(req,res){
-    res.redirect('/static');
-});
+// setup client side
+basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'static')));
+basePathRouter.use('/static', (req,res) => res.render('dashboard', config));
 
-basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
 

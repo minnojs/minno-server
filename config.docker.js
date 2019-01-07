@@ -1,24 +1,18 @@
+const env = process.env;
 module.exports = {
-    /**
-     * Absolute path to dashboard repository.
-     * Install using 
-     * git clone -b node https://github.com/ProjectImplicit/researchDashboard.git
-     **/
-    //static_path: '/usr/src/minnoserver/researchDashboard/',
-    static_path: '/usr/src/minnoserver/researchDashboard/',
 
     email_auth: {
         user: '',
         pass: ''
     },
-    port: 8000,
+    port: env.PORT,
 
     /**
      * Absolute path to the server files ???
      **/
-    base_folder: '/usr/src/minnoserver',
-    mongo_url: 'mongodb://database:27017/minnodb',
-    server_url: 'http://localhost:8000',
+    base_folder: env.MINNO_BASE_FOLDER,
+    mongo_url: env.MINNO_MONGO_URL,
+    server_url:env.MINNO_SERVER_URL,
     maxFileSize: 20*1024*1024,
 
     /**
@@ -48,7 +42,9 @@ module.exports = {
      * For example:
      * // //cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/
      **/
-    minnojsUrl: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/',
+    minnojsUrl: env.MINNO_PLAYER_URL,
+
+    dashboardUrl: env.MINNO_DASHBOARD_URL,
     
     /**
      * secrets for hashing
