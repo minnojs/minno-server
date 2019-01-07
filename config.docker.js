@@ -23,7 +23,7 @@ module.exports = {
     /*
      * For creating temporary files
      **/
-    dataFolder:'data/tmp/',
+    dataFolder:'/data/tmp/',
 
     /**
      * Folder for server logs, relative to the server files
