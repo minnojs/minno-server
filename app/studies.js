@@ -239,7 +239,6 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
                 experiments: [],
                 modify_date: Date.now()
             }, additional_params);
-
             return insert_obj(user_id, study_obj)
                 .then(study => {
                     return  fs.mkdirp(study.dir).then(() => study);

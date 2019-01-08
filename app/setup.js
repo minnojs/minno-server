@@ -88,6 +88,7 @@ function create_bank_studies(){
             const del_studies = bank_studies.filter(study => !study_list_names.includes(study.name));
 
             console.log('Updating bank studies:');
+
             const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).catch(err=>console.log(err.message)));
             const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
             return Promise.all([].concat(new_promises, del_promises));
@@ -95,6 +96,7 @@ function create_bank_studies(){
             function inject_id(study){
                 study.study_name = study.name;
                 study.user_id = user_result._id;
+
                 return study;
             }
 
@@ -105,7 +107,7 @@ function create_bank_studies(){
                 };
             }
         })
-        .then(() => fs.copy('app/bank', path.join(config.user_folder, 'bank')))
+        .then(() => fs.copy('./bank', path.join(config.user_folder, 'bank')))
         .then(() => console.log('Bank studies updated.'));
     });
 }
