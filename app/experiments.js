@@ -1,10 +1,10 @@
 const config        = require('../config');
 const urljoin       = require('url-join');
 const studies_comp  = require('./studies');
-const join = require('path').join;
-const users_comp = require('./users');
-const utils        = require('./utils');
-const data_server  = require('./data_server/controllers/controller');
+const join          = require('path').join;
+const users_comp    = require('./users');
+const utils         = require('./utils');
+const data_server   = require('./data_server/controllers/controller');
 const connection    = Promise.resolve(require('mongoose').connection);
 
 const {has_read_permission, has_read_data_permission, has_write_permission} = studies_comp;
