@@ -14,8 +14,8 @@ const {has_read_permission, has_read_data_permission, has_write_permission} = st
 function get_play_url (user_id, study_id, file_id) {
     return has_read_permission(user_id, study_id)
         .then(({study_data})  => {
-            const url = urljoin(config.relative_path,config.user_folder,study_data.folder_name,file_id);
-            const base_url = urljoin(config.relative_path,config.user_folder,study_data.folder_name, '/');
+            const url = urljoin(config.relative_path,'users',study_data.folder_name,file_id);
+            const base_url = urljoin(config.relative_path,'users',study_data.folder_name, '/');
             const path = join(config.user_folder,study_data.folder_name,file_id);
 
             // set sham experiment data

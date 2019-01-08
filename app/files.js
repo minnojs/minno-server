@@ -11,10 +11,12 @@ const dropbox      = require('./dropbox');
 const utils        = require('./utils');
 const {has_read_permission, has_write_permission} = studies_comp;
 const urljoin       = require('url-join');
+const url = require('url');
 
-function walk(full_path, base_path = full_path){
-    const file_path = full_path.slice(base_path.length+1);
-    const file_url = urljoin(config.server_url, full_path);
+function walk(folder_path, base_path = folder_path){
+    const full_path = path.join(config.user_folder,folder_path);
+    const file_path = full_path.slice(path.join(config.user_folder,base_path).length+1);
+    const file_url = urljoin(url.resolve(config.server_url, config.relative_path), 'users', folder_path);
 
     return fs.stat(full_path)
         .then(res => res.isDirectory() ? dir() : file());
@@ -33,7 +35,7 @@ function walk(full_path, base_path = full_path){
     }
 
     function getFiles(file){
-        return walk(path.join(full_path, file), base_path);
+        return walk(path.join(folder_path, file), base_path);
     }
 
     function file(){
@@ -49,8 +51,7 @@ function walk(full_path, base_path = full_path){
 function get_study_files(user_id, study_id) {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
-        const folderName = path.join(config.user_folder,study_data.folder_name);
-        return walk(folderName)
+        return walk(study_data.folder_name)
         .then(files => {
 
             return {
@@ -68,7 +69,7 @@ function get_study_files(user_id, study_id) {
                     const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id && !exp.inactive);
                     return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};
                 }),
-                base_url: urljoin(config.server_url, config.user_folder, study_data.folder_name, '/images/')
+                base_url: urljoin(url.resolve(config.server_url, config.relative_path), 'users', study_data.folder_name)
             };
         });
     });
@@ -102,9 +103,8 @@ function update_file(user_id, study_id, file_id, content) {
         .then(function(){
             const file_url = path.join('..',config.user_folder,study_data.folder_name,file_id);
             return studies_comp.update_modify(study_id)
-
                 .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name,file_id))))
-            .then(()=>({id: file_id, content: content, url: file_url}));
+                .then(()=>({id: file_id, content: content, url: file_url}));
         });
     });
 }
