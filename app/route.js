@@ -80,8 +80,6 @@ basePathRouter.route('/data')
     .put(data_controller.insertData)
     .get(data_controller.getData);
 
-
-
 // setup client side
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'static/')));
 basePathRouter.use('/static', (req,res) => res.render('dashboard', config));
