@@ -70,27 +70,36 @@ function create_users(){
 
 function create_bank_studies(){
     return connection.then(function(db){
-        const users = db.collection('users');
-        const studies = db.collection('studies');
 
-        return users.findOne({user_name:'bank'})
-        .then(user_result => {
-            const study_ids = user_result.studies.map(study => study.id);
-            return studies
-            .find({ _id: { $in: study_ids } })
-            .toArray()
-            .then(studies => [user_result, studies]);
-        })
-        .then(function([user_result, bank_studies]){
+        console.log('Updating bank studies:');
+        return getBankStudies()
+            .then(createBankStudies)
+            .then(getBankStudies)
+            .then(updateBankStudies)
+            .then(() => console.log('Bank studies updated.'));
+
+        function getBankStudies(){
+            const users = db.collection('users');
+            const studies = db.collection('studies');
+            return users.findOne({user_name:'bank'})
+            .then(user_result => {
+                const study_ids = user_result.studies.map(study => study.id);
+                return studies
+                .find({ _id: { $in: study_ids } })
+                .toArray()
+                .then(studies => [user_result, studies]);
+            });
+        }
+
+        function createBankStudies([user_result, bank_studies]){
             const study_list_names = study_list.map(study => study.name);
             const bank_names = bank_studies.map(study => study.name);
             const new_studies = study_list.filter(study => !bank_names.includes(study.name));
             const del_studies = bank_studies.filter(study => !study_list_names.includes(study.name));
 
-            console.log('Updating bank studies:');
-
-            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).then(()=>fs.copy(`./app/bank/${study.name}`, path.join(config.user_folder, `/bank/${study.name}-${study.id}`))).catch(err=>console.log(err.message)));
+            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).catch(err=>console.log(err.message)));
             const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
+
             return Promise.all([].concat(new_promises, del_promises));
 
             function inject_id(study){
@@ -106,12 +115,18 @@ function create_bank_studies(){
                     return study;
                 };
             }
-        })
+        }
 
-        .then(() => fs.copy('./app/bank', path.join(config.user_folder, 'bank')))
-        .then(() => console.log('Bank studies updated.'));
+        function updateBankStudies([user_result, study_list]){
+            const promises = study_list.map(study => {
+                console.log(`-- copying "${path.join('./app/bank/',study.name)}" into "${path.join(config.user_folder, study.folder_name)}"`);
+                return fs.copy(path.join('./app/bank/',study.name), path.join(config.user_folder, study.folder_name));
+            });
+            return Promise.all(promises);
+        }
     });
 }
+
 
 process.on('unhandledRejection', (reason, p) => {
     console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
