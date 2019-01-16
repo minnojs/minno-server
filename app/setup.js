@@ -108,7 +108,7 @@ function create_bank_studies(){
             }
         })
 
-        // .then(() => fs.copy('./bank', path.join(config.user_folder, 'bank')))
+        .then(() => fs.copy('./app/bank', path.join(config.user_folder, 'bank')))
         .then(() => console.log('Bank studies updated.'));
     });
 }

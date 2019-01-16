@@ -33,7 +33,7 @@ services:
       MINNO_BASE_FOLDER: '/usr/src/minnoserver'
       MINNO_MONGO_URL: 'mongodb://database:27017/minnodb'
       MINNO_SERVER_URL: 'http://localhost:8000'
-      MINNO_DASHBOARD_URL: '//cdn.jsdelivr.net/gh/ProjectImplicit/researchDashboard@1'
+      MINNO_DASHBOARD_URL: '//cdn.jsdelivr.net/gh/minnojs/minno-dashboard@1'
       MINNO_PLAYER_URL : '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/'
 
   database: # name of the service
