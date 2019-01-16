@@ -84,7 +84,11 @@ basePathRouter.route('/data')
 
 // setup client side
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'static/')));
-basePathRouter.use('/static', (req,res) => res.render('dashboard', config));
+// basePathRouter.use('/static', config.dev_mode ? express.static(config.static_path) : (req,res) => res.render('dashboard', config));
+basePathRouter.use('/static', express.static(config.static_path));
+basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
+
+
 
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
