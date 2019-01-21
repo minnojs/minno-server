@@ -307,6 +307,8 @@ function connect(user_name, pass) {
     return connection.then(function (db) {
         const users    = db.collection('users');
         const studies  = db.collection('studies');
+
+
         let query = {user_name, pass: utils.sha1(pass)};
 
         if (!user_name.includes('#'))

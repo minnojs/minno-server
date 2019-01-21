@@ -13,17 +13,17 @@ const {has_read_permission, has_write_permission} = studies_comp;
 const urljoin       = require('url-join');
 const url = require('url');
 
-function walk(folder_path, base_path = folder_path){
+function walk(folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
     const file_path = full_path.slice(path.join(config.user_folder,base_path).length+1);
     const file_url = urljoin(url.resolve(config.server_url, config.relative_path), 'users', folder_path);
-
     return fs.stat(full_path)
-        .then(res => res.isDirectory() ? dir() : file());
+        .then(res => res.isDirectory() ? dir(exps) : file(exps));
 
-    function dir(){
+    function dir(exps){
+
         return fs.readdir(full_path)
-            .then(files => files.map(getFiles))
+            .then(files => files.map(file=>getFiles(file, exps)))
             .then(Promise.all.bind(Promise))
             .then(files => ({
                 id:urlencode(file_path),
@@ -34,16 +34,19 @@ function walk(folder_path, base_path = folder_path){
             }));
     }
 
-    function getFiles(file){
-        return walk(path.join(folder_path, file), base_path);
+    function getFiles(file, exps){
+        return walk(path.join(folder_path, file), exps, base_path);
     }
 
-    function file(){
+    function file(exps){
+        const exp_data = exps.filter(exp => exp.file_id === file_path && !exp.inactive);
+
         return {
             id:urlencode(file_path),
             isDir:false,
             path:file_path,
-            url: file_url
+            url: file_url,
+            exp_data:exp_data?exp_data[0]:[]
         };
     }
 }
@@ -51,9 +54,8 @@ function walk(folder_path, base_path = folder_path){
 function get_study_files(user_id, study_id) {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
-        return walk(study_data.folder_name)
+        return walk(study_data.folder_name, study_data.experiments)
         .then(files => {
-
             return {
                 study_name:study_data.name,
                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
@@ -63,17 +65,13 @@ function get_study_files(user_id, study_id) {
                 is_readonly: !can_write,
                 versions: study_data.versions,
                 permission: study_data.users.find(user=>user.user_id===user_id) ? study_data.users.find(user=>user.user_id===user_id).permission :'read only',
-                files: files.files
-                // TODO: this applies only to root. should add this to deep files as well.
-                .map(function(file){
-                    const exp_data = study_data.experiments.filter(exp => exp.file_id === file.id && !exp.inactive);
-                    return {id:file.id, isDir:file.isDir, path: file.path, url:file.url, files:file.files, exp_data:exp_data?exp_data[0]:[]};
-                }),
+                files: files.files,
                 base_url: urljoin(url.resolve(config.server_url, config.relative_path), 'users', study_data.folder_name)
             };
         });
     });
 }
+
 
 function create_folder(user_id, study_id, folder_id) {
     return has_write_permission(user_id, study_id)
