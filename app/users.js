@@ -217,7 +217,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
                         });
                 })
                 .then(()=>!password ? sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/static/?/activation/${activation_code}`}) : ({}))
-                .then(sent=>sent ? ({}) : ({activation_code}));
+                .then(sent=>sent ? ({}) : ({activation_code:`${config.server_url}/static/?/activation/${activation_code}`}));
         });
     });
 
