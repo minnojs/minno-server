@@ -94,7 +94,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                     {upsert: false, new: true, returnOriginal: true})
                     .then(function(data){
                         const id = utils.sha1(study_id + file_id + descriptive_id + Math.random());
-                        if(!data.lastErrorObject.n)
+                        if(!data.lastErrorObject || !data.lastErrorObject.n)
                             return studies.update({_id: study_id}, {
                                 $push: {
                                     experiments: {
