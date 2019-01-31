@@ -1,0 +1,167 @@
+// SASS style sheet */
+// Palette color codes */
+// Palette URL: http://paletton.com/#uid=13u0u0kqpBpg5MVlwGpzhxMzuos */
+
+// Feel free to copy&paste color codes to your application */
+
+$color-primary-0: #71B0D6;	// Main Primary color */
+$color-primary-1: #D2EAF9;
+$color-primary-2: #9DCEEA;
+$color-primary-3: #4C93BE;
+$color-primary-4: #2E76A1;
+
+$navbar-height: 54px;
+
+h1, h2, h3, h4, h5 {font-weight: 300}
+h1 small, h2 small, h3 small, h4 small, h5 small {font-weight: 200; color: #818a91; font-size:70%}
+
+.deploy, .sharing, .downloadAccess, .StudyChangeRequest, .StudyRemoval, .downloads, .statistics, .pool, .tags-page, .translate-page, .sharing-page{
+    padding-top: 1em;
+}
+.translate-page{
+  overflow: auto;
+  max-height: 100%;
+}
+
+a.no-decoration {text-decoration: none; color:inherit}
+
+// utility
+.centrify {
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	flex-direction:column;
+	height: 100%;
+}
+
+
+.info-box {
+	display: none;
+	position: absolute;
+	border-color: #818A91;
+	padding-left: 10px; // using margin here does not allow hover to continue into the info-box
+	z-index: 5;
+}
+
+*:hover + .info-box, .info-box:hover {
+	display: inline-block;
+}
+
+.pool {
+	padding-bottom: 9em;
+}
+
+
+.space {
+  padding-top: 10px;
+}
+
+
+.double_space {
+  margin-top: 10px;
+}
+
+.warning_text {
+
+  color: red;
+}
+
+#ruleGenerator {
+    background-color: #bcdae2;
+    border-color: #bcdae2;
+    margin-top: 0.5em;
+}
+
+#messages .card {
+	overflow-y: auto;
+}
+
+.history-button-group {
+	position: relative;
+	display: inline-block;
+    vertical-align: top;
+    left: 15px;
+    top: 24px;
+}
+
+.dropdown-component {display: inline-block}
+.dropdown-menu-up {  
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 2px;
+}
+.btn-group > .dropdown-component {
+    display: inline-block;
+
+    &:not(:last-child) > .btn:first-child {
+        border-top-right-radius: 0;
+        border-left-right-radius: 0;
+    }
+
+    &:not(:first-child) > .btn:first-child {
+        margin-left:-1px;
+        border-top-left-radius: 0;
+        border-left-left-radius: 0;
+    }
+}
+
+.statistics-time-button {
+    display:relative;
+    .time-card {
+        display:none;
+        position: absolute;
+        top:100%;
+        left:0;
+        padding-top: 5px;
+        text-align: left;
+    }
+    &:hover .time-card {display: block;}
+}
+
+// used within the validator
+.stringified {
+	.pre {text-decoration: none;white-space: pre;}
+	.string { color: green; }
+	.number { color: darkorange; }
+	.boolean { color: blue; }
+	.null { color: magenta; }
+	.key { color: red; }
+
+	.editor { position: absolute;top: 0;right: 0;bottom: 0;left: 0; height:300px; font-size: 18px;}
+}
+
+.table.table-nowrap th {white-space:nowrap}
+.templae_text {display:inline}
+
+.custom-controls-stacked .custom-control{display:inline}
+.custom-controls-stacked .custom-control:after {
+    display:block;
+    margin-bottom: .25rem;
+    content: '';
+}
+
+.bulletless {
+    list-style-type:none;
+    list-style-image:none;
+}
+
+.folders-well {
+    border: 1px solid #e5e5e5;
+    border-radius: .25rem;
+    padding: 0.75rem 0.75rem 0 0.75rem;
+}
+
+.wizard { height:100%; overflow: scroll; }
+
+@import "./navbar";
+@import "./loader";
+@import "./forms";
+@import "./context";
+@import "./files";
+@import "./backdrop";
+@import "./study";
+@import "./pool";
+@import "./login";
+@import "./dateRange";
+@import "./upload";
+// @import "./fab";

@@ -1,13 +1,13 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('skip',true);
     API.addSettings('skin','demo');
 
-    var raceSet = API.shuffle(['a','b'])[0];
-    var blackLabels = [];
-    var whiteLabels = [];
+    let raceSet = API.shuffle(['a','b'])[0];
+    let blackLabels = [];
+    let whiteLabels = [];
 
     if (raceSet == 'a') {
         blackLabels.push('African Americans');

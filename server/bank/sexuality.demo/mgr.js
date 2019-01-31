@@ -1,14 +1,14 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('skip',true);
     API.addSettings('skin','demo');
 
     //Randomize which of the three possible stimulus sets we are going to use for the gay category
-    var gaySet = API.shuffle(['gay','lesbian','general'])[0];
-    var gayWords = ['Gay People', 'Homosexual']; //All gay sets have this word
-    var gayImages = [];
+    let gaySet = API.shuffle(['gay','lesbian','general'])[0];
+    let gayWords = ['Gay People', 'Homosexual']; //All gay sets have this word
+    let gayImages = [];
 
     //Fill the sets of words and images for the gay categories, based on the gay-set condition
     switch (gaySet){
@@ -70,14 +70,14 @@ define(['managerAPI'], function(Manager) {
             header: 'Welcome'
         }],
 
-		instiat_sexuality: [{
-			inherit: 'instructions',
-			name: 'instiat',
-			templateUrl: 'instiat_sexuality.jst',
-			title: 'IAT Instructions',
-			piTemplate: true,
-			header: 'Implicit Association Test'
-		}],
+        instiat_sexuality: [{
+            inherit: 'instructions',
+            name: 'instiat',
+            templateUrl: 'instiat_sexuality.jst',
+            title: 'IAT Instructions',
+            piTemplate: true,
+            header: 'Implicit Association Test'
+        }],
 
         explicits: [{
             type: 'quest',

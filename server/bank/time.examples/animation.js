@@ -10,7 +10,7 @@
  */
 
 define(['pipAPI'], function(APIconstructor) {
-    var API = new APIconstructor();
+    let API = new APIconstructor();
 
     API.addSettings('base_url','images/');
 
@@ -62,18 +62,18 @@ define(['pipAPI'], function(APIconstructor) {
      * @param opts.topShift Float How much the element should be moved vertically in percent of the canvas. May be negative.
      **/
     function animate(canvas, handle, opts){
-        var canvasSize = canvas.getBoundingClientRect();
-        var el = document.querySelector('[data-handle="' + handle + '"]');
+        let canvasSize = canvas.getBoundingClientRect();
+        let el = document.querySelector('[data-handle="' + handle + '"]');
 
-        var leftStart = el.offsetLeft;
-        var topStart = el.offsetTop;
-        var startTime = performance.now();
-        var duration = opts.duration;
+        let leftStart = el.offsetLeft;
+        let topStart = el.offsetTop;
+        let startTime = performance.now();
+        let duration = opts.duration;
 
         loop();
 
         function loop(){
-            var delta = performance.now() - startTime;
+            let delta = performance.now() - startTime;
             opts.leftShift && (el.style.left = (leftStart + opts.leftShift * canvasSize.width * Math.min(duration, delta)/duration) + 'px');
             opts.topShift && (el.style.top = (topStart + opts.topShift * canvasSize.height * Math.min(duration, delta)/duration) + 'px');
             if (delta < duration) requestAnimationFrame(loop);

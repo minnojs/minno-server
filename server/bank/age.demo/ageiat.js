@@ -1,6 +1,6 @@
 define(['pipAPI','https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.1/IAT/iat6.js'], function(APIConstructor, iatExtension){
-    var API = new APIConstructor();
-    var global = API.getGlobal();
+    let API = new APIConstructor();
+    let global = API.getGlobal();
 
     return iatExtension({
         category1 : {

@@ -1,17 +1,17 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('skip',true);
     API.addSettings('skin','demo');
 
-    var set = API.shuffle(['A','B'])[0];
-    var lightImages = [];
-    var darkImages = [];
-    var lightImagesLabel = [];
-    var darkImagesLabel = [];
-    var lightLabelText = ['Light Skinned People'];
-    var darkLabelText = ['Dark Skinned People'];
+    let set = API.shuffle(['A','B'])[0];
+    let lightImages = [];
+    let darkImages = [];
+    let lightImagesLabel = [];
+    let darkImagesLabel = [];
+    let lightLabelText = ['Light Skinned People'];
+    let darkLabelText = ['Dark Skinned People'];
 
     //Fill the sets of words and images for the gay categories, based on the gay-set condition
     if (set == 'A') {

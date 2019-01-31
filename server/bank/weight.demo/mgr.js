@@ -1,5 +1,5 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('skip',true);
@@ -44,14 +44,14 @@ define(['managerAPI'], function(Manager) {
             header: 'Welcome'
         }],
 
-		instiat_weight: [{
-			inherit: 'instructions',
-			name: 'instiat',
-			templateUrl: 'instiat_weight.jst',
-			title: 'IAT Instructions',
-			piTemplate: true,
-			header: 'Implicit Association Test'
-		}],
+        instiat_weight: [{
+            inherit: 'instructions',
+            name: 'instiat',
+            templateUrl: 'instiat_weight.jst',
+            title: 'IAT Instructions',
+            piTemplate: true,
+            header: 'Implicit Association Test'
+        }],
 
         explicits: [{
             type: 'quest',

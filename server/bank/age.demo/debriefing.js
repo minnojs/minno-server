@@ -1,9 +1,9 @@
 define(['questAPI'], function(Quest){
 
-	var API = new Quest();
-	var demo= 'true';
+    let API = new Quest();
+    let demo= 'true';
 
-    var onFB = {
+    let onFB = {
         type:'grid',
         name: 'iatevaluations',
         description: '<p>2. What do you think of the IAT?</p>',
@@ -16,15 +16,15 @@ define(['questAPI'], function(Quest){
         rowStemCss: {width:'280px'}
     };
 
-	API.addSequence([
-		{
-			header: 'Debriefing',
-			v1style:2, 
-			questions:[
-				{
-					type:'info',
-					name: 'iatresults',
-					description: '' +
+    API.addSequence([
+        {
+            header: 'Debriefing',
+            v1style:2, 
+            questions:[
+                {
+                    type:'info',
+                    name: 'iatresults',
+                    description: '' +
 						'<p>The sorting test you just took is called the Implicit Association Test (IAT). You categorized good and bad words with images of Old People and Young People.</p>' +
 						'<div class="jumbotron jumbotron-dark">' +
 						  '<h2>Here is your result:</h2>' +
@@ -37,31 +37,31 @@ define(['questAPI'], function(Quest){
 					    '<p><b>Note that your IAT result is based only on the categorization task and not on the questions that you answered.</b></p>'+
 						'<hr>' +
 					    '<h4>Please answer the following questions about your results:</h4>'
-				},
-				{
-					type:'dropdown',
-					name: 'broughtwebsite',
-					description:'<p>1. What brought you to this website?</p>',
-					answers: [
-						'Assignment for school',
-						'Assignment for work',
-						'Mention in a news story (any medium)',
-						'Mention or link at a non-news Internet site',
-						'My Internet search for this topic or a related topic',
-						'Recommendation of a friend or co-worker',
-						'Other'
-					]
-				},
-				onFB,
-				{
-					type:'info',
-					description:'<h4>Click "Submit" to submit your answers and receive more information.</h4></p>'
-				}
-			]
-		}
-	]);
+                },
+                {
+                    type:'dropdown',
+                    name: 'broughtwebsite',
+                    description:'<p>1. What brought you to this website?</p>',
+                    answers: [
+                        'Assignment for school',
+                        'Assignment for work',
+                        'Mention in a news story (any medium)',
+                        'Mention or link at a non-news Internet site',
+                        'My Internet search for this topic or a related topic',
+                        'Recommendation of a friend or co-worker',
+                        'Other'
+                    ]
+                },
+                onFB,
+                {
+                    type:'info',
+                    description:'<h4>Click "Submit" to submit your answers and receive more information.</h4></p>'
+                }
+            ]
+        }
+    ]);
 
-	return API.script;
+    return API.script;
 });
 
 

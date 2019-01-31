@@ -1,7 +1,7 @@
 define(['questAPI','underscore'], function(Quest,_){
 
-    var API = new Quest();
-    var isTouch = API.getGlobal().$isTouch;
+    let API = new Quest();
+    let isTouch = API.getGlobal().$isTouch;
 
     /**
 	* Settings
@@ -226,7 +226,7 @@ define(['questAPI','underscore'], function(Quest,_){
         ]
     });
 
-    var countriesArray = [
+    let countriesArray = [
         {text:'U.S.A. ',value:1},
         {text:'Afghanistan',value:2},
         {text:'Albania',value:3},

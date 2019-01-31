@@ -1,7 +1,7 @@
 define(['questAPI'], function(Quest){
 
-    var API = new Quest();
-    var isTouch = API.getGlobal().$isTouch;
+    let API = new Quest();
+    let isTouch = API.getGlobal().$isTouch;
 
     API.addQuestionsSet('iatEval',{
         type: 'selectOne',
@@ -10,7 +10,7 @@ define(['questAPI'], function(Quest){
         answers: ['Not at all', 'Slightly', 'Moderately', 'Very', 'Extremely']
     });
 
-    var onFB = {
+    let onFB = {
         type:'grid',
         name: 'iatevaluations',
         description: '<p>2. What do you think of the IAT?</p>',
@@ -23,7 +23,7 @@ define(['questAPI'], function(Quest){
         rowStemCss: {width:'280px'}
     };
 
-    var onFBtouch = {
+    let onFBtouch = {
         mixer : 'wrapper',
         data : [
             {

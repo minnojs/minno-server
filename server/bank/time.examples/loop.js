@@ -12,8 +12,8 @@
  **/
 define(['timeAPI'], function(APIConstructor) {
 
-    var API = new APIConstructor();
-    var current = API.getCurrent();
+    let API = new APIConstructor();
+    let current = API.getCurrent();
 
     current.score = 0;
 

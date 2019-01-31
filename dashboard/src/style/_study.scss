@@ -1,0 +1,172 @@
+.studies {
+    margin-top: 10px;
+
+    &::after {background: $color-primary-2;position:fixed; left:0; top:0; height:100%; width:100%;z-index:-1000;}
+
+    .studies-card {
+        background: $color-primary-1;
+        border-color: $color-primary-1;
+    }
+    
+    .owner-icon {margin-right:5px;}
+
+    .study-row {
+        background: #fff;
+        padding: 6px;
+        margin: 6px 0;
+
+        .study-text {
+            color: #818a91;
+            padding: .25em 0; 
+            display: inline-block;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            .study-text {color:#fff;}
+            .study-description {color:#D2EAF9;}
+            background: $color-primary-3;
+        }
+    }
+}
+
+.study {
+    .col-md-10, .col-md-2 {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .editor {
+        padding: 0.3em;
+
+        .editor-menu {
+            padding: 4px 0;
+        }
+
+        .file-name {
+            color: #818a91;
+            font-weight: bold;
+            margin: 4px;
+            float: left;
+        }
+    }
+
+    .img-editor img {
+        max-height:90%;
+        max-width:90%;
+    }
+
+    .sidebar {
+        height:100%;
+        width: inherit;
+        overflow-y: auto;
+        top: $navbar-height;
+        bottom: 0;
+        z-index:10;
+        display:flex;
+        flex-direction: column;
+
+        .sidebar-buttons {
+            margin: 10px;
+            flex-shrink:1;
+        }
+        .sidebar-files {
+            flex-grow:1;
+        }
+    }
+
+    .is-iframe & > .col-md-2 {display:none}
+    .is-iframe & > .col-md-10 {width:100%}
+}
+
+.ace_search {
+	input,button {color: initial; font-size:12px;font-family:initial;}
+}
+
+.ace_editor, .ace_editor div{
+    font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+}
+
+.study-tag {
+    display: inline-block;
+    padding: .25em .4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25rem;
+    margin-left: .25rem;
+    max-width: 200px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+} 
+
+.split-pane {
+    height: 100%; 
+    display:flex;
+
+    &-col-right {
+        flex: 1 1 1px;    
+        min-width: 0;
+    }
+
+    &-col-left {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+   &-divider {
+       flex: 0 1 3px;
+       cursor: col-resize;	
+       background: $navbar-background;
+   }
+}
+
+.study-description {
+    color: #818a91;
+    font-size: 80%;
+    font-weight: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left:2em;
+    margin-top:-10px;
+
+    &:hover{ color: #D2EAF9; cursor: help; }
+}
+
+.study-tip {display:none}
+.study-description:hover .study-tip {
+    display:block;
+    white-space: normal;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 2em;
+    width: 230px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5em;
+    padding: 0.5em 0.8em;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    pointer-events: none; /* This prevents the box from apearing when hovered. */
+    z-index: 2;
+
+    &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: -10px; left: 20px;
+        width: 0; height: 0;
+        border: solid transparent 5px;
+        border-bottom-color: rgba(0,0,0,0.8);
+        transition: opacity 250ms, top 250ms;
+    }
+}

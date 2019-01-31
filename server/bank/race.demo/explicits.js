@@ -1,6 +1,6 @@
 define(['questAPI'], function(Quest){
-    var API = new Quest();
-    var isTouch = API.getGlobal().$isTouch;
+    let API = new Quest();
+    let isTouch = API.getGlobal().$isTouch;
 	
     /**
 	* Page prototype

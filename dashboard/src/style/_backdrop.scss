@@ -1,0 +1,30 @@
+.backdrop {
+	.overlay {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 1040;
+		background-color: #000;
+		opacity: .5;
+	}
+
+	.backdrop-content {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+
+		display:flex;
+		justify-content:center;
+		align-items:center;
+		z-index: 1050;
+	}
+}
+
+.backdrop .spinner {
+	font-size: 6em;
+	color: #5BC0DE;
+}

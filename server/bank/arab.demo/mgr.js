@@ -1,5 +1,5 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('skip',true);
@@ -44,14 +44,14 @@ define(['managerAPI'], function(Manager) {
             header: 'Welcome'
         }],
 
-		instiat_arab: [{
-			inherit: 'instructions',
-			name: 'instiat',
-			templateUrl: 'instiat_arab.jst',
-			title: 'IAT Instructions',
-			piTemplate: true,
-			header: 'Implicit Association Test'
-		}],
+        instiat_arab: [{
+            inherit: 'instructions',
+            name: 'instiat',
+            templateUrl: 'instiat_arab.jst',
+            title: 'IAT Instructions',
+            piTemplate: true,
+            header: 'Implicit Association Test'
+        }],
 
         explicits: [{
             type: 'quest',
@@ -83,24 +83,24 @@ define(['managerAPI'], function(Manager) {
         }]
     });
 
-	API.addSequence([
-		{inherit: 'realstart'},
-		{
-			mixer:'random',
-			data:[
-				{inherit: 'explicits'},
-				{
-					mixer: 'wrapper',
-					data: [
-						{inherit: 'instiat_arab'},
-						{inherit: 'arabiat'}
-					]
-				}
-			]
-		},
-		{inherit: 'debriefing'},
-		{inherit: 'lastpage'}
-	]);
+    API.addSequence([
+        {inherit: 'realstart'},
+        {
+            mixer:'random',
+            data:[
+                {inherit: 'explicits'},
+                {
+                    mixer: 'wrapper',
+                    data: [
+                        {inherit: 'instiat_arab'},
+                        {inherit: 'arabiat'}
+                    ]
+                }
+            ]
+        },
+        {inherit: 'debriefing'},
+        {inherit: 'lastpage'}
+    ]);
 
     return API.script;
 });

@@ -1,6 +1,6 @@
 define(['pipAPI','https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.1/IAT/iat6.js'], function(APIConstructor, iatExtension){
-	var API = new APIConstructor();
-    var global = API.getGlobal();
+    let API = new APIConstructor();
+    let global = API.getGlobal();
     
     return iatExtension({
         category1 : {
@@ -14,9 +14,9 @@ define(['pipAPI','https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.1/IAT/iat6.j
                 {image: 'fatman1.jpg'},
                 {image: 'fatman3.jpg'},
                 {image: 'fatman4.jpg'},
-				{image: 'fatman5.jpg'},
+                {image: 'fatman5.jpg'},
                 {image: 'fatman6.jpg'},                 
-				{image: 'fatwoman1.jpg'},
+                {image: 'fatwoman1.jpg'},
                 {image: 'fatwoman2.jpg'},
                 {image: 'fatwoman3.jpg'},
                 {image: 'fatwoman4.jpg'},
@@ -36,63 +36,63 @@ define(['pipAPI','https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.1/IAT/iat6.j
                 {image: 'thinman1.jpg'},
                 {image: 'thinman2.jpg'},
                 {image: 'thinman3.jpg'},
-				{image: 'thinman5.jpg'},
+                {image: 'thinman5.jpg'},
                 {image: 'thinman6.jpg'},                 
-				{image: 'thinwoman1.jpg'},
+                {image: 'thinwoman1.jpg'},
                 {image: 'thinwoman2.jpg'},
                 {image: 'thinwoman3.jpg'},
-				{image: 'thinwoman5.jpg'},
+                {image: 'thinwoman5.jpg'},
                 {image: 'thinwoman6.jpg'}  
             ],
     		//Stimulus css (style)
     		stimulusCss : {color:'#31940F','font-size':'2.3em'}
         },
-		attribute1 :
+        attribute1 :
 		{
-			name : 'Bad words',
-			title : {
-				media : {word : 'Bad words'},
-				css : {color:'#0000FF','font-size':'1.8em'},
-				height : 4 //Used to position the "Or" in the combined block.
-			},
-			stimulusMedia : [ //Stimuli content as PIP's media objects
-				{word: global.negWords[0]},
-				{word: global.negWords[1]},
-				{word: global.negWords[2]},
-				{word: global.negWords[3]},
-				{word: global.negWords[4]},
-				{word: global.negWords[5]},
-				{word: global.negWords[6]},
-				{word: global.negWords[7]}
-			],
-			//Stimulus css
-			stimulusCss : {color:'#0000FF','font-size':'2.3em'}
+		    name : 'Bad words',
+		    title : {
+		        media : {word : 'Bad words'},
+		        css : {color:'#0000FF','font-size':'1.8em'},
+		        height : 4 //Used to position the "Or" in the combined block.
+		    },
+		    stimulusMedia : [ //Stimuli content as PIP's media objects
+		        {word: global.negWords[0]},
+		        {word: global.negWords[1]},
+		        {word: global.negWords[2]},
+		        {word: global.negWords[3]},
+		        {word: global.negWords[4]},
+		        {word: global.negWords[5]},
+		        {word: global.negWords[6]},
+		        {word: global.negWords[7]}
+		    ],
+		    //Stimulus css
+		    stimulusCss : {color:'#0000FF','font-size':'2.3em'}
 		},
-		attribute2 :
+        attribute2 :
 		{
-			name : 'Good words',
-			title : {
-				media : {word : 'Good words'},
-				css : {color:'#0000FF','font-size':'1.8em'},
-				height : 4 //Used to position the "Or" in the combined block.
-			},
-			stimulusMedia : [ //Stimuli content as PIP's media objects
-				{word: global.posWords[0]},
-				{word: global.posWords[1]},
-				{word: global.posWords[2]},
-				{word: global.posWords[3]},
-				{word: global.posWords[4]},
-				{word: global.posWords[5]},
-				{word: global.posWords[6]},
-				{word: global.posWords[7]}
-			],
-			//Stimulus css
-			stimulusCss : {color:'#0000FF','font-size':'2.3em'}
+		    name : 'Good words',
+		    title : {
+		        media : {word : 'Good words'},
+		        css : {color:'#0000FF','font-size':'1.8em'},
+		        height : 4 //Used to position the "Or" in the combined block.
+		    },
+		    stimulusMedia : [ //Stimuli content as PIP's media objects
+		        {word: global.posWords[0]},
+		        {word: global.posWords[1]},
+		        {word: global.posWords[2]},
+		        {word: global.posWords[3]},
+		        {word: global.posWords[4]},
+		        {word: global.posWords[5]},
+		        {word: global.posWords[6]},
+		        {word: global.posWords[7]}
+		    ],
+		    //Stimulus css
+		    stimulusCss : {color:'#0000FF','font-size':'2.3em'}
 		},
         base_url : {//Where are your images at?
             image : global.baseURL
         },
-		isTouch : global.$isTouch
+        isTouch : global.$isTouch
     });
 });
 
