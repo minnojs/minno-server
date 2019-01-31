@@ -3,7 +3,7 @@ const config = require('../config');
 const {promisify} = require('util');
 
 exports.send_mail = function (to, subject, body, data) {
-    const app = require('./route').app;
+    const app = require('./index').app;
     return config_db.get_gmail().then(function (gmail_details) {
         if (!gmail_details)
             return false;
