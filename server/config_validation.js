@@ -9,7 +9,6 @@ const dataFolder = path.join(config.base_folder,config.dataFolder);
     {param: 'dataFolder', message: `The folder for saving temporary files. Relative to your "base_url". For example 'tmp'`},
     {param: 'server_url', message: `The path on your domain on which you load the server. For example: '/' It must begin with a '/'.`},
     {param: 'minnojsUrl', message: `The url for loading MinnoJS. For example: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/'`},
-    {param: 'dashboardUrl', message: `The url for loading the Minno dashboard. For example: '//cdn.jsdelivr.net/gh/ProjectImplicit/researchDashboard@1'`}
 ]
     .forEach(function({param, message}){
         if (param in config) return;
