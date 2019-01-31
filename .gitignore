@@ -3,8 +3,8 @@
 /logs
 /app/logs
 /node_modules
-config.js
+/config.js
 researchDashboard
-users/
-data/
+/users/
+/data/
 .DS_Store
