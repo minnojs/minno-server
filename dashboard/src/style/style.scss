@@ -51,6 +51,39 @@ a.no-decoration {text-decoration: none; color:inherit}
 	padding-bottom: 9em;
 }
 
+.note {
+  margin-bottom:  2em;
+  margin-left: 25%;
+  margin-right: 25%;
+  z-index: 10;
+  position:       fixed;
+  bottom:         0em;
+  right:          0em;
+  width:          50%;
+  text-align:     center;
+  vertical-align: middle;
+}
+
+.animated {
+  -webkit-animation: fadeinout 5s linear 1 forwards;
+  animation: fadeinout 5s linear 1 forwards;
+}
+
+@-webkit-keyframes fadeinout {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
 
 .space {
   padding-top: 10px;

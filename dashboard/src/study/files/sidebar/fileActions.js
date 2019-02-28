@@ -27,16 +27,20 @@ export const uploadFiles = (path,study) => (fd, files) => {
     }
 };
 
-export const moveFile = (file, study) => () => {
+export const moveFile = (file, study, notifications) => () => {
     const newPath = m.prop(file.basePath);
     messages.confirm({
         header: 'Move File',
         content: moveFileComponent({newPath, file, study})
     })
-        .then(response => {
-            const targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
-            if (response && newPath() !== file.basePath) return moveAction(targetPath, file, study);
-        });
+    .then(response => {
+        const targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
+        console.log(notifications);
+
+        if (response && newPath() !== file.basePath)
+            return moveAction(targetPath, file, study)
+            .then(()=>notifications.show_success(`'${file.name}' successfully moved to '${newPath()}'`));
+    });
 };
 
 export let duplicateFile = (file,study) => () => {
@@ -51,7 +55,7 @@ export let duplicateFile = (file,study) => () => {
         });
 };
 
-export let copyFile = (file, study) => () => {
+export let copyFile = (file, study, notifications) => () => {
     let filePath = m.prop(file.basePath);
     let study_id = m.prop(study.id);
     let new_study_id = m.prop('');
@@ -62,22 +66,26 @@ export let copyFile = (file, study) => () => {
         .then(response => {
             if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
         })
-    ;
+        .then(()=>notifications.show_success(`'${file.name}' successfully copied to '${new_study_id()}'`));
 };
 
-export let renameFile = (file,study) => () => {
+export let renameFile = (file, study, notifications) => () => {
     let newPath = m.prop(file.path);
     return messages.prompt({
         header: 'Rename File',
         postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
         prop: newPath
     })
-        .then(response => {
-            if (response && newPath() !== file.name) return moveAction(newPath(), file,study);
-        });
+    .then(response => {
+        if (response && newPath() !== file.name) return moveAction(newPath(), file, study);
+    })
+    .then(()=>notifications.show_success(`'${file.name}' successfully renamed to '${newPath()}'`))
+    .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${newPath()}`): '');
 };
 
-export let make_experiment = (file, study) => () => {
+export let make_experiment = (file, study, notifications) => () => {
+    console.log(notifications);
+
     let descriptive_id = m.prop(file.path);
     let error = m.prop('');
     return messages.confirm({
@@ -85,10 +93,12 @@ export let make_experiment = (file, study) => () => {
         content: m('div', [
             m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
             !error() ? '' : m('p.alert.alert-danger', error())
-        ])}).then(response => response && study.make_experiment(file, descriptive_id()).then(()=>m.redraw()));
+        ])}).then(response => response && study.make_experiment(file, descriptive_id())
+        .then(()=>notifications.show_success(`'${file.name}' is successfully created with descriptive id: '${descriptive_id()}'`))
+        .then(()=>m.redraw()));
 };
 
-export let update_experiment = (file, study) => () => {
+export let update_experiment = (file, study, notifications) => () => {
     let descriptive_id = m.prop(file.exp_data.descriptive_id);
     let error = m.prop('');
     return messages.confirm({
@@ -97,16 +107,20 @@ export let update_experiment = (file, study) => () => {
             m('input.form-control',  {placeholder: 'Enter new descriptive id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
             !error() ? '' : m('p.alert.alert-danger', error())
         ])}).then(response => response && study.update_experiment(file, descriptive_id()))
+        .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully renamed to '${descriptive_id()}'`))
+
         .then(()=>{file.exp_data.descriptive_id=descriptive_id; m.redraw();});
 };
 
-export let delete_experiment = (file, study) => () => {
+export let delete_experiment = (file, study, notifications) => () => {
     messages.confirm({
         header: 'Remove Experiment',
         content: 'Are you sure you want to remove this experiment? This is a permanent change.'
     })
         .then(response => {
             if (response) study.delete_experiment(file);})
+        .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully deleted`))
+
         .then(()=>{delete file.exp_data; m.redraw();});
 
 };

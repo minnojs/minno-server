@@ -9,6 +9,7 @@ import createMessage from '../downloads/dataComp';
 import {update_tags_in_study} from '../tags/tagsModel';
 import {make_pulic} from './sharing/sharingModel';
 import {copyUrl} from 'utils/copyUrl';
+import studyFactory from "./files/fileCollectionModel";
 
 export let do_create = (type, studies) => {
     const study_name = m.prop('');
@@ -89,7 +90,7 @@ export let do_data = (study) => e => {
 };
 
 
-export let do_make_public = (study) => e =>
+export let do_make_public = (study, notifications) => e =>
 {
     e.preventDefault();
     let error = m.prop('');
@@ -102,6 +103,8 @@ export let do_make_public = (study) => e =>
         .then(response => {
             if (response) make_pulic(study.id, !study.is_public)
                 .then(study.is_public = !study.is_public)
+                .then(()=>notifications.show_success(`'${study.name}' is now ${study.is_public ? 'public' : 'private'}`))
+
                 .then(m.redraw);
         });
 
@@ -150,7 +153,7 @@ export const update_study_description = (study) => e => {
     ask();
 };
 
-export const do_rename = (study) => e => {
+export const do_rename = (study, notifications) => e => {
     e.preventDefault();
     let study_name = m.prop(study.name);
     let error = m.prop('');
@@ -168,7 +171,17 @@ export const do_rename = (study) => e => {
     }).then(response => response && rename());
 
     let rename = () => rename_study(study.id, study_name)
+        .then(()=>notifications.show_success(`'${study.name}' renamed successfully to '${study_name()}'`))
+
         .then(()=>study.name=study_name())
+        .then(()=>{
+            const study2 = studyFactory(study.id);
+            study2.get().then(()=>study.base_url = study2.base_url).then(()=> {
+                if (typeof study.files === "function")
+                    study.files(study2.files());
+            });
+        })
+
         .then(m.redraw)
         .catch(e => {
             error(e.message);
@@ -202,7 +215,7 @@ export let do_duplicate= (study, callback) => e => {
     ask();
 };
 
-export let do_lock = (study, callback) => e => {
+export let do_lock = (study, notifications) => e => {
     e.preventDefault();
     let error = m.prop('');
 
@@ -226,7 +239,7 @@ export let do_lock = (study, callback) => e => {
     const lock= () => lock_study(study.id, !study.is_locked)
         .then(() => study.is_locked = !study.is_locked)
         .then(() => study.isReadonly = study.is_locked)
-        .then(callback)
+        .then(()=>notifications.show_success(`'${study.name}' ${study.is_locked ? 'locked' : 'unlocked'} successfully`))
 
         .catch(e => {
             error(e.message);
@@ -236,7 +249,7 @@ export let do_lock = (study, callback) => e => {
     ask();
 };
 
-export let do_publish = (study, callback) => e => {
+export let do_publish = (study, notifications) => e => {
     e.preventDefault();
     let error = m.prop('');
     let update_url =m.prop('update');
@@ -269,9 +282,8 @@ export let do_publish = (study, callback) => e => {
     let publish= () => publish_study(study.id, !study.is_published, update_url)
         .then(res=>study.versions.push(res))
         .then(study.is_published = !study.is_published)
+        .then(()=>notifications.show_success(`'${study.name}' ${study.is_published ? 'published' : 'unpublished'} successfully`))
         .then(study.is_locked = study.is_published || study.is_locked)
-        .then(study.isReadonly = study.is_locked)
-        .then(callback)
 
         .catch(e => {
             error(e.message);

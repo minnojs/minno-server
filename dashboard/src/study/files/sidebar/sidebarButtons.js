@@ -7,17 +7,18 @@ import {draw_menu} from '../../studyMenu';
 
 export default sidebarButtons;
 
-const sidebarButtons = ({study}) => {
+const sidebarButtons = ({study}, notifications) => {
     const readonly = study.isReadonly;
 
     return m('.sidebar-buttons.btn-toolbar', [
+
         m('.btn-group.btn-group-sm', [
             dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
-                draw_menu(study)
+                draw_menu(study, notifications)
             ]})
         ]),
         m('.btn-group.btn-group-sm', [
-            m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study), title: 'Create new files'}, [
+            m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [
                 m('i.fa.fa-plus')
             ]),
             m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [

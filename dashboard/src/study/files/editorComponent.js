@@ -28,6 +28,7 @@ let editors = {
     jpeg: imgEditor,
     bmp: imgEditor,
     png: imgEditor,
+    gif: imgEditor,
 
     pdf: pdfEditor
 };

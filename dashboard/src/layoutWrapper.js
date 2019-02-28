@@ -150,7 +150,15 @@ let layout = route => {
                                         ])
                             ),
                             !ctrl.new_msgs() ? '' : m('li.nav-item.pull-xs-right', [
-                                m('a.nav-link',{href:'/messages', config:m.route},m('i.fa.fa-envelope.fa-lg', {style:{color:'white'}}))
+                                m('a',{href:'/messages', config:m.route},
+                                m('span.fa-stack', [
+                                    // m('a.nav-link',{href:'/messages', config:m.route},m('i.fa.fa-envelope.fa-lg', {style:{color:'white'}}, m('span.badge.badge-light', '4')))
+
+                                m('i.fa.fa-envelope.fa-lg.fa-stack-3x', {style:{color:'white'}}),
+                                m('i.fa.fa-circle.fa-lg.fa-stack-1x', {style:{color:'red', 'margin-top': '-5px', 'margin-right': '-5px'}}),
+
+                                m('span.fa-stack-1x', {style:{color:'white', 'margin-top': '-5px', 'margin-right': '-5px'}}, ctrl.new_msgs() <10 ? ctrl.new_msgs() : '9+' )
+                                ])),
                             ]),
 
                             m('li.nav-item.pull-xs-right', [

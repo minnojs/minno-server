@@ -106,8 +106,8 @@ let createMessage = {
 
         ctrl.downloaded() ? '' : m('.loader'),
         m('.text-xs-right.btn-toolbar',[
-            m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Cancel'),
-            m('a.btn.btn-primary.btn-sm', {onclick:()=>{ask_get_data(ctrl); }}, 'OK')
+            m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close'),
+            m('a.btn.btn-primary.btn-sm', {onclick:()=>{ask_get_data(ctrl); }}, 'Download')
         ])
     ])
 };

@@ -111,8 +111,13 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                                     descriptive_id: descriptive_id
                                 });
                             });
+                        return ({id: id,
+                            file_id: file_id,
+                            descriptive_id: descriptive_id
+                        });
+
+
                     });
-                //
             });
         });
 }

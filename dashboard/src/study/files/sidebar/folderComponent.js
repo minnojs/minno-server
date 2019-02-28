@@ -7,11 +7,11 @@ let folder = args => {
 };
 
 let folderComponent = {
-    view(ctrl, {path, folderHash, study}){
+    view(ctrl, {path, folderHash, study, notifications}){
         let files = folderHash[path] || [];
 
         return m('.files', [
-            m('ul', files.map(file => node({key: file.id, file, folderHash, study})))
+            m('ul', files.map(file => node({key: file.id, file, folderHash, study, notifications})))
         ]);
     }
 };

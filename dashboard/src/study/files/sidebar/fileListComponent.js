@@ -4,7 +4,7 @@ import {uploadConfig} from 'utils/uploader';
 import {uploadFiles} from './fileActions';
 export default filesList;
 
-let filesList = ({study}) => {
+let filesList = ({study}, notifications) => {
     let folderHash = parseFiles(study.files());
     let config = uploadConfig({onchange:uploadFiles('/', study)});
     let chooseState = getCurrentState(study); 
@@ -30,7 +30,7 @@ let filesList = ({study}) => {
                     m('strong', 'UPLOADING...')
                 ])
             ])
-            : folderComponent({path:'/',folderHash, study})
+            : folderComponent({path:'/',folderHash, study, notifications})
     ]);
 };
 

@@ -1,6 +1,7 @@
 export default mainComponent;
 import {load_studies} from './studyModel';
 import {get_tags} from 'tags/tagsModel';
+import {createNotifications} from 'utils/notifyComponent';
 
 import dropdown from 'utils/dropdown';
 import {do_create} from './studyActions';
@@ -20,17 +21,19 @@ const mainComponent = {
             globalSearch: m.prop(''),
             permissionChoice: m.prop('all'),
             loaded:false,
+            notifications: createNotifications(),
             order_by_name: true,
             loadStudies,
             loadTags,
             type: m.prop(''),
             sort_studies_by_name,
-            sort_studies_by_date
+            sort_studies_by_date,
         };
 
         loadTags();
         loadStudies();
         function loadStudies() {
+
             ctrl.type(m.route() == '/studies' ? 'regular' : 'template');
             // console.log(ctrl.type());
             load_studies()
@@ -38,7 +41,7 @@ const mainComponent = {
                 .then(ctrl.studies)
                 .then(()=>ctrl.loaded = true)
                 .then(sort_studies_by_name)
-                .then(m.redraw);
+            .then(m.redraw);
         }
 
         function loadTags() {
@@ -68,11 +71,12 @@ const mainComponent = {
 
 
     },
-    view({loaded, studies, tags, permissionChoice, globalSearch, sort_studies_by_date, sort_studies_by_name, order_by_name, type}){
+    view({loaded, studies, tags, permissionChoice, globalSearch, sort_studies_by_date, sort_studies_by_name, order_by_name, type, notifications}){
         if (!loaded) return m('.loader');
 
-
         return m('.container.studies', [
+
+            m('div', notifications.view()),
             m('.row.p-t-1', [
                 m('.col-sm-4', [
                     m('h3', ['My ', type()=='regular' ? 'Studies' : 'Template Studies'])
@@ -178,7 +182,7 @@ const mainComponent = {
                                     m('.btn-toolbar.pull-right',
                                         m('.btn-group.btn-group-sm', 
                                             dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-toggle', toggleContent: 'Actions', elements: [
-                                                draw_menu(study)
+                                                draw_menu(study, notifications)
                                             ]})
                                         )
                                     )
@@ -187,6 +191,7 @@ const mainComponent = {
                         ]))
                 ])
             ])
+
         ]);
     }
 };

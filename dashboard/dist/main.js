@@ -12956,16 +12956,20 @@
         }
     }; };
 
-    var moveFile = function (file, study) { return function () {
+    var moveFile = function (file, study, notifications) { return function () {
         var newPath = m.prop(file.basePath);
         messages.confirm({
             header: 'Move File',
             content: moveFileComponent({newPath: newPath, file: file, study: study})
         })
-            .then(function (response) {
-                var targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
-                if (response && newPath() !== file.basePath) return moveAction(targetPath, file, study);
-            });
+        .then(function (response) {
+            var targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
+            console.log(notifications);
+
+            if (response && newPath() !== file.basePath)
+                return moveAction(targetPath, file, study)
+                .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully moved to '" + (newPath()) + "'")); });
+        });
     }; };
 
     var duplicateFile = function (file,study) { return function () {
@@ -12980,7 +12984,7 @@
             });
     }; };
 
-    var copyFile = function (file, study) { return function () {
+    var copyFile = function (file, study, notifications) { return function () {
         var filePath = m.prop(file.basePath);
         var study_id = m.prop(study.id);
         var new_study_id = m.prop('');
@@ -12991,22 +12995,26 @@
             .then(function (response) {
                 if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
             })
-        ;
+            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_id()) + "'")); });
     }; };
 
-    var renameFile = function (file,study) { return function () {
+    var renameFile = function (file, study, notifications) { return function () {
         var newPath = m.prop(file.path);
         return messages.prompt({
             header: 'Rename File',
             postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
             prop: newPath
         })
-            .then(function (response) {
-                if (response && newPath() !== file.name) return moveAction(newPath(), file,study);
-            });
+        .then(function (response) {
+            if (response && newPath() !== file.name) return moveAction(newPath(), file, study);
+        })
+        .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully renamed to '" + (newPath()) + "'")); })
+        .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (newPath()))): ''; });
     }; };
 
-    var make_experiment = function (file, study) { return function () {
+    var make_experiment = function (file, study, notifications) { return function () {
+        console.log(notifications);
+
         var descriptive_id = m.prop(file.path);
         var error = m.prop('');
         return messages.confirm({
@@ -13014,10 +13022,12 @@
             content: m('div', [
                 m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
-            ])}).then(function (response) { return response && study.make_experiment(file, descriptive_id()).then(function (){ return m.redraw(); }); });
+            ])}).then(function (response) { return response && study.make_experiment(file, descriptive_id())
+            .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
+            .then(function (){ return m.redraw(); }); });
     }; };
 
-    var update_experiment = function (file, study) { return function () {
+    var update_experiment = function (file, study, notifications) { return function () {
         var descriptive_id = m.prop(file.exp_data.descriptive_id);
         var error = m.prop('');
         return messages.confirm({
@@ -13026,16 +13036,20 @@
                 m('input.form-control',  {placeholder: 'Enter new descriptive id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])}).then(function (response) { return response && study.update_experiment(file, descriptive_id()); })
+            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
+
             .then(function (){file.exp_data.descriptive_id=descriptive_id; m.redraw();});
     }; };
 
-    var delete_experiment = function (file, study) { return function () {
+    var delete_experiment = function (file, study, notifications) { return function () {
         messages.confirm({
             header: 'Remove Experiment',
             content: 'Are you sure you want to remove this experiment? This is a permanent change.'
         })
             .then(function (response) {
                 if (response) study.delete_experiment(file);})
+            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully deleted")); })
+
             .then(function (){delete file.exp_data; m.redraw();});
 
     }; };
@@ -14635,6 +14649,7 @@
         jpeg: imgEditor,
         bmp: imgEditor,
         png: imgEditor,
+        gif: imgEditor,
 
         pdf: pdfEditor
     };
@@ -14886,7 +14901,9 @@
         }
     };
 
-    var fileContext = function (file, study) {
+    var fileContext = function (file, study, notifications) {
+        // console.log(notifications);
+
         var path = !file ? '/' : file.isDir ? file.path : file.basePath;
         var isReadonly = study.isReadonly;
         var menu = [];
@@ -14913,27 +14930,23 @@
             var isExpt = file.exp_data && !file.exp_data.inactive;
 
             if (!isReadonly) menu.push({separator:true});
-
             menu = menu.concat([
                 {icon:'fa-refresh', text: 'Refresh/Reset', action: resetFile(file), disabled: isReadonly || file.content() == file.sourceContent()},
                 {icon:'fa-download', text:'Download', action: downloadFile$2(study, file)},
                 {icon:'fa-link', text: 'Copy URL', action: copyUrl(file.url)},
 
-                !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: make_experiment(file,study), disabled: isReadonly }
+                !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: make_experiment(file,study, notifications), disabled: isReadonly }
                     :  {icon:'fa-desktop', text:'Experiment options', menu: [
-                        {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study), disabled: isReadonly },
-                        {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study), disabled: isReadonly },
+                        {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications), disabled: isReadonly },
+                        {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study, notifications), disabled: isReadonly },
                         { icon:'fa-play', href:(launchUrl + "/" + (file.exp_data.id) + "/" + version_id), text:'Play this task'},
                         {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl((launchUrl + "/" + (file.exp_data.id) + "/" + version_id), true)}
                     ]},
-
-                //     isExpt ?  { icon:'fa-play', href:`https://app-prod-03.implicit.harvard.edu/implicit/Launch?study=${file.url.replace(/^.*?\/implicit/, '')}`, text:'Play this task'} : '',
-                // isExpt ? {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl(`https://app-prod-03.implicit.harvard.edu/implicit/Launch?study=${file.url.replace(/^.*?\/implicit/, '')}`)} : '',
                 {icon:'fa-close', text:'Delete', action: deleteFile, disabled: isReadonly },
-                {icon:'fa-arrows-v', text:'Move', action: moveFile(file,study), disabled: isReadonly },
+                {icon:'fa-arrows-v', text:'Move', action: moveFile(file, study, notifications), disabled: isReadonly },
                 {icon:'fa-clone', text:'Duplicate', action: duplicateFile(file, study), disabled: isReadonly },
-                {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file,study), disabled: isReadonly },
-                {icon:'fa-exchange', text:'Rename...', action: renameFile(file,study), disabled: isReadonly }
+                {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file, study, notifications), disabled: isReadonly },
+                {icon:'fa-exchange', text:'Rename...', action: renameFile(file, study, notifications), disabled: isReadonly }
             ]);
         }
 
@@ -15131,6 +15144,7 @@
             var file = ref.file;
             var folderHash = ref.folderHash;
             var study = ref.study;
+            var notifications = ref.notifications;
 
             var vm = study.vm(file.id); // vm is created by the studyModel
             var hasChildren = !!(file.isDir && file.files && file.files.length);
@@ -15141,7 +15155,7 @@
                         open : vm.isOpen()
                     }),
                     onclick: file.isDir ? toggleOpen(vm) : select(file),
-                    oncontextmenu: fileContext(file, study),
+                    oncontextmenu: fileContext(file, study, notifications),
                     config: file.isDir ? uploadConfig({onchange:uploadFiles(file.path, study)}) : null
                 },
                 [
@@ -15184,7 +15198,7 @@
                         m('span',{class:classNames({'font-weight-bold':file.hasChanged()})},(" " + (file.name))),
 
                         // children
-                        hasChildren && vm.isOpen() ? folder({path: file.path + '/', folderHash: folderHash, study: study}) : ''
+                        hasChildren && vm.isOpen() ? folder({path: file.path + '/', folderHash: folderHash, study: study, notifications: notifications}) : ''
                     ])
                 ]
             );
@@ -15257,16 +15271,17 @@
             var path = ref.path;
             var folderHash = ref.folderHash;
             var study = ref.study;
+            var notifications = ref.notifications;
 
             var files = folderHash[path] || [];
 
             return m('.files', [
-                m('ul', files.map(function (file) { return node({key: file.id, file: file, folderHash: folderHash, study: study}); }))
+                m('ul', files.map(function (file) { return node({key: file.id, file: file, folderHash: folderHash, study: study, notifications: notifications}); }))
             ]);
         }
     };
 
-    var filesList = function (ref) {
+    var filesList = function (ref, notifications) {
         var study = ref.study;
 
         var folderHash = parseFiles(study.files());
@@ -15294,7 +15309,7 @@
                         m('strong', 'UPLOADING...')
                     ])
                 ])
-                : folder({path:'/',folderHash: folderHash, study: study})
+                : folder({path:'/',folderHash: folderHash, study: study, notifications: notifications})
         ]);
     };
 
@@ -15651,8 +15666,8 @@
 
             ctrl.downloaded() ? '' : m('.loader'),
             m('.text-xs-right.btn-toolbar',[
-                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Cancel'),
-                m('a.btn.btn-primary.btn-sm', {onclick:function (){ask_get_data(ctrl); }}, 'OK')
+                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
+                m('a.btn.btn-primary.btn-sm', {onclick:function (){ask_get_data(ctrl); }}, 'Download')
             ])
         ]);
     }
@@ -15870,7 +15885,7 @@
     }; };
 
 
-    var do_make_public = function (study) { return function (e) {
+    var do_make_public = function (study, notifications) { return function (e) {
         e.preventDefault();
         var error = m.prop('');
         return messages.confirm({okText: ['Yes, make ', !study.is_public ? 'public' : 'private'], cancelText: ['No, keep ', !study.is_public ? 'private' : 'public' ], header:'Are you sure?', content:m('p', [m('p', !study.is_public
@@ -15882,6 +15897,8 @@
             .then(function (response) {
                 if (response) make_pulic(study.id, !study.is_public)
                     .then(study.is_public = !study.is_public)
+                    .then(function (){ return notifications.show_success(("'" + (study.name) + "' is now " + (study.is_public ? 'public' : 'private'))); })
+
                     .then(m.redraw);
             });
 
@@ -15930,7 +15947,7 @@
         ask();
     }; };
 
-    var do_rename = function (study) { return function (e) {
+    var do_rename = function (study, notifications) { return function (e) {
         e.preventDefault();
         var study_name = m.prop(study.name);
         var error = m.prop('');
@@ -15948,7 +15965,17 @@
         }).then(function (response) { return response && rename(); }); };
 
         var rename = function () { return rename_study(study.id, study_name)
+            .then(function (){ return notifications.show_success(("'" + (study.name) + "' renamed successfully to '" + (study_name()) + "'")); })
+
             .then(function (){ return study.name=study_name(); })
+            .then(function (){
+                var study2 = studyFactory(study.id);
+                study2.get().then(function (){ return study.base_url = study2.base_url; }).then(function (){
+                    if (typeof study.files === "function")
+                        study.files(study2.files());
+                });
+            })
+
             .then(m.redraw)
             .catch(function (e) {
                 error(e.message);
@@ -15982,7 +16009,7 @@
         ask();
     }; };
 
-    var do_lock = function (study, callback) { return function (e) {
+    var do_lock = function (study, notifications) { return function (e) {
         e.preventDefault();
         var error = m.prop('');
 
@@ -16006,7 +16033,7 @@
         var lock= function () { return lock_study(study.id, !study.is_locked)
             .then(function () { return study.is_locked = !study.is_locked; })
             .then(function () { return study.isReadonly = study.is_locked; })
-            .then(callback)
+            .then(function (){ return notifications.show_success(("'" + (study.name) + "' " + (study.is_locked ? 'locked' : 'unlocked') + " successfully")); })
 
             .catch(function (e) {
                 error(e.message);
@@ -16016,7 +16043,7 @@
         ask();
     }; };
 
-    var do_publish = function (study, callback) { return function (e) {
+    var do_publish = function (study, notifications) { return function (e) {
         e.preventDefault();
         var error = m.prop('');
         var update_url =m.prop('update');
@@ -16049,9 +16076,8 @@
         var publish= function () { return publish_study(study.id, !study.is_published, update_url)
             .then(function (res){ return study.versions.push(res); })
             .then(study.is_published = !study.is_published)
+            .then(function (){ return notifications.show_success(("'" + (study.name) + "' " + (study.is_published ? 'published' : 'unpublished') + " successfully")); })
             .then(study.is_locked = study.is_published || study.is_locked)
-            .then(study.isReadonly = study.is_locked)
-            .then(callback)
 
             .catch(function (e) {
                 error(e.message);
@@ -16200,7 +16226,7 @@
     };
 
 
-    var draw_menu = function (study) { return Object.keys(settings)
+    var draw_menu = function (study, notifications) { return Object.keys(settings)
         .map(function (comp) {
             var config = settings_hash[comp].config;
             return !should_display(config, study) 
@@ -16210,7 +16236,7 @@
                         m('i.fa.fa-fw.'+config.class),
                         settings_hash[comp].text
                     ])
-                    : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study)}, [
+                    : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study, notifications)}, [
                         m('i.fa.fa-fw.'+config.class),
                         settings_hash[comp].text
                     ]);
@@ -16221,19 +16247,20 @@
         return !config.display || config.display.every(function (fn) { return fn(study); });
     }
 
-    var sidebarButtons = function (ref) {
+    var sidebarButtons = function (ref, notifications) {
         var study = ref.study;
 
         var readonly = study.isReadonly;
 
         return m('.sidebar-buttons.btn-toolbar', [
+
             m('.btn-group.btn-group-sm', [
                 dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
-                    draw_menu(study)
+                    draw_menu(study, notifications)
                 ]})
             ]),
             m('.btn-group.btn-group-sm', [
-                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study), title: 'Create new files'}, [
+                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [
                     m('i.fa.fa-plus')
                 ]),
                 m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
@@ -16250,13 +16277,46 @@
         ]);
     };
 
+    var createNotifications = function(){
+        var state = [];
+        return {show_success: show_success, show_danger: show_danger, view: view};
+
+        function show(value, time){
+            if ( time === void 0 ) time = 6000;
+
+            state.push(value);
+            m.redraw();
+            setTimeout(function (){state.pop(value);  m.redraw();}, time);
+        }
+
+        function show_success(value){
+            return show({value: value, type:'success'});
+        }
+
+        function show_danger(value){
+            return show({value: value, type:'danger'});
+        }
+
+
+        function view(){
+            return state.map(function (notes) { return m('.note.alert.animated.fade', {class: notes.type==='danger' ? 'alert-danger' : 'alert-success'},[
+                notes.value
+            ]); });
+
+        }
+    };
+
+    var notifications= createNotifications();
+
     var sidebarComponent = {
         view: function (ctrl , ref) {
             var study = ref.study;
 
             return m('.sidebar', {config: config}, [
-                sidebarButtons({study: study}),
-                filesList({study: study})
+                m('div', notifications.view()),
+
+                sidebarButtons({study: study}, notifications),
+                filesList({study: study}, notifications)
             ]);
         }
     };
@@ -16641,17 +16701,19 @@
                 globalSearch: m.prop(''),
                 permissionChoice: m.prop('all'),
                 loaded:false,
+                notifications: createNotifications(),
                 order_by_name: true,
                 loadStudies: loadStudies,
                 loadTags: loadTags,
                 type: m.prop(''),
                 sort_studies_by_name: sort_studies_by_name,
-                sort_studies_by_date: sort_studies_by_date
+                sort_studies_by_date: sort_studies_by_date,
             };
 
             loadTags();
             loadStudies();
             function loadStudies() {
+
                 ctrl.type(m.route() == '/studies' ? 'regular' : 'template');
                 // console.log(ctrl.type());
                 load_studies()
@@ -16659,7 +16721,7 @@
                     .then(ctrl.studies)
                     .then(function (){ return ctrl.loaded = true; })
                     .then(sort_studies_by_name)
-                    .then(m.redraw);
+                .then(m.redraw);
             }
 
             function loadTags() {
@@ -16699,11 +16761,13 @@
             var sort_studies_by_name = ref.sort_studies_by_name;
             var order_by_name = ref.order_by_name;
             var type = ref.type;
+            var notifications = ref.notifications;
 
             if (!loaded) return m('.loader');
 
-
             return m('.container.studies', [
+
+                m('div', notifications.view()),
                 m('.row.p-t-1', [
                     m('.col-sm-4', [
                         m('h3', ['My ', type()=='regular' ? 'Studies' : 'Template Studies'])
@@ -16809,7 +16873,7 @@
                                         m('.btn-toolbar.pull-right',
                                             m('.btn-group.btn-group-sm', 
                                                 dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-toggle', toggleContent: 'Actions', elements: [
-                                                    draw_menu(study)
+                                                    draw_menu(study, notifications)
                                                 ]})
                                             )
                                         )
@@ -16818,6 +16882,7 @@
                             ]); })
                     ])
                 ])
+
             ]);
         }
     };
@@ -19611,7 +19676,15 @@
                                             ]); }
                                 ),
                                 !ctrl.new_msgs() ? '' : m('li.nav-item.pull-xs-right', [
-                                    m('a.nav-link',{href:'/messages', config:m.route},m('i.fa.fa-envelope.fa-lg', {style:{color:'white'}}))
+                                    m('a',{href:'/messages', config:m.route},
+                                    m('span.fa-stack', [
+                                        // m('a.nav-link',{href:'/messages', config:m.route},m('i.fa.fa-envelope.fa-lg', {style:{color:'white'}}, m('span.badge.badge-light', '4')))
+
+                                    m('i.fa.fa-envelope.fa-lg.fa-stack-3x', {style:{color:'white'}}),
+                                    m('i.fa.fa-circle.fa-lg.fa-stack-1x', {style:{color:'red', 'margin-top': '-5px', 'margin-right': '-5px'}}),
+
+                                    m('span.fa-stack-1x', {style:{color:'white', 'margin-top': '-5px', 'margin-right': '-5px'}}, ctrl.new_msgs() <10 ? ctrl.new_msgs() : '9+' )
+                                    ])),
                                 ]),
 
                                 m('li.nav-item.pull-xs-right', [

@@ -9,7 +9,7 @@ export default node;
 let node = (args) => m.component(nodeComponent, args);
 
 let nodeComponent = {
-    view: (ctrl, {file,folderHash, study}) => {
+    view: (ctrl, {file,folderHash, study, notifications}) => {
         const vm = study.vm(file.id); // vm is created by the studyModel
         const hasChildren = !!(file.isDir && file.files && file.files.length);
         return m('li.file-node',
@@ -19,7 +19,7 @@ let nodeComponent = {
                     open : vm.isOpen()
                 }),
                 onclick: file.isDir ? toggleOpen(vm) : select(file),
-                oncontextmenu: fileContext(file, study),
+                oncontextmenu: fileContext(file, study, notifications),
                 config: file.isDir ? uploadConfig({onchange:uploadFiles(file.path, study)}) : null
             },
             [
@@ -62,7 +62,7 @@ let nodeComponent = {
                     m('span',{class:classNames({'font-weight-bold':file.hasChanged()})},` ${file.name}`),
 
                     // children
-                    hasChildren && vm.isOpen() ? folder({path: file.path + '/', folderHash, study}) : ''
+                    hasChildren && vm.isOpen() ? folder({path: file.path + '/', folderHash, study, notifications}) : ''
                 ])
             ]
         );

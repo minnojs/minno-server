@@ -1,13 +1,17 @@
 import fileListComponent from './fileListComponent';
 import sidebarButtons from './sidebarButtons';
+import {createNotifications} from 'utils/notifyComponent';
 
 export default sidebarComponent;
+const notifications= createNotifications();
 
 const sidebarComponent = {
     view: (ctrl , {study}) => {
         return m('.sidebar', {config}, [
-            sidebarButtons({study}),
-            fileListComponent({study})
+            m('div', notifications.view()),
+
+            sidebarButtons({study}, notifications),
+            fileListComponent({study}, notifications)
         ]);
     }
 };

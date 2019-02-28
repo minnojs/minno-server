@@ -137,7 +137,7 @@ const settings_hash = {
 };
 
 
-export const draw_menu = study => Object.keys(settings)
+export const draw_menu = (study, notifications) => Object.keys(settings)
     .map(comp => {
         const config = settings_hash[comp].config;
         return !should_display(config, study) 
@@ -147,7 +147,7 @@ export const draw_menu = study => Object.keys(settings)
                     m('i.fa.fa-fw.'+config.class),
                     settings_hash[comp].text
                 ])
-                : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study)}, [
+                : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study, notifications)}, [
                     m('i.fa.fa-fw.'+config.class),
                     settings_hash[comp].text
                 ]);
