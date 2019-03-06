@@ -33,46 +33,46 @@ function displayExperiment(params, res){
     return function(exp_data){
         const render = promisify(res.render,res);
         const dataUrl = urljoin(config.relative_path, 'data');
+        const {versionData = {}} = exp_data;
 
         res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
         res.header('Expires', '-1');
         res.header('Pragma', 'no-cache');
 
-        let vars = {
-            descriptiveId: exp_data.descriptive_id, 
+        const postAlways = {
             sessionId:exp_data.session_id, 
-            studyId:exp_data.exp_id
+            studyId:exp_data.exp_id,
+            versionId:versionData.id
         };
-        vars = Object.assign(params, vars);
 
-
-        if (exp_data.version_data) Object.assign(vars, {
-            versionId:exp_data.version_data.id,
-            version:exp_data.version_data.version,
-            state:exp_data.version_data.state
+        const postOnce = Object.assign(params, {
+            descriptiveId: exp_data.descriptive_id, 
+            version:versionData.version,
+            state:versionData.state
         });
 
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
-            .then(transformHtml(exp_data,vars))
+            .then(transformHtml(exp_data,postOnce,postAlways))
             .then(res.send.bind(res));
-            
+
         return render(exp_data.type || 'minno02', {
-            isDev: vars.state === 'Develop',
+            isDev: postOnce.state === 'Develop',
             minnojsUrl: config.minnojsUrl,
             errorception: config.errorception,
             url: exp_data.url, 
             base_url: exp_data.base_url, 
             dataUrl,
-            vars
+            postOnce,
+            postAlways
         })
-            .then(res.send.bind(res))
-            .catch(err => Promise.reject({status:500,message:err.message}));
+        .then(res.send.bind(res))
+        .catch(err => Promise.reject({status:500,message:err.message}));
     };
 }
 
-function transformHtml(exp_data,vars){
+function transformHtml(exp_data, postOnce, postAlways){
     const dataUrl = urljoin(config.relative_path, 'data');
-    const minno = {dataUrl,vars};
+    const minno = {dataUrl, $postOnce:postOnce, $meta:postAlways};
 
     return html => html
         .replace('<!-- os:base -->', `<base href="${exp_data.base_url}">`)
@@ -82,6 +82,8 @@ function transformHtml(exp_data,vars){
         return `<script> 
         (function(){
             var minno = window.minno = ${JSON.stringify(minno,null,2)};
+            log(minno.$postOnce);
+
             minno.log = log;
                 
             function log(data, cb){

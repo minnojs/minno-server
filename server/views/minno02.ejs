@@ -41,7 +41,8 @@
 <script>
     window.piGlobal = {
         $dataUrl: '<%- dataUrl %>',
-        $meta:<%- JSON.stringify(vars) %>
+        $meta:<%- JSON.stringify(postAlways) %>,
+        $postOnce:<%- JSON.stringify(postOnce) %>
     };
         
     <%if (isDev) { %>
