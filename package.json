@@ -7,7 +7,7 @@
   "scripts": {
     "start": "nodemon server/index --watch server",
     "setup": "node server/setup",
-    "test": "eslint dashboard/src server",
+    "test": "eslint .",
     "js": "rollup --config --sourcemap",
     "css": "node-sass dashboard/src/style/style.scss --output dashboard/dist --source-map=true",
     "bundle": "npm-run-all --parallel js css",
@@ -60,14 +60,14 @@
     "zip-folder": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^5.9.0",
-    "mithril": "^0.2.8",
-    "pikaday": "^1.4.0",
-    "promise-polyfill": "^8.1.0",
-    "whatwg-fetch": "^3.0.0",
     "buble": "^0.12.3",
+    "eslint": "^5.15.1",
+    "eslint-plugin-import": "^2.16.0",
+    "mithril": "^0.2.8",
     "node-sass": "^3.13.1",
     "npm-run-all": "^2.3.0",
+    "pikaday": "^1.4.0",
+    "promise-polyfill": "^8.1.0",
     "rollup": "^0.67.1",
     "rollup-plugin-buble": "^0.12.1",
     "rollup-plugin-commonjs": "^9.2.0",
@@ -75,6 +75,7 @@
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-plugin-uglify": "^6.0.0",
     "rollup-watch": "^2.4.0",
-    "url-join": "^4.0.0"
+    "url-join": "^4.0.0",
+    "whatwg-fetch": "^3.0.0"
   }
 }

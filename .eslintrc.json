@@ -10,33 +10,35 @@
         "no-console": [1],
         "no-var": [1]
     },
-    "overrides": [
-        {
-            "files" : ["./dashboard/src/**/*.js"],
-            "rules" : {
-                "globals": {
-                    "m" : true,
-                    "require" : true,
-                    "fetch" : true
-                }
-            }
-        },
-        {
-            "files" : ["server/bank/**/*.js"],
-            "rules" : {
-                "globals": {
-                    "define" : true
-                },
-                "env": {
-                    "es6": false,
-                    "node": true
-                }
-            }
-        }
-    ],
     "env": {
         "es6": true,
         "node": true
     },
-    "extends": "eslint:recommended"
+    "extends": "eslint:recommended",
+    "overrides" : [
+        {
+            "files": "dashboard/src/**",
+            "env" : {
+                "browser": true,
+                "node": false
+            },
+            "globals": {
+                "m" : true,
+                "require" : true,
+                "fetch" : true
+            }
+        },
+        {
+            "files":"server/bank/**",
+            "rules": {
+                "no-mixed-spaces-and-tabs": "off"
+            },
+            "env": {
+                "browser":true,
+                "es6":false,
+                "node":false,
+                "amd":true
+            }
+        }
+    ]
 }

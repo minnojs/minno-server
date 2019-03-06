@@ -1,7 +1,6 @@
 define(['questAPI'], function(Quest){
 
     let API = new Quest();
-    let demo= 'true';
 
     let onFB = {
         type:'grid',
@@ -19,32 +18,31 @@ define(['questAPI'], function(Quest){
     {
         API.addQuestionsSet('iatEval',{
             type: 'selectOne',
-            numericValues:true, 
+            numericValues:true,
             style:'multiButtons',
             answers: ['Not at all', 'Slightly', 'Moderately', 'Very', 'Extremely']
         });
 	
-        onFB = 
-		{
-		    mixer : 'wrapper',
-		    data : [
-		        {
-		            inherit : 'iatEval', 				
-		            name: 'iatevaluations1',
-		            description: '<p>2. What do you think of the IAT?<br/><br/>To what extent did you enjoy trying the IAT?</p>'
-		        },
-		        {
-		            inherit : 'iatEval', 				
-		            name: 'iatevaluations2',
-		            description: '<p>To what extent did the IAT score you received change your view of yourself?</p>'
-		        },
-		        {
-		            inherit : 'iatEval', 				
-		            name: 'iatevaluations3',
-		            description: '<p>To what extent are you skeptical of the IAT score that you received?</p>'
-		        }
-		    ]
-		};
+        onFB = {
+            mixer : 'wrapper',
+            data : [
+                {
+                    inherit : 'iatEval', 				
+                    name: 'iatevaluations1',
+                    description: '<p>2. What do you think of the IAT?<br/><br/>To what extent did you enjoy trying the IAT?</p>'
+                },
+                {
+                    inherit : 'iatEval', 				
+                    name: 'iatevaluations2',
+                    description: '<p>To what extent did the IAT score you received change your view of yourself?</p>'
+                },
+                {
+                    inherit : 'iatEval', 				
+                    name: 'iatevaluations3',
+                    description: '<p>To what extent are you skeptical of the IAT score that you received?</p>'
+                }
+            ]
+        };
     }
 	
 
@@ -59,16 +57,16 @@ define(['questAPI'], function(Quest){
                     description: '' +
 						'<p>The sorting test you just took is called the Implicit Association Test (IAT). You categorized good and bad words with images of Fat People and Thin People.</p>' +
 						'<div class="jumbotron jumbotron-dark">' +
-						  '<h2>Here is your result:</h2>' +
-						  '<p><%= global.weightiat.feedback %></p>' +
+                            '<h2>Here is your result:</h2>' +
+                            '<p><%= global.weightiat.feedback %></p>' +
 						'</div>' +
 
-					    '<p>Your result is described as an "Automatic preference for Fat People over Thin People" if you were faster responding when <i>Fat People</i> and <i>Good</i> are assigned to the same response key than when <i>Thin People</i> and <i>Good</i> were classified with the same key. Your score is described as an "Automatic preference for Thin People over Fat People" if the opposite occurred.</p>' +
-					    '<p>Your automatic preference may be described as "slight", "moderate", "strong", or "no preference". This indicates the <i>strength</i> of your automatic preference.</p>' +
-						'<p>The IAT requires a certain number of correct responses in order to get results. If you made too many errors while completing the test you will get the feedback that there were too many errors to determine a result.</p>' + 
-					    '<p><b>Note that your IAT result is based only on the categorization task and not on the questions that you answered.</b></p>'+
+                            '<p>Your result is described as an "Automatic preference for Fat People over Thin People" if you were faster responding when <i>Fat People</i> and <i>Good</i> are assigned to the same response key than when <i>Thin People</i> and <i>Good</i> were classified with the same key. Your score is described as an "Automatic preference for Thin People over Fat People" if the opposite occurred.</p>' +
+                            '<p>Your automatic preference may be described as "slight", "moderate", "strong", or "no preference". This indicates the <i>strength</i> of your automatic preference.</p>' +
+                            '<p>The IAT requires a certain number of correct responses in order to get results. If you made too many errors while completing the test you will get the feedback that there were too many errors to determine a result.</p>' + 
+                            '<p><b>Note that your IAT result is based only on the categorization task and not on the questions that you answered.</b></p>'+
 						'<hr>' +
-					    '<h4>Please answer the following questions about your results:</h4>'
+                        '<h4>Please answer the following questions about your results:</h4>'
                 },
                 {
                     type:'dropdown',
@@ -95,6 +93,3 @@ define(['questAPI'], function(Quest){
 
     return API.script;
 });
-
-
-

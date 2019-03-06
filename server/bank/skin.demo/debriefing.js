@@ -1,7 +1,6 @@
 define(['questAPI'], function(Quest){
 
     let API = new Quest();
-    let demo= 'true';
 
     let onFB = {
         type:'grid',
