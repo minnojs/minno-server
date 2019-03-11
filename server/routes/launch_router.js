@@ -45,7 +45,7 @@ function displayExperiment(params, res){
             versionId:versionData.id
         };
 
-        const postOnce = Object.assign(params, {
+        const postOnce = Object.assign({}, params, {
             descriptiveId: exp_data.descriptive_id, 
             version:versionData.version,
             state:versionData.state
