@@ -49,7 +49,7 @@ function displayExperiment(params, res){
             descriptiveId: exp_data.descriptive_id, 
             version:versionData.version,
             state:versionData.state
-        });
+        }, postAlways); // post the post always stuff too - so that we can connect them...
 
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
             .then(transformHtml(exp_data,postOnce,postAlways))
