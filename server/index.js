@@ -39,11 +39,11 @@ const day = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
 
 SimpleNodeLogger = require('simple-node-logger'),
-    opts = {
-        logFilePath:`${config.logs_folder}/${day}.log`,
-        timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
-    },
-    log = SimpleNodeLogger.createSimpleLogger( opts );
+opts = {
+    logFilePath:`${config.logs_folder}/${day}.log`,
+    timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
+},
+log = SimpleNodeLogger.createSimpleLogger( opts );
 
 app.use(cors({
     credentials: true, origin: true,
@@ -139,6 +139,5 @@ app.on('ready', function() {
 }); 
 
 process.on('unhandledRejection', (reason, p) => {
-  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
-  // application specific logging, throwing an error, or other logic here
+    console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });

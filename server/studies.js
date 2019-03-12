@@ -158,6 +158,22 @@ function remove_collaboration(user_id, study_id, collaboration_user_id){
     });
 }
 
+function update_collaboration(user_id, study_id, body){
+    return connection.then(function (db) {
+        const studies   = db.collection('studies');
+        const users   = db.collection('users');
+        return has_read_permission(user_id, study_id)
+            .then(()=>
+                Promise.all([
+                    studies.update({_id: study_id, users: { $elemMatch: {user_id:body.collaborator_id}}},
+                        {$set: body.permissions.permission ? {'users.$.permission': body.permissions.permission} : {'users.$.data_permission': body.permissions.data_permission}}),
+                    users.update({_id: body.collaborator_id, studies: { $elemMatch: {id: study_id}}},
+                        {$set: body.permissions.permission ? {'studies.$.permission': body.permissions.permission} : {'studies.$.data_permission': body.permissions.data_permission}})
+
+                ]));
+    });
+}
+
 
 function add_collaboration(user_id, study_id, collaborator_name, permission, data_permission){
     return connection.then(function (db) {
@@ -178,13 +194,15 @@ function add_collaboration(user_id, study_id, collaborator_name, permission, dat
                                         {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission, data_permission, status:'pending'}}}),
                                     users.update({_id: collaborator_data._id},
                                         {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
-                                    sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration', {accept: config.server_url+'/dashboard/?/collaboration/'+accept,
-                                                                                                                                             reject: config.server_url+'/dashboard/?/collaboration/'+reject,
-                                                                                                                                             collaborator_name,
-                                                                                                                                             permission,
-                                                                                                                                             data_permission,
-                                                                                                                                             owner_name,
-                                                                                                                                             study_name})
+                                    sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration',
+                                        {accept: config.server_url+'/dashboard/?/collaboration/'+accept,
+                                            reject: config.server_url+'/dashboard/?/collaboration/'+reject,
+                                            collaborator_name,
+                                            permission,
+                                            data_permission,
+                                            owner_name,
+                                            study_name
+                                        })
                                 ]));
                     }));
     });
@@ -402,24 +420,23 @@ function update_obj(study_id, study_obj) {
     });
 }
 
-function delete_by_id(user_id, study_id) {
-    return connection.then(function (db) {
-        const users   = db.collection('users');
-        const studies   = db.collection('studies');
-        return users
-            .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
-            .then(function(){return studies.findAndModify({_id:study_id},
-                [],
-                {remove: true});})
-            .then(function(study_data){
-                return Promise.resolve(study_data);
-            });
-    });
-}
+// function delete_by_id(user_id, study_id) {
+//     return connection.then(function (db) {
+//         const users   = db.collection('users');
+//         const studies   = db.collection('studies');
+//         return users
+//             .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
+//             .then(function(){return studies.findAndModify({_id:study_id},
+//                 [],
+//                 {remove: true});})
+//             .then(function(study_data){
+//                 return Promise.resolve(study_data);
+//             });
+//     });
+// }
 
 function delete_by_id2(user_id, study_id) {
     return connection.then(function (db) {
-        const users   = db.collection('users');
         const studies   = db.collection('studies');
         // return users
         //     .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
@@ -503,4 +520,4 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission};
+module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission};

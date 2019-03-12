@@ -56,6 +56,7 @@ function get_study_files(user_id, study_id) {
     .then(function({study_data, can_write}){
         return walk(study_data.folder_name, study_data.experiments)
         .then(files => {
+            const study_user = study_data.users.find(user=>user.user_id===user_id);
             return {
                 study_name:study_data.name,
                 is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
@@ -63,8 +64,11 @@ function get_study_files(user_id, study_id) {
                 type: study_data.type,
                 is_public: study_data.is_public,
                 is_readonly: !can_write,
+
                 versions: study_data.versions,
-                permission: study_data.users.find(user=>user.user_id===user_id) ? study_data.users.find(user=>user.user_id===user_id).permission :'read only',
+                permission: study_user ? study_user.permission :'read only',
+                has_data_permission: study_user.permission === 'owner' || study_user.data_permission === 'visible',
+
                 files: files.files,
                 base_url: urljoin(url.resolve(config.server_url, config.relative_path), 'users', study_data.folder_name)
             };

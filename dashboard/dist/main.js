@@ -12441,6 +12441,7 @@
                     this$1.is_locked = study.is_locked;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
+                    this$1.has_data_permission = study.has_data_permission;
                     this$1.name = study.study_name;
                     this$1.type = study.type || 'minno02';
                     this$1.base_url = study.base_url;
@@ -15791,6 +15792,12 @@
     }); };
 
 
+    var update_permission = function (study_id, collaborator_id, permissions) { return fetchJson(collaboration_url(study_id), {
+        method: 'put',
+        body: {collaborator_id: collaborator_id, permissions: permissions}
+    }); };
+
+
     var add_link = function (study_id) { return fetchJson(link_url(study_id), {
         method: 'post'
     }); };
@@ -16090,6 +16097,7 @@
     var do_copy_url = function (study) { return copyUrl(study.base_url); };
 
     var can_edit = function (study) { return !study.isReadonly && study.permission !== 'read only'; };
+    var can_see_data = function (study) { return study.has_data_permission; };
 
     var is_locked = function (study) { return study.is_locked; };
     var is_published = function (study) { return study.is_published; };
@@ -16127,7 +16135,7 @@
             }},
         data: {text: 'Data',
             config: {
-                display: [can_edit],
+                display: [can_see_data],
                 onmousedown: do_data,
                 class: 'fa-download'
             }},
@@ -16228,6 +16236,7 @@
 
     var draw_menu = function (study, notifications) { return Object.keys(settings)
         .map(function (comp) {
+            console.log(study);
             var config = settings_hash[comp].config;
             return !should_display(config, study) 
                 ? '' 
@@ -18856,6 +18865,7 @@
                 pub_error:m.prop(''),
                 share_error:m.prop(''),
                 remove: remove,
+                do_update_permission: do_update_permission,
                 do_add_collaboration: do_add_collaboration,
                 do_add_link: do_add_link,
                 do_revoke_link: do_revoke_link,
@@ -18891,19 +18901,22 @@
                     });
             }
 
+            function do_update_permission(collaborator_id, ref){
+                var permission = ref.permission;
+                var data_permission = ref.data_permission;
+
+                update_permission(m.route.param('studyId'), collaborator_id, {permission: permission, data_permission: data_permission})
+                    .then(function (){ return load(); })
+                    .then(m.redraw);
+            }
 
 
             function check_permission(ctrl){
                 return ctrl.data_permission(ctrl.permission() === 'invisible' ? 'visible' : ctrl.data_permission());
-
-
-
             }
 
             function do_add_collaboration()
             {
-
-
                     messages.confirm({
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
@@ -19011,14 +19024,32 @@
                             m('tr', [
                                 m('th', 'User name'),
                                 m('th',  'Permission'),
-                                m('th',  'Remove')
+                                m('th',  ' Remove')
                             ])
                         ]),
                         m('tbody', [
                             ctrl.users().map(function (user) { return m('tr', [
-                                m('td', user.user_name),
-                                m('td', [user.permission, user.status ? (" (" + (user.status) + ")") : '']),
-                                m('td', m('button.btn.btn-secondary', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
+                                m('td', [user.user_name, user.status ? (" (" + (user.status) + ")") : '']),
+                                m('td.form-group', [
+                                    m('.row.row-centered', [
+                                        m('.col-xs-4',  'files'),
+                                        m('.col-xs-4', 'data'),
+                                        ]),
+                                    m('.row', [
+                                        m('.col-xs-4',
+                                            m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
+                                                m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Can edit'),
+                                                m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
+                                                m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'Invisible')
+                                            ])),
+                                        m('.col-xs-4',
+                                            m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
+                                                m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Visible'),
+                                                m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'Invisible')
+                                            ])),
+                                    ])
+                                ]),
+                                m('td', m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
                             ]); })
 
                         ]),

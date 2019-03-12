@@ -1,4 +1,4 @@
-import {get_collaborations, remove_collaboration, add_collaboration, make_pulic, add_link, revoke_link} from './sharingModel';
+import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
 import messages from 'utils/messagesComponent';
 
 export default collaborationComponent;
@@ -24,6 +24,7 @@ let collaborationComponent = {
             pub_error:m.prop(''),
             share_error:m.prop(''),
             remove,
+            do_update_permission,
             do_add_collaboration,
             do_add_link,
             do_revoke_link,
@@ -59,20 +60,19 @@ let collaborationComponent = {
                 });
         }
 
-
+        function do_update_permission(collaborator_id, {permission, data_permission}){
+            update_permission(m.route.param('studyId'), collaborator_id, {permission, data_permission})
+                .then(()=>load())
+                .then(m.redraw);
+        }
 
         function check_permission(ctrl){
             return ctrl.data_permission(ctrl.permission() === 'invisible' ? 'visible' : ctrl.data_permission());
-
-
-
         }
 
         function do_add_collaboration()
         {
-
-
-                messages.confirm({
+            messages.confirm({
                 header:'Add a Collaborator',
                 content: m.component({view: () => m('p', [
                     m('p', 'Enter collaborator\'s user name:'),
@@ -86,35 +86,34 @@ let collaborationComponent = {
 
                     ]),
                     m('p.space', 'Select data visibility:'),
-                        m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
-                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
-                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
-                        ]),
-
+                    m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
+                        m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
+                        m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
+                    ]),
                     m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
-                ])
-                })})
-                .then(response => {
-                    if (response){
+                ])})
+            })
+            .then(response => {
+                if (response){
 
-                        if(!ctrl.user_name())
-                        {
-                            ctrl.col_error('ERROR: user name is missing');
-                            return do_add_collaboration();
+                    if(!ctrl.user_name())
+                    {
+                        ctrl.col_error('ERROR: user name is missing');
+                        return do_add_collaboration();
 
-                        }
-                        add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
-                            .then(()=>{
-                                ctrl.col_error('');
-                                load();
-                            })
-                            .catch(error => {
-                                ctrl.col_error(error.message);
-                                do_add_collaboration();
-                            })
-                            .then(m.redraw);
                     }
-                });
+                    add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
+                        .then(()=>{
+                            ctrl.col_error('');
+                            load();
+                        })
+                        .catch(error => {
+                            ctrl.col_error(error.message);
+                            do_add_collaboration();
+                        })
+                        .then(m.redraw);
+                }
+            });
         }
 
         function do_add_link() {
@@ -179,14 +178,32 @@ let collaborationComponent = {
                         m('tr', [
                             m('th', 'User name'),
                             m('th',  'Permission'),
-                            m('th',  'Remove')
+                            m('th',  ' Remove')
                         ])
                     ]),
                     m('tbody', [
                         ctrl.users().map(user => m('tr', [
-                            m('td', user.user_name),
-                            m('td', [user.permission, user.status ? ` (${user.status})` : '']),
-                            m('td', m('button.btn.btn-secondary', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
+                            m('td', [user.user_name, user.status ? ` (${user.status})` : '']),
+                            m('td.form-group', [
+                                m('.row.row-centered', [
+                                    m('.col-xs-4',  'files'),
+                                    m('.col-xs-4', 'data'),
+                                ]),
+                                m('.row', [
+                                    m('.col-xs-4',
+                                        m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
+                                            m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Can edit'),
+                                            m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
+                                            m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'Invisible')
+                                        ])),
+                                    m('.col-xs-4',
+                                        m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
+                                            m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Visible'),
+                                            m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'Invisible')
+                                        ])),
+                                ])
+                            ]),
+                            m('td', m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
                         ]))
 
                     ]),

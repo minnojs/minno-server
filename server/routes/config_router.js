@@ -1,5 +1,6 @@
 const express     = require('express');
-const config_db        = require('../config_db');
+const config_db   = require('../config_db');
+const users       = require('../users');
 
 const configRouter = express.Router();
 

@@ -8,11 +8,10 @@ export const copyUrlContent = (url) => () =>
 
 export const copyUrl = (url, launch) => () =>
 {
-        messages.alert({
+    messages.alert({
         header: 'Copy URL',
         content: m.component(copyComponent, getAbsoluteUrl(url), launch),
-        okText: 'Done'
-    });
+        okText: 'Done'});
 };
 
 let copyComponent = {

@@ -6,6 +6,8 @@ const users_comp    = require('./users');
 const utils         = require('./utils');
 const data_server   = require('./data_server/controllers/controller');
 const connection    = Promise.resolve(require('mongoose').connection);
+const fs           = require('fs-extra');
+const path         = require('path');
 
 const {has_read_permission, has_read_data_permission, has_write_permission} = studies_comp;
 
@@ -77,9 +79,46 @@ function get_experiments(user_id, study_id) {
         .then(({study_data})=>study_data);
 }
 
+// This function are used for update the requests that sent by *all* the users.
+// First, it will remove all the old (>7 days) requests from both DB and FS.
+// Later, it will put the new request with the current timestamp into the DB.
+function add_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id, path2file) {
+    return connection.then(function (db) {
+        const week_ms = 1000*60;//*60*24*7;
+        const data_requests = db.collection('data_requests');
+        return data_requests.find({timestamp: {$lt: Date.now()-week_ms}})
+        .toArray()
+        .then(requests => {
+            Promise.all(requests.map(request => {
+                const delPath = path.join(config.base_folder, config.dataFolder,  request.path);
+                fs.remove(delPath);
+            }));
+        })
+        .then(() => data_requests.remove({timestamp: {$lt: Date.now()-week_ms}}))
+        .then(() => data_requests.insert({
+            user_id,
+            study_id,
+            exp_id,
+            file_format,
+            file_split,
+            start_date,
+            end_date,
+            version_id,
+            path: path2file,
+            timestamp: Date.now()
+        }));
+    });
+}
+
+
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
     return has_read_data_permission(user_id, study_id)
         .then(()=> data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id))
+        .then(path2file=>{
+            add_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id, path2file);
+            return path2file;
+        })
+
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 
@@ -146,8 +185,9 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
-                                      {$set:{'experiments.$.descriptive_id': descriptive_id}}
+                return studies.update(
+                    {_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
+                    {$set:{'experiments.$.descriptive_id': descriptive_id}}
                 );
             });
         });
@@ -158,8 +198,9 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
-                { $set:{'experiments.$.file_id':new_file_id}}
+                return studies.update(
+                    {_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
+                    {$set:{'experiments.$.file_id':new_file_id}}
                 );
             });
         });

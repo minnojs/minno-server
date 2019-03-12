@@ -90,7 +90,7 @@ studiesRouter.route('/:study_id/versions')
 
 studiesRouter.route('/:study_id/experiments')
     .get(
-        function(req, res, next){
+        function(req, res){
             experiments.get_experiments(req.user_id, parseInt(req.params.study_id))
                 .then(function (study_data) {
                     res.json({experiments: study_data.experiments});
@@ -100,15 +100,15 @@ studiesRouter.route('/:study_id/experiments')
                 });
         })
     .post(
-        function(req, res, next){
-            experiments.get_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id,
-                                    req.body.file_format, req.body.file_split, req.body.start_date, req.body.end_date, req.body.version_id)
-                                    .then(function(data){
-                                        res.json({data_file:data});
-                                    })
-                .catch(err=> {
-                    res.status(err.status || 500).json({message: err.message});
-                });
+        function(req, res){
+            experiments.get_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id, req.body.file_format,
+                req.body.file_split, req.body.start_date, req.body.end_date, req.body.version_id)
+            .then(function(data){
+                res.json({data_file:data});
+            })
+            .catch(err=> {
+                res.status(err.status || 500).json({message: err.message});
+            });
         });
 
 
@@ -119,17 +119,23 @@ studiesRouter.route('/:study_id/collaboration')
                 .then(()=>res.json({}))
                 .catch(next);
         })
+    .put(
+        function(req, res){
+            studies.update_collaboration(req.user_id, parseInt(req.params.study_id), req.body)
+                .then(()=>res.json({}))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
     .get(
-        function(req, res, next){
+        function(req, res){
             studies.get_collaborations(req.user_id, parseInt(req.params.study_id))
                 .then(function ({users, study_name, is_public}) {
                     res.json({users, is_public, link_data: {link: '', link_type: '', link_list: []}, study_name
                     });
                 })
-                .catch(next);
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
     .post(
-        function(req, res, next){
+        function(req, res){
             studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission, req.body.data_permission)
                 .then(function(data){
                     res.json({data_file:data});

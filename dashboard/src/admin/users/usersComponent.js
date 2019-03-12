@@ -1,4 +1,4 @@
-import {get_users, remove_user, update_role, change_user_password} from './usersModel';
+import {get_users, remove_user, update_role} from './usersModel';
 
 import messages from 'utils/messagesComponent';
 import {copyUrlContent} from 'utils/copyUrl';
@@ -31,9 +31,7 @@ let usersComponent = {
         }
 
         function add_user(){
-            messages.alert({okText: 'Close', header:'Add a new user', content:addComponent
-
-                    })
+            messages.alert({okText: 'Close', header:'Add a new user', content:addComponent})
                 .then(()=>load()).then(m.redraw);
         }
 
@@ -55,14 +53,14 @@ let usersComponent = {
             messages.confirm({
                 header:`Url for reset ${user_name}'s password`,
                 content: copyUrlContent(reset_code)()
-            })
+            });
         }
 
         function activate_user(activation_code, user_name){
             messages.confirm({
                 header:`Url for ${user_name}'s account activation`,
                 content: copyUrlContent(activation_code)()
-            })
+            });
         }
 
         function update(user_id, role){
@@ -81,18 +79,18 @@ let usersComponent = {
             ?
             m('.loader')
             :
-                m('.container.sharing-page', [
-                    m('.row',[
-                        m('.col-sm-10', [
-                            m('h3', 'User Management')
-                        ]),
-                        m('.col-sm-2', [
-                            m('button.btn.btn-success.btn-sm.m-r-1', {onclick:ctrl.add_user}, [
-                                m('i.fa.fa-user-plus'), '  Add a new user'
-                            ])
-                        ])
+            m('.container.sharing-page', [
+                m('.row',[
+                    m('.col-sm-10', [
+                        m('h3', 'User Management')
                     ]),
-                    m('table', {class:'table table-striped table-hover'}, [
+                    m('.col-sm-2', [
+                        m('button.btn.btn-success.btn-sm.m-r-1', {onclick:ctrl.add_user}, [
+                            m('i.fa.fa-user-plus'), '  Add a new user'
+                        ])
+                    ])
+                ]),
+                m('table', {class:'table table-striped table-hover'}, [
                     m('thead', [
                         m('tr', [
                             m('th', 'User name'),

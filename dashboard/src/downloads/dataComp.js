@@ -33,10 +33,7 @@ let createMessage = {
             {
                 ctrl.studies(response.studies);
                 ctrl.studies(ctrl.studies().filter(study=>study.has_data_permission).sort(sort_studies_by_name));
-            }).then(()=>
-
-        load_exps(ctrl));
-
+            }).then(()=>load_exps(ctrl));
         return {ctrl, close};
     },
     view: ({ctrl, close}) => m('div', [
@@ -161,7 +158,7 @@ function sort_studies_by_name(study1, study2){
 function select_study(ctrl, study_id){
     ctrl.study_id(study_id);
     ctrl.loaded.bind(null, false);
-    const new_study = ctrl.studies().filter(study=>study.id==study_id)[0];;
+    const new_study = ctrl.studies().filter(study=>study.id==study_id)[0];
     ctrl.versions = new_study.versions;
     return load_exps(ctrl);
 
@@ -182,7 +179,6 @@ function load_exps(ctrl){
                     tmp_exps.map(exp2update=>exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update);
                 ctrl.exps(tmp_exps);
             });
-            console.log(ctrl.exps())
         })
         .then(()=> {
             ctrl.all_versions(ctrl.versions.map(version=>version.id));

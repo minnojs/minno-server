@@ -1,6 +1,7 @@
 import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
 
 const can_edit = study => !study.isReadonly && study.permission !== 'read only';
+const can_see_data = study => study.has_data_permission;
 
 const is_locked = study => study.is_locked;
 const is_published = study => study.is_published;
@@ -38,7 +39,7 @@ const settings_hash = {
         }},
     data: {text: 'Data',
         config: {
-            display: [can_edit],
+            display: [can_see_data],
             onmousedown: do_data,
             class: 'fa-download'
         }},

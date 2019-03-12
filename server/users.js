@@ -38,8 +38,8 @@ function set_password(user_id, password, confirm) {
     return connection.then(function (db) {
         const users   = db.collection('users');
         return users.findAndModify({_id: user_id},
-                            [],
-                            {$set: {pass: utils.sha1(password)}})
+            [],
+            {$set: {pass: utils.sha1(password)}})
             .then(() => ({}));
     });
 }
@@ -127,15 +127,16 @@ function get_users() {
             .then(function(users_data)
             {
                 users_data = users_data.filter(user=>user.user_name!=='bank' && user.user_name!=='admin');
-                return (users_data.map(user=>({id:user._id,
-                                               user_name: user.user_name,
-                                               first_name:user.first_name,
-                                               last_name: user.last_name,
-                                               email:user.email,
-                                               role:user.role,
-                                               activation_code: !user.activation_code ? '' : `${config.server_url}/dashboard/?/activation/${user.activation_code}`,
-                                               reset_code: !user.reset_code ? '' : `${config.server_url}/dashboard/?/reset_password/${user.reset_code}`
-                                              })));
+                return (users_data.map(user=>(
+                    {id:user._id,
+                        user_name: user.user_name,
+                        first_name:user.first_name,
+                        last_name: user.last_name,
+                        email:user.email,
+                        role:user.role,
+                        activation_code: !user.activation_code ? '' : `${config.server_url}/dashboard/?/activation/${user.activation_code}`,
+                        reset_code: !user.reset_code ? '' : `${config.server_url}/dashboard/?/reset_password/${user.reset_code}`
+                    })));
             });
     });
 }
@@ -160,8 +161,10 @@ function remove_user(user_id) {
 function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
 
 
-    let validator = new Validator({username, email, first_name, last_name},
-                                  {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'});
+    let validator = new Validator(
+        {username, email, first_name, last_name},
+        {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'}
+    );
 
     return validator.check()
     .then(function () {

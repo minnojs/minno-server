@@ -35,6 +35,12 @@ export let add_collaboration = (study_id, user_name, permission, data_permission
 });
 
 
+export let update_permission = (study_id, collaborator_id, permissions) => fetchJson(collaboration_url(study_id), {
+    method: 'put',
+    body: {collaborator_id, permissions}
+});
+
+
 export let add_link = (study_id) => fetchJson(link_url(study_id), {
     method: 'post'
 });

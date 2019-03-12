@@ -1,6 +1,5 @@
 const express     = require('express');
 const users     = require('../users');
-const utils = require('../utils');
 const connectionsRouter = express.Router();
 
 module.exports = connectionsRouter;
@@ -34,13 +33,11 @@ connectionsRouter.post('/connect',function(req, res){
 
 
 
-connectionsRouter.post('/logout',function(req, res){
-    req.session.destroy(function(err) {
-        if(err) {
-            console.log(err);
-        } else {
-            res.redirect(req.get('referer'));
-        }
+connectionsRouter.post('/logout',function(req, res) {
+    req.session.destroy(function (err) {
+        if (err)
+            return res.status(err.status || 500).json({message: err.message});
+        return res.redirect(req.get('referer'));
     });
 });
 

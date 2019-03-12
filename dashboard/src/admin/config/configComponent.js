@@ -1,11 +1,5 @@
 import {get_config, set_gmail_params, unset_gmail_params, set_dbx_params, unset_dbx_params} from './configModel';
 
-import messages from 'utils/messagesComponent';
-import {copyUrlContent} from 'utils/copyUrl';
-
-import addComponent from '../../addUser/addUserComponent';
-import {set_password} from "../../settings/settingsModel";
-
 
 export default configComponent;
 
@@ -113,24 +107,24 @@ let configComponent = {
             ?
             m('.loader')
             :
-                m('.container.sharing-page', [
-                    m('.row',[
-                        m('.col-sm-10', [
-                            m('h3', 'Edit configuration')
-                        ])
-                    ]),
+            m('.container.sharing-page', [
+                m('.row',[
+                    m('.col-sm-10', [
+                        m('h3', 'Edit configuration')
+                    ])
+                ]),
 
-                    m('.row.centrify',
-                        [m('.card.card-inverse.col-md-5.centrify', [
+                m('.row.centrify',
+                    [m('.card.card-inverse.col-md-5.centrify', [
 
-                            !ctrl.gmail.enable() ?
-                                m('a', {onclick: ()=>ctrl.toggle_visibility('gmail', true)},
-                                    m('button.btn.btn-primary.btn-block', [
-                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with email'
-                                    ])
-                                )
-                                :
-                                m('.card-block',[
+                        !ctrl.gmail.enable() ?
+                            m('a', {onclick: ()=>ctrl.toggle_visibility('gmail', true)},
+                                m('button.btn.btn-primary.btn-block', [
+                                    m('i.fa.fa-fw.fa-envelope'), ' Enable support with email'
+                                ])
+                            )
+                            :
+                            m('.card-block',[
                                 m('h4', 'Enter details for Gmail accont'),
                                 m('form', [
                                     m('input.form-control', {
@@ -153,20 +147,20 @@ let configComponent = {
                                 m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
                                 !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
                                 !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
-                                ])
-                        ])
+                            ])
+                    ])
 
-                        ]),
-                    m('.row.centrify',
-                        m('.card.card-inverse.col-md-5.centrify', [
-                            !ctrl.dbx.enable() ?
-                                m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
-                                    m('button.btn.btn-primary.btn-block', [
-                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
-                                    ])
-                                )
-                                :
-                                m('.card-block',[
+                    ]),
+                m('.row.centrify',
+                    m('.card.card-inverse.col-md-5.centrify', [
+                        !ctrl.dbx.enable() ?
+                            m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
+                                m('button.btn.btn-primary.btn-block', [
+                                    m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
+                                ])
+                            )
+                            :
+                            m('.card-block',[
                                 m('h4', 'Enter details for Dropbox application'),
                                 m('form', [
                                     m('input.form-control', {
@@ -185,13 +179,13 @@ let configComponent = {
                                         onchange: m.withAttr('value', ctrl.dbx.client_secret),
                                     })
                                 ]),
-                                    ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
-                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
-                                    !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
-                                    !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
+                                ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
+                                m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
+                                !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                             ])
-                        ])
-                    ),
+                    ])
+                ),
             ]);
     }
 };

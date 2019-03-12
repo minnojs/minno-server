@@ -9,7 +9,7 @@ import createMessage from '../downloads/dataComp';
 import {update_tags_in_study} from '../tags/tagsModel';
 import {make_pulic} from './sharing/sharingModel';
 import {copyUrl} from 'utils/copyUrl';
-import studyFactory from "./files/fileCollectionModel";
+import studyFactory from './files/fileCollectionModel';
 
 export let do_create = (type, studies) => {
     const study_name = m.prop('');
@@ -177,7 +177,7 @@ export const do_rename = (study, notifications) => e => {
         .then(()=>{
             const study2 = studyFactory(study.id);
             study2.get().then(()=>study.base_url = study2.base_url).then(()=> {
-                if (typeof study.files === "function")
+                if (typeof study.files === 'function')
                     study.files(study2.files());
             });
         })

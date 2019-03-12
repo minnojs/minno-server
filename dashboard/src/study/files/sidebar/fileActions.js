@@ -35,7 +35,6 @@ export const moveFile = (file, study, notifications) => () => {
     })
     .then(response => {
         const targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
-        console.log(notifications);
 
         if (response && newPath() !== file.basePath)
             return moveAction(targetPath, file, study)
@@ -84,8 +83,6 @@ export let renameFile = (file, study, notifications) => () => {
 };
 
 export let make_experiment = (file, study, notifications) => () => {
-    console.log(notifications);
-
     let descriptive_id = m.prop(file.path);
     let error = m.prop('');
     return messages.confirm({

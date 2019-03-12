@@ -72,12 +72,11 @@ function get_user_token(user_id){
         if (!dbx_details)
             return false;
     })
-    .then(()=>
-         users_comp.user_info(user_id)
+    .then(()=> users_comp.user_info(user_id)
                 .then(function(info){
                     return info.dbx_token;
                 })
-        );
+    );
 }
 
 function upload_users_file(user_id, study_id, path){
@@ -94,7 +93,7 @@ function upload_user_file(user_id, path){
         .then(function(access_token) {
             if (!access_token)
                 return;
-            return upload_file(access_token, path)
+            return upload_file(access_token, path);
         });
 }
 
@@ -119,7 +118,7 @@ function upload_file(access_token, path){
         .catch(err=>{
             if(err.statusCode==429)
                 return upload_file(access_token, path);
-            console.log({path:path, err: err.message});
+            // console.log({path:path, err: err.message});
         });
 }
 
@@ -159,7 +158,7 @@ function rename_file(access_token, path2rename, new_name){
         .catch(err=>{
             if(err.statusCode==429)
                 return rename_file(access_token, path2rename);
-            console.log({path:path2rename, err: err.message});
+            // console.log({path:path2rename, err: err.message});
         });
 }
 
@@ -199,7 +198,7 @@ function delete_file(access_token, path2delete){
         .catch(err=>{
             if(err.statusCode==429)
                 return delete_file(access_token, path2delete);
-            console.log({path:path2delete, err: err.message});
+            // console.log({path:path2delete, err: err.message});
         });
 }
 
