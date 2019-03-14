@@ -4,27 +4,26 @@ const config      = require('../config');
 const files       = require('./files');
 const dateFormat  = require('dateformat');
 
-const launch_router     = require('./routes/launch_router');
-const connections_router     = require('./routes/connections_router');
-const lock_router       = require('./routes/lock_router');
-const publish_router    = require('./routes/publish_router');
-const studies_router    = require('./routes/studies_router');
-const tags_router       = require('./routes/tags_router');
-const files_router      = require('./routes/files_router');
-const sharing_router    = require('./routes/sharing_router');
-const settings_router   = require('./routes/settings_router');
-const messages_router   = require('./routes/messages_router');
-const users_router      = require('./routes/users_router');
-const config_router      = require('./routes/config_router');
-const dropbox_router    = require('./routes/dropbox_router');
-const collaboration_router    = require('./routes/collaboration_router');
-const mongoose = require('mongoose');
-const urljoin       = require('url-join');
+const launch_router         = require('./routes/launch_router');
+const connections_router    = require('./routes/connections_router');
+const lock_router           = require('./routes/lock_router');
+const publish_router        = require('./routes/publish_router');
+const studies_router        = require('./routes/studies_router');
+const tags_router           = require('./routes/tags_router');
+const files_router          = require('./routes/files_router');
+const sharing_router        = require('./routes/sharing_router');
+const settings_router       = require('./routes/settings_router');
+const messages_router       = require('./routes/messages_router');
+const users_router          = require('./routes/users_router');
+const config_router         = require('./routes/config_router');
+const dropbox_router        = require('./routes/dropbox_router');
+const collaboration_router  = require('./routes/collaboration_router');
 
+const mongoose   = require('mongoose');
+const urljoin    = require('url-join');
 const bodyParser = require('body-parser');
-const app = express();
-
-const mailer = require('express-mailer');
+const app        = express();
+const mailer     = require('express-mailer');
 
 mailer.extend(app, {
     secureConnection: true,
@@ -35,7 +34,7 @@ mailer.extend(app, {
 module.exports = {app};
 
 const cors = require('cors');
-const day = dateFormat(new Date(), 'yyyy-mm-dd');
+const day  = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
 
 SimpleNodeLogger = require('simple-node-logger'),

@@ -31,9 +31,10 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
 function displayExperiment(params, res){
     return function(exp_data){
+
         const render = promisify(res.render,res);
         const dataUrl = urljoin(config.relative_path, 'data');
-        const {versionData = {}} = exp_data;
+        const {version_data = {}} = exp_data;
 
         res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
         res.header('Expires', '-1');
@@ -42,13 +43,12 @@ function displayExperiment(params, res){
         const postAlways = {
             sessionId:exp_data.session_id, 
             studyId:exp_data.exp_id,
-            versionId:versionData.id
+            versionId:version_data.id
         };
-
         const postOnce = Object.assign({}, params, {
             descriptiveId: exp_data.descriptive_id, 
-            version:versionData.version,
-            state:versionData.state
+            version:version_data.version,
+            state:version_data.state
         }, postAlways); // post the post always stuff too - so that we can connect them...
 
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')

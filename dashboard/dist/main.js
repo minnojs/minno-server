@@ -12965,7 +12965,6 @@
         })
         .then(function (response) {
             var targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
-            console.log(notifications);
 
             if (response && newPath() !== file.basePath)
                 return moveAction(targetPath, file, study)
@@ -13014,8 +13013,6 @@
     }; };
 
     var make_experiment = function (file, study, notifications) { return function () {
-        console.log(notifications);
-
         var descriptive_id = m.prop(file.path);
         var error = m.prop('');
         return messages.confirm({
@@ -13824,11 +13821,10 @@
 
 
     var copyUrl = function (url, launch) { return function () {
-            messages.alert({
+        messages.alert({
             header: 'Copy URL',
             content: m.component(copyComponent, getAbsoluteUrl(url), launch),
-            okText: 'Done'
-        });
+            okText: 'Done'});
     }; };
 
     var copyComponent = {
@@ -15593,7 +15589,6 @@
                     ctrl.studies(response.studies);
                     ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name));
                 }).then(function (){ return load_exps(ctrl); });
-
             return {ctrl: ctrl, close: close};
         },
         view: function (ref) {
@@ -15728,7 +15723,8 @@
     function select_study(ctrl, study_id){
         ctrl.study_id(study_id);
         ctrl.loaded.bind(null, false);
-        var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];    ctrl.versions = new_study.versions;
+        var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
+        ctrl.versions = new_study.versions;
         return load_exps(ctrl);
 
     }
@@ -15748,7 +15744,6 @@
                         tmp_exps.map(function (exp2update){ return exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update; });
                     ctrl.exps(tmp_exps);
                 });
-                console.log(ctrl.exps());
             })
             .then(function (){
                 ctrl.all_versions(ctrl.versions.map(function (version){ return version.id; }));
@@ -15978,7 +15973,7 @@
             .then(function (){
                 var study2 = studyFactory(study.id);
                 study2.get().then(function (){ return study.base_url = study2.base_url; }).then(function (){
-                    if (typeof study.files === "function")
+                    if (typeof study.files === 'function')
                         study.files(study2.files());
                 });
             })
@@ -16236,7 +16231,6 @@
 
     var draw_menu = function (study, notifications) { return Object.keys(settings)
         .map(function (comp) {
-            console.log(study);
             var config = settings_hash[comp].config;
             return !should_display(config, study) 
                 ? '' 
@@ -17653,16 +17647,13 @@
                     ctrl.activation_code()
                         ?
                         [
-                            m('h5', [, ("Added " + (ctrl.username()) + " successfully")]),
+                            m('h5', [("Added " + (ctrl.username()) + " successfully")]),
                             m('.card.card-inverse.col-md-10',
                                 [m('label', 'Send the following link to user to allow them to activate their account and to change their password.'),
-                                 copyUrlContent('/static/?/activation/'+ctrl.activation_code())()
-                            ])
+                                    copyUrlContent('/static/?/activation/'+ctrl.activation_code())()
+                                ])
                         ]:
-                        [
-                        m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                        m('h5', [ctrl.username(), ' successfully added (email sent)!'])
-                    ]
+                        [m('i.fa.fa-thumbs-up.fa-5x.m-b-1'), m('h5', [ctrl.username(), ' successfully added (email sent)!'])]
                     :
                     m('.card.card-inverse.col-md-10', [
                         m('.card-block',[
@@ -17677,8 +17668,8 @@
                                         oninput: m.withAttr('value', ctrl.username),
                                         onchange: m.withAttr('value', ctrl.username),
                                         config: getStartValue$1(ctrl.username)
-                                    }
-                                )),
+                                    })
+                                ),
                                 m('fieldset.form-group',
                                     m('label', 'First name:'),
                                     m('input.form-control', {
@@ -17688,8 +17679,8 @@
                                         oninput: m.withAttr('value', ctrl.first_name),
                                         onchange: m.withAttr('value', ctrl.first_name),
                                         config: getStartValue$1(ctrl.first_name)
-                                    }
-                                )),
+                                    })
+                                ),
                                 m('fieldset.form-group',
                                     m('label', 'Last name:'),
                                     m('input.form-control', {
@@ -17710,8 +17701,8 @@
                                         oninput: m.withAttr('value', ctrl.email),
                                         onchange: m.withAttr('value', ctrl.email),
                                         config: getStartValue$1(ctrl.email)
-                                    }
-                                ))
+                                    })
+                                )
                             ]),
 
                             !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
@@ -17771,9 +17762,7 @@
             }
 
             function add_user(){
-                messages.alert({okText: 'Close', header:'Add a new user', content:addComponent
-
-                        })
+                messages.alert({okText: 'Close', header:'Add a new user', content:addComponent})
                     .then(function (){ return load(); }).then(m.redraw);
             }
 
@@ -17821,18 +17810,18 @@
                 ?
                 m('.loader')
                 :
-                    m('.container.sharing-page', [
-                        m('.row',[
-                            m('.col-sm-10', [
-                                m('h3', 'User Management')
-                            ]),
-                            m('.col-sm-2', [
-                                m('button.btn.btn-success.btn-sm.m-r-1', {onclick:ctrl.add_user}, [
-                                    m('i.fa.fa-user-plus'), '  Add a new user'
-                                ])
-                            ])
+                m('.container.sharing-page', [
+                    m('.row',[
+                        m('.col-sm-10', [
+                            m('h3', 'User Management')
                         ]),
-                        m('table', {class:'table table-striped table-hover'}, [
+                        m('.col-sm-2', [
+                            m('button.btn.btn-success.btn-sm.m-r-1', {onclick:ctrl.add_user}, [
+                                m('i.fa.fa-user-plus'), '  Add a new user'
+                            ])
+                        ])
+                    ]),
+                    m('table', {class:'table table-striped table-hover'}, [
                         m('thead', [
                             m('tr', [
                                 m('th', 'User name'),
@@ -17906,71 +17895,6 @@
     }); };
 
     var unset_dbx_params = function () { return fetchJson(dbx_url(), {
-        method: 'delete'
-    }); };
-
-    var change_password_url = baseUrl + "/change_password";
-    var change_email_url = baseUrl + "/change_email";
-    var update_details_url = baseUrl + "/settings";
-    var present_templates_url = baseUrl + "/present_templates";
-    var dropbox_url = baseUrl + "/dropbox";
-
-    function apiURL(code)
-    {   
-        return (change_password_url + "/" + (encodeURIComponent(code)));
-    }
-
-    var is_recovery_code = function (code) { return fetchJson(apiURL(code), {
-        method: 'get'
-    }); };
-
-    var set_password = function (code, password, confirm) { return fetchJson(apiURL(code), {
-        method: 'post',
-        body: {password: password, confirm: confirm}
-    }); };
-
-    var set_email = function (email) { return fetchJson(change_email_url, {
-        method: 'post',
-        body: {email: email}
-    }); };
-
-
-    var update_details = function (params) { return fetchJson(update_details_url, {
-        method: 'post',
-        body: {params: params}
-    }); };
-
-
-    var get_email = function () { return fetchJson(change_email_url, {
-        method: 'get'
-    }); };
-
-
-    var check_if_present_templates = function () { return fetchJson(present_templates_url, {
-        method: 'get'
-    }); };
-
-    var set_present_templates = function (value) {
-        if (value)
-            return do_present_templates();
-        return do_hide_templates();
-    };
-
-
-
-    var do_present_templates = function () { return fetchJson(present_templates_url, {
-        method: 'post'
-    }); };
-
-    var do_hide_templates = function () { return fetchJson(present_templates_url, {
-        method: 'delete'
-    }); };
-
-    var check_if_dbx_synchronized = function () { return fetchJson(dropbox_url, {
-        method: 'get'
-    }); };
-
-    var stop_dbx_synchronized = function () { return fetchJson(dropbox_url, {
         method: 'delete'
     }); };
 
@@ -18078,24 +18002,24 @@
                 ?
                 m('.loader')
                 :
-                    m('.container.sharing-page', [
-                        m('.row',[
-                            m('.col-sm-10', [
-                                m('h3', 'Edit configuration')
-                            ])
-                        ]),
+                m('.container.sharing-page', [
+                    m('.row',[
+                        m('.col-sm-10', [
+                            m('h3', 'Edit configuration')
+                        ])
+                    ]),
 
-                        m('.row.centrify',
-                            [m('.card.card-inverse.col-md-5.centrify', [
+                    m('.row.centrify',
+                        [m('.card.card-inverse.col-md-5.centrify', [
 
-                                !ctrl.gmail.enable() ?
-                                    m('a', {onclick: function (){ return ctrl.toggle_visibility('gmail', true); }},
-                                        m('button.btn.btn-primary.btn-block', [
-                                            m('i.fa.fa-fw.fa-envelope'), ' Enable support with email'
-                                        ])
-                                    )
-                                    :
-                                    m('.card-block',[
+                            !ctrl.gmail.enable() ?
+                                m('a', {onclick: function (){ return ctrl.toggle_visibility('gmail', true); }},
+                                    m('button.btn.btn-primary.btn-block', [
+                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with email'
+                                    ])
+                                )
+                                :
+                                m('.card-block',[
                                     m('h4', 'Enter details for Gmail accont'),
                                     m('form', [
                                         m('input.form-control', {
@@ -18118,20 +18042,20 @@
                                     m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
                                     !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
                                     !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
-                                    ])
-                            ])
+                                ])
+                        ])
 
-                            ]),
-                        m('.row.centrify',
-                            m('.card.card-inverse.col-md-5.centrify', [
-                                !ctrl.dbx.enable() ?
-                                    m('a', {onclick: function (){ return ctrl.toggle_visibility('dbx', true); }},
-                                        m('button.btn.btn-primary.btn-block', [
-                                            m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
-                                        ])
-                                    )
-                                    :
-                                    m('.card-block',[
+                        ]),
+                    m('.row.centrify',
+                        m('.card.card-inverse.col-md-5.centrify', [
+                            !ctrl.dbx.enable() ?
+                                m('a', {onclick: function (){ return ctrl.toggle_visibility('dbx', true); }},
+                                    m('button.btn.btn-primary.btn-block', [
+                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
+                                    ])
+                                )
+                                :
+                                m('.card-block',[
                                     m('h4', 'Enter details for Dropbox application'),
                                     m('form', [
                                         m('input.form-control', {
@@ -18150,16 +18074,81 @@
                                             onchange: m.withAttr('value', ctrl.dbx.client_secret),
                                         })
                                     ]),
-                                        ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('dbx', false); }},'Cancel'),
-                                        m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
-                                        !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
-                                        !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
+                                    ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('dbx', false); }},'Cancel'),
+                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                    !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
+                                    !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                                 ])
-                            ])
-                        ),
+                        ])
+                    ),
                 ]);
         }
     };
+
+    var change_password_url = baseUrl + "/change_password";
+    var change_email_url = baseUrl + "/change_email";
+    var update_details_url = baseUrl + "/settings";
+    var present_templates_url = baseUrl + "/present_templates";
+    var dropbox_url = baseUrl + "/dropbox";
+
+    function apiURL(code)
+    {   
+        return (change_password_url + "/" + (encodeURIComponent(code)));
+    }
+
+    var is_recovery_code = function (code) { return fetchJson(apiURL(code), {
+        method: 'get'
+    }); };
+
+    var set_password = function (code, password, confirm) { return fetchJson(apiURL(code), {
+        method: 'post',
+        body: {password: password, confirm: confirm}
+    }); };
+
+    var set_email = function (email) { return fetchJson(change_email_url, {
+        method: 'post',
+        body: {email: email}
+    }); };
+
+
+    var update_details = function (params) { return fetchJson(update_details_url, {
+        method: 'post',
+        body: {params: params}
+    }); };
+
+
+    var get_email = function () { return fetchJson(change_email_url, {
+        method: 'get'
+    }); };
+
+
+    var check_if_present_templates = function () { return fetchJson(present_templates_url, {
+        method: 'get'
+    }); };
+
+    var set_present_templates = function (value) {
+        if (value)
+            return do_present_templates();
+        return do_hide_templates();
+    };
+
+
+
+    var do_present_templates = function () { return fetchJson(present_templates_url, {
+        method: 'post'
+    }); };
+
+    var do_hide_templates = function () { return fetchJson(present_templates_url, {
+        method: 'delete'
+    }); };
+
+    var check_if_dbx_synchronized = function () { return fetchJson(dropbox_url, {
+        method: 'get'
+    }); };
+
+    var stop_dbx_synchronized = function () { return fetchJson(dropbox_url, {
+        method: 'delete'
+    }); };
 
     var emil_body = function (ctrl) { return m('.card.card-inverse.col-md-4', [
         m('.card-block',[
@@ -18688,7 +18677,7 @@
             }
         },
         view: function view(ctrl){
-                return m('.activation.centrify', {config:fullHeight},[
+            return m('.activation.centrify', {config:fullHeight},[
                 ctrl.error() ?
                     m('p.text-center',
                         m('.alert.alert-danger', m('strong', 'Error: '), ctrl.error())) :
@@ -18910,14 +18899,13 @@
                     .then(m.redraw);
             }
 
-
             function check_permission(ctrl){
                 return ctrl.data_permission(ctrl.permission() === 'invisible' ? 'visible' : ctrl.data_permission());
             }
 
             function do_add_collaboration()
             {
-                    messages.confirm({
+                messages.confirm({
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
@@ -18931,35 +18919,34 @@
 
                         ]),
                         m('p.space', 'Select data visibility:'),
-                            m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
-                                m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
-                                m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
-                            ]),
-
+                        m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
+                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
+                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
+                        ]),
                         m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
-                    ]); }
-                    })})
-                    .then(function (response) {
-                        if (response){
+                    ]); }})
+                })
+                .then(function (response) {
+                    if (response){
 
-                            if(!ctrl.user_name())
-                            {
-                                ctrl.col_error('ERROR: user name is missing');
-                                return do_add_collaboration();
+                        if(!ctrl.user_name())
+                        {
+                            ctrl.col_error('ERROR: user name is missing');
+                            return do_add_collaboration();
 
-                            }
-                            add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
-                                .then(function (){
-                                    ctrl.col_error('');
-                                    load();
-                                })
-                                .catch(function (error) {
-                                    ctrl.col_error(error.message);
-                                    do_add_collaboration();
-                                })
-                                .then(m.redraw);
                         }
-                    });
+                        add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
+                            .then(function (){
+                                ctrl.col_error('');
+                                load();
+                            })
+                            .catch(function (error) {
+                                ctrl.col_error(error.message);
+                                do_add_collaboration();
+                            })
+                            .then(m.redraw);
+                    }
+                });
             }
 
             function do_add_link() {
@@ -19034,7 +19021,7 @@
                                     m('.row.row-centered', [
                                         m('.col-xs-4',  'files'),
                                         m('.col-xs-4', 'data'),
-                                        ]),
+                                    ]),
                                     m('.row', [
                                         m('.col-xs-4',
                                             m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
@@ -19708,14 +19695,12 @@
                                 ),
                                 !ctrl.new_msgs() ? '' : m('li.nav-item.pull-xs-right', [
                                     m('a',{href:'/messages', config:m.route},
-                                    m('span.fa-stack', [
-                                        // m('a.nav-link',{href:'/messages', config:m.route},m('i.fa.fa-envelope.fa-lg', {style:{color:'white'}}, m('span.badge.badge-light', '4')))
-
-                                    m('i.fa.fa-envelope.fa-lg.fa-stack-3x', {style:{color:'white'}}),
-                                    m('i.fa.fa-circle.fa-lg.fa-stack-1x', {style:{color:'red', 'margin-top': '-5px', 'margin-right': '-5px'}}),
-
-                                    m('span.fa-stack-1x', {style:{color:'white', 'margin-top': '-5px', 'margin-right': '-5px'}}, ctrl.new_msgs() <10 ? ctrl.new_msgs() : '9+' )
-                                    ])),
+                                        m('span.fa-stack', [
+                                            m('i.fa.fa-envelope.fa-lg.fa-stack-3x', {style:{color:'white'}}),
+                                            m('i.fa.fa-circle.fa-lg.fa-stack-1x', {style:{color:'red', 'margin-top': '-5px', 'margin-right': '-5px'}}),
+                                            m('span.fa-stack-1x', {style:{color:'white', 'margin-top': '-5px', 'margin-right': '-5px'}}, ctrl.new_msgs() <10 ? ctrl.new_msgs() : '9+' )
+                                        ])
+                                    ),
                                 ]),
 
                                 m('li.nav-item.pull-xs-right', [
