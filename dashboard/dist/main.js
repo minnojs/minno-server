@@ -12830,6 +12830,10 @@
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
     }
 
+    function get_requests_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/requests");
+    }
+
     function get_lock_url(study_id , lock) {
 
         if (lock)
@@ -12849,6 +12853,10 @@
     var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
 
     var get_exps = function (study_id) { return fetchJson(get_exps_url(study_id)); };
+
+
+    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
+
 
     var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
         method: 'post',
@@ -15567,6 +15575,7 @@
                 study_id:m.prop(study_id),
                 exps: exps,
                 versions: versions,
+                requests: m.prop([]),
                 studies: m.prop([]),
                 version_id: m.prop(''),
                 all_exp_ids: m.prop(''),
@@ -15588,7 +15597,10 @@
                 .then(function (response) {
                     ctrl.studies(response.studies);
                     ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name));
-                }).then(function (){ return load_exps(ctrl); });
+                })
+                .then(function (){ return load_exps(ctrl); })
+                .then(function (){ return load_requests(ctrl); })
+            ;
             return {ctrl: ctrl, close: close};
         },
         view: function (ref) {
@@ -15655,6 +15667,7 @@
                 ])
             ]),
             ctrl.loaded() ? '' : m('.loader'),
+            show_requests(ctrl.requests),
             ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
             !ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
 
@@ -15750,8 +15763,93 @@
                 ctrl.version_id(ctrl.all_versions());
             })
             .catch(ctrl.error)
+            .then(m.redraw);
+    }
+
+    function load_requests(ctrl){
+        get_requests(ctrl.study_id())
+            .then(function (response) { return ctrl.requests(response.requests); })
+            .catch(ctrl.error)
             .then(ctrl.loaded.bind(null, true))
             .then(m.redraw);
+    }
+
+    function show_requests(requests){
+        return requests().length === 0
+            ?
+            ''
+            :
+            m('table', {class:'table table-striped table-hover'}, [
+                m('thead', [
+                    m('tr', [
+                        // m('th', 'ID')
+                        m('th', 'Date Added'),
+                        m('th', 'File Size'),
+                        m('th', 'Actions'),
+                        m('th','Status'),
+                    ])
+                ]),
+                m('tbody',
+                    requests().map(function (download) { return m('tr', [
+                        m('td', [
+                            formatDate(new Date(download.creation_date)),
+                            '  ',
+                            m('i.fa.fa-info-circle'),
+                            m('.info-box', [
+                                m('.card', [
+                                    m('.card-header', 'Request Details'),
+                                    m('ul.list-group.list-group-flush',[
+                                        m('li.list-group-item', [
+                                            m('strong', 'Creation Date: '), formatDate(new Date(download.creation_date))
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'Start Date: '), formatDate(new Date(download.start_date))
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'End Date: '), formatDate(new Date(download.end_date))
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'File Format: ', download.file_format)
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'File Split: ', download.file_split)
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'Experimant Id: ', download.exp_id.length>1 ? 'All' : download.exp_id[0])
+                                        ]),
+                                        m('li.list-group-item', [
+                                            m('strong', 'Version Id: ', download.version_id.length>1 ? 'All' : download.version_id[0])
+                                        ]),
+                                    ])
+                                ])
+                            ])
+                        ]),
+
+                        m('td', size_format(download.size)),
+                        m('td', [
+                            m('a', {href:(baseUrl + "/download?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                            m('i', ' | '),
+                            m('a', {href:(baseUrl + "/download?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-close'))
+                        ]),
+                        m('td', m('span.label.label-success', 'Complete')),
+
+                    ]); })
+                )]);
+    }
+
+    function size_format(bytes){
+        var thresh = 1024;
+        if(Math.abs(bytes) < thresh) {
+            return bytes + ' B';
+        }
+
+        var units =  ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+        var u = 0;
+        do {
+            bytes /= thresh;
+            ++u;
+        } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+        return bytes.toFixed(1)+' '+units[u];
     }
 
     function collaboration_url(study_id)

@@ -15,6 +15,10 @@ function get_exps_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/experiments`;
 }
 
+function get_requests_url(study_id) {
+    return `${baseUrl}/${encodeURIComponent(study_id)}/requests`;
+}
+
 function get_lock_url(study_id , lock) {
 
     if (lock)
@@ -34,6 +38,10 @@ export let load_templates = () => fetchJson(templatesUrl);
 export let create_study = body => fetchJson(baseUrl, { method: 'post', body });
 
 export let get_exps = (study_id) => fetchJson(get_exps_url(study_id));
+
+
+export let get_requests = (study_id) => fetchJson(get_requests_url(study_id));
+
 
 export let get_data = (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) => fetchJson(get_exps_url(study_id), {
     method: 'post',

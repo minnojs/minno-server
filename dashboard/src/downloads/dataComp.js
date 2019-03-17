@@ -1,7 +1,8 @@
 export default args => m.component(createMessage, args);
 import {dateRangePicker} from 'utils/dateRange';
-import {get_exps, get_data, load_studies} from '../study/studyModel';
+import {get_exps, get_data, load_studies, get_requests} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
+import formatDate from 'utils/formatDate';
 
 let createMessage = {
     controller({exps, dates, study_id, versions, close}){
@@ -11,6 +12,7 @@ let createMessage = {
             study_id:m.prop(study_id),
             exps,
             versions,
+            requests: m.prop([]),
             studies: m.prop([]),
             version_id: m.prop(''),
             all_exp_ids: m.prop(''),
@@ -33,7 +35,10 @@ let createMessage = {
             {
                 ctrl.studies(response.studies);
                 ctrl.studies(ctrl.studies().filter(study=>study.has_data_permission).sort(sort_studies_by_name));
-            }).then(()=>load_exps(ctrl));
+            })
+            .then(()=>load_exps(ctrl))
+            .then(()=>load_requests(ctrl))
+        ;
         return {ctrl, close};
     },
     view: ({ctrl, close}) => m('div', [
@@ -96,6 +101,7 @@ let createMessage = {
             ])
         ]),
         ctrl.loaded() ? '' : m('.loader'),
+        show_requests(ctrl.requests),
         ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
         !ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
 
@@ -185,6 +191,91 @@ function load_exps(ctrl){
             ctrl.version_id(ctrl.all_versions());
         })
         .catch(ctrl.error)
+        .then(m.redraw);
+}
+
+function load_requests(ctrl){
+    get_requests(ctrl.study_id())
+        .then(response => ctrl.requests(response.requests))
+        .catch(ctrl.error)
         .then(ctrl.loaded.bind(null, true))
         .then(m.redraw);
+}
+
+function show_requests(requests){
+    return requests().length === 0
+        ?
+        ''
+        :
+        m('table', {class:'table table-striped table-hover'}, [
+            m('thead', [
+                m('tr', [
+                    // m('th', 'ID')
+                    m('th', 'Date Added'),
+                    m('th', 'File Size'),
+                    m('th', 'Actions'),
+                    m('th','Status'),
+                ])
+            ]),
+            m('tbody',
+                requests().map(download => m('tr', [
+                    m('td', [
+                        formatDate(new Date(download.creation_date)),
+                        '  ',
+                        m('i.fa.fa-info-circle'),
+                        m('.info-box', [
+                            m('.card', [
+                                m('.card-header', 'Request Details'),
+                                m('ul.list-group.list-group-flush',[
+                                    m('li.list-group-item', [
+                                        m('strong', 'Creation Date: '), formatDate(new Date(download.creation_date))
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'Start Date: '), formatDate(new Date(download.start_date))
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'End Date: '), formatDate(new Date(download.end_date))
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'File Format: ', download.file_format)
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'File Split: ', download.file_split)
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'Experimant Id: ', download.exp_id.length>1 ? 'All' : download.exp_id[0])
+                                    ]),
+                                    m('li.list-group-item', [
+                                        m('strong', 'Version Id: ', download.version_id.length>1 ? 'All' : download.version_id[0])
+                                    ]),
+                                ])
+                            ])
+                        ])
+                    ]),
+
+                    m('td', size_format(download.size)),
+                    m('td', [
+                        m('a', {href:`${baseUrl}/download?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                        m('i', ' | '),
+                        m('a', {href:`${baseUrl}/download?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-close'))
+                    ]),
+                    m('td', m('span.label.label-success', 'Complete')),
+
+                ]))
+            )]);
+}
+
+function size_format(bytes){
+    const thresh = 1024;
+    if(Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+
+    const units =  ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+    let u = 0;
+    do {
+        bytes /= thresh;
+        ++u;
+    } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1)+' '+units[u];
 }

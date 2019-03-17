@@ -112,6 +112,20 @@ studiesRouter.route('/:study_id/experiments')
         });
 
 
+studiesRouter.route('/:study_id/requests')
+    .get(
+        function(req, res){
+            experiments.get_requests(req.user_id, parseInt(req.params.study_id))
+                .then(function (requests) {
+                    res.json({requests});
+                })
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
+        });
+
+
+
 studiesRouter.route('/:study_id/collaboration')
     .delete(
         function(req, res, next){
