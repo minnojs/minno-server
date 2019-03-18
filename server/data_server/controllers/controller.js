@@ -18,6 +18,7 @@ const defaultValueName = 'data'; // name used for non json items in data arrays
 const dataPrefix = ''; //prefix for items in the data array
 const dataFileLocation = config.base_folder;
 const dataFolder = config.dataFolder;
+const maxRowsInMemory=1000000;
 
 exports.insertData = function(req, res) {
 	var newData = new Data(req.body);
@@ -64,6 +65,8 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	var rowSplitString = '\t';
 	var fileSuffix = '.txt';
 	var fileConfig = {};
+	var datacount=0;
+	var useDataArray=true;
 	findObject.studyId = studyId;
 	if(Array.isArray(studyId))
 	{
@@ -110,45 +113,83 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 		details: findObject,
 		requestId: currentTime
 	};
-
+	
 	var newDataRequest = new DataRequest(dataObject);
-	var cursor = Data.find(findObject).cursor();
+	var newMapArray=[maxRowsInMemory];
+	var cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		dataEntry = JSON.parse(JSON.stringify(dataEntry));
 		var newMaps = getInitialVarMap(dataEntry);
+		if(useDataArray){
+		newMapArray[datacount]=newMaps;
+		datacount++;}
+		if(datacount>=maxRowsInMemory) //query is too large to store in memory
+		{
+			useDataArray=false;
+			datacount=0;
+			newMapArray=[]; 
+		}
 		newMaps.forEach(function(newMap) {
 			updateMap(dataMaps, newMap, fileSplitVar);
 		});
+			
+	};
 
-	}
 	if (Object.keys(dataMaps).length == 0) {
 
         throw {status:500, message: 'ERROR: No data!'};
 	}
 	await fileSetup(fileConfig);
-
+if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
+{
+	for(var x=0;x<datacount;x++){
+		var ewMaps=newMapArray[datacount];
+		for await (var newMap of newMaps)
+		{
+			
+						if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+							var filename = defaultDataFilename;
+						} else {
+							var filename = newMap[fileSplitVar];
+						}
+						var dataMap = dataMaps[filename];
+						var row = mapToRow(dataMap, newMap, filename);			
+					    writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+		}
+	}
+	
+}
+	else
+{
 	cursor = Data.find(findObject).cursor();
+	var dataCount=0;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		
+		datacount++;
 		if(typeof fileFormat !== 'undefined' && fileFormat=='json')
 		{
-			await writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
+			 writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
 			continue;
 		}
-		dataEntry = JSON.parse(JSON.stringify(dataEntry));
+		//dataEntry = JSON.parse(JSON.stringify(dataEntry));
 		newMaps = getInitialVarMap(dataEntry);
-		await asyncForEach(newMaps, async function(newMap) {
-			if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
-				var filename = defaultDataFilename;
-			} else {
-				var filename = newMap[fileSplitVar];
-			}
-			var dataMap = dataMaps[filename];
-			var row = mapToRow(dataMap, newMap, filename);			
-			await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
-		});
-	}
+		for await (var newMap of newMaps)
+		{
+			
+						if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+							var filename = defaultDataFilename;
+						} else {
+							var filename = newMap[fileSplitVar];
+						}
+						var dataMap = dataMaps[filename];
+						var row = mapToRow(dataMap, newMap, filename);			
+					    writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+		}
+	}}
+	
 	await closeFiles(files);
+	if(dataCount==0) {
+		throw {status:500, message: 'ERROR: No data!'};
+	}
+	
 	return zipFiles(fileConfig);
 
 
@@ -181,6 +222,7 @@ exports.newStudyInstance = function(req, res) {
 		res.json(study);
 	});
 };
+
 var getInitialVarMap = function(data) {
 	var varMap = {};
 	var varMaps = [];
@@ -199,14 +241,14 @@ var getInitialVarMap = function(data) {
 		}
 	});
 	var item = data.data;
-	try {
+	/*try {
 		item = JSON.parse(item);
-	} catch (e) {}
+	} catch (e) {}*/
 	var pushVarMaps = false;
 	if ((item.length > 0 && typeof item == 'object')) {
 		item.forEach(function(row, index) {
 			if (Object.keys(row).length > 0 && typeof row == 'object') {
-				varMaps.push(getVarMap(row, dataPrefix, JSON.parse(JSON.stringify(varMap))));
+				varMaps.push(getVarMap(row, dataPrefix, varMap));//JSON.parse(JSON.stringify(varMap))));
 
 			} else {
 				if (varMap[defaultValueName + varSplit + index] == null) {
@@ -248,10 +290,10 @@ var getVarMap = function(data, prefix, map) {
 		}
 
 
-		try {
+		/*try {
 			if (typeof item == 'object'){
 			item = JSON.parse(item);}
-		} catch (e) {}
+		} catch (e) {}*/
 		if (Array.isArray(item)) {
 			map = getVarMap(item, prefix + key + varSplit, map);
 		} else {
