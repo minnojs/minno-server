@@ -142,7 +142,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 {
 	for(var x=0;x<datacount;x++){
-		var ewMaps=newMapArray[datacount];
+		var newMaps=newMapArray[x];
 		for await (var newMap of newMaps)
 		{
 			
