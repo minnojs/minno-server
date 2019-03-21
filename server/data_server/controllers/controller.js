@@ -118,7 +118,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	var newMapArray=[maxRowsInMemory];
 	var cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		console.log(JSON.stringify(dataEntry) +" is DE")
 		var newMaps = getInitialVarMap(dataEntry);
+		console.log(newMaps);
 		if(useDataArray){
 		newMapArray[datacount]=newMaps;
 		datacount++;}
@@ -248,7 +250,7 @@ var getInitialVarMap = function(data) {
 	if ((item.length > 0 && typeof item == 'object')) {
 		item.forEach(function(row, index) {
 			if (Object.keys(row).length > 0 && typeof row == 'object') {
-				varMaps.push(getVarMap(row, dataPrefix, varMap));//JSON.parse(JSON.stringify(varMap))));
+				varMaps.push(getVarMap(row, dataPrefix,  Object.assign({}, varMap)));//JSON.parse(JSON.stringify(varMap))));
 
 			} else {
 				if (varMap[defaultValueName + varSplit + index] == null) {
