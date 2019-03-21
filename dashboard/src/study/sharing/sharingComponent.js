@@ -28,8 +28,10 @@ let collaborationComponent = {
             do_add_collaboration,
             do_add_link,
             do_revoke_link,
-            do_make_public
+            do_make_public,
+            permission_map
         };
+
         function load() {
             get_collaborations(m.route.param('studyId'))
                 .then(response =>{ctrl.users(response.users);
@@ -78,17 +80,17 @@ let collaborationComponent = {
                     m('p', 'Enter collaborator\'s user name:'),
                     m('input.form-control', {placeholder: 'User name', value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
-                    m('p.space', 'Select users\'s permissions:'),
+                    m('p.space', 'Select user\'s study file access:'),
                     m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
-                        m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Can edit'),
+                        m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Edit'),
                         m('option',{value:'read only', selected: ctrl.permission() === 'read only'}, 'Read only'),
-                        m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'Invisible'),
+                        m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'No access'),
 
                     ]),
                     m('p.space', 'Select data visibility:'),
                     m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
-                        m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
-                        m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
+                        m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Full'),
+                        m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'No access')
                     ]),
                     m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
                 ])})
@@ -192,14 +194,14 @@ let collaborationComponent = {
                                 m('.row', [
                                     m('.col-xs-4',
                                         m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
-                                            m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Can edit'),
+                                            m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
                                             m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                            m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'Invisible')
+                                            m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'No access')
                                         ])),
                                     m('.col-xs-4',
                                         m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
-                                            m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Visible'),
-                                            m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'Invisible')
+                                            m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
+                                            m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
                                         ])),
                                 ])
                             ]),

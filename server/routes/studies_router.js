@@ -122,7 +122,18 @@ studiesRouter.route('/:study_id/requests')
                 .catch(err=> {
                     res.status(err.status || 500).json({message: err.message});
                 });
-        });
+        })
+    .delete(function(req, res){
+        experiments.delete_request(req.user_id, parseInt(req.params.study_id), req.body.request_id)
+            .then(function (requests) {
+                res.json({requests});
+            })
+            .catch(err=> {
+                res.status(err.status || 500).json({message: err.message});
+            });
+
+    })
+;
 
 
 

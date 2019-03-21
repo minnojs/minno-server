@@ -111,7 +111,6 @@ let sess;
 
 /********************************************/
 
-
 basePathRouter.route('/download').get(
     function(req, res){
         sess = req.session;
@@ -122,6 +121,18 @@ basePathRouter.route('/download').get(
         files.download_zip(req.query.path, res);
     }
 );
+
+basePathRouter.route('/download_data')
+    .get(function(req, res){
+        sess = req.session;
+        if(!sess.user){
+            res.statusCode = 403;
+            return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+        }
+        files.download_data(req.session.user.id, req.query.path, res);
+    })
+
+;
 
 
 mongoose.Promise = global.Promise;

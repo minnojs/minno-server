@@ -12858,11 +12858,16 @@
     var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
 
 
+    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
+        method: 'delete',
+        body: {request_id: request_id}
+
+    }); };
+
     var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
         method: 'post',
         body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
-    }); }
-    ;
+    }); };
 
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
         method: 'put',
@@ -15575,6 +15580,7 @@
                 study_id:m.prop(study_id),
                 exps: exps,
                 versions: versions,
+                ask_delete_request: ask_delete_request,
                 requests: m.prop([]),
                 studies: m.prop([]),
                 version_id: m.prop(''),
@@ -15667,11 +15673,10 @@
                 ])
             ]),
             ctrl.loaded() ? '' : m('.loader'),
-            show_requests(ctrl.requests),
+            show_requests(ctrl),
             ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
             !ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
 
-            !ctrl.link() ? '' : m('input-group-addon', ['Your file is ready for downloading: ', m('a', {href: ctrl.link()}, ctrl.link())]),
 
             ctrl.downloaded() ? '' : m('.loader'),
             m('.text-xs-right.btn-toolbar',[
@@ -15699,8 +15704,16 @@
             })
             .catch(function (err){ return ctrl.error(err.message); })
             .then(function (){ return ctrl.downloaded(true); })
+            .then(function (){ return load_requests(ctrl); })
 
             .then(m.redraw);
+    }
+
+    function ask_delete_request(study_id, request_id, ctrl){
+        return delete_request(study_id, request_id)
+            .then(function (){ return load_requests(ctrl); })
+            .then(m.redraw);
+
     }
 
     // helper functions for the day buttons
@@ -15738,7 +15751,8 @@
         ctrl.loaded.bind(null, false);
         var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
         ctrl.versions = new_study.versions;
-        return load_exps(ctrl);
+        load_exps(ctrl);
+        load_requests(ctrl);
 
     }
 
@@ -15769,13 +15783,17 @@
     function load_requests(ctrl){
         get_requests(ctrl.study_id())
             .then(function (response) { return ctrl.requests(response.requests); })
+            .then(function (){
+                if (ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length)
+                    setTimeout(load_requests(ctrl), 5000);
+            })
             .catch(ctrl.error)
             .then(ctrl.loaded.bind(null, true))
             .then(m.redraw);
     }
 
-    function show_requests(requests){
-        return requests().length === 0
+    function show_requests(ctrl){
+        return ctrl.requests().length === 0
             ?
             ''
             :
@@ -15790,7 +15808,7 @@
                     ])
                 ]),
                 m('tbody',
-                    requests().map(function (download) { return m('tr', [
+                    ctrl.requests().map(function (download) { return m('tr', [
                         m('td', [
                             formatDate(new Date(download.creation_date)),
                             '  ',
@@ -15827,17 +15845,19 @@
 
                         m('td', size_format(download.size)),
                         m('td', [
-                            m('a', {href:(baseUrl + "/download?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                            m('a', {href:(baseUrl + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
                             m('i', ' | '),
-                            m('a', {href:(baseUrl + "/download?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-close'))
+                            m('a', {href:'..', onclick: function() {ask_delete_request(download.study_id, download._id, ctrl); return false;}}, m('i.fa.fa-close'))
                         ]),
-                        m('td', m('span.label.label-success', 'Complete')),
-
+                        m('td', m('span.label.label-success', download.status)),
                     ]); })
                 )]);
     }
 
     function size_format(bytes){
+        if (!bytes)
+            return '-';
+
         var thresh = 1024;
         if(Math.abs(bytes) < thresh) {
             return bytes + ' B';
@@ -18956,8 +18976,10 @@
                 do_add_collaboration: do_add_collaboration,
                 do_add_link: do_add_link,
                 do_revoke_link: do_revoke_link,
-                do_make_public: do_make_public
+                do_make_public: do_make_public,
+                permission_map: permission_map
             };
+
             function load() {
                 get_collaborations(m.route.param('studyId'))
                     .then(function (response) {ctrl.users(response.users);
@@ -19009,17 +19031,17 @@
                         m('p', 'Enter collaborator\'s user name:'),
                         m('input.form-control', {placeholder: 'User name', value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
-                        m('p.space', 'Select users\'s permissions:'),
+                        m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
-                            m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Can edit'),
+                            m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Edit'),
                             m('option',{value:'read only', selected: ctrl.permission() === 'read only'}, 'Read only'),
-                            m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'Invisible'),
+                            m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'No access'),
 
                         ]),
                         m('p.space', 'Select data visibility:'),
                         m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
-                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Visible'),
-                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'Invisible')
+                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Full'),
+                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'No access')
                         ]),
                         m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
                     ]); }})
@@ -19123,14 +19145,14 @@
                                     m('.row', [
                                         m('.col-xs-4',
                                             m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
-                                                m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Can edit'),
+                                                m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
                                                 m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                                m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'Invisible')
+                                                m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'No access')
                                             ])),
                                         m('.col-xs-4',
                                             m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
-                                                m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Visible'),
-                                                m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'Invisible')
+                                                m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
+                                                m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
                                             ])),
                                     ])
                                 ]),

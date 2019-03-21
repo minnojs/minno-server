@@ -9,9 +9,10 @@ const studies_comp = require('./studies');
 const experiments  = require('./experiments');
 const dropbox      = require('./dropbox');
 const utils        = require('./utils');
-const {has_read_permission, has_write_permission} = studies_comp;
+const {has_read_permission, has_write_permission, has_read_data_permission} = studies_comp;
 const urljoin       = require('url-join');
 const url = require('url');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 function walk(folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
@@ -81,8 +82,7 @@ function create_folder(user_id, study_id, folder_id) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
         folder_id = urlencode.decode(folder_id);
-        const folder_path = path.join(config.user_folder,study_data.folder_name,folder_id);
-
+        const folder_path = path.join(config.user_folder, study_data.folder_name, folder_id);
         return fs.pathExists(folder_path)
         .then(existing => existing
             ? Promise.reject({status:500, message: 'ERROR: folder aleady exists in FS!'})
@@ -139,19 +139,55 @@ function delete_files(user_id, study_id, files) {
 }
 
 function download_zip(pth, res) {
-    return res.download(path.join(config.base_folder , config.dataFolder,pth), pth, function(err){
-        if (err) {
-            return res.status(err.status || 500).json({message:err.message});
-        } else {
-            fs.remove(path.join(config.base_folder , config.dataFolder,pth));
-        }
-    });
-
+    const full_path = path.join(config.base_folder , config.zip_folder, pth);
+    return fs.pathExists(full_path)
+        .then(exist=>
+            !exist ?
+                res.status(500).json({message: 'File doesn\'t exist'})
+                :
+                res.download(full_path, pth, function (err) {
+                    if (err) {
+                        return res.status(err.status || 500).json({message: err.message});
+                    } else {
+                        fs.remove(path.join(config.base_folder, config.dataFolder, pth));
+                    }
+                })
+        );
 }
+
+
+function download_data(user_id, pth, res) {
+    console.log('xx');
+    const full_path = path.join(config.base_folder, config.dataFolder, pth);
+    return connection.then(function (db) {
+        const data_requests = db.collection('data_requests');
+        return data_requests.findOne({path: pth})
+            .then(request => {
+                return !request ?
+                    res.status(500).json({message: 'File doesn\'t exist'})
+                    :
+                    has_read_data_permission(user_id, request.study_id)
+                    .then(()=>
+                        fs.pathExists(full_path)
+                            .then(exist=>
+                                !exist ?
+                                    res.status(500).json({message: 'File doesn\'t exist'})
+                                    :
+                                    res.download(full_path, pth, function (err) {
+                                        if (err)
+                                            return res.status(err.status || 500).json({message: err.message});
+                                    })
+                            )
+                    );
+            })
+            .catch(err=>res.status(err.status || 500).json(err.message));
+    });
+}
+
 
 function download_files(user_id, study_id, files) {
     const zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
-    const zip_path = config.base_folder + config.dataFolder + zip_name;
+    const zip_path = config.base_folder + config.zip_folder + zip_name;
     const zip_file = zip_path+'.zip';
     return has_read_permission(user_id, study_id)
         .then(function({study_data}){
@@ -248,4 +284,4 @@ function upload(user_id, study_id, req) {
     });
 }
 
-module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, rename_file, copy_file, upload};
+module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, download_data, rename_file, copy_file, upload};

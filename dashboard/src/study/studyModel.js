@@ -43,11 +43,16 @@ export let get_exps = (study_id) => fetchJson(get_exps_url(study_id));
 export let get_requests = (study_id) => fetchJson(get_requests_url(study_id));
 
 
+export let delete_request = (study_id, request_id) => fetchJson(get_requests_url(study_id), {
+    method: 'delete',
+    body: {request_id}
+
+});
+
 export let get_data = (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) => fetchJson(get_exps_url(study_id), {
     method: 'post',
     body: {exp_id, version_id, file_format, file_split, start_date, end_date}
-})
-;
+});
 
 export const update_study = (study_id, body) => fetchJson(get_url(study_id), {
     method: 'put',

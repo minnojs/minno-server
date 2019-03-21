@@ -1,6 +1,6 @@
 export default args => m.component(createMessage, args);
 import {dateRangePicker} from 'utils/dateRange';
-import {get_exps, get_data, load_studies, get_requests} from '../study/studyModel';
+import {get_exps, get_data, load_studies, get_requests, delete_request} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
 
@@ -12,6 +12,7 @@ let createMessage = {
             study_id:m.prop(study_id),
             exps,
             versions,
+            ask_delete_request,
             requests: m.prop([]),
             studies: m.prop([]),
             version_id: m.prop(''),
@@ -101,11 +102,10 @@ let createMessage = {
             ])
         ]),
         ctrl.loaded() ? '' : m('.loader'),
-        show_requests(ctrl.requests),
+        show_requests(ctrl),
         ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
         !ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
 
-        !ctrl.link() ? '' : m('input-group-addon', ['Your file is ready for downloading: ', m('a', {href: ctrl.link()}, ctrl.link())]),
 
         ctrl.downloaded() ? '' : m('.loader'),
         m('.text-xs-right.btn-toolbar',[
@@ -132,8 +132,16 @@ function ask_get_data(ctrl){
         })
         .catch(err=>ctrl.error(err.message))
         .then(()=>ctrl.downloaded(true))
+        .then(()=>load_requests(ctrl))
 
         .then(m.redraw);
+}
+
+function ask_delete_request(study_id, request_id, ctrl){
+    return delete_request(study_id, request_id)
+        .then(()=>load_requests(ctrl))
+        .then(m.redraw);
+
 }
 
 // helper functions for the day buttons
@@ -166,7 +174,8 @@ function select_study(ctrl, study_id){
     ctrl.loaded.bind(null, false);
     const new_study = ctrl.studies().filter(study=>study.id==study_id)[0];
     ctrl.versions = new_study.versions;
-    return load_exps(ctrl);
+    load_exps(ctrl);
+    load_requests(ctrl);
 
 }
 
@@ -197,13 +206,17 @@ function load_exps(ctrl){
 function load_requests(ctrl){
     get_requests(ctrl.study_id())
         .then(response => ctrl.requests(response.requests))
+        .then(()=>{
+            if (ctrl.requests().filter(request=>request.status==='in progress').length)
+                setTimeout(load_requests(ctrl), 5000);
+        })
         .catch(ctrl.error)
         .then(ctrl.loaded.bind(null, true))
         .then(m.redraw);
 }
 
-function show_requests(requests){
-    return requests().length === 0
+function show_requests(ctrl){
+    return ctrl.requests().length === 0
         ?
         ''
         :
@@ -218,7 +231,7 @@ function show_requests(requests){
                 ])
             ]),
             m('tbody',
-                requests().map(download => m('tr', [
+                ctrl.requests().map(download => m('tr', [
                     m('td', [
                         formatDate(new Date(download.creation_date)),
                         '  ',
@@ -255,17 +268,19 @@ function show_requests(requests){
 
                     m('td', size_format(download.size)),
                     m('td', [
-                        m('a', {href:`${baseUrl}/download?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                        m('a', {href:`${baseUrl}/download_data?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-download')),
                         m('i', ' | '),
-                        m('a', {href:`${baseUrl}/download?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-close'))
+                        m('a', {href:'..', onclick: function() {ask_delete_request(download.study_id, download._id, ctrl); return false;}}, m('i.fa.fa-close'))
                     ]),
-                    m('td', m('span.label.label-success', 'Complete')),
-
+                    m('td', m('span.label.label-success', download.status)),
                 ]))
             )]);
 }
 
 function size_format(bytes){
+    if (!bytes)
+        return '-';
+
     const thresh = 1024;
     if(Math.abs(bytes) < thresh) {
         return bytes + ' B';
