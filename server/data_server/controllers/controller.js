@@ -118,9 +118,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	var newMapArray=[maxRowsInMemory];
 	var cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		console.log(JSON.stringify(dataEntry) +" is DE")
 		var newMaps = getInitialVarMap(dataEntry);
-		console.log(newMaps);
 		if(useDataArray){
 		newMapArray[datacount]=newMaps;
 		datacount++;}
