@@ -248,7 +248,7 @@ var getInitialVarMap = function(data) {
 	if ((item.length > 0 && typeof item == 'object')) {
 		item.forEach(function(row, index) {
 			if (Object.keys(row).length > 0 && typeof row == 'object') {
-				varMaps.push(getVarMap(row, dataPrefix, varMap));//JSON.parse(JSON.stringify(varMap))));
+				varMaps.push(getVarMap(row, dataPrefix,  Object.assign({}, varMap)));//JSON.parse(JSON.stringify(varMap))));
 
 			} else {
 				if (varMap[defaultValueName + varSplit + index] == null) {
@@ -396,19 +396,29 @@ var zipFolder = async function(zipPath, zipFolder) {
 	await archive.finalize();
 }
 var fileSetup = async function(fileConfig) {
+	var dataPath = dataFolder + '/';
 	var currentDate = getDateString(0);
-	var currentTime = new Date();
-	currentTime = currentTime.getTime();
-	var dataPath = dataFolder + currentDate + '/';
+		var currentTime = new Date();
+		currentTime = currentTime.getTime();
+	var zipName=currentTime+makeid(8);
 	var filePrefix = dataFileLocation + dataPath;
 	if (!fs.existsSync(filePrefix)) {
 		await fs.mkdir(filePrefix);
 	}
-	fileConfig.zipPath = filePrefix + currentTime + '.zip';
-	filePrefix += +currentTime + '/';
+	fileConfig.zipPath = filePrefix + zipName + '.zip';
+	filePrefix += zipName + '/';
 	await fs.mkdir(filePrefix);
 	fileConfig.filePrefix = filePrefix;
-	fileConfig.zipName = currentDate + '/' + currentTime + '.zip';
+	fileConfig.zipName = zipName + '.zip';
+}
+var makeid= function(length) {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < length; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
 }
 var closeFiles= async function(files)
 {
@@ -463,6 +473,7 @@ var writeDataRowToFile = async function(row, map, filename, rowSplitString, file
 var zipFiles = async function(fileConfig) {
 	await zipFolder(fileConfig.zipPath, fileConfig.filePrefix);
 	fs.remove(fileConfig.filePrefix); //don't need to wait on folder to be deleted after it has been zipped
+	console.log(fileConfig.zipName);
 	return fileConfig.zipName;
 }
 
