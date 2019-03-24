@@ -15860,7 +15860,7 @@
 
         var thresh = 1024;
 
-        var units =  ['kB','MB','GB','TB','PB','EB','ZB','YB'];
+        var units =  ['B', 'kB','MB','GB','TB','PB','EB','ZB','YB'];
         var u = 0;
         while(Math.abs(bytes) >= thresh)
         {
