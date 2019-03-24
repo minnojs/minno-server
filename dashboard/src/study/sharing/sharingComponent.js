@@ -28,8 +28,7 @@ let collaborationComponent = {
             do_add_collaboration,
             do_add_link,
             do_revoke_link,
-            do_make_public,
-            permission_map
+            do_make_public
         };
 
         function load() {
