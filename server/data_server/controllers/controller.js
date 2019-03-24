@@ -397,7 +397,10 @@ var zipFolder = async function(zipPath, zipFolder) {
 }
 var fileSetup = async function(fileConfig) {
 	var dataPath = dataFolder + '/';
-	var zipName=makeid(15);
+	var currentDate = getDateString(0);
+		var currentTime = new Date();
+		currentTime = currentTime.getTime();
+	var zipName=currentTime+makeid(8);
 	var filePrefix = dataFileLocation + dataPath;
 	if (!fs.existsSync(filePrefix)) {
 		await fs.mkdir(filePrefix);
