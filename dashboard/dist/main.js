@@ -15785,7 +15785,7 @@
             .then(function (response) { return ctrl.requests(response.requests); })
             .then(function (){
                 if (ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length)
-                    setTimeout(load_requests(ctrl), 5000);
+                    setTimeout(function (){ return load_requests(ctrl); }, 5000);
             })
             .catch(ctrl.error)
             .then(ctrl.loaded.bind(null, true))
@@ -15860,7 +15860,7 @@
 
         var thresh = 1024;
 
-        var units =  ['B', 'kB','MB','GB','TB','PB','EB','ZB','YB'];
+        var units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
         var u = 0;
         while(Math.abs(bytes) >= thresh)
         {

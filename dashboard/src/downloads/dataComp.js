@@ -208,7 +208,7 @@ function load_requests(ctrl){
         .then(response => ctrl.requests(response.requests))
         .then(()=>{
             if (ctrl.requests().filter(request=>request.status==='in progress').length)
-                setTimeout(load_requests(ctrl), 5000);
+                setTimeout(()=>load_requests(ctrl), 5000);
         })
         .catch(ctrl.error)
         .then(ctrl.loaded.bind(null, true))
@@ -283,7 +283,7 @@ function size_format(bytes){
 
     const thresh = 1024;
 
-    const units =  ['B', 'kB','MB','GB','TB','PB','EB','ZB','YB'];
+    const units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
     let u = 0;
     while(Math.abs(bytes) >= thresh)
     {
