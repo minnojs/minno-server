@@ -25,6 +25,7 @@
   "dependencies": {
     "archiver": "^2.1.1",
     "archiver-promise": "^1.0.0",
+    "body-parser": "^1.18.2",
     "bower": "^1.6.8",
     "cors": "^2.8.4",
     "csv-stringify": "^3.1.1",
@@ -38,12 +39,14 @@
     "fetch": "^1.1.0",
     "formidable": "^1.2.0",
     "fs-extra": "^5.0.0",
-    "mongoose": "^5.0.10",
+    "mongoose": "^5.4.21",
     "mongoose_schema-json": "^1.0.3",
+    "multer": "^1.1.0",
     "node-dropbox": "^0.1.8",
     "node-fetch": "^2.2.0",
     "node-input-validator": "^2.3.3",
     "nodemailer-promise": "^2.0.0",
+    "nodemon": "^1.18.10",
     "promisify-node": "^0.5.0",
     "request-promise": "^4.2.2",
     "sanitize-filename": "^1.6.1",
@@ -54,9 +57,6 @@
     "valid-filename": "^2.0.1",
     "walkdir": "0.0.12",
     "zip-dir": "^1.0.2",
-    "nodemon": "^1.17.2",
-    "multer": "^1.1.0",
-    "body-parser": "^1.18.2",
     "zip-folder": "^1.0.0"
   },
   "devDependencies": {

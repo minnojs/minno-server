@@ -43,6 +43,13 @@ a.no-decoration {text-decoration: none; color:inherit}
 	z-index: 5;
 }
 
+.info-box4data {
+  width:600px;
+  margin-top:-120px;
+  padding-left:0px
+}
+
+
 *:hover + .info-box, .info-box:hover {
 	display: inline-block;
 }

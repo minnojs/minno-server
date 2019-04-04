@@ -15797,6 +15797,9 @@
             ?
             ''
             :
+            [
+
+
             m('table', {class:'table table-striped table-hover'}, [
                 m('thead', [
                     m('tr', [
@@ -15813,31 +15816,63 @@
                             formatDate(new Date(download.creation_date)),
                             '  ',
                             m('i.fa.fa-info-circle'),
-                            m('.info-box', [
+                            m('.info-box.info-box4data',[
                                 m('.card', [
-                                    m('.card-header', 'Request Details'),
-                                    m('ul.list-group.list-group-flush',[
-                                        m('li.list-group-item', [
-                                            m('strong', 'Creation Date: '), formatDate(new Date(download.creation_date))
+                                    m('.row-xs-10.list-group-item2.row-centered', [
+                                        m('.col-xs-10',[
+                                            m('strong', 'Request Details')
+                                        ])
+                                    ]),
+
+                                    m('.row-xs-10.list-group-item2', [
+                                        m('.col-xs-3',[
+                                            m('strong', 'Creation Date: ')
                                         ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'Start Date: '), formatDate(new Date(download.start_date))
-                                        ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'End Date: '), formatDate(new Date(download.end_date))
-                                        ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'File Format: ', download.file_format)
-                                        ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'File Split: ', download.file_split)
-                                        ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'Experimant Id: ', download.exp_id.length>1 ? 'All' : download.exp_id[0])
-                                        ]),
-                                        m('li.list-group-item', [
-                                            m('strong', 'Version Id: ', download.version_id.length>1 ? 'All' : download.version_id[0])
-                                        ]),
+                                        m('.col-xs-7',[
+                                            formatDate(new Date(download.creation_date))
+                                        ])
+                                    ]),
+
+                                    m('.row-xs-10.list-group-item2', [
+                                        m('.col-xs-3',
+                                            m('strong', 'Start Date: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            formatDate(new Date(download.start_date))
+                                        ),
+                                        m('.col-xs-3',
+                                            m('strong', 'End Date: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            formatDate(new Date(download.end_date))
+                                        )
+                                    ]),
+                                    m('.row-xs-10.list-group-item2', [
+                                        m('.col-xs-3',
+                                            m('strong', 'File Format: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            download.file_format
+                                        ),
+                                        m('.col-xs-3',
+                                            m('strong', 'File Split: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            download.file_split
+                                        )
+                                    ]),
+                                    m('.row-xs-10.list-group-item2', [
+                                        m('.col-xs-3',
+                                            m('strong', 'Experimant Id: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            download.exp_id.length>1 ? 'All' : download.exp_id[0]
+                                        ),
+                                        m('.col-xs-3',
+                                            m('strong', 'Version Id: ')
+                                        ),
+                                        m('.col-xs-2',
+                                            download.version_id.length>1 ? 'All' : download.version_id[0]                                    )
                                     ])
                                 ])
                             ])
@@ -15851,7 +15886,8 @@
                         ]),
                         m('td', m('span.label.label-success', download.status)),
                     ]); })
-                )]);
+                )])
+            ];
     }
 
     function size_format(bytes){
