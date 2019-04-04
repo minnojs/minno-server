@@ -219,11 +219,7 @@ function show_requests(ctrl){
     return ctrl.requests().length === 0
         ?
         ''
-        :
-        [
-
-
-        m('table', {class:'table table-striped table-hover'}, [
+        :[m('table', {class:'table table-striped table-hover'}, [
             m('thead', [
                 m('tr', [
                     // m('th', 'ID')

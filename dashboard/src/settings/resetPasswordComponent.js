@@ -13,7 +13,9 @@ let resetPasswordComponent = {
             password_error: m.prop(''),
             password_changed:false,
             code: m.prop(''),
-            do_set_password
+            do_set_password,
+            loaded:m.prop(false),
+            external:m.prop(true)
         };
         ctrl.code(m.route.param('code')!== undefined ? m.route.param('code') : '');
         is_recovery_code(ctrl.code())
@@ -21,8 +23,10 @@ let resetPasswordComponent = {
                 m.route('/');
             })
             .then(() => {
-                m.redraw();
-            });
+                ctrl.external(false);
+                return m.redraw();
+            })
+            .then(ctrl.loaded(true));
 
         return ctrl;
         
@@ -38,7 +42,13 @@ let resetPasswordComponent = {
         }
     },
     view(ctrl){
-        return m('.activation.centrify', {config:fullHeight},[
+
+
+        return !ctrl.loaded()
+            ?
+            m('.loader')
+            :
+            m('.activation.centrify', {config:fullHeight},[
             ctrl.password_changed
                 ?
                 [

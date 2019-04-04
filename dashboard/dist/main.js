@@ -15796,11 +15796,7 @@
         return ctrl.requests().length === 0
             ?
             ''
-            :
-            [
-
-
-            m('table', {class:'table table-striped table-hover'}, [
+            :[m('table', {class:'table table-striped table-hover'}, [
                 m('thead', [
                     m('tr', [
                         // m('th', 'ID')
@@ -17802,7 +17798,7 @@
                             m('h5', [("Added " + (ctrl.username()) + " successfully")]),
                             m('.card.card-inverse.col-md-10',
                                 [m('label', 'Send the following link to user to allow them to activate their account and to change their password.'),
-                                    copyUrlContent('/static/?/activation/'+ctrl.activation_code())()
+                                    copyUrlContent(ctrl.activation_code())()
                                 ])
                         ]:
                         [m('i.fa.fa-thumbs-up.fa-5x.m-b-1'), m('h5', [ctrl.username(), ' successfully added (email sent)!'])]
@@ -18351,6 +18347,7 @@
                     config: getStartValue$3(ctrl.confirm)
                 })
             ]),
+            console.log(ctrl.external()),
             !ctrl.password_error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.password_error()),
             ctrl.external() ? '' : m('button.btn.btn-primary.btn-block', {onclick: ctrl.do_set_password},'Update')
         ])
@@ -18879,7 +18876,9 @@
                 password_error: m.prop(''),
                 password_changed:false,
                 code: m.prop(''),
-                do_set_password: do_set_password
+                do_set_password: do_set_password,
+                loaded:m.prop(false),
+                external:m.prop(true)
             };
             ctrl.code(m.route.param('code')!== undefined ? m.route.param('code') : '');
             is_recovery_code(ctrl.code())
@@ -18887,8 +18886,10 @@
                     m.route('/');
                 })
                 .then(function () {
-                    m.redraw();
-                });
+                    ctrl.external(false);
+                    return m.redraw();
+                })
+                .then(ctrl.loaded(true));
 
             return ctrl;
             
@@ -18904,7 +18905,13 @@
             }
         },
         view: function view(ctrl){
-            return m('.activation.centrify', {config:fullHeight},[
+
+
+            return !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+                m('.activation.centrify', {config:fullHeight},[
                 ctrl.password_changed
                     ?
                     [

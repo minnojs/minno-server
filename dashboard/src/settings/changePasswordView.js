@@ -20,6 +20,7 @@ export let password_body = ctrl => m('.card.card-inverse.col-md-4', [
                 config: getStartValue(ctrl.confirm)
             })
         ]),
+        console.log(ctrl.external()),
         !ctrl.password_error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.password_error()),
         ctrl.external() ? '' : m('button.btn.btn-primary.btn-block', {onclick: ctrl.do_set_password},'Update')
     ])

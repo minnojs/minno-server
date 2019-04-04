@@ -37,8 +37,7 @@ function set_password(user_id, password, confirm) {
 
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.findAndModify({_id: user_id},
-            [],
+        return users.findOneAndUpdate({_id: user_id},
             {$set: {pass: utils.sha1(password)}})
             .then(() => ({}));
     });
@@ -75,8 +74,7 @@ function set_email(user_id, email) {
                 return Promise.reject({status: 400, message: validator.errors.email.message});
             return connection.then(function (db) {
                 const users = db.collection('users');
-                return users.findAndModify({_id: user_id},
-                    [],
+                return users.findOneAndUpdate({_id: user_id},
                     {$set: {email: email}})
                     .then(() => ({}));
 
@@ -90,8 +88,7 @@ function set_dbx_token(user_id, access_token) {
         return Promise.reject({status:400, message: 'Missing access_token'});
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.findAndModify({_id: user_id},
-            [],
+        return users.findOneAndUpdate({_id: user_id},
             {$set: {dbx_token: access_token}})
             .then(()=>({}));
 
@@ -101,11 +98,9 @@ function set_dbx_token(user_id, access_token) {
 function revoke_dbx_token(user_id) {
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.findAndModify({_id: user_id},
-            [],
+        return users.findOneAndUpdate({_id: user_id},
             {$unset: {dbx_token: ''}})
             .then(()=>({}));
-
     });
 }
 
@@ -144,7 +139,7 @@ function get_users() {
 function update_role(user_id, role) {
     return connection.then(function (db) {
         const users = db.collection('users');
-        return users.update({_id: user_id}, {$set: {role: role}})
+        return users.updateOne({_id: user_id}, {$set: {role: role}})
             .then(user_data => (user_data));
     });
 }
@@ -153,14 +148,12 @@ function update_role(user_id, role) {
 function remove_user(user_id) {
     return connection.then(function (db) {
         const users = db.collection('users');
-        return users.remove({_id: user_id})
+        return users.deleteOne({_id: user_id})
             .then(user_data => (user_data));
     });
 }
 
 function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
-
-
     let validator = new Validator(
         {username, email, first_name, last_name},
         {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'}
@@ -197,16 +190,15 @@ function insert_new_user({username, first_name, last_name, email, role, password
                 })
                 .then(() => fs.ensureDir(userFolder))
 
-                .then(() => counters.findAndModify(
+                .then(() => counters.findOneAndUpdate(
                     {_id: 'user_id'},
-                    [],
                     {$inc: {'seq': 1}},
-                    {upsert: true, new: true, returnOriginal:false}
+                    {update: true, new: true, returnOriginal:false}
                 ))
                 .then(function (counter_data) {
                     const user_id = counter_data.value.seq;
                     const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
-                    return users.insert(user_obj)
+                    return users.insertOne(user_obj)
                         .then(response => {
                             if(password && confirm){
                                 set_password(response.ops[0]._id, password, confirm);
@@ -244,9 +236,8 @@ function set_user_by_activation_code(code, pass, pass_confirm)
 
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.findAndModify(
+        return users.findOneAndUpdate(
             {activation_code:code},
-            [],
             {$set: {pass:utils.sha1(pass)}, $unset: {activation_code: ''}})
             .then(function () {
                 return ({});
@@ -261,7 +252,7 @@ function reset_password_request(user_name)
     return connection.then(function (db) {
         const users = db.collection('users');
         const reset_code = utils.sha1(user_name + Math.floor(Date.now() / 1000));
-        return users.findAndModify({$or: [{user_name: user_name}, {email: user_name}]}, [], {$set: {reset_code: reset_code}})
+        return users.findOneAndUpdate({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
             .then(function(user_data)
             {
                 sender.send_mail(user_data.value.email, 'Restore password', 'reset_password', {url: config.server_url+'/dashboard/?/reset_password/'+reset_code});
@@ -285,7 +276,7 @@ function check_reset_code(code) {
 function use_reset_code(reset_code) {
     return connection.then(function (db) {
         const users = db.collection('users');
-        return users.update({reset_code: reset_code}, {$unset: {reset_code: 0}})
+        return users.updateOne({reset_code: reset_code}, {$unset: {reset_code: 0}})
             .then(() => ({}));
     });
 }

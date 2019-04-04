@@ -382,31 +382,30 @@ function insert_obj(user_id, study_props) {
         const counters = db.collection('counters');
         const studies  = db.collection('studies');
         const users    = db.collection('users');
-        return counters.findAndModify(
+        return counters.findOneAndUpdate(
             {_id:'study_id'},
-            [],
             {$inc: {seq: 1}},
-            {upsert: true, new: true, returnOriginal: false}
+            {update: true, new: true, returnOriginal: false}
         )
-            .then(function(counter_data){
-                const study_id = counter_data.value.seq;
-                study_obj._id = study_id;
-                study_obj.folder_name = `${study_obj.folder_name}-${study_id}`;
-                study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
+        .then(function(counter_data){
+            const study_id = counter_data.value.seq;
+            study_obj._id = study_id;
+            study_obj.folder_name = `${study_obj.folder_name}-${study_id}`;
+            study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
 
-                return studies.insert(study_obj);
-            })
-            .then(function(){
-                return users.updateOne(
-                    {_id: user_id},
-                    {$push: {studies: {id: study_obj._id, tags: []}}}
-                );
-            })
-            .then(function(){
-                const dir = path.join(config.user_folder, study_obj.folder_name);
-                const study_id = study_obj._id;
-                return {study_id, dir};
-            });
+            return studies.insertOne(study_obj);
+        })
+        .then(function(){
+            return users.updateOne(
+                {_id: user_id},
+                {$push: {studies: {id: study_obj._id, tags: []}}}
+            );
+        })
+        .then(function(){
+            const dir = path.join(config.user_folder, study_obj.folder_name);
+            const study_id = study_obj._id;
+            return {study_id, dir};
+        });
     });
 }
 
@@ -418,8 +417,6 @@ function update_obj(study_id, study_obj) {
     });
 }
 
-
-
 function delete_by_id(user_id, study_id) {
     return connection.then(function (db) {
         const studies   = db.collection('studies');
@@ -428,7 +425,6 @@ function delete_by_id(user_id, study_id) {
         );
     });
 }
-
 
 function update_study(user_id, study_id, update_body) {
     const modify_date = Date.now();
