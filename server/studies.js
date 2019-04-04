@@ -148,11 +148,11 @@ function remove_collaboration(user_id, study_id, collaboration_user_id){
         return has_read_permission(user_id, study_id)
             .then(()=>
                 Promise.all([
-                    studies.update({_id: study_id},
+                    studies.updateOne({_id: study_id},
                         {$pull: {users: {user_id: collaboration_user_id}}}),
-                    users.update({_id: collaboration_user_id},
+                    users.updateOne({_id: collaboration_user_id},
                         {$pull: {studies: {id: study_id}}}),
-                    users.update({_id: collaboration_user_id},
+                    users.updateOne({_id: collaboration_user_id},
                         {$pull: {pending_studies: {id: study_id}}})
                 ]));
     });
@@ -165,9 +165,9 @@ function update_collaboration(user_id, study_id, body){
         return has_read_permission(user_id, study_id)
             .then(()=>
                 Promise.all([
-                    studies.update({_id: study_id, users: { $elemMatch: {user_id:body.collaborator_id}}},
+                    studies.updateOne({_id: study_id, users: { $elemMatch: {user_id:body.collaborator_id}}},
                         {$set: body.permissions.permission ? {'users.$.permission': body.permissions.permission} : {'users.$.data_permission': body.permissions.data_permission}}),
-                    users.update({_id: body.collaborator_id, studies: { $elemMatch: {id: study_id}}},
+                    users.updateOne({_id: body.collaborator_id, studies: { $elemMatch: {id: study_id}}},
                         {$set: body.permissions.permission ? {'studies.$.permission': body.permissions.permission} : {'studies.$.data_permission': body.permissions.data_permission}})
 
                 ]));
@@ -190,9 +190,9 @@ function add_collaboration(user_id, study_id, collaborator_name, permission, dat
                         return studies.findOne({_id: study_id, users:{ $elemMatch: {user_id:collaborator_data._id}}})
                             .then(data=> data ? Promise.reject({status:500, message: 'ERROR: user already collaborated'}) :
                                 Promise.all([
-                                    studies.update({_id: study_id},
+                                    studies.updateOne({_id: study_id},
                                         {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission, data_permission, status:'pending'}}}),
-                                    users.update({_id: collaborator_data._id},
+                                    users.updateOne({_id: collaborator_data._id},
                                         {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
                                     sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration',
                                         {accept: config.server_url+'/dashboard/?/collaboration/'+accept,
@@ -221,17 +221,17 @@ function make_collaboration(user_id, code){
                     return Promise.reject({status:400, message:'wrong user'});
 
                 const study = user_data.pending_studies.filter(study=>study.accept===code || study.reject===code)[0];
-                return users.update({_id: user_data._id},
+                return users.updateOne({_id: user_data._id},
                     {$pull: {pending_studies: {id: study.id}}})
                     .then(function() {
                         if (study.accept === code)
                             return Promise.all([
-                                users.update({_id: user_data._id},
+                                users.updateOne({_id: user_data._id},
                                     {$push: {studies: {id: study.id, tags: []}}}),
-                                studies.update({_id: study.id, 'users.user_id':user_data._id},
+                                studies.updateOne({_id: study.id, 'users.user_id':user_data._id},
                                     {$unset: {'users.$.status': ''}})
                             ]);
-                        return studies.update({_id: study.id, 'users.user_id':user_data._id},
+                        return studies.updateOne({_id: study.id, 'users.user_id':user_data._id},
                             {$set: {'users.$.status': 'reject'}});
                     });
             });
@@ -291,7 +291,7 @@ function duplicate_study(user_id, study_id, new_study_name) {
 
 function delete_study(user_id, study_id) {
     return has_write_permission(user_id, study_id)
-        .then(()=>delete_by_id2(user_id, study_id)
+        .then(()=>delete_by_id(user_id, study_id)
             // .then(function(study_data) {
             //     const dir = path.join(config.user_folder, study_data.value.folder_name);
             //     return fs.pathExists(dir)
@@ -397,9 +397,8 @@ function insert_obj(user_id, study_props) {
                 return studies.insert(study_obj);
             })
             .then(function(){
-                return users.findAndModify(
+                return users.updateOne(
                     {_id: user_id},
-                    [],
                     {$push: {studies: {id: study_obj._id, tags: []}}}
                 );
             })
@@ -414,37 +413,19 @@ function insert_obj(user_id, study_props) {
 function update_obj(study_id, study_obj) {
     return connection.then(function (db) {
         const studies   = db.collection('studies');
-        return studies.findAndModify({_id:study_id},
-            [],
+        return studies.findOneAndUpdate({_id:study_id},
             {$set: study_obj});
     });
 }
 
-// function delete_by_id(user_id, study_id) {
-//     return connection.then(function (db) {
-//         const users   = db.collection('users');
-//         const studies   = db.collection('studies');
-//         return users
-//             .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
-//             .then(function(){return studies.findAndModify({_id:study_id},
-//                 [],
-//                 {remove: true});})
-//             .then(function(study_data){
-//                 return Promise.resolve(study_data);
-//             });
-//     });
-// }
 
-function delete_by_id2(user_id, study_id) {
+
+function delete_by_id(user_id, study_id) {
     return connection.then(function (db) {
         const studies   = db.collection('studies');
-        // return users
-        //     .update({_id:user_id}, {$pull: {studies: {id: study_id}}})
-        //     .then(function() {
-        return studies.update({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
+        return studies.updateOne({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
             {$set: {'users.$.deleted': true}}
-        );//.then(data=>console.log(data));
-    // });
+        );
     });
 }
 
@@ -498,7 +479,7 @@ function set_lock_status(user_id, study_id, status) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update({_id: study_id}, {$set: {locked: status}});
+                return studies.updateOne({_id: study_id}, {$set: {locked: status}});
             });
         });
 }
@@ -508,7 +489,7 @@ function update_modify(study_id) {
 
     return connection.then(function (db) {
         const studies   = db.collection('studies');
-        return studies.update({_id: study_id}, {$set: {modify_date}});
+        return studies.updateOne({_id: study_id}, {$set: {modify_date}});
     });
 }
 
@@ -516,7 +497,7 @@ function make_public(user_id, study_id, is_public) {
     return has_write_permission(user_id, study_id)
         .then(()=> connection.then(function (db) {
             const studies = db.collection('studies');
-            return studies.update({_id: study_id}, {$set: {is_public}});
+            return studies.updateOne({_id: study_id}, {$set: {is_public}});
         }));
 }
 
