@@ -192,6 +192,3 @@ studiesRouter.route('/:study_id/tags')
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
 
         });
-
-
-

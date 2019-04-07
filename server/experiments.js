@@ -54,8 +54,7 @@ function get_experiment_url (req) {
                         const base_url  = urljoin(config.relative_path, 'users', exp_data.folder_name,'/');
                         const path      = join(config.user_folder,  exp_data.folder_name,exp[0].file_id);
 
-                        return counters.findAndModify({_id:'session_id'},
-                            [],
+                        return counters.findOneAndUpdate({_id:'session_id'},
                             {'$inc': {'seq': 1}},
                             {upsert: true, new: true, returnOriginal: false})
                             .then(function(counter_data){
@@ -118,7 +117,7 @@ function update_request(request_id, path2file) {
     return connection.then(function (db) {
         return fs.stat(path.join(config.base_folder, config.dataFolder, path2file)).then(file_data=>{
             const data_requests = db.collection('data_requests');
-            return data_requests.update({_id: request_id},
+            return data_requests.updateOne({_id: request_id},
                 {$set:{
                     status: 'Ready',
                     path: path2file,
@@ -172,14 +171,13 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.findAndModify({_id: study_id, experiments: {$elemMatch:{file_id:file_id, descriptive_id: descriptive_id}}},
-                    [],
+                return studies.findOneAndUpdate({_id: study_id, experiments: {$elemMatch:{file_id:file_id, descriptive_id: descriptive_id}}},
                     {$unset:{'experiments.$.inactive': false}},
                     {upsert: false, new: true, returnOriginal: true})
                     .then(function(data){
                         const id = utils.sha1(study_id + file_id + descriptive_id + Math.random());
                         if(!data.lastErrorObject || !data.lastErrorObject.n)
-                            return studies.update({_id: study_id}, {
+                            return studies.updateOne({_id: study_id}, {
                                 $push: {
                                     experiments: {
                                         id: id,
@@ -211,13 +209,10 @@ function delete_experiment(user_id, study_id, file_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                // return studies.update({_id: study_id},
-                //     {$set:{'experiments': []}}
-                // )
                 return studies.findOne({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}})
                     .then(function(study_data){
                         const exps = study_data.experiments.map(exp=>exp.file_id!==file_id ? exp : {id:exp.id, file_id:exp.file_id, descriptive_id: exp.descriptive_id, inactive:true});
-                        return studies.update({_id: study_id},
+                        return studies.updateOne({_id: study_id},
                             {$set:{experiments: exps}}
                         );
                     });
@@ -230,8 +225,8 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update(
-                    {_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
+                return studies.updateOne(
+                    {_id: study_id, experiments:{$elemMatch:{file_id, inactive:{$ne:true}}}},
                     {$set:{'experiments.$.descriptive_id': descriptive_id}}
                 );
             });
@@ -243,7 +238,7 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
         .then(function() {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.update(
+                return studies.updateOne(
                     {_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
                     {$set:{'experiments.$.file_id':new_file_id}}
                 );

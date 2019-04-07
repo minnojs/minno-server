@@ -157,7 +157,6 @@ function download_zip(pth, res) {
 
 
 function download_data(user_id, pth, res) {
-    console.log('xx');
     const full_path = path.join(config.base_folder, config.dataFolder, pth);
     return connection.then(function (db) {
         const data_requests = db.collection('data_requests');

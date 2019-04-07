@@ -13046,10 +13046,10 @@
             content: m('div', [
                 m('input.form-control',  {placeholder: 'Enter new descriptive id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
-            ])}).then(function (response) { return response && study.update_experiment(file, descriptive_id()); })
-            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
-
-            .then(function (){file.exp_data.descriptive_id=descriptive_id; m.redraw();});
+            ])})
+            .then(function (response) { return response && study.update_experiment(file, descriptive_id())
+                .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
+                .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();}); });
     }; };
 
     var delete_experiment = function (file, study, notifications) { return function () {
