@@ -8,7 +8,7 @@ const path = require('path');
 const study_list = require('./bank/studyList');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
-mongoose.connect(config.mongo_url);
+mongoose.connect(config.mongo_url, {useNewUrlParser:true});
 const connection    = Promise.resolve(mongoose.connection);
 
 
