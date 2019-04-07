@@ -38,9 +38,8 @@ function update_study_tags(user_id, study_id, tags) {
             const study_obj = user_data.studies.find(study => study.id === study_id);
             let study_tags = study_obj.tags;
             tags.forEach(tag=>tag.used ? study_tags.push(tag.id): study_tags = study_tags.filter(el=>el !== tag.id));
-            return users.findAndModify(
+            return users.findOneAndUpdate(
                 {_id:user_id, studies: {$elemMatch: {id:study_id}} },
-                [],
                 {$set: {'studies.$.tags': study_tags}})
                 .then(()=>({tags:study_tags}));
         });
@@ -50,7 +49,7 @@ function update_study_tags(user_id, study_id, tags) {
 function insert_new_tag(user_id, tag_text, tag_color) {
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.update({_id: user_id}, {$push: {tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}}})
+        return users.updateOne({_id: user_id}, {$push: {tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}}})
             .then(function(user_result){
                 if (!user_result)
                     return Promise.reject({status:500, message: 'ERROR: internal error'});
@@ -70,7 +69,7 @@ function delete_tag(user_id, tag_id) {
                     return tag !== tag_id;
                 });
             });
-            return users.update({_id: user_id}, {$pull: {tags: {id: tag_id}}, $set: {studies: user.studies} })
+            return users.updateOne({_id: user_id}, {$pull: {tags: {id: tag_id}}, $set: {studies: user.studies} })
                 .then(function(user_result){
                     if (!user_result)
                         return Promise.reject({status:500, message: 'ERROR: internal error'});
@@ -82,7 +81,7 @@ function delete_tag(user_id, tag_id) {
 function update_tag(user_id, tag) {
     return connection.then(function (db) {
         const users = db.collection('users');
-        return users.update({_id: user_id, tags: { $elemMatch: {id:tag.id}}},
+        return users.updateOne({_id: user_id, tags: { $elemMatch: {id:tag.id}}},
             {$set: {'tags.$.text': tag.text, 'tags.$.color': tag.color}}
         )
         .then(function(tag_result){
