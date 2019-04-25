@@ -1,10 +1,10 @@
-export default args => m.component(createMessage, args);
+export default args => m.component(data_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
 import {get_exps, get_data, load_studies, get_requests, delete_request} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
 
-let createMessage = {
+let data_dialog = {
     controller({exps, dates, study_id, versions, close}){
         const ctrl = {
             data_study_id: m.prop(''),
@@ -27,7 +27,7 @@ let createMessage = {
             error: m.prop(null),
             dates: {
                 startDate: m.prop(daysAgo(3650)),
-                endDate: m.prop(daysAgo(-1))
+                endDate: m.prop(daysAgo(0))
             }
         };
 
@@ -124,7 +124,16 @@ function ask_get_data(ctrl){
         ctrl.exp_id(ctrl.exp_id().split(','));
     ctrl.downloaded(false);
 
-    return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), ctrl.dates.startDate(), ctrl.dates.endDate())
+
+    let correct_start_date = new Date(ctrl.dates.startDate());
+    correct_start_date.setHours(0,0,0,0);
+
+    let correct_end_date = new Date(ctrl.dates.endDate());
+    correct_end_date.setHours(23,59,59,999);
+
+
+    console.log(correct_end_date);
+    return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), correct_start_date, correct_end_date)
         .then(response => {
             const file_data = response.data_file;
             if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');

@@ -15182,7 +15182,7 @@
                         })
                     }),
 
-                    m('a', {class:classNames({'text-primary': /\.expt\.xml$/.test(file.name)})}, [
+                    m('a', {class:classNames({'text-primary': file.exp_data && !file.exp_data.inactive})}, [
                         // checkbox
                         m('i.fa.fa-fw', {
                             onclick: choose({file: file,study: study}),
@@ -15310,7 +15310,11 @@
                         })
                     })
                 ]),
-                m('a.no-decoration', {href:("/editor/" + (study.id)), config:m.route}, study.name)
+
+
+
+                m('a.no-decoration', {href:("/editor/" + (study.id)), config:m.route},
+                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), study.name])
             ]),
             study.isUploading
                 ? m('div', [
@@ -15565,8 +15569,8 @@
             .then(m.redraw); };
     }
 
-    function createMessage$3 (args) { return m.component(createMessage$4, args); }
-    var createMessage$4 = {
+    function data_dialog (args) { return m.component(data_dialog$1, args); }
+    var data_dialog$1 = {
         controller: function controller(ref){
             var exps = ref.exps;
             var dates = ref.dates;
@@ -15595,7 +15599,7 @@
                 error: m.prop(null),
                 dates: {
                     startDate: m.prop(daysAgo$1(3650)),
-                    endDate: m.prop(daysAgo$1(-1))
+                    endDate: m.prop(daysAgo$1(0))
                 }
             };
 
@@ -15696,7 +15700,16 @@
             ctrl.exp_id(ctrl.exp_id().split(','));
         ctrl.downloaded(false);
 
-        return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), ctrl.dates.startDate(), ctrl.dates.endDate())
+
+        var correct_start_date = new Date(ctrl.dates.startDate());
+        correct_start_date.setHours(0,0,0,0);
+
+        var correct_end_date = new Date(ctrl.dates.endDate());
+        correct_end_date.setHours(23,59,59,999);
+
+
+        console.log(correct_end_date);
+        return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), correct_start_date, correct_end_date)
             .then(function (response) {
                 var file_data = response.data_file;
                 if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
@@ -16030,7 +16043,7 @@
         var dates = m.prop();
 
         var close = messages.close;
-        messages.custom({header:'Data download', content: createMessage$3({tags: tags, exps: exps, dates: dates, study_id: study_id, versions: versions, close: close})})
+        messages.custom({header:'Data download', content: data_dialog({tags: tags, exps: exps, dates: dates, study_id: study_id, versions: versions, close: close})})
             .then(m.redraw);
     }; };
 

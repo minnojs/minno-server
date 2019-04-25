@@ -85,6 +85,7 @@ function get_experiments(user_id, study_id) {
 // Later, it will put the new request with the current timestamp into the DB.
 function add_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
     return connection.then(function (db) {
+
         const week_ms = 1000*60*60*24*7;
         const data_requests = db.collection('data_requests');
         return data_requests.find({creation_date: {$lt: Date.now()-week_ms}})
@@ -96,8 +97,8 @@ function add_request(user_id, study_id, exp_id, file_format, file_split, start_d
             fs.remove(delPath);
         }));
         })
-        .then(() => data_requests.remove({creation_date: {$lt: Date.now()-week_ms}}))
-        .then(() => data_requests.insert({
+        .then(() => data_requests.deleteMany({creation_date: {$lt: Date.now()-week_ms}}))
+        .then(() => data_requests.insertOne({
             user_id,
             study_id,
             exp_id,
@@ -127,6 +128,18 @@ function update_request(request_id, path2file) {
     });
 }
 
+function cancel_request(request_id) {
+    return connection.then(function (db) {
+        const data_requests = db.collection('data_requests');
+        return data_requests.updateOne({_id: request_id},
+            {$set:{
+                status: 'No data',
+                path: '',
+                size: ''}}
+        );
+    });
+}
+
 
 function get_requests(user_id, study_id) {
     return connection.then(function (db) {
@@ -146,7 +159,7 @@ function delete_request(user_id, study_id, request_id) {
             .then(request => {
                 const delPath = path.join(config.base_folder, config.dataFolder,  request.path);
                 fs.remove(delPath);
-                data_requests.remove({_id: ObjectId(request_id)});
+                data_requests.deleteOne({_id: ObjectId(request_id)});
             });
     });
 }
@@ -160,11 +173,13 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
 
                 const request_id=record.ops[0]._id;
                 data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id)
-                .then(path2file=>update_request(request_id, path2file));
+                .then(path2file=>update_request(request_id, path2file))
+                 .catch(()=>cancel_request(request_id));
                 return {request_id};
             }))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
+
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
     return has_write_permission(user_id, study_id)
@@ -246,15 +261,15 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
         });
 }
 
-function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
-    return has_read_permission(user_id, study_id)
-        .then(function() {
-            return connection.then(function (db) {
-                const studies = db.collection('studies');
-                return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
-                .then(study_data => !!study_data);
-            });
-        });
-}
+// function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
+//     return has_read_permission(user_id, study_id)
+//         .then(function() {
+//             return connection.then(function (db) {
+//                 const studies = db.collection('studies');
+//                 return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
+//                 .then(study_data => !!study_data);
+//             });
+//         });
+// }
 
-module.exports = {get_play_url, get_experiment_url, is_descriptive_id_exist, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_requests, delete_request};
+module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_requests, delete_request};

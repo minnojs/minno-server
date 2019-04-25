@@ -36,7 +36,7 @@ let nodeComponent = {
                     })
                 }),
 
-                m('a', {class:classNames({'text-primary': /\.expt\.xml$/.test(file.name)})}, [
+                m('a', {class:classNames({'text-primary': file.exp_data && !file.exp_data.inactive})}, [
                     // checkbox
                     m('i.fa.fa-fw', {
                         onclick: choose({file,study}),

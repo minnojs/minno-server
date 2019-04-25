@@ -10,6 +10,9 @@ const connection    = Promise.resolve(require('mongoose').connection);
 
 const {user_info, user_info_by_name}   = require('./users');
 
+
+// const {duplicate_experiments}   = require('./experiments');
+
 const PERMISSION_OWNER     = 'owner';
 const PERMISSION_READ_ONLY = 'read only';
 
@@ -277,15 +280,37 @@ function duplicate_study(user_id, study_id, new_study_name) {
 
         return insert_obj(user_id, study_obj)
             .then(function (study_data) {
+
                 const originalPath = path.join(config.user_folder ,original_study.folder_name);
                 return fs.pathExists(study_data.dir)
                     .then(exists => {
                         if (!exists)
                             return fs.copy(originalPath, study_data.dir)
-                                .then(() => ({study_id: study_data.study_id}))
-                                .catch(() => Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'}));
+                                .then(()=>
+                                    duplicate_experiments(study_data.study_id, original_study.experiments)
+                                        .then(() => ({study_id: study_data.study_id}))
+                                        .catch(() => Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'}))
+
+                                );
                     });
             });
+    });
+}
+
+function duplicate_experiments(study_id, exps) {
+    return connection.then(function (db) {
+        const studies = db.collection('studies');
+        return Promise.all(exps.map(function(exp) {
+            const id = utils.sha1(study_id + exp.file_id + exp.descriptive_id + Math.random());
+            return studies.updateOne({_id: study_id}, {
+                $push: {
+                    experiments: {
+                        id,
+                        file_id: exp.file_id, descriptive_id: exp.descriptive_id
+                    }
+                }
+            });
+        }));
     });
 }
 
