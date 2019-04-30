@@ -15888,7 +15888,7 @@
                         ]),
 
                         m('td', size_format(download.size)),
-                        m('td', [
+                        m('td', !download.size ? '-' : [
                             m('a', {href:(baseUrl + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
                             m('i', ' | '),
                             m('a', {href:'..', onclick: function() {ask_delete_request(download.study_id, download._id, ctrl); return false;}}, m('i.fa.fa-close'))
