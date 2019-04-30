@@ -15196,10 +15196,10 @@
                         // icon
                         m('i.fa.fa-fw.fa-file-o', {
                             class: classNames({
-                                'fa-file-code-o': /(js)$/.test(file.type),
-                                'fa-file-text-o': /(jst|html|xml)$/.test(file.type),
-                                'fa-file-image-o': /(jpg|png|bmp)$/.test(file.type),
-                                'fa-file-pdf-o': /(pdf)$/.test(file.type),
+                                'fa-file-code-o': /(js)$/.test(file.type) && !file.isDir,
+                                'fa-file-text-o': /(jst|html|xml)$/.test(file.type) && !file.isDir,
+                                'fa-file-image-o': /(jpg|png|bmp)$/.test(file.type) && !file.isDir,
+                                'fa-file-pdf-o': /(pdf)$/.test(file.type) && !file.isDir,
                                 'fa-folder-o': file.isDir
                             })
                         }),
@@ -16033,13 +16033,10 @@
 
     var do_data = function (study) { return function (e) {
         e.preventDefault();
-        // let exps = get_exps[]);
-        // console.log(exps);
-
         var study_id = study.id;
         var versions = study.versions;
-        var exps = m.prop([]);
-        var tags = m.prop([]);
+        var exps  = m.prop([]);
+        var tags  = m.prop([]);
         var dates = m.prop();
 
         var close = messages.close;
@@ -16264,6 +16261,7 @@
     var settings = {
         'tags':[],
         'data':[],
+        'stat':[],
         'delete':[],
         'rename':[],
         'description':[],
@@ -16295,6 +16293,13 @@
                 onmousedown: do_data,
                 class: 'fa-download'
             }},
+        stat: {text: 'Statistics',
+            config: {
+                display: [can_see_data],
+                onmousedown: do_data,
+                class: 'fas.fa-bar-chart'
+            }},
+
         delete: {text: 'Delete Study',
             config: {
                 display: [can_edit, not(is_locked)],
@@ -16401,7 +16406,7 @@
                         settings_hash[comp].text
                     ])
                     : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study, notifications)}, [
-                        m('i.fa.fa-fw.'+config.class),
+                        m('i.fal.fa.fa-fw.'+config.class),
                         settings_hash[comp].text
                     ]);
         }); };

@@ -50,10 +50,10 @@ let nodeComponent = {
                     // icon
                     m('i.fa.fa-fw.fa-file-o', {
                         class: classNames({
-                            'fa-file-code-o': /(js)$/.test(file.type),
-                            'fa-file-text-o': /(jst|html|xml)$/.test(file.type),
-                            'fa-file-image-o': /(jpg|png|bmp)$/.test(file.type),
-                            'fa-file-pdf-o': /(pdf)$/.test(file.type),
+                            'fa-file-code-o': /(js)$/.test(file.type) && !file.isDir,
+                            'fa-file-text-o': /(jst|html|xml)$/.test(file.type) && !file.isDir,
+                            'fa-file-image-o': /(jpg|png|bmp)$/.test(file.type) && !file.isDir,
+                            'fa-file-pdf-o': /(pdf)$/.test(file.type) && !file.isDir,
                             'fa-folder-o': file.isDir
                         })
                     }),

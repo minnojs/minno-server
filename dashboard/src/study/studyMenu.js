@@ -1,4 +1,4 @@
-import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
+import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_stat, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
 
 const can_edit = study => !study.isReadonly && study.permission !== 'read only';
 const can_see_data = study => study.has_data_permission;
@@ -12,6 +12,7 @@ const not = fn => study => !fn(study);
 const settings = {
     'tags':[],
     'data':[],
+    'stat':[],
     'delete':[],
     'rename':[],
     'description':[],
@@ -43,6 +44,13 @@ const settings_hash = {
             onmousedown: do_data,
             class: 'fa-download'
         }},
+    stat: {text: 'Statistics',
+        config: {
+            display: [can_see_data],
+            onmousedown: do_data,
+            class: 'fas.fa-bar-chart'
+        }},
+
     delete: {text: 'Delete Study',
         config: {
             display: [can_edit, not(is_locked)],
@@ -149,7 +157,7 @@ export const draw_menu = (study, notifications) => Object.keys(settings)
                     settings_hash[comp].text
                 ])
                 : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study, notifications)}, [
-                    m('i.fa.fa-fw.'+config.class),
+                    m('i.fal.fa.fa-fw.'+config.class),
                     settings_hash[comp].text
                 ]);
     });

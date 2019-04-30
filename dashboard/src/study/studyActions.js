@@ -75,13 +75,25 @@ export const do_tags = (study) => e => {
 
 export let do_data = (study) => e => {
     e.preventDefault();
-    // let exps = get_exps[]);
-    // console.log(exps);
-
     let study_id = study.id;
     let versions = study.versions;
-    let exps = m.prop([]);
-    let tags = m.prop([]);
+    let exps  = m.prop([]);
+    let tags  = m.prop([]);
+    let dates = m.prop();
+
+    let close = messages.close;
+    messages.custom({header:'Data download', content: data_dialog({tags, exps, dates, study_id, versions, close})})
+        .then(m.redraw);
+};
+
+
+
+export let do_stat = (study) => e => {
+    e.preventDefault();
+    let study_id = study.id;
+    let versions = study.versions;
+    let exps  = m.prop([]);
+    let tags  = m.prop([]);
     let dates = m.prop();
 
     let close = messages.close;
