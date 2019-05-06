@@ -12830,6 +12830,10 @@
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
     }
 
+    function get_stat_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
+    }
+
     function get_requests_url(study_id) {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/requests");
     }
@@ -12867,6 +12871,11 @@
     var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
         method: 'post',
         body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
+    }); };
+
+    var get_stat = function (study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task) { return fetchJson(get_stat_url(study_id), {
+        method: 'post',
+        body: {version_id: version_id, start_date: start_date, end_date: end_date, sort_experiment: sort_experiment, sort_task: sort_task, time_frame: time_frame, first_task: first_task, last_task: last_task}
     }); };
 
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
@@ -15915,6 +15924,292 @@
         return bytes.toFixed(1)+' '+units[u];
     }
 
+    var statisticsInstructions$2 = function () { return m('.text-muted', [
+        m('p', 'Choose whether you want participation data from demo studies, research pool, all research studies (including lab studies), or all studies (demo and research).'),
+        m('p', 'Enter the study id or any part of the study id (the study name that that appears in an .expt file). Note that the study id search feature is case-sensitive. If you leave this box blank you will get data from all studies.'),
+        m('p', 'You can also use the Task box to enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks.'),
+        m('p', 'You can also choose how you want the data displayed, using the "Show by" options. If you click "Study", you will see data from each study that meets your search criteria. If you also check "Task" you will see data from any study that meets your search criteria separated by task.  The "Data Group" option will allow you to see whether a given study is coming from the demo or research site.  '),
+        m('p', 'You can define how completion rate is calculated by entering text to "First task" and "Last task". Only sessions that visited those tasks would be used for the calculation.'),
+        m('p', 'When you choose to show the results by date, you will see all the studies that have at least one session in the requested date range, separated by day, week, month or year. This will also show dates with zero sessions. If you want to hide rows with zero sessions, select the "Hide empty" option.')
+    ]); };
+
+    function stat_dialog (args) { return m.component(stat_dialog$1, args); }
+    var stat_dialog$1 = {
+        controller: function controller(ref){
+            var study_id = ref.study_id;
+            var versions = ref.versions;
+            var close = ref.close;
+
+
+
+            var ctrl = {
+                displayHelp: m.prop(false),
+                data_study_id: m.prop(''),
+                exp_id: m.prop(''),
+                study_id:m.prop(study_id),
+                versions: versions,
+                studies: m.prop([]),
+                version_id: m.prop(''),
+                all_versions: m.prop(''),
+                stat_data: m.prop(''),
+                file_split: m.prop('taskName'),
+                sort_experiment: m.prop(false),
+                sort_task: m.prop(false),
+                time_frame: m.prop('None'),
+                first_task: m.prop(''),
+                last_task: m.prop(''),
+
+                show_empty: m.prop(false),
+
+                loaded: m.prop(false),
+                downloaded: m.prop(true),
+                link: m.prop(''),
+                error: m.prop(null),
+                dates: {
+                    startDate: m.prop(daysAgo$2(3650)),
+                    endDate: m.prop(daysAgo$2(0))
+                }
+            };
+
+            load_studies()
+                .then(function (response) {
+                    ctrl.studies(response.studies);
+                    ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$1));
+                })
+                .then(m.redraw);
+            return {ctrl: ctrl, close: close};
+        },
+        view: function (ref) {
+            var ctrl = ref.ctrl;
+            var close = ref.close;
+
+            return m('div', [
+            m('.card-block', [
+                m('.row', [
+                    m('.col-sm-4', [
+                        m('.input-group', [m('strong', 'Study name'),
+                            m('select.c-select.form-control',{onchange: function (e) { return select_study$1(ctrl, e.target.value); }}, [
+                                ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , study.name); })
+                            ])
+                        ]),
+                    ]),
+                    m('.col-sm-5', [
+                        m('.input-group', [m('strong', 'Version id'),
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
+                                ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
+                                ctrl.versions.map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                            ])
+                        ])
+                    ]),
+                ]),
+                m('.row.space', [
+                    m('.col-sm-12', [
+                        m('.form-group', [
+                            dateRangePicker(ctrl.dates),
+                            m('p.text-muted.btn-toolbar', [
+                                dayButtonView$3(ctrl.dates, 'Last 7 Days', 7),
+                                dayButtonView$3(ctrl.dates, 'Last 30 Days', 30),
+                                dayButtonView$3(ctrl.dates, 'Last 90 Days', 90),
+                                dayButtonView$3(ctrl.dates, 'All time', 3650)
+                            ]),
+                            m('small.text-muted',  'The data for the study statistics by day is saved in 24 hour increments by date in USA eastern time (EST).')
+                        ])
+                    ])
+                ]),
+                m('.row.space', [
+                    m('.col-sm-12', [
+                        m('.form-group.row', [
+                            m('.col-sm-3', [
+                                m('label.form-control-label', 'Show by')
+                            ]),
+                            m('.col-sm-9.pull-right', [
+                                m('.btn-group.btn-group-sm', [
+                                    button$2(ctrl.sort_experiment, 'Experiment'),
+                                    button$2(ctrl.sort_task, 'Task'),
+                                    m('a.btn.btn-secondary.statistics-time-button', {class: ctrl.time_frame() !== 'All' ? 'active' : ''}, [
+                                        'Time',
+                                        m('.time-card', [
+                                            m('.card', [
+                                                m('.card-header', 'Time filter'),
+                                                m('.card-block.c-inputs-stacked', [
+                                                    radioButton$2(ctrl.time_frame, 'None'),
+                                                    radioButton$2(ctrl.time_frame, 'Days'),
+                                                    radioButton$2(ctrl.time_frame, 'Weeks'),
+                                                    radioButton$2(ctrl.time_frame, 'Months'),
+                                                    radioButton$2(ctrl.time_frame, 'Years')
+                                                ])
+                                            ])
+                                        ])
+                                    ])
+                                ])
+
+                            ])
+                        ])
+                    ])
+                ]),
+                m('.row.space', [
+                    m('.col-sm-3', [
+                        m('label.form-control-label', 'Compute completions')
+                    ]),
+                    m('.col-sm-9', [
+                        m('.row', [
+                            m('.col-sm-5', [
+                                m('input.form-control', {placeholder: 'First task', value: ctrl.first_task(), onchange: m.withAttr('value', ctrl.first_task)})
+                            ]),
+                            m('.col-sm-1', [
+                                m('.form-control-static', 'to')
+                            ]),
+                            m('.col-sm-5', [
+                                m('input.form-control', {placeholder: 'Last task', value: ctrl.last_task(), onchange: m.withAttr('value', ctrl.last_task)})
+                            ])
+                        ])
+                    ])
+
+                ]),
+                m('.row.space', [
+                    m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return ctrl.displayHelp(!ctrl.displayHelp()); }}, ['Toggle help ', m('i.fa.fa-question-circle')]),
+
+                    m('.btn-group.btn-group-sm.pull-right', [
+                        button$2(ctrl.show_empty, 'Hide Empty', 'Hide Rows with Zero Started Sessions')
+                    ])
+                ]),
+
+                !ctrl.displayHelp() ? '' : m('.row', [
+                    m('.col-sm-12.p-a-2', statisticsInstructions$2())
+                ]),
+
+            ]),
+            show_stat(ctrl),
+            ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
+            ctrl.downloaded() && !ctrl.loaded() ?  '' : m('.loader'),
+            m('.text-xs-right.btn-toolbar',[
+                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
+                m('a.btn.btn-primary.btn-sm', {onclick:function (){ask_get_stat(ctrl); }}, 'Show')
+            ])
+        ]);
+    }
+    };
+
+    function ask_get_stat(ctrl){
+        ctrl.error('');
+
+        ctrl.downloaded(false);
+
+
+        var correct_start_date = new Date(ctrl.dates.startDate());
+        correct_start_date.setHours(0,0,0,0);
+
+        var correct_end_date = new Date(ctrl.dates.endDate());
+        correct_end_date.setHours(23,59,59,999);
+
+
+        return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date,
+                        ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
+
+
+            .then(function (response) {
+                var stat_data = response.stat_data;
+                if (stat_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
+
+                ctrl.stat_data(response.stat_data);
+
+            })
+            .catch(function (err){ return ctrl.error(err.message); })
+            .then(function (){ return ctrl.downloaded(true); })
+            .then(m.redraw);
+    }
+
+
+    // helper functions for the day buttons
+    var daysAgo$2 = function (days) {
+        var d = new Date();
+        d.setDate(d.getDate() - days);
+        return d;
+    };
+    var equalDates$2 = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
+    var activeDate$2 = function (ref, days) {
+        var startDate = ref.startDate;
+        var endDate = ref.endDate;
+
+        return equalDates$2(startDate(), daysAgo$2(days)) && equalDates$2(endDate(), new Date());
+    };
+    var dayButtonView$3 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+
+        class: activeDate$2(dates, days)? 'active' : '',
+        onclick: function () {
+            dates.startDate(daysAgo$2(days));
+            dates.endDate(new Date());
+        }
+    }, name); };
+
+
+
+    function sort_studies_by_name$1(study1, study2){
+        return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
+    }
+
+
+
+    function select_study$1(ctrl, study_id){
+        ctrl.study_id(study_id);
+        ctrl.loaded.bind(null, false);
+        var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
+        ctrl.versions = new_study.versions;
+
+    }
+
+
+    function show_stat(ctrl){
+        var stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(function (row) { return row.starts !==0; });
+
+
+
+        return !stat2show
+            ?
+            ''
+            :[m('table', {class:'table table-striped table-hover'}, [
+                m('thead', [
+                    m('tr', [
+                        m('th', 'Study Name'),
+                        m('th', 'Task Name'),
+                        m('th', 'Date'),
+                        m('th', 'Starts'),
+                        m('th','Completes'),
+                    ])
+                ]),
+                m('tbody',
+                    stat2show.map(function (data) { return m('tr', [
+                        m('td', data.study_name),
+                        m('td',data.task_name),
+                        m('td',formatDate(new Date(data.date))),
+                        m('td', data.starts),
+                        m('td', data.completes)
+
+
+                    ]); })
+                )])
+            ];
+    }
+
+    var button$2 = function (prop, text, title) {
+        if ( title === void 0 ) title = '';
+
+        return m('a.btn.btn-secondary', {
+        class: prop() ? 'active' : '',
+        onclick: function () { return prop(!prop()); },
+        title: title
+    }, text);
+    };
+
+    var radioButton$2 = function (prop, text) { return m('label.c-input.c-radio', [
+        m('input.form-control[type=radio]', {
+            onclick: prop.bind(null, text),
+            checked: prop() == text
+        }),
+        m('span.c-indicator'),
+        text
+    ]); };
+
     function collaboration_url(study_id)
     {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/collaboration");
@@ -16041,6 +16336,21 @@
 
         var close = messages.close;
         messages.custom({header:'Data download', content: data_dialog({tags: tags, exps: exps, dates: dates, study_id: study_id, versions: versions, close: close})})
+            .then(m.redraw);
+    }; };
+
+
+
+    var do_stat = function (study) { return function (e) {
+        e.preventDefault();
+        var study_id = study.id;
+        var versions = study.versions;
+        var exps  = m.prop([]);
+        var tags  = m.prop([]);
+        var dates = m.prop();
+
+        var close = messages.close;
+        messages.custom({header:'Statistics', content: stat_dialog({study_id: study_id, versions: versions, close: close})})
             .then(m.redraw);
     }; };
 
@@ -16296,7 +16606,7 @@
         stat: {text: 'Statistics',
             config: {
                 display: [can_see_data],
-                onmousedown: do_data,
+                onmousedown: do_stat,
                 class: 'fas.fa-bar-chart'
             }},
 

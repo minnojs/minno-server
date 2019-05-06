@@ -47,7 +47,7 @@ const settings_hash = {
     stat: {text: 'Statistics',
         config: {
             display: [can_see_data],
-            onmousedown: do_data,
+            onmousedown: do_stat,
             class: 'fas.fa-bar-chart'
         }},
 

@@ -88,6 +88,30 @@ studiesRouter.route('/:study_id/versions')
         });
 
 
+
+studiesRouter.route('/:study_id/statistics')
+    .post(
+        function(req, res){
+            return experiments.get_stat(req.user_id,
+                parseInt(req.params.study_id),
+                req.body.version_id,
+                req.body.start_date,
+                req.body.end_date,
+                req.body.sort_experiment,
+                req.body.sort_task,
+                req.body.time_frame,
+                req.body.first_task,
+                req.body.last_task)
+
+                .then(function(stat_data){
+                    return res.json({stat_data});
+                })
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
+        });
+
+
 studiesRouter.route('/:study_id/experiments')
     .get(
         function(req, res){

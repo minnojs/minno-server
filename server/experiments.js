@@ -164,6 +164,27 @@ function delete_request(user_id, study_id, request_id) {
     });
 }
 
+function get_stat(user_id, study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task) {
+
+    return has_read_data_permission(user_id, study_id)
+        .then(()=> {
+            const stat_data = [{
+                study_name:  'agampa.qualtrics.transfer2',
+                task_name:   'Completion rate',
+                date:       '2019-05-06T04:00Z',
+                starts:     161,
+                completes:  0
+            }];
+                return stat_data;
+        }
+
+        )
+        // data_server.getStat(study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task))
+        .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
+}
+
+
+
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
 
     return has_read_data_permission(user_id, study_id)
@@ -272,4 +293,4 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
 //         });
 // }
 
-module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_requests, delete_request};
+module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_requests, delete_request, get_stat};

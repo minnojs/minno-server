@@ -15,6 +15,10 @@ function get_exps_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/experiments`;
 }
 
+function get_stat_url(study_id) {
+    return `${baseUrl}/${encodeURIComponent(study_id)}/statistics`;
+}
+
 function get_requests_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/requests`;
 }
@@ -52,6 +56,11 @@ export let delete_request = (study_id, request_id) => fetchJson(get_requests_url
 export let get_data = (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) => fetchJson(get_exps_url(study_id), {
     method: 'post',
     body: {exp_id, version_id, file_format, file_split, start_date, end_date}
+});
+
+export let get_stat = (study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task) => fetchJson(get_stat_url(study_id), {
+    method: 'post',
+    body: {version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task}
 });
 
 export const update_study = (study_id, body) => fetchJson(get_url(study_id), {

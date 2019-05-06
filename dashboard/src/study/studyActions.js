@@ -4,6 +4,7 @@ import {lock_study, publish_study, duplicate_study, create_study, delete_study, 
 import studyTemplatesComponent from './templates/studyTemplatesComponent';
 import studyTagsComponent from '../tags/studyTagsComponent';
 import data_dialog from '../downloads/dataComp';
+import stat_dialog from './open_statistics/statComp';
 
 
 import {update_tags_in_study} from '../tags/tagsModel';
@@ -97,7 +98,7 @@ export let do_stat = (study) => e => {
     let dates = m.prop();
 
     let close = messages.close;
-    messages.custom({header:'Data download', content: data_dialog({tags, exps, dates, study_id, versions, close})})
+    messages.custom({header:'Statistics', content: stat_dialog({study_id, versions, close})})
         .then(m.redraw);
 };
 
