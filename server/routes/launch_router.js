@@ -56,8 +56,9 @@ function displayExperiment(params, res){
             .then(res.send.bind(res));
 
         return render(exp_data.type || 'minno02', {
-            isDev: postOnce.state === 'Develop',
+            isDev: postOnce.state === 'Develop' || postOnce.state === undefined,
             minnojsUrl: config.minnojsUrl,
+            minnojsDevUrl: config.minnojsDevUrl,
             errorception: config.errorception,
             url: exp_data.url, 
             base_url: exp_data.base_url, 

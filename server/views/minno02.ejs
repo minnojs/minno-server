@@ -9,7 +9,7 @@
     <meta name="pinterest" content="nopin" />
     <base href="<%= base_url %>">
 
-    <link rel="stylesheet" href="<%= minnojsUrl %>/main.css" />
+    <link rel="stylesheet" href="<%= isDev ? minnojsDevUrl || minnojsUrl : minnojsUrl %>/main.css" />
 
     <style type="text/css">
         .container {padding-top: 15px;}
@@ -34,7 +34,7 @@
             <span>&times;</span>
         </button>
         <strong>Development Environment</strong></br>
-        miManager/miQuest v0.2
+        Minno v0.2
     </div>
 <% } %>
 
@@ -73,8 +73,8 @@
 </body>
 
 <% if (isDev) { %>
-    <script src="<%= minnojsUrl %>/minno-debug.js" type="text/javascript"></script>
+    <script src="<%= minnojsDevUrl || minnojsUrl %>/minno-debug.js" type="text/javascript"></script>
 <% } %>
 
-<script src="<%= minnojsUrl %>/pi-minno.js" type="text/javascript"></script>
+<script src="<%= isDev ? minnojsDevUrl || minnojsUrl : minnojsUrl %>/pi-minno.js" type="text/javascript"></script>
 </html>
