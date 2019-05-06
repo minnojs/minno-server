@@ -5,7 +5,7 @@ import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
 
 let data_dialog = {
-    controller({exps, dates, study_id, versions, close}){
+    controller({exps, study_id, versions, close}){
         const ctrl = {
             data_study_id: m.prop(''),
             exp_id: m.prop(''),
@@ -118,7 +118,7 @@ let data_dialog = {
 function ask_get_data(ctrl){
     ctrl.error('');
     if(ctrl.exp_id() ==='')
-        return error('Please select experiment id');
+        return ctrl.error('Please select experiment id');
 
     if(!Array.isArray(ctrl.exp_id()))
         ctrl.exp_id(ctrl.exp_id().split(','));
@@ -130,9 +130,7 @@ function ask_get_data(ctrl){
 
     let correct_end_date = new Date(ctrl.dates.endDate());
     correct_end_date.setHours(23,59,59,999);
-
-
-    console.log(correct_end_date);
+    
     return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), correct_start_date, correct_end_date)
         .then(response => {
             const file_data = response.data_file;

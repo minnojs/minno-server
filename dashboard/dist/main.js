@@ -13518,7 +13518,7 @@
         return {level:'warn', message: message, test:test};
     }
 
-    function error$1(message, test){
+    function error(message, test){
         return {level:'error', message: message, test:test};
     }
 
@@ -13656,16 +13656,16 @@
             if (!interactions) {return;}
 
             if (!Array.isArray(interactions)){
-                return [error$1('Interactions must be an array.', true)];
+                return [error('Interactions must be an array.', true)];
             }
 
             return  interactions.map(function (interaction, index) {
                 return [
-                    !interaction.conditions ? error$1(("Interaction [" + index + "] must have conditions"), true) : [
-                        error$1(("Interaction conditon [" + index + "] must have a type"), toArray(interaction.conditions).some(function (c){ return !c.type; }))
+                    !interaction.conditions ? error(("Interaction [" + index + "] must have conditions"), true) : [
+                        error(("Interaction conditon [" + index + "] must have a type"), toArray(interaction.conditions).some(function (c){ return !c.type; }))
                     ],
-                    !interaction.actions ? error$1(("Interaction [" + index + "] must have actions"), true) : [
-                        error$1(("Interaction action [" + index + "] must have a type"), toArray(interaction.actions).some(function (a){ return !a.type; }))
+                    !interaction.actions ? error(("Interaction [" + index + "] must have actions"), true) : [
+                        error(("Interaction action [" + index + "] must have a type"), toArray(interaction.actions).some(function (a){ return !a.type; }))
                     ]
                 ];
             });
@@ -13681,12 +13681,12 @@
             if (!input) {return;}
 
             if (!Array.isArray(trial.input)){
-                return [error$1('Input must be an Array', true)];
+                return [error('Input must be an Array', true)];
             }
 
             return [
-                error$1('Input must always have a handle', input.some(function (i){ return !i.handle; })),
-                error$1('Input must always have an on attribute', input.some(function (i){ return !i.on; }))
+                error('Input must always have a handle', input.some(function (i){ return !i.handle; })),
+                error('Input must always have an on attribute', input.some(function (i){ return !i.on; }))
             ];
         }
     }
@@ -15582,7 +15582,6 @@
     var data_dialog$1 = {
         controller: function controller(ref){
             var exps = ref.exps;
-            var dates = ref.dates;
             var study_id = ref.study_id;
             var versions = ref.versions;
             var close = ref.close;
@@ -15703,7 +15702,7 @@
     function ask_get_data(ctrl){
         ctrl.error('');
         if(ctrl.exp_id() ==='')
-            return error('Please select experiment id');
+            return ctrl.error('Please select experiment id');
 
         if(!Array.isArray(ctrl.exp_id()))
             ctrl.exp_id(ctrl.exp_id().split(','));
@@ -15715,9 +15714,7 @@
 
         var correct_end_date = new Date(ctrl.dates.endDate());
         correct_end_date.setHours(23,59,59,999);
-
-
-        console.log(correct_end_date);
+        
         return get_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), ctrl.file_format(), ctrl.file_split(), correct_start_date, correct_end_date)
             .then(function (response) {
                 var file_data = response.data_file;
@@ -15940,8 +15937,6 @@
             var versions = ref.versions;
             var close = ref.close;
 
-
-
             var ctrl = {
                 displayHelp: m.prop(false),
                 data_study_id: m.prop(''),
@@ -16103,8 +16098,7 @@
         correct_end_date.setHours(23,59,59,999);
 
 
-        return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date,
-                        ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
+        return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date, ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
 
 
             .then(function (response) {
@@ -16161,9 +16155,6 @@
 
     function show_stat(ctrl){
         var stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(function (row) { return row.starts !==0; });
-
-
-
         return !stat2show
             ?
             ''
@@ -16331,11 +16322,9 @@
         var study_id = study.id;
         var versions = study.versions;
         var exps  = m.prop([]);
-        var tags  = m.prop([]);
-        var dates = m.prop();
 
         var close = messages.close;
-        messages.custom({header:'Data download', content: data_dialog({tags: tags, exps: exps, dates: dates, study_id: study_id, versions: versions, close: close})})
+        messages.custom({header:'Data download', content: data_dialog({exps: exps, study_id: study_id, versions: versions, close: close})})
             .then(m.redraw);
     }; };
 
@@ -16345,10 +16334,6 @@
         e.preventDefault();
         var study_id = study.id;
         var versions = study.versions;
-        var exps  = m.prop([]);
-        var tags  = m.prop([]);
-        var dates = m.prop();
-
         var close = messages.close;
         messages.custom({header:'Statistics', content: stat_dialog({study_id: study_id, versions: versions, close: close})})
             .then(m.redraw);
@@ -18675,7 +18660,6 @@
                     config: getStartValue$3(ctrl.confirm)
                 })
             ]),
-            console.log(ctrl.external()),
             !ctrl.password_error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.password_error()),
             ctrl.external() ? '' : m('button.btn.btn-primary.btn-block', {onclick: ctrl.do_set_password},'Update')
         ])
@@ -19240,18 +19224,18 @@
                 m('.loader')
                 :
                 m('.activation.centrify', {config:fullHeight},[
-                ctrl.password_changed
-                    ?
-                    [
-                        m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                        m('h5', 'Password successfully updated!'),
-                        m('p.text-center',
-                            m('small.text-muted',  m('a', {href:'./'}, 'Take me to my studies!'))
-                        )
-                    ]
-                    :
-                    password_body(ctrl)
-            ]);
+                    ctrl.password_changed
+                        ?
+                        [
+                            m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
+                            m('h5', 'Password successfully updated!'),
+                            m('p.text-center',
+                                m('small.text-muted',  m('a', {href:'./'}, 'Take me to my studies!'))
+                            )
+                        ]
+                        :
+                        password_body(ctrl)
+                ]);
         }
     };
 

@@ -79,11 +79,9 @@ export let do_data = (study) => e => {
     let study_id = study.id;
     let versions = study.versions;
     let exps  = m.prop([]);
-    let tags  = m.prop([]);
-    let dates = m.prop();
 
     let close = messages.close;
-    messages.custom({header:'Data download', content: data_dialog({tags, exps, dates, study_id, versions, close})})
+    messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
         .then(m.redraw);
 };
 
@@ -93,10 +91,6 @@ export let do_stat = (study) => e => {
     e.preventDefault();
     let study_id = study.id;
     let versions = study.versions;
-    let exps  = m.prop([]);
-    let tags  = m.prop([]);
-    let dates = m.prop();
-
     let close = messages.close;
     messages.custom({header:'Statistics', content: stat_dialog({study_id, versions, close})})
         .then(m.redraw);

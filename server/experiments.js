@@ -175,10 +175,8 @@ function get_stat(user_id, study_id, version_id, start_date, end_date, sort_expe
                 starts:     161,
                 completes:  0
             }];
-                return stat_data;
-        }
-
-        )
+            return stat_data;
+        })
         // data_server.getStat(study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }

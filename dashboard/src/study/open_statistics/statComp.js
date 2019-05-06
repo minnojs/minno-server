@@ -1,14 +1,11 @@
 export default args => m.component(stat_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
 import {get_stat, load_studies} from '../studyModel';
-import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
 import statisticsInstructions from './instructions';
 
 let stat_dialog = {
     controller({study_id, versions, close}){
-
-
         const ctrl = {
             displayHelp: m.prop(false),
             data_study_id: m.prop(''),
@@ -45,7 +42,6 @@ let stat_dialog = {
                 ctrl.studies(ctrl.studies().filter(study=>study.has_data_permission).sort(sort_studies_by_name));
             })
             .then(m.redraw);
-        ;
         return {ctrl, close};
     },
     view: ({ctrl, close}) => m('div', [
@@ -167,8 +163,7 @@ function ask_get_stat(ctrl){
     correct_end_date.setHours(23,59,59,999);
 
 
-    return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date,
-                    ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
+    return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date, ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
 
 
         .then(response => {
@@ -220,9 +215,6 @@ function select_study(ctrl, study_id){
 
 function show_stat(ctrl){
     const stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(row => row.starts !==0);
-
-
-
     return !stat2show
         ?
         ''
@@ -248,22 +240,6 @@ function show_stat(ctrl){
                 ]))
             )])
         ];
-}
-
-function size_format(bytes){
-    if (!bytes)
-        return '-';
-
-    const thresh = 1024;
-
-    const units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
-    let u = 0;
-    while(Math.abs(bytes) >= thresh)
-    {
-        bytes /= thresh;
-        u = u+1;
-    }
-    return bytes.toFixed(1)+' '+units[u];
 }
 
 let button = (prop, text, title = '') => m('a.btn.btn-secondary', {

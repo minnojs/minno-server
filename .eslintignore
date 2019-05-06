@@ -1,3 +1,5 @@
 /dashboard/dist
 /data
 /users
+/server/config_db.js
+/server/config_validation.js
