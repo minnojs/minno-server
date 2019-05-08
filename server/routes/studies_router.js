@@ -94,12 +94,11 @@ studiesRouter.route('/:study_id/statistics')
         function(req, res){
             return experiments.get_stat(req.user_id,
                 parseInt(req.params.study_id),
-                req.body.version_id,
                 req.body.start_date,
                 req.body.end_date,
+                req.body.sort_version,
                 req.body.sort_experiment,
-                req.body.sort_task,
-                req.body.time_frame,
+                req.body.sort_day,
                 req.body.first_task,
                 req.body.last_task)
 

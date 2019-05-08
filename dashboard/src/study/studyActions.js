@@ -92,7 +92,7 @@ export let do_stat = (study) => e => {
     let study_id = study.id;
     let versions = study.versions;
     let close = messages.close;
-    messages.custom({header:'Statistics', content: stat_dialog({study_id, versions, close})})
+    messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id, versions, close})})
         .then(m.redraw);
 };
 

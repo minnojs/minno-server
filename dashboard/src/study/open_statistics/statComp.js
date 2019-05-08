@@ -13,13 +13,12 @@ let stat_dialog = {
             study_id:m.prop(study_id),
             versions,
             studies: m.prop([]),
-            version_id: m.prop(''),
             all_versions: m.prop(''),
             stat_data: m.prop(''),
             file_split: m.prop('taskName'),
+            sort_version: m.prop(false),
             sort_experiment: m.prop(false),
-            sort_task: m.prop(false),
-            time_frame: m.prop('None'),
+            sort_day: m.prop(false),
             first_task: m.prop(''),
             last_task: m.prop(''),
 
@@ -47,21 +46,13 @@ let stat_dialog = {
     view: ({ctrl, close}) => m('div', [
         m('.card-block', [
             m('.row', [
-                m('.col-sm-4', [
+                m('.col-sm-12', [
                     m('.input-group', [m('strong', 'Study name'),
                         m('select.c-select.form-control',{onchange: e => select_study(ctrl, e.target.value)}, [
                             ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , study.name))
                         ])
                     ]),
-                ]),
-                m('.col-sm-5', [
-                    m('.input-group', [m('strong', 'Version id'),
-                        m('select.c-select.form-control',{onchange: e => ctrl.version_id(e.target.value)}, [
-                            ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
-                            ctrl.versions.map(version=> m('option', {value:version.id}, `${version.version} (${version.state})`))
-                        ])
-                    ])
-                ]),
+                ])
             ]),
             m('.row.space', [
                 m('.col-sm-12', [
@@ -85,23 +76,9 @@ let stat_dialog = {
                         ]),
                         m('.col-sm-9.pull-right', [
                             m('.btn-group.btn-group-sm', [
+                                button(ctrl.sort_version, 'Version'),
                                 button(ctrl.sort_experiment, 'Experiment'),
-                                button(ctrl.sort_task, 'Task'),
-                                m('a.btn.btn-secondary.statistics-time-button', {class: ctrl.time_frame() !== 'All' ? 'active' : ''}, [
-                                    'Time',
-                                    m('.time-card', [
-                                        m('.card', [
-                                            m('.card-header', 'Time filter'),
-                                            m('.card-block.c-inputs-stacked', [
-                                                radioButton(ctrl.time_frame, 'None'),
-                                                radioButton(ctrl.time_frame, 'Days'),
-                                                radioButton(ctrl.time_frame, 'Weeks'),
-                                                radioButton(ctrl.time_frame, 'Months'),
-                                                radioButton(ctrl.time_frame, 'Years')
-                                            ])
-                                        ])
-                                    ])
-                                ])
+                                button(ctrl.sort_day, 'Day')
                             ])
 
                         ])
@@ -163,7 +140,7 @@ function ask_get_stat(ctrl){
     correct_end_date.setHours(23,59,59,999);
 
 
-    return get_stat(ctrl.study_id(), ctrl.version_id(), correct_start_date, correct_end_date, ctrl.sort_task(), ctrl.sort_experiment(), ctrl.time_frame(), ctrl.first_task(), ctrl.last_task())
+    return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.sort_version(), ctrl.sort_experiment(), ctrl.sort_day(), ctrl.first_task(), ctrl.last_task())
 
 
         .then(response => {
@@ -222,8 +199,10 @@ function show_stat(ctrl){
             m('thead', [
                 m('tr', [
                     m('th', 'Study Name'),
-                    m('th', 'Task Name'),
-                    m('th', 'Date'),
+                    m('th', 'Version'),
+                    m('th', 'Experiment Name'),
+                    m('th', 'Earliest session'),
+                    m('th', 'Latest session'),
                     m('th', 'Starts'),
                     m('th','Completes'),
                 ])
@@ -231,8 +210,10 @@ function show_stat(ctrl){
             m('tbody',
                 stat2show.map(data => m('tr', [
                     m('td', data.study_name),
-                    m('td',data.task_name),
-                    m('td',formatDate(new Date(data.date))),
+                    m('td',data.version),
+                    m('td',data.experiment),
+                    m('td',formatDate(new Date(data.earliest_session))),
+                    m('td',formatDate(new Date(data.latest_session))),
                     m('td', data.starts),
                     m('td', data.completes)
 
