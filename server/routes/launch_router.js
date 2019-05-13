@@ -3,6 +3,7 @@ const experiments   = require('../experiments');
 const express       = require('express');
 const fs            = require('fs-extra');
 const urljoin       = require('url-join');
+const data_server   = require('../data_server/controllers/controller');
 
 const router        = express.Router();
 const readFile = promisify(fs.readFile);
@@ -50,7 +51,16 @@ function displayExperiment(params, res){
             version:version_data.version,
             state:version_data.state
         }, postAlways); // post the post always stuff too - so that we can connect them...
-
+		const experimentSessionData=
+		{
+            descriptiveId: exp_data.descriptive_id, 
+            version:version_data.version,
+            state:version_data.state,
+            sessionId:exp_data.session_id, 
+            studyId:exp_data.exp_id,
+            versionId:version_data.id
+		};
+		data_server.insertExperimentSession(experimentSessionData);
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
             .then(transformHtml(exp_data,postOnce,postAlways))
             .then(res.send.bind(res));

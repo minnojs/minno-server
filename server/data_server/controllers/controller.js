@@ -6,7 +6,10 @@ var config = require.main.require('../config'),
 	Study = require('../models/studySchema'), //created model loading here
 	DataRequest = mongoose.model('DataRequest'),
 	Data = mongoose.model('Data'),
+	experimentSessionSchema=require('../models/experimentSessionSchema'),
+	experimentSessionSchema = mongoose.model('ExperimentSession'),
 	sanitize = require("sanitize-filename");
+	
 
 var fs = require('fs-extra');
 var convert = require('mongoose_schema-json');
@@ -29,6 +32,17 @@ exports.insertData = function(req, res) {
 		res.json(data);
 	});
 };
+exports.insertExperimentSession = function(params) {
+	var newData = new experimentSessionSchema(params);
+	newData.save(function(err, data) {
+		if (err)
+			res.send(err);
+		console.log("saved session data");
+		return true;
+	});
+};
+
+
 exports.getDownloadRequests = function(studyIds) {
 	return new Promise(function(resolve, reject) {
 		DataRequest.find({
@@ -45,16 +59,94 @@ exports.getDownloadRequests = function(studyIds) {
 
 		})
 	});
+};
+/**
+additionalColumns: an array with strings of additional fields to include in the output
+dateSize: How to group date fields.  'day' 'month' 'year' are the options.  defaults 'day'
+**/
+exports.getStatistics = async function(studyId,  startDate, endDate,additionalColumns, dateSize) 	
+{
+if (typeof studyId == 'undefined' || !studyId)
+	throw new Error("Error: studyId must be specified");
+if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
+{
+	dateSize='day';
+}
+console.log("stats");
+	var findObject = {};
+	var files = {};
+	var dataMaps = {};
+	var processedData = [];
+	var pos = 0;
+	var rowSplitString = '\t';
+	var fileSuffix = '.txt';
+	var fileConfig = {};
+	var datacount=0;
+	var sortB=true;
+	findObject.studyId = studyId;
+	if(Array.isArray(studyId))
+	{
+		findObject.studyId ={};
+		findObject.studyId.$in=studyId;
+	}
+	if (typeof startDate !== 'undefined' && startDate) {
+		findObject.createdDate = {};
+		findObject.createdDate.$gt = new Date(startDate);
+	}
+	if (typeof endDate !== 'undefined' && endDate) {
+		if (typeof findObject.createdDate == 'undefined' || !findObject.createdDate) {
+			findObject.createdDate = {};
+		}
+		findObject.createdDate.$lt = new Date(endDate);
+	}
+	var fieldsToFind="studyId descriptiveId -_id";
+	if(additionalColumns!=null)
+	{
+		additionalColumns.forEach(function(element) {
+			fieldsToFind+=" "+element;
+		});
+	}
+	var dataMap=new Map();
+	var cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
+	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		console.log(dataEntry);
+		if(dataEntry.createdDate!== 'undefined' )
+		{
+			dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);
+			
+		}
+		var dataHash=JSON.stringify(dataEntry).hashCode();
+		var dataMap=new Map();
+		if(!dataMap.has(dataHash))
+		{
+			dataEntry['#totalsessions']=1;
+			dataMap.set(dataHash,dataEntry);
+		}
+		else
+		{
+			dataEntry=dataMap.get(dataHash);
+			dataEntry['#totalsessions']++;
+			dataMap.set(dataHash,dataEntry);
+		}
+			
+	}
+	var output=new Array(dataMap.size);
+	var pos=0;
+	for (let key of dataMap.keys())
+	{
+		output[pos]=dataMap.get(key);
+		pos++;
+	}
+	return output;
+
 
 
 };
+
 exports.getData2 = function(req, res) {
 	res.send(exports.getData(req.get('studyId')));
 }
 exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate,versionId) {
-	//startDate=null;
-	//endDate=null;
-
 	if (typeof studyId == 'undefined' || !studyId)
 		throw new Error("Error: studyId must be specified");
 	var findObject = {};
@@ -353,6 +445,23 @@ var getDateString = function(daysFromPresent) {
 
 	return dateString;
 }
+var formatDate = function(date,dateSize)
+{
+	var dd = date.getDate();
+	var mm = date.getMonth();
+	var yyyy = date.getFullYear();
+
+	if(dateSize=='day'){
+	return dd + '.' + mm + '.' + yyyy;}
+	if(dateSize=='month')
+	{
+		return mm + '.' + yyyy;
+	}
+	if(dateSize=='year')
+	{
+		return ''+yyyy;
+	}
+}
 var zipFolder = async function(zipPath, zipFolder) {
 	var output = fs.createWriteStream(zipPath);
 	var archive = archiver('zip', {
@@ -513,3 +622,13 @@ var arrayToCsvString = function(theArray, separator) {
 	newString += '\n';
 	return newString;
 }
+String.prototype.hashCode = function() {
+  var hash = 0, i, chr;
+  if (this.length === 0) return hash;
+  for (i = 0; i < this.length; i++) {
+    chr   = this.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
