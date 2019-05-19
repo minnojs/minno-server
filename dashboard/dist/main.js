@@ -12873,9 +12873,9 @@
         body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
     }); };
 
-    var get_stat = function (study_id, start_date, end_date, sort_version, sort_experiment, sort_day, first_task, last_task) { return fetchJson(get_stat_url(study_id), {
+    var get_stat = function (study_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
         method: 'post',
-        body: {start_date: start_date, end_date: end_date, sort_version: sort_version, sort_experiment: sort_experiment, sort_day: sort_day, first_task: first_task, last_task: last_task}
+        body: {start_date: start_date, end_date: end_date, date_size: date_size}
     }); };
 
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
@@ -15947,11 +15947,7 @@
                 all_versions: m.prop(''),
                 stat_data: m.prop(''),
                 file_split: m.prop('taskName'),
-                sort_version: m.prop(false),
-                sort_experiment: m.prop(false),
-                sort_day: m.prop(false),
-                first_task: m.prop(''),
-                last_task: m.prop(''),
+                date_size: m.prop('day'),
 
                 show_empty: m.prop(false),
 
@@ -16003,40 +15999,19 @@
                     ])
                 ]),
                 m('.row.space', [
-                    m('.col-sm-12', [
+                    m('.col-sm-5', [
                         m('.form-group.row', [
                             m('.col-sm-3', [
                                 m('label.form-control-label', 'Show by')
                             ]),
-                            m('.col-sm-9.pull-right', [
-                                m('.btn-group.btn-group-sm', [
-                                    button$2(ctrl.sort_version, 'Version'),
-                                    button$2(ctrl.sort_experiment, 'Experiment'),
-                                    button$2(ctrl.sort_day, 'Day')
-                                ])
+                            m('p.text-muted.btn-toolbar', [
 
-                            ])
+                                dateSizeView(ctrl.date_size, 'day'),
+                                dateSizeView(ctrl.date_size, 'month'),
+                                dateSizeView(ctrl.date_size, 'year')                        ]),
+
                         ])
                     ])
-                ]),
-                m('.row.space', [
-                    m('.col-sm-3', [
-                        m('label.form-control-label', 'Compute completions')
-                    ]),
-                    m('.col-sm-9', [
-                        m('.row', [
-                            m('.col-sm-5', [
-                                m('input.form-control', {placeholder: 'First task', value: ctrl.first_task(), onchange: m.withAttr('value', ctrl.first_task)})
-                            ]),
-                            m('.col-sm-1', [
-                                m('.form-control-static', 'to')
-                            ]),
-                            m('.col-sm-5', [
-                                m('input.form-control', {placeholder: 'Last task', value: ctrl.last_task(), onchange: m.withAttr('value', ctrl.last_task)})
-                            ])
-                        ])
-                    ])
-
                 ]),
                 m('.row.space', [
                     m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return ctrl.displayHelp(!ctrl.displayHelp()); }}, ['Toggle help ', m('i.fa.fa-question-circle')]),
@@ -16075,7 +16050,7 @@
         correct_end_date.setHours(23,59,59,999);
 
 
-        return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.sort_version(), ctrl.sort_experiment(), ctrl.sort_day(), ctrl.first_task(), ctrl.last_task())
+        return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.date_size())
 
 
             .then(function (response) {
@@ -16112,6 +16087,16 @@
             dates.endDate(new Date());
         }
     }, name); };
+
+
+
+
+    var dateSizeView = function (date_size, value) { return m('button.btn.btn-secondary.btn-sm', {
+
+        class:  date_size()===value ? 'active' : '' ,
+        onclick: function () {
+            date_size(value);
+        }}, value); };
 
 
 

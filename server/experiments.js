@@ -164,7 +164,7 @@ function delete_request(user_id, study_id, request_id) {
     });
 }
 
-function get_stat(user_id, study_id, start_date, end_date, sort_version, sort_experiment, sort_day, first_task, last_task) {
+function get_stat(user_id, study_id, start_date, end_date, date_size) {
 
     return has_read_data_permission(user_id, study_id)
         .then(()=> {
@@ -179,7 +179,7 @@ function get_stat(user_id, study_id, start_date, end_date, sort_version, sort_ex
             }];
             return stat_data;
         })
-        // data_server.getStat(study_id, version_id, start_date, end_date, sort_experiment, sort_task, time_frame, first_task, last_task))
+        // data_server.getStat(study_id, start_date, end_date, date_size))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 

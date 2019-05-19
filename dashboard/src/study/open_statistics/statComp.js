@@ -16,11 +16,7 @@ let stat_dialog = {
             all_versions: m.prop(''),
             stat_data: m.prop(''),
             file_split: m.prop('taskName'),
-            sort_version: m.prop(false),
-            sort_experiment: m.prop(false),
-            sort_day: m.prop(false),
-            first_task: m.prop(''),
-            last_task: m.prop(''),
+            date_size: m.prop('day'),
 
             show_empty: m.prop(false),
 
@@ -69,40 +65,19 @@ let stat_dialog = {
                 ])
             ]),
             m('.row.space', [
-                m('.col-sm-12', [
+                m('.col-sm-5', [
                     m('.form-group.row', [
                         m('.col-sm-3', [
                             m('label.form-control-label', 'Show by')
                         ]),
-                        m('.col-sm-9.pull-right', [
-                            m('.btn-group.btn-group-sm', [
-                                button(ctrl.sort_version, 'Version'),
-                                button(ctrl.sort_experiment, 'Experiment'),
-                                button(ctrl.sort_day, 'Day')
-                            ])
+                        m('p.text-muted.btn-toolbar', [
 
-                        ])
+                            dateSizeView(ctrl.date_size, 'day'),
+                            dateSizeView(ctrl.date_size, 'month'),
+                            dateSizeView(ctrl.date_size, 'year')                        ]),
+
                     ])
                 ])
-            ]),
-            m('.row.space', [
-                m('.col-sm-3', [
-                    m('label.form-control-label', 'Compute completions')
-                ]),
-                m('.col-sm-9', [
-                    m('.row', [
-                        m('.col-sm-5', [
-                            m('input.form-control', {placeholder: 'First task', value: ctrl.first_task(), onchange: m.withAttr('value', ctrl.first_task)})
-                        ]),
-                        m('.col-sm-1', [
-                            m('.form-control-static', 'to')
-                        ]),
-                        m('.col-sm-5', [
-                            m('input.form-control', {placeholder: 'Last task', value: ctrl.last_task(), onchange: m.withAttr('value', ctrl.last_task)})
-                        ])
-                    ])
-                ])
-
             ]),
             m('.row.space', [
                 m('button.btn.btn-secondary.btn-sm', {onclick: ()=>ctrl.displayHelp(!ctrl.displayHelp())}, ['Toggle help ', m('i.fa.fa-question-circle')]),
@@ -140,7 +115,7 @@ function ask_get_stat(ctrl){
     correct_end_date.setHours(23,59,59,999);
 
 
-    return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.sort_version(), ctrl.sort_experiment(), ctrl.sort_day(), ctrl.first_task(), ctrl.last_task())
+    return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.date_size())
 
 
         .then(response => {
@@ -172,6 +147,16 @@ let dayButtonView = (dates, name, days) => m('button.btn.btn-secondary.btn-sm', 
         dates.endDate(new Date());
     }
 }, name);
+
+
+
+
+let dateSizeView = (date_size, value) => m('button.btn.btn-secondary.btn-sm', {
+
+    class:  date_size()===value ? 'active' : '' ,
+    onclick: () => {
+        date_size(value);
+    }}, value);
 
 
 
