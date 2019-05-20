@@ -170,7 +170,7 @@ export const do_rename = (study, notifications) => e => {
         content: {
             view(){
                 return m('div', [
-                    m('input.form-control',  {placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
+                    m('input.form-control',  {placeholder: 'Enter Study Name', value: study_name(), autofocus: true, onchange: m.withAttr('value', study_name)}),
                     !error() ? '' : m('p.alert.alert-danger', error())
                 ]);
             }

@@ -16,7 +16,7 @@ let stat_dialog = {
             all_versions: m.prop(''),
             stat_data: m.prop(''),
             file_split: m.prop('taskName'),
-            date_size: m.prop('day'),
+            date_size: m.prop(''),
 
             show_empty: m.prop(false),
 
@@ -155,7 +155,7 @@ let dateSizeView = (date_size, value) => m('button.btn.btn-secondary.btn-sm', {
 
     class:  date_size()===value ? 'active' : '' ,
     onclick: () => {
-        date_size(value);
+        date_size()===value ? date_size('') : date_size(value);
     }}, value);
 
 

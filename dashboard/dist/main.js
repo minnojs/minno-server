@@ -15947,7 +15947,7 @@
                 all_versions: m.prop(''),
                 stat_data: m.prop(''),
                 file_split: m.prop('taskName'),
-                date_size: m.prop('day'),
+                date_size: m.prop(''),
 
                 show_empty: m.prop(false),
 
@@ -16095,7 +16095,7 @@
 
         class:  date_size()===value ? 'active' : '' ,
         onclick: function () {
-            date_size(value);
+            date_size()===value ? date_size('') : date_size(value);
         }}, value); };
 
 
@@ -16369,7 +16369,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('input.form-control',  {placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control',  {placeholder: 'Enter Study Name', value: study_name(), autofocus: true, onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
