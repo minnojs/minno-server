@@ -72,7 +72,6 @@ if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dat
 {
 	dateSize='day';
 }
-console.log("stats");
 	var findObject = {};
 	var files = {};
 	var dataMaps = {};
@@ -109,7 +108,6 @@ console.log("stats");
 	var dataMap=new Map();
 	var cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		console.log(dataEntry);
 		if(dataEntry.createdDate!== 'undefined' )
 		{
 			dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);

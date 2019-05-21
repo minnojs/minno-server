@@ -168,18 +168,15 @@ function get_stat(user_id, study_id, start_date, end_date, date_size) {
 
     return has_read_data_permission(user_id, study_id)
         .then(()=> {
-            const stat_data = [{
-                study_name:         'agampa.qualtrics.transfer2',
-                version:            'agampa.qualtrics.transfer2',
-                experiment:         'Completion rate',
-                earliest_session:   '2019-05-06T04:00Z',
-                latest_session:     '2019-05-06T04:00Z',
-                starts:     161,
-                completes:  0
-            }];
-            return stat_data;
+			var additionalColumns=[];
+			if(typeof dateSize == 'undefined')
+			{
+				additionalColumns.push('createdDate');
+			}
+	        return data_server.getStatistics(study_id, start_date, end_date, additionalColumns, date_size);
+            
         })
-        // data_server.getStat(study_id, start_date, end_date, date_size))
+		
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 
