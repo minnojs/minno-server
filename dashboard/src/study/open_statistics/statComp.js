@@ -1,6 +1,6 @@
 export default args => m.component(stat_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
-import {get_stat, load_studies} from '../studyModel';
+import {get_exps, get_stat, load_studies} from '../studyModel';
 import formatDate from 'utils/formatDate';
 import statisticsInstructions from './instructions';
 
@@ -9,10 +9,13 @@ let stat_dialog = {
         const ctrl = {
             displayHelp: m.prop(false),
             data_study_id: m.prop(''),
-            exp_id: m.prop(''),
             study_id:m.prop(study_id),
             versions,
             studies: m.prop([]),
+            exps: m.prop([]),
+            exp_id: m.prop(''),
+            all_exp_ids: m.prop(''),
+            version_id: m.prop(''),
             all_versions: m.prop(''),
             stat_data: m.prop(''),
             file_split: m.prop('taskName'),
@@ -36,6 +39,8 @@ let stat_dialog = {
                 ctrl.studies(response.studies);
                 ctrl.studies(ctrl.studies().filter(study=>study.has_data_permission).sort(sort_studies_by_name));
             })
+            .then(()=>load_exps(ctrl))
+
             .then(m.redraw);
         return {ctrl, close};
     },
@@ -45,9 +50,29 @@ let stat_dialog = {
                 m('.col-sm-12', [
                     m('.input-group', [m('strong', 'Study name'),
                         m('select.c-select.form-control',{onchange: e => select_study(ctrl, e.target.value)}, [
-                            ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , study.name))
+                            ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , `${study.name} ${study.permission!=='deleted' ? '' : '(deleted study)' }`))
                         ])
                     ]),
+                ])
+            ]),
+
+
+            m('.row', [
+                m('.col-sm-6', [
+                    m('.input-group', [m('strong', 'Experimant id'),
+                        m('select.c-select.form-control',{onchange: e => ctrl.exp_id(e.target.value)}, [
+                            ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
+                            ctrl.exps().map(exp=> m('option', {value:exp.ids} , exp.descriptive_id))
+                        ])
+                    ])
+                ]),
+                m('.col-sm-6', [
+                    m('.input-group', [m('strong', 'Version id'),
+                        m('select.c-select.form-control',{onchange: e => ctrl.version_id(e.target.value)}, [
+                            ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
+                            ctrl.versions.map(version=> m('option', {value:version.id}, `${version.version} (${version.state})`))
+                        ])
+                    ])
                 ])
             ]),
             m('.row.space', [
@@ -102,6 +127,33 @@ let stat_dialog = {
     ])
 };
 
+
+
+function load_exps(ctrl){
+    get_exps(ctrl.study_id())
+        .then(response => {
+            ctrl.exps(response.experiments);
+            ctrl.all_exp_ids(ctrl.exps().map(exp=>exp.id));
+            ctrl.exp_id(ctrl.all_exp_ids());
+            let tmp_exps = [];
+            ctrl.exps().forEach(exp=>{
+                !tmp_exps.find(exp2find=>exp2find.descriptive_id === exp.descriptive_id)
+                    ?
+                    tmp_exps.push({ids:[exp.id], descriptive_id:exp.descriptive_id})
+                    :
+                    tmp_exps.map(exp2update=>exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update);
+                ctrl.exps(tmp_exps);
+            });
+        })
+        .then(()=> {
+            ctrl.all_versions(ctrl.versions.map(version=>version.id));
+            ctrl.version_id(ctrl.all_versions());
+        })
+        .catch(ctrl.error)
+        .then(m.redraw);
+}
+
+
 function ask_get_stat(ctrl){
     ctrl.error('');
 
@@ -115,7 +167,7 @@ function ask_get_stat(ctrl){
     correct_end_date.setHours(23,59,59,999);
 
 
-    return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.date_size())
+    return get_stat(ctrl.study_id(), ctrl.all_exp_ids(), ctrl.all_versions(), correct_start_date, correct_end_date, ctrl.date_size())
 
 
         .then(response => {

@@ -164,19 +164,11 @@ function delete_request(user_id, study_id, request_id) {
     });
 }
 
-function get_stat(user_id, study_id, start_date, end_date, date_size) {
+function get_stat(user_id, study_id, exp_id, version_id, start_date, end_date, date_size) {
+    const additional_columns = [];
 
     return has_read_data_permission(user_id, study_id)
-        .then(()=> {
-			var additionalColumns=[];
-			if(typeof dateSize == 'undefined')
-			{
-				additionalColumns.push('createdDate');
-			}
-	        return data_server.getStatistics(study_id, start_date, end_date, additionalColumns, date_size);
-            
-        })
-		
+        .then(()=> data_server.getStatistics(study_id, exp_id, version_id, start_date, end_date, date_size, additional_columns))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 

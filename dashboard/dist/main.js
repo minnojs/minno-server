@@ -12873,9 +12873,9 @@
         body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
     }); };
 
-    var get_stat = function (study_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
+    var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
         method: 'post',
-        body: {start_date: start_date, end_date: end_date, date_size: date_size}
+        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
     }); };
 
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
@@ -15629,7 +15629,7 @@
             m('.card-block', [
                 m('.input-group', [m('strong', 'Study name'),
                     m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
-                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , study.name); })
+                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                     ])
                 ]),
                 m('.row', [
@@ -15940,10 +15940,13 @@
             var ctrl = {
                 displayHelp: m.prop(false),
                 data_study_id: m.prop(''),
-                exp_id: m.prop(''),
                 study_id:m.prop(study_id),
                 versions: versions,
                 studies: m.prop([]),
+                exps: m.prop([]),
+                exp_id: m.prop(''),
+                all_exp_ids: m.prop(''),
+                version_id: m.prop(''),
                 all_versions: m.prop(''),
                 stat_data: m.prop(''),
                 file_split: m.prop('taskName'),
@@ -15966,6 +15969,8 @@
                     ctrl.studies(response.studies);
                     ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$1));
                 })
+                .then(function (){ return load_exps$1(ctrl); })
+
                 .then(m.redraw);
             return {ctrl: ctrl, close: close};
         },
@@ -15979,9 +15984,29 @@
                     m('.col-sm-12', [
                         m('.input-group', [m('strong', 'Study name'),
                             m('select.c-select.form-control',{onchange: function (e) { return select_study$1(ctrl, e.target.value); }}, [
-                                ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , study.name); })
+                                ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                             ])
                         ]),
+                    ])
+                ]),
+
+
+                m('.row', [
+                    m('.col-sm-6', [
+                        m('.input-group', [m('strong', 'Experimant id'),
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.exp_id(e.target.value); }}, [
+                                ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
+                                ctrl.exps().map(function (exp){ return m('option', {value:exp.ids} , exp.descriptive_id); })
+                            ])
+                        ])
+                    ]),
+                    m('.col-sm-6', [
+                        m('.input-group', [m('strong', 'Version id'),
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
+                                ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
+                                ctrl.versions.map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                            ])
+                        ])
                     ])
                 ]),
                 m('.row.space', [
@@ -16037,6 +16062,33 @@
     }
     };
 
+
+
+    function load_exps$1(ctrl){
+        get_exps(ctrl.study_id())
+            .then(function (response) {
+                ctrl.exps(response.experiments);
+                ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
+                ctrl.exp_id(ctrl.all_exp_ids());
+                var tmp_exps = [];
+                ctrl.exps().forEach(function (exp){
+                    !tmp_exps.find(function (exp2find){ return exp2find.descriptive_id === exp.descriptive_id; })
+                        ?
+                        tmp_exps.push({ids:[exp.id], descriptive_id:exp.descriptive_id})
+                        :
+                        tmp_exps.map(function (exp2update){ return exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update; });
+                    ctrl.exps(tmp_exps);
+                });
+            })
+            .then(function (){
+                ctrl.all_versions(ctrl.versions.map(function (version){ return version.id; }));
+                ctrl.version_id(ctrl.all_versions());
+            })
+            .catch(ctrl.error)
+            .then(m.redraw);
+    }
+
+
     function ask_get_stat(ctrl){
         ctrl.error('');
 
@@ -16050,7 +16102,7 @@
         correct_end_date.setHours(23,59,59,999);
 
 
-        return get_stat(ctrl.study_id(), correct_start_date, correct_end_date, ctrl.date_size())
+        return get_stat(ctrl.study_id(), ctrl.all_exp_ids(), ctrl.all_versions(), correct_start_date, correct_end_date, ctrl.date_size())
 
 
             .then(function (response) {
