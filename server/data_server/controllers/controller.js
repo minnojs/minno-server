@@ -127,12 +127,9 @@ if (typeof studyId == 'undefined' || !studyId)
 	var dataMap=new Map();
 	var cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		console.log(dataEntry);
 		if(dataEntry.createdDate!== 'undefined' && dataEntry.createdDate)
 		{
-			console.log('inside');
 			dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);
-			
 		}
 		var dataHash=JSON.stringify(dataEntry).hashCode();
 		var dataMap=new Map();
