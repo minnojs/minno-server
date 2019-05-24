@@ -64,14 +64,11 @@ exports.getDownloadRequests = function(studyIds) {
 additionalColumns: an array with strings of additional fields to include in the output
 dateSize: How to group date fields.  'day' 'month' 'year' are the options.  defaults 'day'
 **/
-exports.getStatistics = async function(studyId,  startDate, endDate,additionalColumns, dateSize) 	
+exports.getStatistics = async function(studyId, version_id,  startDate, endDate, dateSize, additionalColumns) 	
 {
 if (typeof studyId == 'undefined' || !studyId)
 	throw new Error("Error: studyId must be specified");
-if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
-{
-	dateSize='day';
-}
+
 	var findObject = {};
 	var files = {};
 	var dataMaps = {};
@@ -98,7 +95,29 @@ if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dat
 		}
 		findObject.createdDate.$lt = new Date(endDate);
 	}
+	if(typeof versionId !== 'undefined' && versionId)
+	{
+		if(Array.isArray(versionId))
+		{
+			versionId.forEach(function(vId) {
+				vId=vId.toString();
+			});
+			findObject.versionId={};
+			findObject.versionId.$in=versionId;
+		}
+			else
+			{
+				findObject.versionId==versionId.toString();
+	}
+	}
 	var fieldsToFind="studyId descriptiveId -_id";
+	if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
+	{
+		dateSize='day';
+	}
+	else{
+		fieldsToFind+=' createdDate ';
+	}
 	if(additionalColumns!=null)
 	{
 		additionalColumns.forEach(function(element) {
@@ -108,8 +127,10 @@ if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dat
 	var dataMap=new Map();
 	var cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		if(dataEntry.createdDate!== 'undefined' )
+		console.log(dataEntry);
+		if(dataEntry.createdDate!== 'undefined' && dataEntry.createdDate)
 		{
+			console.log('inside');
 			dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);
 			
 		}

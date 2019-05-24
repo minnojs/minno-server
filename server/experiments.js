@@ -168,7 +168,7 @@ function get_stat(user_id, study_id, exp_id, version_id, start_date, end_date, d
     const additional_columns = [];
 
     return has_read_data_permission(user_id, study_id)
-        .then(()=> data_server.getStatistics(study_id, exp_id, version_id, start_date, end_date, date_size, additional_columns))
+        .then(()=> data_server.getStatistics(exp_id, version_id, start_date, end_date, date_size, additional_columns))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 
