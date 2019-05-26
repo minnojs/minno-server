@@ -37,7 +37,6 @@ exports.insertExperimentSession = function(params) {
 	newData.save(function(err, data) {
 		if (err)
 			res.send(err);
-		console.log("saved session data");
 		return true;
 	});
 };
@@ -64,11 +63,10 @@ exports.getDownloadRequests = function(studyIds) {
 additionalColumns: an array with strings of additional fields to include in the output
 dateSize: How to group date fields.  'day' 'month' 'year' are the options.  defaults 'day'
 **/
-exports.getStatistics = async function(studyId, version_id,  startDate, endDate, dateSize, additionalColumns) 	
+exports.getStatistics = async function(studyId, versionId,  startDate, endDate, dateSize, additionalColumns) 	
 {
 if (typeof studyId == 'undefined' || !studyId)
 	throw new Error("Error: studyId must be specified");
-
 	var findObject = {};
 	var files = {};
 	var dataMaps = {};
@@ -107,7 +105,7 @@ if (typeof studyId == 'undefined' || !studyId)
 		}
 			else
 			{
-				findObject.versionId==versionId.toString();
+				findObject.versionId=versionId.toString();
 	}
 	}
 	var fieldsToFind="descriptiveId -_id createdDate version ";
@@ -134,7 +132,7 @@ if (typeof studyId == 'undefined' || !studyId)
 			delete dataEntry.createdDate;
 		}
 		var dataHash=JSON.stringify(dataEntry).hashCode();
-		var dataMap=new Map();
+		
 		if(!dataMap.has(dataHash))
 		{
 			dataEntry['#earliest_session']=currentDate;
@@ -501,15 +499,15 @@ var zipFolder = async function(zipPath, zipFolder) {
 	// listen for all archive data to be written
 	// 'close' event is fired only when a file descriptor is involved
 	output.on('close', function() {
-		console.log(archive.pointer() + ' total bytes');
-		console.log('archiver has been finalized and the output file descriptor has closed.');
+	//	console.log(archive.pointer() + ' total bytes');
+	//	console.log('archiver has been finalized and the output file descriptor has closed.');
 	});
 
 	// This event is fired when the data source is drained no matter what was the data source.
 	// It is not part of this library but rather from the NodeJS Stream API.
 	// @see: https://nodejs.org/api/stream.html#stream_event_end
 	output.on('end', function() {
-		console.log('Data has been drained');
+		//console.log('Data has been drained');
 	});
 
 	// good practice to catch warnings (ie stat failures and other non-blocking errors)
@@ -610,7 +608,6 @@ var writeDataRowToFile = async function(row, map, filename, rowSplitString, file
 var zipFiles = async function(fileConfig) {
 	await zipFolder(fileConfig.zipPath, fileConfig.filePrefix);
 	fs.remove(fileConfig.filePrefix); //don't need to wait on folder to be deleted after it has been zipped
-	console.log(fileConfig.zipName);
 	return fileConfig.zipName;
 }
 
