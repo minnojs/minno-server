@@ -110,7 +110,7 @@ if (typeof studyId == 'undefined' || !studyId)
 				findObject.versionId==versionId.toString();
 	}
 	}
-	var fieldsToFind="studyId descriptiveId -_id createdDate version ";
+	var fieldsToFind="descriptiveId -_id createdDate version ";
 	if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
 	{
 		dateSize='none';
