@@ -110,13 +110,10 @@ if (typeof studyId == 'undefined' || !studyId)
 				findObject.versionId==versionId.toString();
 	}
 	}
-	var fieldsToFind="studyId descriptiveId -_id";
+	var fieldsToFind="studyId descriptiveId -_id createdDate ";
 	if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
 	{
-		dateSize='day';
-	}
-	else{
-		fieldsToFind+=' createdDate ';
+		dateSize='none';
 	}
 	if(additionalColumns!=null)
 	{
@@ -127,14 +124,21 @@ if (typeof studyId == 'undefined' || !studyId)
 	var dataMap=new Map();
 	var cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		if(dataEntry.createdDate!== 'undefined' && dataEntry.createdDate)
+		if(dateSize!='none')
 		{
 			dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);
+		}
+		else
+		{
+			var currentDate=dataEntry.createdDate;
+			delete dataEntry.createdDate;
 		}
 		var dataHash=JSON.stringify(dataEntry).hashCode();
 		var dataMap=new Map();
 		if(!dataMap.has(dataHash))
 		{
+			dataEntry['#earliest_session']=currentDate;
+			dataEntry['#latest_session']=currentDate;
 			dataEntry['#totalsessions']=1;
 			dataMap.set(dataHash,dataEntry);
 		}
@@ -142,6 +146,14 @@ if (typeof studyId == 'undefined' || !studyId)
 		{
 			dataEntry=dataMap.get(dataHash);
 			dataEntry['#totalsessions']++;
+			if(dataEntry['#earliest_session']>currentDate)
+			{
+				dataEntry['#earliest_session']=currentDate;
+			}
+			if(dataEntry['#latest_session']<currentDate)
+			{
+				dataEntry['#latest_session']=currentDate;
+			}
 			dataMap.set(dataHash,dataEntry);
 		}
 			
