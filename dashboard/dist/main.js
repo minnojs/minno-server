@@ -15993,7 +15993,7 @@
 
                 m('.row', [
                     m('.col-sm-6', [
-                        m('.input-group', [m('strong', 'Experimant id'),
+                        m('.input-group', [m('strong', 'Experiment name'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.exp_id(e.target.value); }}, [
                                 ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
                                 ctrl.exps().map(function (exp){ return m('option', {value:exp.ids} , exp.descriptive_id); })
@@ -16001,7 +16001,7 @@
                         ])
                     ]),
                     m('.col-sm-6', [
-                        m('.input-group', [m('strong', 'Version id'),
+                        m('.input-group', [m('strong', 'Version'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
                                 ctrl.versions.map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
@@ -16102,7 +16102,7 @@
         correct_end_date.setHours(23,59,59,999);
 
 
-        return get_stat(ctrl.study_id(), ctrl.all_exp_ids(), ctrl.all_versions(), correct_start_date, correct_end_date, ctrl.date_size())
+        return get_stat(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), correct_start_date, correct_end_date, ctrl.date_size())
 
 
             .then(function (response) {
@@ -16175,24 +16175,20 @@
             :[m('table', {class:'table table-striped table-hover'}, [
                 m('thead', [
                     m('tr', [
-                        m('th', 'Study Name'),
                         m('th', 'Version'),
                         m('th', 'Experiment Name'),
                         m('th', 'Earliest session'),
                         m('th', 'Latest session'),
-                        m('th', 'Starts'),
-                        m('th','Completes'),
+                        m('th', 'Total sessions')
                     ])
                 ]),
                 m('tbody',
                     stat2show.map(function (data) { return m('tr', [
-                        m('td', data.study_name),
                         m('td',data.version),
-                        m('td',data.experiment),
-                        m('td',formatDate(new Date(data.earliest_session))),
-                        m('td',formatDate(new Date(data.latest_session))),
-                        m('td', data.starts),
-                        m('td', data.completes)
+                        m('td',data.descriptiveId),
+                        m('td',formatDate(new Date(data['#earliest_session']))),
+                        m('td',formatDate(new Date(data['#latest_session']))),
+                        m('td', data['#totalsessions'])
 
 
                     ]); })
