@@ -15706,6 +15706,11 @@
 
         if(!Array.isArray(ctrl.exp_id()))
             ctrl.exp_id(ctrl.exp_id().split(','));
+
+        if(!Array.isArray(ctrl.version_id()))
+            ctrl.version_id(ctrl.version_id().split(','));
+
+
         ctrl.downloaded(false);
 
 
@@ -16041,9 +16046,9 @@
                 m('.row.space', [
                     m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return ctrl.displayHelp(!ctrl.displayHelp()); }}, ['Toggle help ', m('i.fa.fa-question-circle')]),
 
-                    m('.btn-group.btn-group-sm.pull-right', [
-                        button$2(ctrl.show_empty, 'Hide Empty', 'Hide Rows with Zero Started Sessions')
-                    ])
+                    // m('.btn-group.btn-group-sm.pull-right', [
+                    //     button(ctrl.show_empty, 'Hide Empty', 'Hide Rows with Zero Started Sessions')
+                    // ])
                 ]),
 
                 !ctrl.displayHelp() ? '' : m('.row', [
@@ -16093,6 +16098,13 @@
         ctrl.error('');
 
         ctrl.downloaded(false);
+
+
+        if(!Array.isArray(ctrl.exp_id()))
+            ctrl.exp_id(ctrl.exp_id().split(','));
+
+        if(!Array.isArray(ctrl.version_id()))
+            ctrl.version_id(ctrl.version_id().split(','));
 
 
         var correct_start_date = new Date(ctrl.dates.startDate());
@@ -16163,16 +16175,21 @@
         ctrl.loaded.bind(null, false);
         var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
         ctrl.versions = new_study.versions;
+        load_exps$1(ctrl);
 
     }
 
 
     function show_stat(ctrl){
-        var stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(function (row) { return row.starts !==0; });
+        var stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(function (data) { return data['#totalsessions'] !==0; });
         return !stat2show
             ?
             ''
-            :[m('table', {class:'table table-striped table-hover'}, [
+            :
+
+            [stat2show.length<1 ? m('.alert.alert-info', 'There is no data') :
+
+            m('table', {class:'table table-striped table-hover'}, [
                 m('thead', [
                     m('tr', [
                         m('th', 'Version'),
@@ -16195,16 +16212,6 @@
                 )])
             ];
     }
-
-    var button$2 = function (prop, text, title) {
-        if ( title === void 0 ) title = '';
-
-        return m('a.btn.btn-secondary', {
-        class: prop() ? 'active' : '',
-        onclick: function () { return prop(!prop()); },
-        title: title
-    }, text);
-    };
 
     function collaboration_url(study_id)
     {

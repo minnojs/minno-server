@@ -107,9 +107,9 @@ let stat_dialog = {
             m('.row.space', [
                 m('button.btn.btn-secondary.btn-sm', {onclick: ()=>ctrl.displayHelp(!ctrl.displayHelp())}, ['Toggle help ', m('i.fa.fa-question-circle')]),
 
-                m('.btn-group.btn-group-sm.pull-right', [
-                    button(ctrl.show_empty, 'Hide Empty', 'Hide Rows with Zero Started Sessions')
-                ])
+                // m('.btn-group.btn-group-sm.pull-right', [
+                //     button(ctrl.show_empty, 'Hide Empty', 'Hide Rows with Zero Started Sessions')
+                // ])
             ]),
 
             !ctrl.displayHelp() ? '' : m('.row', [
@@ -158,6 +158,13 @@ function ask_get_stat(ctrl){
     ctrl.error('');
 
     ctrl.downloaded(false);
+
+
+    if(!Array.isArray(ctrl.exp_id()))
+        ctrl.exp_id(ctrl.exp_id().split(','));
+
+    if(!Array.isArray(ctrl.version_id()))
+        ctrl.version_id(ctrl.version_id().split(','));
 
 
     let correct_start_date = new Date(ctrl.dates.startDate());
@@ -223,16 +230,21 @@ function select_study(ctrl, study_id){
     ctrl.loaded.bind(null, false);
     const new_study = ctrl.studies().filter(study=>study.id==study_id)[0];
     ctrl.versions = new_study.versions;
+    load_exps(ctrl);
 
 }
 
 
 function show_stat(ctrl){
-    const stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(row => row.starts !==0);
+    const stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(data => data['#totalsessions'] !==0);
     return !stat2show
         ?
         ''
-        :[m('table', {class:'table table-striped table-hover'}, [
+        :
+
+        [stat2show.length<1 ? m('.alert.alert-info', 'There is no data') :
+
+        m('table', {class:'table table-striped table-hover'}, [
             m('thead', [
                 m('tr', [
                     m('th', 'Version'),
