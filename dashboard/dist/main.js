@@ -13043,6 +13043,7 @@
                 m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])}).then(function (response) { return response && study.make_experiment(file, descriptive_id())
+            .then(function (data){ return console.log(data); })
             .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
             .then(function (){ return m.redraw(); }); });
     }; };

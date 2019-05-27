@@ -218,7 +218,9 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                                     descriptive_id: descriptive_id
                                 });
                             });
-                        return ({id: id,
+                        const exp_data = data.value.experiments.find(exp=>exp.file_id===file_id && descriptive_id===descriptive_id);
+                        return ({
+                            id: exp_data.id,
                             file_id: file_id,
                             descriptive_id: descriptive_id
                         });
