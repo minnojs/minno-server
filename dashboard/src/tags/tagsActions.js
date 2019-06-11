@@ -11,7 +11,7 @@ let editTagComponent = {
                 m('label.form-control-label', 'Tag name')
             ]),
             m('.col-sm-9', [
-                m('input.form-control', {placeholder: 'tag_text', value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                m('input.form-control', {placeholder: 'text', autofocus: true, value: tag_text(), oninput: m.withAttr('value', tag_text)})
             ])
         ]),
 

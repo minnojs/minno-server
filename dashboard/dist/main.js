@@ -12834,8 +12834,13 @@
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
     }
 
+    function get_restore_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/restore");
+    }
+
+
     function get_requests_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/requests");
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
     }
 
     function get_lock_url(study_id , lock) {
@@ -12876,6 +12881,11 @@
     var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
         method: 'post',
         body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
+    }); };
+
+    var restore2version = function (study_id, version_id) { return fetchJson(get_restore_url(study_id), {
+        method: 'post',
+        body: {version_id: version_id}
     }); };
 
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
@@ -13043,7 +13053,6 @@
                 m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])}).then(function (response) { return response && study.make_experiment(file, descriptive_id())
-            .then(function (data){ return console.log(data); })
             .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
             .then(function (){ return m.redraw(); }); });
     }; };
@@ -15536,7 +15545,8 @@
                 m('input.form-control', {
                     placeholder: 'Filter Tags',
                     value: tagName(),
-                    oninput: m.withAttr('value', tagName)
+                    oninput: m.withAttr('value', tagName),
+                    autofocus: true
                 }),
                 m('span.input-group-btn', [
                     m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -16188,30 +16198,89 @@
             ''
             :
 
-            [stat2show.length<1 ? m('.alert.alert-info', 'There is no data') :
+            [stat2show.length<1 ? m('.alert.alert-info', 'There is no data')
+                :
+                m('table', {class:'table table-striped table-hover'}, [
+                    m('thead', [
+                        m('tr', [
+                            m('th', 'Version'),
+                            m('th', 'Experiment Name'),
+                            m('th', 'Earliest session'),
+                            m('th', 'Latest session'),
+                            m('th', 'Total sessions')
+                        ])
+                    ]),
+                    m('tbody',
+                        stat2show.map(function (data) { return m('tr', [
+                            m('td',data.version),
+                            m('td',data.descriptiveId),
+                            m('td',formatDate(new Date(data['#earliest_session']))),
+                            m('td',formatDate(new Date(data['#latest_session']))),
+                            m('td', data['#totalsessions'])
 
-            m('table', {class:'table table-striped table-hover'}, [
-                m('thead', [
-                    m('tr', [
-                        m('th', 'Version'),
-                        m('th', 'Experiment Name'),
-                        m('th', 'Earliest session'),
-                        m('th', 'Latest session'),
-                        m('th', 'Total sessions')
+
+                        ]); })
+                    )])
+            ];
+    }
+
+    function restore_dialog (args) { return m.component(restore_dialog$1, args); }
+    var restore_dialog$1 = {
+        controller: function controller(ref){
+            var study_id = ref.study_id;
+            var versions = ref.versions;
+            var close = ref.close;
+
+            var ctrl = {
+                study_id: study_id,
+                versions: m.prop([]),
+                version_id: m.prop(''),
+                error: m.prop('')
+            };
+
+            ctrl.versions(versions.sort(function (a, b) { return b.version-a.version; }).slice(0, -1));
+            ctrl.version_id(ctrl.versions().length<1 ? '' : ctrl.versions()[0].id);
+
+            return {ctrl: ctrl, close: close};
+        },
+        view: function (ref) {
+            var ctrl = ref.ctrl;
+            var close = ref.close;
+
+            return m('div', [
+            m('.card-block', [
+
+                    m('.col-sm-6', [
+                        m('.input-group', [m('strong', 'Version'),
+                            ctrl.versions().length<1 ? m('.alert.alert-info', 'There are no versions')
+                            :
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
+                                ctrl.versions().map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                            ])
+                        ])
                     ])
                 ]),
-                m('tbody',
-                    stat2show.map(function (data) { return m('tr', [
-                        m('td',data.version),
-                        m('td',data.descriptiveId),
-                        m('td',formatDate(new Date(data['#earliest_session']))),
-                        m('td',formatDate(new Date(data['#latest_session']))),
-                        m('td', data['#totalsessions'])
+            ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
+            m('.text-xs-right.btn-toolbar',[
+                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
+                m('a.btn.btn-primary.btn-sm', {onclick:function (){do_restore(ctrl); }}, 'Restore')
+            ])
+        ]);
+    }
+    };
 
 
-                    ]); })
-                )])
-            ];
+    function do_restore(ctrl){
+        ctrl.error('');
+
+        return restore2version(ctrl.study_id, ctrl.version_id())
+            .then(function (response) {
+                var stat_data = response.version;
+                if (version == null) return Promise.reject('There was a problem restore your study, please contact your administrator');
+                ctrl.stat_data(response.stat_data);
+            })
+            .catch(function (err){ return ctrl.error(err.message); })
+            .then(m.redraw);
     }
 
     function collaboration_url(study_id)
@@ -16285,7 +16354,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name)})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), autofocus: true})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -16352,6 +16421,15 @@
             .then(m.redraw);
     }; };
 
+    var do_restore$1 = function (study) { return function (e) {
+        e.preventDefault();
+        var study_id = study.id;
+        var versions = study.versions;
+        var close = messages.close;
+        messages.custom({header:'Restore', content: restore_dialog({study_id: study_id, versions: versions, close: close})})
+            .then(m.redraw);
+    }; };
+
 
     var do_make_public = function (study, notifications) { return function (e) {
         e.preventDefault();
@@ -16383,7 +16461,6 @@
                     .then(m.redraw)
                     .then(m.route('./'))
                 ;
-
             });
     }; };
 
@@ -16397,7 +16474,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), onchange: m.withAttr('value', study_description)}),
+                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), autofocus: true, onchange: m.withAttr('value', study_description)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -16461,7 +16538,7 @@
         var ask = function () { return messages.confirm({
             header:'New Name',
             content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', onchange: m.withAttr('value', study_name)}),
+                m('input.form-control', {placeholder: 'Enter Study Name', autofocus: true, onchange: m.withAttr('value', study_name)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])
         }).then(function (response) { return response && duplicate(); }); };
@@ -16570,6 +16647,7 @@
         'tags':[],
         'data':[],
         'stat':[],
+        // 'restore':[],
         'delete':[],
         'rename':[],
         'description':[],
@@ -16606,6 +16684,12 @@
                 display: [can_see_data],
                 onmousedown: do_stat,
                 class: 'fas.fa-bar-chart'
+            }},
+      restore: {text: 'Restore',
+            config: {
+                display: [can_edit],
+                onmousedown: do_restore$1,
+                class: 'fas.fa-undo'
             }},
 
         delete: {text: 'Delete Study',
@@ -17302,7 +17386,7 @@
                                 ])
                             ]),
                             m('.col-sm-4', [
-                                m('input.form-control', {placeholder: 'Search ...', value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                                m('input.form-control', {placeholder: 'Search...', autofocus: true, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
 
@@ -18137,6 +18221,7 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
+                                        autofocus: true,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
@@ -19394,7 +19479,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', autofocus: true, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -19562,7 +19647,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'tag_text', value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', autofocus: true, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -20047,6 +20132,7 @@
             controller: function controller(){
                 var ctrl = {
                     isloggedin: isloggedin,
+                    first_admin_login: m.prop(false),
                     role: m.prop(role),
                     new_msgs: m.prop(new_msgs),
                     present_templates: m.prop(false),
@@ -20061,6 +20147,7 @@
 
                         isloggedin = ctrl.isloggedin = response.isloggedin;
                         ctrl.present_templates(response.present_templates);
+                        ctrl.first_admin_login(response.first_admin_login);
                         var is_view = (m.route() == ("/view/" + (m.route.param('code'))) || m.route() == ("/view/" + (m.route.param('code')) + "/" + (m.route.param('resource')) + "/" + (encodeURIComponent(m.route.param('fileId')))));
 
                         if(ctrl.role()=='ro' && !is_view)
@@ -20076,8 +20163,11 @@
                             m.route('/login');
                             location.hash = encodeURIComponent(url);
                         }
-                        if(ctrl.role()=='CU' && m.route() == '/studies')
+                        if(ctrl.role()=='CU' && m.route() !== '/studies')
                             m.route('/downloads');
+
+                        if(ctrl.first_admin_login() && m.route() !== '/settings')
+                            m.route('/settings');
 
 
                         timer = response.timeoutInSeconds;

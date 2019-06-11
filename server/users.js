@@ -29,11 +29,13 @@ function user_info_by_name (user_name) {
 
 function set_password(user_id, password, confirm) {
     if(!password || !confirm)
-        return Promise.reject({status:400, message: 'ERROR: Missing password / confirm password'});
+        return Promise.reject({status:400, message: 'Missing password / confirm password'});
     if(password.length<8)
-        return Promise.reject({status:400, message: 'ERROR: Passwords must be at least 8 characters in length'});
+        return Promise.reject({status:400, message: 'Passwords must be at least 8 characters in length'});
     if(password !== confirm)
-        return Promise.reject({status:400, message: 'ERROR: Passwords do not match'});
+        return Promise.reject({status:400, message: 'Passwords do not match'});
+    if(password===config.admin_default_pass)
+        return Promise.reject({status:400, message: 'Password must be different from the default'});
 
     return connection.then(function (db) {
         const users   = db.collection('users');
@@ -42,6 +44,8 @@ function set_password(user_id, password, confirm) {
             .then(() => ({}));
     });
 }
+
+
 
 function update_details(user_id, params) {
 
@@ -322,8 +326,11 @@ function connect(user_name, pass) {
                         return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
                     user_data.id = user_data._id;
                     if (!user_data.studies) user_data.studies = [];
-                    if(user_name == pass)
-                        user_data.first_login = true;
+                    if(user_name ==='admin' && pass === config.admin_default_pass)
+                    {
+                        user_data.first_admin_login = true;
+                    }
+
                     const study_ids = user_data.studies.map(obj=>obj.id);
                     return studies
                         .find({_id: {$in: study_ids}})

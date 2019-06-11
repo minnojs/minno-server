@@ -5,6 +5,7 @@ import studyTemplatesComponent from './templates/studyTemplatesComponent';
 import studyTagsComponent from '../tags/studyTagsComponent';
 import data_dialog from '../downloads/dataComp';
 import stat_dialog from './open_statistics/statComp';
+import restore_dialog from './restore/restoreComp';
 
 
 import {update_tags_in_study} from '../tags/tagsModel';
@@ -29,7 +30,7 @@ export let do_create = (type, studies) => {
             view: () => m('p', [
                 m('.form-group', [
                     m('label', 'Enter Study Name:'),
-                    m('input.form-control',  {oninput: m.withAttr('value', study_name)})
+                    m('input.form-control',  {oninput: m.withAttr('value', study_name), autofocus: true})
                 ]),
                 m('.form-group', [
                     m('label', 'Enter Study Description:'),
@@ -96,6 +97,15 @@ export let do_stat = (study) => e => {
         .then(m.redraw);
 };
 
+export let do_restore = (study) => e => {
+    e.preventDefault();
+    let study_id = study.id;
+    let versions = study.versions;
+    let close = messages.close;
+    messages.custom({header:'Restore', content: restore_dialog({study_id, versions, close})})
+        .then(m.redraw);
+};
+
 
 export let do_make_public = (study, notifications) => e =>
 {
@@ -128,7 +138,6 @@ export let do_delete = (study) => e => {
                 .then(m.redraw)
                 .then(m.route('./'))
             ;
-
         });
 };
 
@@ -142,7 +151,7 @@ export const update_study_description = (study) => e => {
         content: {
             view(){
                 return m('div', [
-                    m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), onchange: m.withAttr('value', study_description)}),
+                    m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), autofocus: true, onchange: m.withAttr('value', study_description)}),
                     !error() ? '' : m('p.alert.alert-danger', error())
                 ]);
             }
@@ -206,7 +215,7 @@ export let do_duplicate= (study, callback) => e => {
     let ask = () => messages.confirm({
         header:'New Name',
         content: m('div', [
-            m('input.form-control', {placeholder: 'Enter Study Name', onchange: m.withAttr('value', study_name)}),
+            m('input.form-control', {placeholder: 'Enter Study Name', autofocus: true, onchange: m.withAttr('value', study_name)}),
             !error() ? '' : m('p.alert.alert-danger', error())
         ])
     }).then(response => response && duplicate());

@@ -83,7 +83,7 @@ function get_experiments(user_id, study_id) {
 // This function are used for update the requests that sent by *all* the users.
 // First, it will remove all the old (>7 days) requests from both DB and FS.
 // Later, it will put the new request with the current timestamp into the DB.
-function add_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
+function add_data_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
     return connection.then(function (db) {
 
         const week_ms = 1000*60*60*24*7;
@@ -114,7 +114,7 @@ function add_request(user_id, study_id, exp_id, file_format, file_split, start_d
 }
 
 
-function update_request(request_id, path2file) {
+function update_data_request(request_id, path2file) {
     return connection.then(function (db) {
         return fs.stat(path.join(config.base_folder, config.dataFolder, path2file)).then(file_data=>{
             const data_requests = db.collection('data_requests');
@@ -128,7 +128,7 @@ function update_request(request_id, path2file) {
     });
 }
 
-function cancel_request(request_id) {
+function cancel_data_request(request_id) {
     return connection.then(function (db) {
         const data_requests = db.collection('data_requests');
         return data_requests.updateOne({_id: request_id},
@@ -141,7 +141,7 @@ function cancel_request(request_id) {
 }
 
 
-function get_requests(user_id, study_id) {
+function get_data_requests(user_id, study_id) {
     return connection.then(function (db) {
         const two_days_ms = 1000*60*60*24*2;
         const data_requests = db.collection('data_requests');
@@ -152,7 +152,7 @@ function get_requests(user_id, study_id) {
 
 
 
-function delete_request(user_id, study_id, request_id) {
+function delete_data_request(user_id, study_id, request_id) {
     return connection.then(function (db) {
         const data_requests = db.collection('data_requests');
         return data_requests.findOne({_id: ObjectId(request_id)})
@@ -178,13 +178,13 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
 
     return has_read_data_permission(user_id, study_id)
         .then(()=>
-            add_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id)
+            add_data_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id)
             .then((record)=>{
 
                 const request_id=record.ops[0]._id;
                 data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id)
-                .then(path2file=>update_request(request_id, path2file))
-                 .catch(()=>cancel_request(request_id));
+                .then(path2file=>update_data_request(request_id, path2file))
+                 .catch(()=>cancel_data_request(request_id));
                 return {request_id};
             }))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
@@ -284,4 +284,4 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
 //         });
 // }
 
-module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_requests, delete_request, get_stat};
+module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_data_requests, delete_data_request, get_stat};

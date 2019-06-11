@@ -19,7 +19,8 @@ let studyTagsComponent = {
             m('input.form-control', {
                 placeholder: 'Filter Tags',
                 value: tagName(),
-                oninput: m.withAttr('value', tagName)
+                oninput: m.withAttr('value', tagName),
+                autofocus: true
             }),
             m('span.input-group-btn', [
                 m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [

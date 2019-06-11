@@ -1,5 +1,6 @@
 const express     = require('express');
 const users        = require('../users');
+const config      = require('../../config');
 
 const settingsRouter = express.Router();
 
@@ -15,6 +16,12 @@ settingsRouter
 settingsRouter.route('/settings')
     .post(
         function(req, res){
+            if (req.session.user.first_admin_login && req.session.user.user_name === 'admin' && req.body.params.password && req.body.params.password !== config.admin_default_pass) {
+                req.session.user.first_admin_login = false;
+                req.session.save(function (err) {
+                    console.log(err);
+                });
+            }
             return users.update_details(req.user_id, req.body.params)
                 .then(data=>res.json(data))
                 .catch(err=>

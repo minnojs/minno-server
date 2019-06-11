@@ -19,8 +19,13 @@ function get_stat_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/statistics`;
 }
 
+function get_restore_url(study_id) {
+    return `${baseUrl}/${encodeURIComponent(study_id)}/restore`;
+}
+
+
 function get_requests_url(study_id) {
-    return `${baseUrl}/${encodeURIComponent(study_id)}/requests`;
+    return `${baseUrl}/${encodeURIComponent(study_id)}/data`;
 }
 
 function get_lock_url(study_id , lock) {
@@ -61,6 +66,11 @@ export let get_data = (study_id, exp_id, version_id, file_format, file_split, st
 export let get_stat = (study_id, exp_id, version_id, start_date, end_date, date_size) => fetchJson(get_stat_url(study_id), {
     method: 'post',
     body: {exp_id, version_id, start_date, end_date, date_size}
+});
+
+export let restore2version = (study_id, version_id) => fetchJson(get_restore_url(study_id), {
+    method: 'post',
+    body: {version_id}
 });
 
 export const update_study = (study_id, body) => fetchJson(get_url(study_id), {

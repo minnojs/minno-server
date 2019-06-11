@@ -16,10 +16,22 @@ console.log('Setting up MinnoJS server');
 console.log('=========================');
 Promise.resolve()
     .then(create_dirs)
+    .then(create_counters)
     .then(create_users)
     .then(create_bank_studies)
     .then(update_admin_role)
     .then(process.exit.bind(process));
+
+function create_counters(){
+    console.log('Checking counters');
+    return connection
+        .then(function (db) {
+            const counters = db.collection('counters');
+            return counters.updateMany({},
+                {$max: {seq:0}});
+        });
+
+}
 
 function create_dirs(){
     console.log('Creating directories');
@@ -99,7 +111,6 @@ function create_bank_studies(){
 
             const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).catch(err=>console.log(err.message)));
             const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
-
             return Promise.all([].concat(new_promises, del_promises));
 
             function inject_id(study){

@@ -77,7 +77,7 @@ let collaborationComponent = {
                 header:'Add a Collaborator',
                 content: m.component({view: () => m('p', [
                     m('p', 'Enter collaborator\'s user name:'),
-                    m('input.form-control', {placeholder: 'User name', value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                    m('input.form-control', {placeholder: 'User name', autofocus: true, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                     m('p.space', 'Select user\'s study file access:'),
                     m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [

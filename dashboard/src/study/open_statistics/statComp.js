@@ -242,43 +242,28 @@ function show_stat(ctrl){
         ''
         :
 
-        [stat2show.length<1 ? m('.alert.alert-info', 'There is no data') :
+        [stat2show.length<1 ? m('.alert.alert-info', 'There is no data')
+            :
+            m('table', {class:'table table-striped table-hover'}, [
+                m('thead', [
+                    m('tr', [
+                        m('th', 'Version'),
+                        m('th', 'Experiment Name'),
+                        m('th', 'Earliest session'),
+                        m('th', 'Latest session'),
+                        m('th', 'Total sessions')
+                    ])
+                ]),
+                m('tbody',
+                    stat2show.map(data => m('tr', [
+                        m('td',data.version),
+                        m('td',data.descriptiveId),
+                        m('td',formatDate(new Date(data['#earliest_session']))),
+                        m('td',formatDate(new Date(data['#latest_session']))),
+                        m('td', data['#totalsessions'])
 
-        m('table', {class:'table table-striped table-hover'}, [
-            m('thead', [
-                m('tr', [
-                    m('th', 'Version'),
-                    m('th', 'Experiment Name'),
-                    m('th', 'Earliest session'),
-                    m('th', 'Latest session'),
-                    m('th', 'Total sessions')
-                ])
-            ]),
-            m('tbody',
-                stat2show.map(data => m('tr', [
-                    m('td',data.version),
-                    m('td',data.descriptiveId),
-                    m('td',formatDate(new Date(data['#earliest_session']))),
-                    m('td',formatDate(new Date(data['#latest_session']))),
-                    m('td', data['#totalsessions'])
 
-
-                ]))
-            )])
+                    ]))
+                )])
         ];
 }
-
-let button = (prop, text, title = '') => m('a.btn.btn-secondary', {
-    class: prop() ? 'active' : '',
-    onclick: () => prop(!prop()),
-    title
-}, text);
-
-let radioButton = (prop, text) => m('label.c-input.c-radio', [
-    m('input.form-control[type=radio]', {
-        onclick: prop.bind(null, text),
-        checked: prop() == text
-    }),
-    m('span.c-indicator'),
-    text
-]);

@@ -1,4 +1,4 @@
-import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_stat, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
+import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_stat, do_restore, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
 
 const can_edit = study => !study.isReadonly && study.permission !== 'read only';
 const can_see_data = study => study.has_data_permission;
@@ -13,6 +13,7 @@ const settings = {
     'tags':[],
     'data':[],
     'stat':[],
+    // 'restore':[],
     'delete':[],
     'rename':[],
     'description':[],
@@ -49,6 +50,12 @@ const settings_hash = {
             display: [can_see_data],
             onmousedown: do_stat,
             class: 'fas.fa-bar-chart'
+        }},
+  restore: {text: 'Restore',
+        config: {
+            display: [can_edit],
+            onmousedown: do_restore,
+            class: 'fas.fa-undo'
         }},
 
     delete: {text: 'Delete Study',

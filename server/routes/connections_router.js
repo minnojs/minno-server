@@ -9,13 +9,15 @@ connectionsRouter.get('/is_loggedin',function(req, res){
     if (!req.session || !req.session.user)
         return res.json({isloggedin: false, timeoutInSeconds: 0});
 
-    return users.new_msgs(req.session.user._id).then(new_msgs=>
-        res.json({
-            new_msgs: new_msgs,
+    return users.new_msgs(req.session.user._id).then(new_msgs=>{
+        let user_object = {new_msgs: new_msgs,
             isloggedin: true,
-            role: req.session.user.role
+            role: req.session.user.role};
+        if (req.session.user.first_admin_login)
+            user_object.first_admin_login = true;
+        return res.json(user_object);
 
-        }));
+    });
 });
 
 

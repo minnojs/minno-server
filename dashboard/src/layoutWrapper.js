@@ -15,7 +15,8 @@ let layout = route => {
     return {
         controller(){
             const ctrl = {
-                isloggedin: isloggedin,
+                isloggedin,
+                first_admin_login: m.prop(false),
                 role: m.prop(role),
                 new_msgs: m.prop(new_msgs),
                 present_templates: m.prop(false),
@@ -30,6 +31,7 @@ let layout = route => {
 
                     isloggedin = ctrl.isloggedin = response.isloggedin;
                     ctrl.present_templates(response.present_templates);
+                    ctrl.first_admin_login(response.first_admin_login);
                     let is_view = (m.route() == `/view/${m.route.param('code')}` || m.route() == `/view/${m.route.param('code')}/${m.route.param('resource')}/${encodeURIComponent(m.route.param('fileId'))}`);
 
                     if(ctrl.role()=='ro' && !is_view)
@@ -45,8 +47,11 @@ let layout = route => {
                         m.route('/login');
                         location.hash = encodeURIComponent(url);
                     }
-                    if(ctrl.role()=='CU' && m.route() == '/studies')
+                    if(ctrl.role()=='CU' && m.route() !== '/studies')
                         m.route('/downloads');
+
+                    if(ctrl.first_admin_login() && m.route() !== '/settings')
+                        m.route('/settings');
 
 
                     timer = response.timeoutInSeconds;

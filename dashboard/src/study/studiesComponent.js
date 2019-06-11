@@ -134,7 +134,7 @@ const mainComponent = {
                             ])
                         ]),
                         m('.col-sm-4', [
-                            m('input.form-control', {placeholder: 'Search ...', value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                            m('input.form-control', {placeholder: 'Search...', autofocus: true, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                         ])
                     ]),
 

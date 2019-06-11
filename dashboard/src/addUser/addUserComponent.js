@@ -60,6 +60,7 @@ let addComponent = {
                                 m('label', 'User name:'),
                                 m('input.form-control', {
                                     type:'text',
+                                    autofocus: true,
                                     placeholder: 'User name',
                                     value: ctrl.username(),
                                     oninput: m.withAttr('value', ctrl.username),

@@ -2,6 +2,7 @@ const express     = require('express');
 const studies     = require('../studies');
 const tags        = require('../tags');
 const experiments = require('../experiments');
+const versions = require('../versions');
 
 const studiesRouter = express.Router();
 
@@ -100,13 +101,20 @@ studiesRouter.route('/:study_id/statistics')
                 req.body.end_date,
                 req.body.date_size)
 
-
                 .then(function(stat_data){
                     return res.json({stat_data});
                 })
                 .catch(err=> {
                     res.status(err.status || 500).json({message: err.message});
                 });
+        });
+
+studiesRouter.route('/:study_id/restore')
+    .post(
+        function(req, res){
+            console.log({user_id: req.user_id, study_id:req.params.study_id, version_id:req.body.version_id});
+            versions.restore_version(req.user_id, req.params.study_id, req.body.version_id);
+
         });
 
 
@@ -134,10 +142,10 @@ studiesRouter.route('/:study_id/experiments')
         });
 
 
-studiesRouter.route('/:study_id/requests')
+studiesRouter.route('/:study_id/data')
     .get(
         function(req, res){
-            experiments.get_requests(req.user_id, parseInt(req.params.study_id))
+            experiments.get_data_requests(req.user_id, parseInt(req.params.study_id))
                 .then(function (requests) {
                     res.json({requests});
                 })
@@ -146,7 +154,7 @@ studiesRouter.route('/:study_id/requests')
                 });
         })
     .delete(function(req, res){
-        experiments.delete_request(req.user_id, parseInt(req.params.study_id), req.body.request_id)
+        experiments.delete_data_request(req.user_id, parseInt(req.params.study_id), req.body.request_id)
             .then(function (requests) {
                 res.json({requests});
             })
