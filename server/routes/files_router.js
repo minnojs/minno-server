@@ -89,7 +89,7 @@ filesRouter.route('/:study_id/file/:file_id/move')
     .put(
         function(req, res){
             return files.rename_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.path)
-                .then(tags_data=>res.json(tags_data))
+                .then(file_data=>res.json(file_data))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
 
         });

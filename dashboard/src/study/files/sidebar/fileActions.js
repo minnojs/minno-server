@@ -76,10 +76,12 @@ export let renameFile = (file, study, notifications) => () => {
         prop: newPath
     })
     .then(response => {
-        if (response && newPath() !== file.name) return moveAction(newPath(), file, study);
+        if (response && newPath() !== file.name)
+            return moveAction(newPath(), file, study)
+                .then(()=>notifications.show_success(`'${file.name}' successfully renamed to '${newPath()}'`))
+                .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${encodeURIComponent(encodeURIComponent(newPath()))}`): '');
     })
-    .then(()=>notifications.show_success(`'${file.name}' successfully renamed to '${newPath()}'`))
-    .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${newPath()}`): '');
+
 };
 
 export let make_experiment = (file, study, notifications) => () => {
