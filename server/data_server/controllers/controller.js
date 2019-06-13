@@ -21,7 +21,7 @@ const defaultValueName = 'data'; // name used for non json items in data arrays
 const dataPrefix = ''; //prefix for items in the data array
 const dataFileLocation = config.base_folder;
 const dataFolder = config.dataFolder;
-const maxRowsInMemory=1000000;
+const maxRowsInMemory=100000;
 
 exports.insertData = function(req, res) {
 	var newData = new Data(req.body);
@@ -278,7 +278,7 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 }
 	else
 {
-	cursor = Data.find(findObject).cursor();
+	cursor = cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
 	var dataCount=0;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
 		datacount++;
@@ -298,13 +298,13 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 							var filename = newMap[fileSplitVar];
 						}
 						var dataMap = dataMaps[filename];
-						var row = mapToRow(dataMap, newMap, filename);			
+						var row = mapToRow(dataMap, newMap, filename);	
 					    writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
 		}
 	}}
 	
 	await closeFiles(files);
-	if(dataCount==0) {
+	if(dataCount==0  && useDataArray==true) {
 		throw {status:500, message: 'ERROR: No data!'};
 	}
 	
