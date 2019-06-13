@@ -32,11 +32,11 @@ exports.insertData = function(req, res) {
 		res.json(data);
 	});
 };
-exports.insertExperimentSession = function(params) {
+exports.insertExperimentSession = async function(params) {
 	var newData = new experimentSessionSchema(params);
 	newData.save(function(err, data) {
 		if (err)
-			res.send(err);
+			throw new Error(err);
 		return true;
 	});
 };
