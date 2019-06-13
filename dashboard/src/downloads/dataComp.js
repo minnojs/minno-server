@@ -104,7 +104,7 @@ let data_dialog = {
         ctrl.loaded() ? '' : m('.loader'),
         show_requests(ctrl),
         ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
-        !ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
+        ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
 
 
         ctrl.downloaded() ? '' : m('.loader'),
