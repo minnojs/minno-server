@@ -36,7 +36,7 @@ exports.insertExperimentSession = async function(params) {
 	var newData = new experimentSessionSchema(params);
 	newData.save(function(err, data) {
 		if (err)
-			thow new Error(err);
+			throw new Error(err);
 		return true;
 	});
 };
