@@ -60,12 +60,11 @@ let addComponent = {
                                 m('label', 'User name:'),
                                 m('input.form-control', {
                                     type:'text',
-                                    autofocus: true,
+                                    config: focus_it,
                                     placeholder: 'User name',
                                     value: ctrl.username(),
                                     oninput: m.withAttr('value', ctrl.username),
                                     onchange: m.withAttr('value', ctrl.username),
-                                    config: getStartValue(ctrl.username)
                                 })
                             ),
                             m('fieldset.form-group',
@@ -116,3 +115,6 @@ function getStartValue(prop){
         if (!isInit) setTimeout(()=>prop(element.value), 30);
     };
 }
+
+const focus_it = (element, isInitialized) => {
+    if (!isInitialized) setTimeout(() => element.focus());};

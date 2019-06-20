@@ -134,7 +134,7 @@ const mainComponent = {
                             ])
                         ]),
                         m('.col-sm-4', [
-                            m('input.form-control', {placeholder: 'Search...', autofocus: true, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                            m('input.form-control', {placeholder: 'Search...', config: focus_it, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                         ])
                     ]),
 
@@ -238,3 +238,6 @@ function routeConfig(el, isInit, ctx, vdom) {
         m.route(el.search.slice(1));
     }
 }
+
+const focus_it = (element, isInitialized) => {
+    if (!isInitialized) setTimeout(() => element.focus());};

@@ -11,7 +11,7 @@ let editTagComponent = {
                 m('label.form-control-label', 'Tag name')
             ]),
             m('.col-sm-9', [
-                m('input.form-control', {placeholder: 'text', autofocus: true, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                m('input.form-control', {placeholder: 'text', config: focus_it, value: tag_text(), oninput: m.withAttr('value', tag_text)})
             ])
         ]),
 
@@ -73,3 +73,5 @@ function colorButton(color, prop){
     return m('button',  {style: {'background-color': `#${color}`}, onclick: prop.bind(null, color)}, ' A ');
 }
 
+const focus_it = (element, isInitialized) => {
+    if (!isInitialized) setTimeout(() => element.focus());};

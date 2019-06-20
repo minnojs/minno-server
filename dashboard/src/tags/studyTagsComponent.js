@@ -20,7 +20,7 @@ let studyTagsComponent = {
                 placeholder: 'Filter Tags',
                 value: tagName(),
                 oninput: m.withAttr('value', tagName),
-                autofocus: true
+                config: focus_it
             }),
             m('span.input-group-btn', [
                 m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -61,3 +61,7 @@ function create_tag(study_id, tagName, tags, error){
         .catch(error)
         .then(m.redraw);
 }
+
+
+const focus_it = (element, isInitialized) => {
+    if (!isInitialized) setTimeout(() => element.focus());};

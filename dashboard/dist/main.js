@@ -15548,7 +15548,7 @@
                     placeholder: 'Filter Tags',
                     value: tagName(),
                     oninput: m.withAttr('value', tagName),
-                    autofocus: true
+                    config: focus_it
                 }),
                 m('span.input-group-btn', [
                     m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -15590,6 +15590,10 @@
             .catch(error)
             .then(m.redraw); };
     }
+
+
+    var focus_it = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function data_dialog (args) { return m.component(data_dialog$1, args); }
     var data_dialog$1 = {
@@ -16356,7 +16360,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name), autofocus: true})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$1})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -16476,7 +16480,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), autofocus: true, onchange: m.withAttr('value', study_description)}),
+                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$1, onchange: m.withAttr('value', study_description)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -16504,16 +16508,14 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('input.form-control',  {placeholder: 'Enter Study Name', value: study_name(), autofocus: true, onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control',  {config: focus_it$1, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
             }
         }).then(function (response) { return response && rename(); }); };
-
         var rename = function () { return rename_study(study.id, study_name)
             .then(function (){ return notifications.show_success(("'" + (study.name) + "' renamed successfully to '" + (study_name()) + "'")); })
-
             .then(function (){ return study.name=study_name(); })
             .then(function (){
                 var study2 = studyFactory(study.id);
@@ -16540,7 +16542,7 @@
         var ask = function () { return messages.confirm({
             header:'New Name',
             content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', autofocus: true, onchange: m.withAttr('value', study_name)}),
+                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$1, onchange: m.withAttr('value', study_name)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])
         }).then(function (response) { return response && duplicate(); }); };
@@ -16633,6 +16635,9 @@
             .then(m.redraw); };
         ask();
     }; };
+
+    var focus_it$1 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var do_copy_url = function (study) { return copyUrl(study.base_url); };
 
@@ -17388,7 +17393,7 @@
                                 ])
                             ]),
                             m('.col-sm-4', [
-                                m('input.form-control', {placeholder: 'Search...', autofocus: true, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                                m('input.form-control', {placeholder: 'Search...', config: focus_it$2, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
 
@@ -17492,6 +17497,9 @@
             m.route(el.search.slice(1));
         }
     }
+
+    var focus_it$2 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var deploy_url = baseUrl + "/deploy_list";
 
@@ -18223,12 +18231,11 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
-                                        autofocus: true,
+                                        config: focus_it$3,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
                                         onchange: m.withAttr('value', ctrl.username),
-                                        config: getStartValue$1(ctrl.username)
                                     })
                                 ),
                                 m('fieldset.form-group',
@@ -18279,6 +18286,9 @@
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
     }
+
+    var focus_it$3 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function users_url()
     {
@@ -19481,7 +19491,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', autofocus: true, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$4, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -19632,6 +19642,9 @@
         }
     };
 
+    var focus_it$4 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
+
     // it makes sense to use this for cotnrast:
     // https://24ways.org/2010/calculating-color-contrast/
 
@@ -19649,7 +19662,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', autofocus: true, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$5, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -19711,6 +19724,9 @@
     function colorButton(color, prop){
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
+
+    var focus_it$5 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
         controller: function controller(){
