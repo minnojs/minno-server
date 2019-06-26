@@ -5,6 +5,7 @@ const dataFolder = path.join(config.base_folder,config.dataFolder);
 
 
 [
+    {param: 'server_type', message:`server_type: 'http', 'https', or 'greenlock'`},
     {param: 'admin_default_pass', message:`The default password for te admin. For example 'admin123'`},
     {param: 'zip_folder', message: `The folder for saving temporary files. Relative to your "base_url". For example 'tmp'`},
     {param: 'dataFolder', message: `The folder for saving data files. Relative to your "base_url". For example 'data_files'`},
