@@ -12,7 +12,7 @@ module.exports = router;
 router.get('/launch/:exp_id/:version_id',function(req, res){
     return experiments
         .get_experiment_url(req)
-        .then(displayExperiment(req.query, res))
+        .then(displayExperiment(req.query, res,req.fingerprint))
         .catch(displayErrorPage(res));
 });
 
@@ -26,11 +26,11 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
     return experiments
         .get_play_url(sess.user.id, req.params.study_id, req.params.file_id)
-        .then(displayExperiment(req.query, res))
+        .then(displayExperiment(req.query, res,req.fingerprint))
         .catch(displayErrorPage(res));
 });
 
-function displayExperiment(params, res){
+function displayExperiment(params, res,fingerprint){
     return function(exp_data){
 
         const render = promisify(res.render,res);
@@ -51,14 +51,17 @@ function displayExperiment(params, res){
             version:version_data.version,
             state:version_data.state
         }, postAlways); // post the post always stuff too - so that we can connect them...
+		console.log(fingerprint);
 		const experimentSessionData=
 		{
             descriptiveId: exp_data.descriptive_id, 
             version:version_data.version,
             state:version_data.state,
             sessionId:exp_data.session_id, 
+			taskName:"_session_data",
             studyId:exp_data.exp_id,
-            versionId:version_data.id
+            versionId:version_data.id,
+			data:[fingerprint]
 		};
 		data_server.insertExperimentSession(experimentSessionData);
         if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
