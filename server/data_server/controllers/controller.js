@@ -26,6 +26,11 @@ const maxRowsInMemory=100000;
 exports.insertData = function(req, res) {
 	var newData = new Data(req.body);
 	var reqBody = req.body;
+	if(newData.sessionId<0)
+	{
+		res.json('{message:"data not saved due to negative sessionID"}');
+		return;
+	}
 	newData.save(function(err, data) {
 		if (err)
 			res.send(err);
@@ -33,6 +38,10 @@ exports.insertData = function(req, res) {
 	});
 };
 exports.insertExperimentSession = async function(params) {
+	if(params.sessionId<0)
+	{
+		return null;
+	}
 	var newData = new experimentSessionSchema(params);
 	newData.save(function(err, data) {
 		if (err)
@@ -253,9 +262,36 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	};
 
 	if (Object.keys(dataMaps).length == 0) {
+		console.log("no data");
 
         throw {status:500, message: 'ERROR: No data!'};
+		
 	}
+	console.log("p1");
+	cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });//;
+	console.log("p2");
+	try{
+	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		var newMaps = getInitialVarMap(dataEntry);
+		if(useDataArray){
+		newMapArray[datacount]=newMaps;
+		datacount++;}
+		if(datacount>=maxRowsInMemory) //query is too large to store in memory
+		{
+			useDataArray=false;
+			datacount=0;
+			newMapArray=[]; 
+		}
+		newMaps.forEach(function(newMap) {
+			updateMap(dataMaps, newMap, fileSplitVar);
+		});
+			
+	};}
+	catch(e)
+	{
+		console.log(e);
+	}
+	console.log("p3");
 	await fileSetup(fileConfig);
 if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 {
@@ -301,13 +337,38 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 						var row = mapToRow(dataMap, newMap, filename);	
 					    writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
 		}
-	}}
+	}
+	cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
+	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+		datacount++;
+		if(typeof fileFormat !== 'undefined' && fileFormat=='json')
+		{
+			 writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
+			continue;
+		}
+		//dataEntry = JSON.parse(JSON.stringify(dataEntry));
+		newMaps = getInitialVarMap(dataEntry);
+		for await (var newMap of newMaps)
+		{
+			
+						if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+							var filename = defaultDataFilename;
+						} else {
+							var filename = newMap[fileSplitVar];
+						}
+						var dataMap = dataMaps[filename];
+						var row = mapToRow(dataMap, newMap, filename);	
+					    writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+		}
+	}
+
+}
 	
 	await closeFiles(files);
 	if(dataCount==0  && useDataArray==true) {
 		throw {status:500, message: 'ERROR: No data!'};
 	}
-	
+	console.log("zipping");
 	return zipFiles(fileConfig);
 
 
@@ -363,7 +424,7 @@ var getInitialVarMap = function(data) {
 		item = JSON.parse(item);
 	} catch (e) {}*/
 	var pushVarMaps = false;
-	if ((item.length > 0 && typeof item == 'object')) {
+	if ((item!=null && item.length > 0 && typeof item == 'object')) {
 		item.forEach(function(row, index) {
 			if (Object.keys(row).length > 0 && typeof row == 'object') {
 				varMaps.push(getVarMap(row, dataPrefix,  Object.assign({}, varMap)));//JSON.parse(JSON.stringify(varMap))));
