@@ -262,14 +262,11 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	};
 
 	if (Object.keys(dataMaps).length == 0) {
-		console.log("no data");
 
         throw {status:500, message: 'ERROR: No data!'};
 		
 	}
-	console.log("p1");
 	cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });//;
-	console.log("p2");
 	try{
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
 		var newMaps = getInitialVarMap(dataEntry);
@@ -291,7 +288,6 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	{
 		console.log(e);
 	}
-	console.log("p3");
 	await fileSetup(fileConfig);
 if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 {
@@ -368,7 +364,6 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 	if(dataCount==0  && useDataArray==true) {
 		throw {status:500, message: 'ERROR: No data!'};
 	}
-	console.log("zipping");
 	return zipFiles(fileConfig);
 
 
