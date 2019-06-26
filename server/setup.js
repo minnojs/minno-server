@@ -24,11 +24,23 @@ Promise.resolve()
 
 function create_counters(){
     console.log('Checking counters');
+    const counters2check = ['session_id', 'study_id', 'user_id'];
     return connection
         .then(function (db) {
             const counters = db.collection('counters');
-            return counters.updateMany({},
-                {$max: {seq:0}});
+            return counters.find({})
+            .toArray()
+            .then(function (counters_data) {
+                const counter_ids = counters_data.map(counter=>counter._id);
+
+                const counters2add = counters2check.filter(counter => !counter_ids.includes(counter));
+                if (counters2add.length===0)
+                    return;
+                const object2add = counters2add.map(counter=>({'_id':counter, 'seq':0}));
+                return counters.insertMany(object2add);
+
+            });
+
         });
 
 }

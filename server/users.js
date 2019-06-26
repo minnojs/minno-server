@@ -27,14 +27,14 @@ function user_info_by_name (user_name) {
     });
 }
 
-function set_password(user_id, password, confirm) {
+function set_password(user_id, password, confirm, force) {
     if(!password || !confirm)
         return Promise.reject({status:400, message: 'Missing password / confirm password'});
     if(password.length<8)
         return Promise.reject({status:400, message: 'Passwords must be at least 8 characters in length'});
     if(password !== confirm)
         return Promise.reject({status:400, message: 'Passwords do not match'});
-    if(password===config.admin_default_pass)
+    if(password===config.admin_default_pass && !force)
         return Promise.reject({status:400, message: 'Password must be different from the default'});
 
     return connection.then(function (db) {
@@ -205,7 +205,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
                     return users.insertOne(user_obj)
                         .then(response => {
                             if(password && confirm){
-                                set_password(response.ops[0]._id, password, confirm);
+                                set_password(response.ops[0]._id, password, confirm, true);
                             }
 
                         });
