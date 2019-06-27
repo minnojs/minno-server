@@ -5,9 +5,9 @@ const loginUrl = `${baseUrl}/connect`;
 const logoutUrl = `${baseUrl}/logout`;
 const is_logedinUrl = `${baseUrl}/is_loggedin`;
 
-export let login = (username, password) => fetchJson(loginUrl, {
+export let login = (username, password, recaptcha) => fetchJson(loginUrl, {
     method: 'post',
-    body: {username, password}
+    body: {username, password, recaptcha}
 });
 
 export let logout = () => fetchVoid(logoutUrl, {method:'post'}).then(getAuth);

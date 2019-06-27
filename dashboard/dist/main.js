@@ -10834,9 +10834,9 @@
     var logoutUrl = baseUrl + "/logout";
     var is_logedinUrl = baseUrl + "/is_loggedin";
 
-    var login = function (username, password) { return fetchJson(loginUrl, {
+    var login = function (username, password, recaptcha) { return fetchJson(loginUrl, {
         method: 'post',
-        body: {username: username, password: password}
+        body: {username: username, password: password, recaptcha: recaptcha}
     }); };
 
     var logout = function () { return fetchVoid(logoutUrl, {method:'post'}).then(getAuth); };
@@ -12175,8 +12175,10 @@
             return ctrl;
 
             function loginAction(){
+                var recaptcha = document.getElementById('g-recaptcha-response').value;
+
                 if(ctrl.username() && ctrl.password())
-                    login(ctrl.username, ctrl.password)
+                    login(ctrl.username, ctrl.password, recaptcha)
                         .then(function () {
                             m.route(!location.hash ? './' : decodeURIComponent(location.hash).substring(1));
                         })
@@ -12221,7 +12223,10 @@
                                 onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
-                            })
+                            }),
+                            m('.g-recaptcha', {
+                                'data-sitekey':'6Ldd6KoUAAAAAMZDtcf2P2HVhnbuanCD7rkbAe_c'
+                            }),
                         ]),
 
                         !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
@@ -18444,6 +18449,10 @@
     {
         return (baseUrl + "/config/dbx");
     }
+    function recaptcha_url()
+    {
+        return (baseUrl + "/config/recaptcha");
+    }
 
 
     var get_config = function () { return fetchJson(config_url(), {
@@ -18469,10 +18478,26 @@
         method: 'delete'
     }); };
 
+    var set_recaptcha_params = function (site_key, secret_key) { return fetchJson(recaptcha_url(), {
+        body: {site_key: site_key, secret_key: secret_key},
+        method: 'put'
+    }); };
+
+    var unset_recaptcha_params = function () { return fetchJson(recaptcha_url(), {
+        method: 'delete'
+    }); };
+
     var configComponent = {
         controller: function controller(){
             var ctrl = {
                 loaded:m.prop(false),
+                recaptcha: {
+                    setted: m.prop(false),
+                    enable: m.prop(false),
+                    site_key:m.prop(''),
+                    secret_key:m.prop(''),
+                    error:m.prop('')
+                },
                 dbx: {
                     setted: m.prop(false),
                     enable: m.prop(false),
@@ -18492,7 +18517,10 @@
                 set_gmail: set_gmail,
                 unset_gmail: unset_gmail,
                 set_dbx: set_dbx,
-                unset_dbx: unset_dbx
+                unset_dbx: unset_dbx,
+                set_recaptcha: set_recaptcha,
+                unset_recaptcha: unset_recaptcha
+
             };
 
 
@@ -18564,6 +18592,28 @@
                     .then(ctrl.dbx.client_secret(''))
                     .then(m.redraw);
             }
+            function set_recaptcha() {
+                ctrl.recaptcha.error('');
+                set_recaptcha_params(ctrl.recaptcha.site_key, ctrl.recaptcha.secret_key)
+                    .catch(function (error) {
+                        ctrl.recaptcha.error(error.message);
+                    })
+                    .then(ctrl.recaptcha.setted(true))
+                    .then(ctrl.recaptcha.enable(true))
+                    .then(m.redraw);
+            }
+
+            function unset_recaptcha() {
+                unset_recaptcha_params()
+                    .catch(function (error) {
+                        ctrl.recaptcha.error(error.message);
+                    })
+                    .then(ctrl.recaptcha.setted(false))
+                    .then(ctrl.recaptcha.enable(false))
+                    .then(ctrl.recaptcha.site_key(''))
+                    .then(ctrl.recaptcha.secret_key(''))
+                    .then(m.redraw);
+            }
 
             load();
             return ctrl;
@@ -18622,7 +18672,7 @@
                             !ctrl.dbx.enable() ?
                                 m('a', {onclick: function (){ return ctrl.toggle_visibility('dbx', true); }},
                                     m('button.btn.btn-primary.btn-block', [
-                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
+                                        m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
                                     ])
                                 )
                                 :
@@ -18650,8 +18700,47 @@
                                     !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
                                     !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                                 ])
+
+                                // <i class="far fa-shield-check"></i>
                         ])
                     ),
+                    m('.row.centrify',
+                        m('.card.card-inverse.col-md-5.centrify', [
+                            !ctrl.dbx.enable() ?
+                                m('a', {onclick: function (){ return ctrl.toggle_visibility('dbx', true); }},
+                                    m('button.btn.btn-primary.btn-block', [
+                                        m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
+                                    ])
+                                )
+                                :
+                                m('.card-block',[
+                                    m('h4', 'Enter details for Dropbox application'),
+                                    m('form', [
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'client id',
+                                            value: ctrl.dbx.client_id(),
+                                            oninput: m.withAttr('value', ctrl.dbx.client_id),
+                                            onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                        }),
+
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'client secret',
+                                            value: ctrl.dbx.client_secret(),
+                                            oninput: m.withAttr('value', ctrl.dbx.client_secret),
+                                            onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                        })
+                                    ]),
+                                    ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('dbx', false); }},'Cancel'),
+                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                    !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
+                                    !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
+                                ])
+
+                            // <i class="far fa-shield-check"></i>
+                        ])
+                    )
                 ]);
         }
     };

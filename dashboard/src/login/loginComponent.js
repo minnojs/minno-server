@@ -15,8 +15,10 @@ let loginComponent = {
         return ctrl;
 
         function loginAction(){
+            const recaptcha = document.getElementById('g-recaptcha-response').value;
+
             if(ctrl.username() && ctrl.password())
-                login(ctrl.username, ctrl.password)
+                login(ctrl.username, ctrl.password, recaptcha)
                     .then(() => {
                         m.route(!location.hash ? './' : decodeURIComponent(location.hash).substring(1));
                     })
@@ -61,7 +63,10 @@ let loginComponent = {
                             onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction(): false;},
                             onchange: m.withAttr('value', ctrl.password),
                             config: getStartValue(ctrl.password)
-                        })
+                        }),
+                        m('.g-recaptcha', {
+                            'data-sitekey':'6Ldd6KoUAAAAAMZDtcf2P2HVhnbuanCD7rkbAe_c'
+                        }),
                     ]),
 
                     !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
