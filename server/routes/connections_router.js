@@ -22,7 +22,14 @@ connectionsRouter.get('/is_loggedin',function(req, res){
 
 
 connectionsRouter.post('/connect',function(req, res){
-    return users.connect(req.body.username, req.body.password)
+    // req.connection.remoteAddress will provide IP address of connected user.
+
+    const recaptcha = req.body.recaptcha;
+    const remoteAddress = req.connection.remoteAddress;
+
+
+
+    return users.connect(req.body.username, req.body.password, recaptcha, remoteAddress)
         .catch(err=>
             res.status(err.status || 500).json({message:err.message}))
         .then(
@@ -32,7 +39,6 @@ connectionsRouter.post('/connect',function(req, res){
             }
         );
 });
-
 
 
 connectionsRouter.post('/logout',function(req, res) {

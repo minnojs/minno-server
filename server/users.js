@@ -3,6 +3,8 @@ const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
 const utils       = require('./utils');
+const request     = require('request-promise');
+
 
 const connection    = Promise.resolve(require('mongoose').connection);
 const Validator = require('node-input-validator');
@@ -293,55 +295,63 @@ function reset_password(reset_code, password, confirm) {
 }
 
 
-function connect(user_name, pass) {
-    if (!user_name || !pass)
+function connect(user_name, pass, recaptcha, remoteAddress) {
+    if (!user_name || !pass )
         return Promise.reject({status:400, message: 'missing parameters!'});
+    if(recaptcha === undefined || recaptcha === '' || recaptcha === null)
+        return Promise.reject({status:400, message: 'Please select captcha!'});
 
-    return connection.then(function (db) {
-        const users    = db.collection('users');
-        const studies  = db.collection('studies');
+    const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify?secret=' + config.secretKey + '&response=' + recaptcha + '&remoteip=' + remoteAddress;
 
+    return request(verificationUrl)
+        .then(body=> {
+            body = JSON.parse(body);
+            // Success will be true or false depending upon captcha validation.
+            if (body.success !== undefined && !body.success)
+                return Promise.reject({status: 400, message: 'Failed captcha verification'});
+            return connection.then(function (db) {
+                const users    = db.collection('users');
+                const studies  = db.collection('studies');
+                let query = {user_name, pass: utils.sha1(pass)};
 
-        let query = {user_name, pass: utils.sha1(pass)};
+                if (!user_name.includes('#'))
+                    return user_obj();
 
-        if (!user_name.includes('#'))
-            return user_obj();
+                const users_names = user_name.split('#');
+                query = {user_name: users_names[0], pass: utils.sha1(pass)};
 
-        const users_names = user_name.split('#');
-        query = {user_name: users_names[0], pass: utils.sha1(pass)};
+                return user_obj()
+                    .then(function(user_data){
+                        if(user_data.role!=='su')
+                            return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
+                        query = {user_name: users_names[1]};
+                        return user_obj();
+                    });
 
-        return user_obj()
-            .then(function(user_data){
-                if(user_data.role!=='su')
-                    return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-                query = {user_name: users_names[1]};
-                return user_obj();
-            });
+                function user_obj(){
+                    return users.findOne(query)
+                        .then(function (user_data) {
+                            if (!user_data)
+                                return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
+                            user_data.id = user_data._id;
+                            if (!user_data.studies) user_data.studies = [];
+                            if(user_name ==='admin' && pass === config.admin_default_pass)
+                            {
+                                user_data.first_admin_login = true;
+                            }
 
-        function user_obj()
-        {
-            return users.findOne(query)
-                .then(function (user_data) {
-                    if (!user_data)
-                        return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-                    user_data.id = user_data._id;
-                    if (!user_data.studies) user_data.studies = [];
-                    if(user_name ==='admin' && pass === config.admin_default_pass)
-                    {
-                        user_data.first_admin_login = true;
-                    }
-
-                    const study_ids = user_data.studies.map(obj=>obj.id);
-                    return studies
-                        .find({_id: {$in: study_ids}})
-                        .toArray()
-                        .then(function (studies) {
-                            user_data.studies = studies;
-                            return user_data;
+                            const study_ids = user_data.studies.map(obj=>obj.id);
+                            return studies
+                                .find({_id: {$in: study_ids}})
+                                .toArray()
+                                .then(function (studies) {
+                                    user_data.studies = studies;
+                                    return user_data;
+                                });
                         });
-                });
-        }
-    });
+                }
+            });
+        });
 }
 
 

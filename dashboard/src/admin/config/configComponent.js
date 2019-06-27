@@ -1,4 +1,4 @@
-import {get_config, set_gmail_params, unset_gmail_params, set_dbx_params, unset_dbx_params} from './configModel';
+import {get_config, set_gmail_params, unset_gmail_params, set_dbx_params, unset_dbx_params, set_recaptcha_params, unset_recaptcha_params} from './configModel';
 
 
 export default configComponent;
@@ -7,6 +7,13 @@ let configComponent = {
     controller(){
         let ctrl = {
             loaded:m.prop(false),
+            recaptcha: {
+                setted: m.prop(false),
+                enable: m.prop(false),
+                site_key:m.prop(''),
+                secret_key:m.prop(''),
+                error:m.prop('')
+            },
             dbx: {
                 setted: m.prop(false),
                 enable: m.prop(false),
@@ -26,7 +33,10 @@ let configComponent = {
             set_gmail,
             unset_gmail,
             set_dbx,
-            unset_dbx
+            unset_dbx,
+            set_recaptcha,
+            unset_recaptcha
+
         };
 
 
@@ -96,6 +106,28 @@ let configComponent = {
                 .then(ctrl.dbx.enable(false))
                 .then(ctrl.dbx.client_id(''))
                 .then(ctrl.dbx.client_secret(''))
+                .then(m.redraw);
+        }
+        function set_recaptcha() {
+            ctrl.recaptcha.error('');
+            set_recaptcha_params(ctrl.recaptcha.site_key, ctrl.recaptcha.secret_key)
+                .catch(error => {
+                    ctrl.recaptcha.error(error.message);
+                })
+                .then(ctrl.recaptcha.setted(true))
+                .then(ctrl.recaptcha.enable(true))
+                .then(m.redraw);
+        }
+
+        function unset_recaptcha() {
+            unset_recaptcha_params()
+                .catch(error => {
+                    ctrl.recaptcha.error(error.message);
+                })
+                .then(ctrl.recaptcha.setted(false))
+                .then(ctrl.recaptcha.enable(false))
+                .then(ctrl.recaptcha.site_key(''))
+                .then(ctrl.recaptcha.secret_key(''))
                 .then(m.redraw);
         }
 
@@ -184,8 +216,47 @@ let configComponent = {
                                 !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
                                 !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                             ])
+
+                            // <i class="far fa-shield-check"></i>
                     ])
                 ),
+                m('.row.centrify',
+                    m('.card.card-inverse.col-md-5.centrify', [
+                        !ctrl.dbx.enable() ?
+                            m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
+                                m('button.btn.btn-primary.btn-block', [
+                                    m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
+                                ])
+                            )
+                            :
+                            m('.card-block',[
+                                m('h4', 'Enter details for Dropbox application'),
+                                m('form', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'client id',
+                                        value: ctrl.dbx.client_id(),
+                                        oninput: m.withAttr('value', ctrl.dbx.client_id),
+                                        onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                    }),
+
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'client secret',
+                                        value: ctrl.dbx.client_secret(),
+                                        oninput: m.withAttr('value', ctrl.dbx.client_secret),
+                                        onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                    })
+                                ]),
+                                ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
+                                m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
+                                !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
+                            ])
+
+                        // <i class="far fa-shield-check"></i>
+                    ])
+                )
             ]);
     }
 };

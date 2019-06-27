@@ -100,7 +100,8 @@ basePathRouter.route('/data')
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'dashboard/')));
 basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
 basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
-basePathRouter.use('/static', express.static(config.static_path));
+if (config.static_path)
+    basePathRouter.use('/static', express.static(config.static_path));
 
 
 
