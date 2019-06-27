@@ -1,5 +1,5 @@
 const config = require('../config');
-const zipFolder    = require('zip-folder');
+const zipFolder = require('zip-a-folder');
 
 const fs           = require('fs-extra');
 const formidable   = require('formidable');
@@ -196,7 +196,7 @@ function download_files(user_id, study_id, files) {
             }));
         })
         .then(() => new Promise(function(resolve, reject) {
-            zipFolder(zip_path, zip_file, function (err) {
+            zipFolder.zipFolder(zip_path, zip_file, function (err) {
                 if (err)
                     return reject(err);
                 resolve();

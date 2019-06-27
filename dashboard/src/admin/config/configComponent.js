@@ -156,7 +156,7 @@ let configComponent = {
                         !ctrl.dbx.enable() ?
                             m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
                                 m('button.btn.btn-primary.btn-block', [
-                                    m('i.fa.fa-fw.fa-envelope'), ' Enable support with dropbox'
+                                    m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
                                 ])
                             )
                             :

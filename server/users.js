@@ -210,7 +210,7 @@ function insert_new_user({username, first_name, last_name, email, role, password
 
                         });
                 })
-                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'email', {email, user_name, url: `${config.server_url}/dashboard/?/activation/${activation_code}`}) : ({}))
+                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: `${config.server_url}/dashboard/?/activation/${activation_code}`}) : ({}))
                 .then(sent=>sent ? ({}) : ({activation_code:`${config.server_url}/dashboard/?/activation/${activation_code}`}));
         });
     });
@@ -259,7 +259,7 @@ function reset_password_request(user_name)
         return users.findOneAndUpdate({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
             .then(function(user_data)
             {
-                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password', {url: config.server_url+'/dashboard/?/reset_password/'+reset_code});
+                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: config.server_url+'/dashboard/?/reset_password/'+reset_code});
                 return ({});
             });
     });

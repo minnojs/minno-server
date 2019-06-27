@@ -4,6 +4,8 @@ const config      = require('../config');
 const files       = require('./files');
 const dateFormat  = require('dateformat');
 
+
+
 const launch_router         = require('./routes/launch_router');
 const connections_router    = require('./routes/connections_router');
 const lock_router           = require('./routes/lock_router');
@@ -25,15 +27,9 @@ const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
 const bodyParser = require('body-parser');
 const app        = express();
-const mailer     = require('express-mailer');
 
 
 
-mailer.extend(app, {
-    secureConnection: true,
-    host: 'smtp.gmail.com',
-    port: 465
-});
 
 module.exports = {app};
 

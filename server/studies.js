@@ -197,7 +197,7 @@ function add_collaboration(user_id, study_id, collaborator_name, permission, dat
                                         {$push: {users: {user_id: collaborator_data._id, user_name:collaborator_data.user_name, permission, data_permission, status:'pending'}}}),
                                     users.updateOne({_id: collaborator_data._id},
                                         {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
-                                    sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration',
+                                    sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration.ejs',
                                         {accept: config.server_url+'/dashboard/?/collaboration/'+accept,
                                             reject: config.server_url+'/dashboard/?/collaboration/'+reject,
                                             collaborator_name,
