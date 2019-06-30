@@ -67,7 +67,7 @@ app.use(Fingerprint({
             })
         },*/
     ]
-}))
+}));
 
 app.use(session({secret: config.session_secret,
     resave: true,
@@ -161,20 +161,14 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', function() { 
-	if(config.server_type=='greenlock')
-	{
-		startupGreenlock();
-	}
-	if(config.server_type=='http')
-	{
-		startupHttp();
-	}
-	if(config.server_type=='https')
-	{
-		startupHttps();
-	}
+    if(config.server_type==='greenlock')
+        startupGreenlock();
+    if(config.server_type==='http')
+        startupHttp();
+    if(config.server_type==='https')
+        startupHttps();
 
- 
+
     /*app.listen(config.port,function(){
         console.log('Minno-server Started on PORT '+config.port);
     });*/
@@ -184,69 +178,68 @@ process.on('unhandledRejection', (reason, p) => {
     console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 function startupGreenlock() {
-    var greenlock = Greenlock.create({
-    	// Let's Encrypt v2 is ACME draft 11
-    	version: "draft-11",
-    	server: "https://acme-v02.api.letsencrypt.org/directory",
-    	// Note: If at first you don't succeed, stop and switch to staging
-    	//server: "https://acme-staging-v02.api.letsencrypt.org/directory",
-    	// You MUST change this to a valid email address
-    	email: config.owner_email,
-    	// You MUST NOT build clients that accept the ToS without asking the user
-    	agreeTos: true,
-    	// You MUST change these to valid domains
-    	// NOTE: all domains will validated and listed on the certificate
-    	approvedDomains: config.domains,
-    	// You MUST have access to write to directory where certs are saved
-    	// ex: /home/foouser/acme/etc
-    	configDir: "~/.config/acme/", // MUST have write access
-    	// Get notified of important updates and help me make greenlock better
-    	communityMember: true
-    	, debug: true
+    const greenlock = Greenlock.create({
+        // Let's Encrypt v2 is ACME draft 11
+        version: 'draft-11',
+        server: 'https://acme-v02.api.letsencrypt.org/directory',
+        // Note: If at first you don't succeed, stop and switch to staging
+        //server: "https://acme-staging-v02.api.letsencrypt.org/directory",
+        // You MUST change this to a valid email address
+        email: config.owner_email,
+        // You MUST NOT build clients that accept the ToS without asking the user
+        agreeTos: true,
+        // You MUST change these to valid domains
+        // NOTE: all domains will validated and listed on the certificate
+        approvedDomains: config.domains,
+        // You MUST have access to write to directory where certs are saved
+        // ex: /home/foouser/acme/etc
+        configDir: '~/.config/acme/', // MUST have write access
+        // Get notified of important updates and help me make greenlock better
+        communityMember: true,
+        debug: true
     });
-    var redirectHttps = require("redirect-https")();
-    var acmeChallengeHandler = greenlock.middleware(redirectHttps);
-    require("http")
-    	.createServer(acmeChallengeHandler)
-    	.listen(config.port, function() {
-    		console.log("Listening for ACME http-01 challenges on", this.address());
-    	});
+    const redirectHttps = require('redirect-https')();
+    const acmeChallengeHandler = greenlock.middleware(redirectHttps);
+    require('http')
+        .createServer(acmeChallengeHandler)
+        .listen(config.port, function() {
+            console.log('Listening for ACME http-01 challenges on', this.address());
+        });
 
     ////////////////////////
     // http2 via SPDY h2  //
     ////////////////////////
 
     // spdy is a drop-in replacement for the https API
-    var spdyOptions = Object.assign({}, greenlock.tlsOptions);
-    spdyOptions.spdy = { protocols: ["h2", "http/1.1"], plain: false };
-    var myApp = require("./index.js");
-    var server = require("spdy").createServer(spdyOptions, myApp.app);
-    server.on("error", function(err) {
-    	console.error(err);
+    const spdyOptions = Object.assign({}, greenlock.tlsOptions);
+    spdyOptions.spdy = { protocols: ['h2', 'http/1.1'], plain: false };
+    const myApp = require('./index.js');
+    const server = require('spdy').createServer(spdyOptions, myApp.app);
+    server.on('error', function(err) {
+        console.error(err);
     });
-    server.on("listening", function() {
-    	console.log("Minno-server Started and listening for SPDY/http2/https requests on", this.address());
+    server.on('listening', function() {
+        console.log('Minno-server Started and listening for SPDY/http2/https requests on', this.address());
     });
     server.listen(config.sslport);	
 } 
-function startupHttp() 
-{
-	app.listen(config.port,function(){
-	console.log('Minno-server Started on PORT '+config.port);
-});
+function startupHttp(){
+    app.listen(config.port,function(){
+        console.log('Minno-server Started on PORT '+config.port);
+    });
 }
-function startupHttps() 
-{
-	var fs = require('fs');
-	var http = require('http');
-	var https = require('https');
-	var privateKey  = fs.readFileSync(config.certFile, 'utf8');
-	var certificate = fs.readFileSync(config.keyFile, 'utf8');
 
-	var credentials = {key: privateKey, cert: certificate};
-	var httpServer = http.createServer(app);
-	var httpsServer = https.createServer(credentials, app);
-	httpServer.listen(config.port);
-	httpsServer.listen(config.sslport);
-	console.log('Minno-server Started on PORT '+config.port +"and "+config.sslport);
+function startupHttps() {
+    const fs = require('fs');
+    const http = require('http');
+    const https = require('https');
+    const privateKey  = fs.readFileSync(config.certFile, 'utf8');
+    const certificate = fs.readFileSync(config.keyFile, 'utf8');
+
+    const credentials = {key: privateKey, cert: certificate};
+    const httpServer = http.createServer(app);
+    const httpsServer = https.createServer(credentials, app);
+    httpServer.listen(config.port);
+    httpsServer.listen(config.sslport);
+    console.log('Minno-server Started on PORT '+config.port +'and '+config.sslport);
 }
