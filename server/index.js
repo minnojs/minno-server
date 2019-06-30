@@ -241,4 +241,4 @@ function startupHttps() {
     httpServer.listen(config.port);
     httpsServer.listen(config.sslport);
     console.log('Minno-server Started on PORT '+config.port +'and '+config.sslport);
-}Z
+}
