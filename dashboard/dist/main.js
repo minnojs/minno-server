@@ -12918,6 +12918,7 @@
     var copyFileComponent$1 = {
         controller: function controller(ref){
             var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
             var study_id = ref.study_id;
 
             var studies = m.prop([]);
@@ -12928,12 +12929,13 @@
                 .catch(error)
                 .then(loaded.bind(null, true))
                 .then(m.redraw);
-            return {studies: studies, study_id: study_id, new_study_id: new_study_id, loaded: loaded, error: error};
+            return {studies: studies, study_id: study_id, new_study_id: new_study_id, new_study_name: new_study_name, loaded: loaded, error: error};
         },
         view: function (ref) {
             var studies = ref.studies;
             var study_id = ref.study_id;
             var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
             var loaded = ref.loaded;
             var error = ref.error;
 
@@ -12943,7 +12945,7 @@
 
             loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
 
-            m('select.form-control', {value:new_study_id(), onchange: m.withAttr('value',new_study_id)}, [
+            m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
                 m('option',{value:'', disabled: true}, 'Select Study'),
                 studies()
                     .filter(function (study) { return !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
@@ -12953,6 +12955,10 @@
     }
     };
 
+    function update_study_details(event, new_study_id, new_study_name){
+        new_study_id(event.target.value);
+        new_study_name(event.target[event.target.selectedIndex].text);
+    }
 
 
     function sort_studies_by_name2(study1, study2){
@@ -13020,14 +13026,16 @@
         var filePath = m.prop(file.basePath);
         var study_id = m.prop(study.id);
         var new_study_id = m.prop('');
+        var new_study_name = m.prop('');
+
         messages.confirm({
             header: 'Copy File',
-            content: copyFileComponent({new_study_id: new_study_id, study_id: study_id})
+            content: copyFileComponent({new_study_id: new_study_id, new_study_name: new_study_name, study_id: study_id})
         })
             .then(function (response) {
                 if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
             })
-            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_id()) + "'")); });
+            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
     }; };
 
     var renameFile = function (file, study, notifications) { return function () {
