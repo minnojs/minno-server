@@ -31,5 +31,5 @@ dropboxRouter.route('/set')
             const code = req.query.code;
             return dropbox.get_access_token(code)
                 .then(body=>dropbox.add_user_folder(user_id, body.access_token))
-                .then(() => res.redirect('/static'));
+                .then(() => res.redirect('/dashboard/'));
         });

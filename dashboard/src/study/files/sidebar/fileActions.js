@@ -58,14 +58,15 @@ export let copyFile = (file, study, notifications) => () => {
     let filePath = m.prop(file.basePath);
     let study_id = m.prop(study.id);
     let new_study_id = m.prop('');
+    let new_study_name = m.prop('');
     messages.confirm({
         header: 'Copy File',
-        content: copyFileComponent({new_study_id, study_id})
+        content: copyFileComponent({new_study_id, new_study_name, study_id})
     })
         .then(response => {
             if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
         })
-        .then(()=>notifications.show_success(`'${file.name}' successfully copied to '${new_study_id()}'`));
+        .then(()=>notifications.show_success(`'${file.name}' successfully copied to '${new_study_name()}'`));
 };
 
 export let renameFile = (file, study, notifications) => () => {

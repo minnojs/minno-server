@@ -12172,10 +12172,18 @@
                 error: m.prop('')
             };
             is_loggedin();
+
+            setTimeout(function(){
+                var captcha_dom = document.getElementById('g-recaptcha');
+                if(captcha_dom.children.length === 0) {
+                    grecaptcha.render('g-recaptcha');
+                }
+            }, 500);
+
             return ctrl;
 
             function loginAction(){
-                var recaptcha = document.getElementById('g-recaptcha-response').value;
+                var recaptcha = document.getElementsByClassName('g-recaptcha-response')[0].value;
 
                 if(ctrl.username() && ctrl.password())
                     login(ctrl.username, ctrl.password, recaptcha)
@@ -12197,6 +12205,7 @@
             }
         },
         view: function view(ctrl){
+
             return m('.login.centrify', {config:fullHeight},[
                 m('.card.card-inverse.col-md-4', [
                     m('.card-block',[
@@ -12224,16 +12233,16 @@
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
                             }),
-                            m('.g-recaptcha', {
+                            m('.g-recaptcha#g-recaptcha', {
                                 'data-sitekey':'6Lfo-6oUAAAAAPNqAYcmbiqTQnN8QzEINfDiajY7'
                             }),
                         ]),
-
                         !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                         m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
                         m('p.text-center',
                             m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
                         )
+
                     ])
                 ])
             ]);
@@ -12923,6 +12932,7 @@
     var copyFileComponent$1 = {
         controller: function controller(ref){
             var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
             var study_id = ref.study_id;
 
             var studies = m.prop([]);
@@ -12933,12 +12943,13 @@
                 .catch(error)
                 .then(loaded.bind(null, true))
                 .then(m.redraw);
-            return {studies: studies, study_id: study_id, new_study_id: new_study_id, loaded: loaded, error: error};
+            return {studies: studies, study_id: study_id, new_study_id: new_study_id, new_study_name: new_study_name, loaded: loaded, error: error};
         },
         view: function (ref) {
             var studies = ref.studies;
             var study_id = ref.study_id;
             var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
             var loaded = ref.loaded;
             var error = ref.error;
 
@@ -12948,7 +12959,7 @@
 
             loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
 
-            m('select.form-control', {value:new_study_id(), onchange: m.withAttr('value',new_study_id)}, [
+            m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
                 m('option',{value:'', disabled: true}, 'Select Study'),
                 studies()
                     .filter(function (study) { return !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
@@ -12959,6 +12970,10 @@
     };
 
 
+    function update_study_details(study, new_study_id, new_study_name){
+        new_study_id(study.target.value);
+        new_study_name(study.target[study.target.selectedIndex].text);
+    }
 
     function sort_studies_by_name2(study1, study2){
         return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
@@ -13025,14 +13040,15 @@
         var filePath = m.prop(file.basePath);
         var study_id = m.prop(study.id);
         var new_study_id = m.prop('');
+        var new_study_name = m.prop('');
         messages.confirm({
             header: 'Copy File',
-            content: copyFileComponent({new_study_id: new_study_id, study_id: study_id})
+            content: copyFileComponent({new_study_id: new_study_id, new_study_name: new_study_name, study_id: study_id})
         })
             .then(function (response) {
                 if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
             })
-            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_id()) + "'")); });
+            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
     }; };
 
     var renameFile = function (file, study, notifications) { return function () {

@@ -67,7 +67,7 @@ app.use(Fingerprint({
             })
         },*/
     ]
-}));
+}))
 
 app.use(session({secret: config.session_secret,
     resave: true,
@@ -100,8 +100,7 @@ basePathRouter.route('/data')
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'dashboard/')));
 basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
 basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
-if (config.static_path)
-    basePathRouter.use('/static', express.static(config.static_path));
+basePathRouter.use('/static', express.static(config.static_path));
 
 
 
@@ -155,12 +154,12 @@ basePathRouter.route('/download_data')
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url, {useNewUrlParser:true});
-mongoose.connection.once('open', function() { 
+mongoose.connection.once('open', function() {
     // All OK - fire (emit) a ready event so that express can start
-    app.emit('ready'); 
+    app.emit('ready');
 });
 
-app.on('ready', function() { 
+app.on('ready', function() {
     if(config.server_type==='greenlock')
         startupGreenlock();
     if(config.server_type==='http')
@@ -172,7 +171,7 @@ app.on('ready', function() {
     /*app.listen(config.port,function(){
         console.log('Minno-server Started on PORT '+config.port);
     });*/
-}); 
+});
 
 process.on('unhandledRejection', (reason, p) => {
     console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -221,8 +220,8 @@ function startupGreenlock() {
     server.on('listening', function() {
         console.log('Minno-server Started and listening for SPDY/http2/https requests on', this.address());
     });
-    server.listen(config.sslport);	
-} 
+    server.listen(config.sslport);
+}
 function startupHttp(){
     app.listen(config.port,function(){
         console.log('Minno-server Started on PORT '+config.port);

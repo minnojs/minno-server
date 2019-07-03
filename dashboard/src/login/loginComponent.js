@@ -12,10 +12,18 @@ let loginComponent = {
             error: m.prop('')
         };
         is_loggedin();
+
+        setTimeout(function(){
+            const captcha_dom = document.getElementById('g-recaptcha');
+            if(captcha_dom.children.length === 0) {
+                grecaptcha.render('g-recaptcha');
+            }
+        }, 500);
+
         return ctrl;
 
         function loginAction(){
-            const recaptcha = document.getElementById('g-recaptcha-response').value;
+            const recaptcha = document.getElementsByClassName('g-recaptcha-response')[0].value;
 
             if(ctrl.username() && ctrl.password())
                 login(ctrl.username, ctrl.password, recaptcha)
@@ -37,6 +45,7 @@ let loginComponent = {
         }
     },
     view(ctrl){
+
         return m('.login.centrify', {config:fullHeight},[
             m('.card.card-inverse.col-md-4', [
                 m('.card-block',[
@@ -64,16 +73,16 @@ let loginComponent = {
                             onchange: m.withAttr('value', ctrl.password),
                             config: getStartValue(ctrl.password)
                         }),
-                        m('.g-recaptcha', {
+                        m('.g-recaptcha#g-recaptcha', {
                             'data-sitekey':'6Lfo-6oUAAAAAPNqAYcmbiqTQnN8QzEINfDiajY7'
                         }),
                     ]),
-
                     !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                     m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
                     m('p.text-center',
                         m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
                     )
+
                 ])
             ])
         ]);
