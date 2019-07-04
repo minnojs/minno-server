@@ -59,6 +59,7 @@ export let copyFile = (file, study, notifications) => () => {
     let study_id = m.prop(study.id);
     let new_study_id = m.prop('');
     let new_study_name = m.prop('');
+
     messages.confirm({
         header: 'Copy File',
         content: copyFileComponent({new_study_id, new_study_name, study_id})
