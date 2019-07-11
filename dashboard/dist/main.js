@@ -10834,9 +10834,9 @@
     var logoutUrl = baseUrl + "/logout";
     var is_logedinUrl = baseUrl + "/is_loggedin";
 
-    var login = function (username, password) { return fetchJson(loginUrl, {
+    var login = function (username, password, recaptcha) { return fetchJson(loginUrl, {
         method: 'post',
-        body: {username: username, password: password}
+        body: {username: username, password: password, recaptcha: recaptcha}
     }); };
 
     var logout = function () { return fetchVoid(logoutUrl, {method:'post'}).then(getAuth); };
@@ -12168,33 +12168,57 @@
                 username:m.prop(''),
                 password:m.prop(''),
                 isloggedin: false,
+                recaptcha_site_key:m.prop(''),
                 loginAction: loginAction,
                 error: m.prop('')
             };
             is_loggedin();
-            return ctrl;
+            reload_captcha();
 
             function loginAction(){
+                ctrl.error('');
+                var recaptcha = !ctrl.recaptcha_site_key() ? '' : document.getElementsByClassName('g-recaptcha-response')[0].value;
                 if(ctrl.username() && ctrl.password())
-                    login(ctrl.username, ctrl.password)
+                    login(ctrl.username, ctrl.password, recaptcha)
                         .then(function () {
                             m.route(!location.hash ? './' : decodeURIComponent(location.hash).substring(1));
                         })
                         .catch(function (response) {
                             ctrl.error(response.message);
+                            ctrl.recaptcha_site_key(response.recaptcha);
                             m.redraw();
+                            reload_captcha();
                         })
                     ;
             }
+
+            function reload_captcha(){
+                setTimeout(function(){
+                    var captcha_dom = document.getElementById('g-recaptcha');
+                    if(captcha_dom && captcha_dom.children.length === 0)
+                        grecaptcha.render('g-recaptcha');
+
+                    if(captcha_dom && captcha_dom.children.length > 0)
+                        grecaptcha.reset();
+
+                }, 500);
+
+            }
+
 
             function is_loggedin(){
                 getAuth().then(function (response) {
                     if(response.isloggedin)
                         m.route('./');
+                        ctrl.recaptcha_site_key(response.recaptcha);
+                        m.redraw();
+
                 });
             }
+            return ctrl;
         },
         view: function view(ctrl){
+
             return m('.login.centrify', {config:fullHeight},[
                 m('.card.card-inverse.col-md-4', [
                     m('.card-block',[
@@ -12221,14 +12245,17 @@
                                 onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
-                            })
+                            }),
+                            !ctrl.recaptcha_site_key() ? '' : m('.g-recaptcha#g-recaptcha', {
+                                'data-sitekey':ctrl.recaptcha_site_key()
+                            }),
                         ]),
-
                         !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                         m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
                         m('p.text-center',
                             m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
                         )
+
                     ])
                 ])
             ]);
@@ -12955,11 +12982,11 @@
     }
     };
 
-    function update_study_details(event, new_study_id, new_study_name){
-        new_study_id(event.target.value);
-        new_study_name(event.target[event.target.selectedIndex].text);
-    }
 
+    function update_study_details(study, new_study_id, new_study_name){
+        new_study_id(study.target.value);
+        new_study_name(study.target[study.target.selectedIndex].text);
+    }
 
     function sort_studies_by_name2(study1, study2){
         return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
@@ -18452,6 +18479,10 @@
     {
         return (baseUrl + "/config/dbx");
     }
+    function recaptcha_url()
+    {
+        return (baseUrl + "/config/recaptcha");
+    }
 
 
     var get_config = function () { return fetchJson(config_url(), {
@@ -18477,22 +18508,42 @@
         method: 'delete'
     }); };
 
+    var set_recaptcha_params = function (site_key, secret_key, attempts) { return fetchJson(recaptcha_url(), {
+        body: {site_key: site_key, secret_key: secret_key, attempts: attempts},
+        method: 'put'
+    }); };
+
+    var unset_recaptcha_params = function () { return fetchJson(recaptcha_url(), {
+        method: 'delete'
+    }); };
+
     var configComponent = {
         controller: function controller(){
             var ctrl = {
                 loaded:m.prop(false),
-                dbx: {
-                    setted: m.prop(false),
-                    enable: m.prop(false),
-                    client_id:m.prop(''),
-                    client_secret:m.prop(''),
-                    error:m.prop('')
-                },
                 gmail: {
                     setted: m.prop(false),
                     enable: m.prop(false),
                     email:m.prop(''),
                     password:m.prop(''),
+                    can_save:m.prop(false),
+                    error:m.prop('')
+                },
+                dbx: {
+                    setted: m.prop(false),
+                    enable: m.prop(false),
+                    client_id:m.prop(''),
+                    client_secret:m.prop(''),
+                    can_save:m.prop(false),
+                    error:m.prop('')
+                },
+                recaptcha: {
+                    setted: m.prop(false),
+                    enable: m.prop(false),
+                    site_key:m.prop(''),
+                    secret_key:m.prop(''),
+                    attempts:m.prop('3'),
+                    can_save:m.prop(false),
                     error:m.prop('')
                 },
 
@@ -18500,7 +18551,12 @@
                 set_gmail: set_gmail,
                 unset_gmail: unset_gmail,
                 set_dbx: set_dbx,
-                unset_dbx: unset_dbx
+                unset_dbx: unset_dbx,
+                set_recaptcha: set_recaptcha,
+                unset_recaptcha: unset_recaptcha,
+                update_gmail_fields: update_gmail_fields,
+                update_dbx_fields: update_dbx_fields,
+                update_recaptcha_fields: update_recaptcha_fields
             };
 
 
@@ -18509,11 +18565,13 @@
                     ctrl.gmail.setted(true) && ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
                 if(response.config.dbx)
                     ctrl.dbx.setted(true) && ctrl.dbx.enable(true) && ctrl.dbx.client_id(response.config.dbx.client_id) && ctrl.dbx.client_secret(response.config.dbx.client_secret);
+                if(response.config.recaptcha)
+                    ctrl.recaptcha.setted(true) && ctrl.recaptcha.enable(true) && ctrl.recaptcha.site_key(response.config.recaptcha.site_key) && ctrl.recaptcha.secret_key(response.config.recaptcha.secret_key) && ctrl.recaptcha.attempts(response.config.recaptcha.attempts);
             }
 
-            function toggle_visibility(varable, state){
-                ctrl[varable].error('');
-                ctrl[varable].enable(state);
+            function toggle_visibility(variable, state){
+                ctrl[variable].error('');
+                ctrl[variable].enable(state);
             }
 
             function load() {
@@ -18550,6 +18608,13 @@
                     .then(m.redraw);
             }
 
+            function update_gmail_fields(ctrl, fields){
+                ctrl.gmail.email(fields.email ? fields.email : ctrl.gmail.email());
+                ctrl.gmail.password(fields.password ? fields.password : ctrl.gmail.password());
+                ctrl.gmail.can_save(true);
+                return m.redraw();
+            }
+
             function set_dbx() {
                 ctrl.dbx.error('');
                 set_dbx_params(ctrl.dbx.client_id, ctrl.dbx.client_secret)
@@ -18571,6 +18636,45 @@
                     .then(ctrl.dbx.client_id(''))
                     .then(ctrl.dbx.client_secret(''))
                     .then(m.redraw);
+            }
+
+
+            function update_dbx_fields(ctrl, fields){
+                ctrl.dbx.client_id(fields.client_id ? fields.client_id : ctrl.dbx.client_id());
+                ctrl.dbx.client_secret(fields.client_secret ? fields.client_secret : ctrl.dbx.client_secret());
+                ctrl.dbx.can_save(true);
+                return m.redraw();
+            }
+
+            function set_recaptcha() {
+                ctrl.recaptcha.error('');
+                set_recaptcha_params(ctrl.recaptcha.site_key, ctrl.recaptcha.secret_key, ctrl.recaptcha.attempts)
+                    .catch(function (error) {
+                        ctrl.recaptcha.error(error.message);
+                    })
+                    .then(ctrl.recaptcha.setted(true))
+                    .then(ctrl.recaptcha.enable(true))
+                    .then(m.redraw);
+            }
+
+            function unset_recaptcha() {
+                unset_recaptcha_params()
+                    .catch(function (error) {
+                        ctrl.recaptcha.error(error.message);
+                    })
+                    .then(ctrl.recaptcha.setted(false))
+                    .then(ctrl.recaptcha.enable(false))
+                    .then(ctrl.recaptcha.site_key(''))
+                    .then(ctrl.recaptcha.secret_key(''))
+                    .then(m.redraw);
+            }
+
+            function update_recaptcha_fields(ctrl, fields){
+                ctrl.recaptcha.site_key(fields.site_key ? fields.site_key : ctrl.recaptcha.site_key());
+                ctrl.recaptcha.secret_key(fields.secret_key ? fields.secret_key : ctrl.recaptcha.secret_key());
+                ctrl.recaptcha.attempts(fields.attempts ? fields.attempts : ctrl.recaptcha.attempts());
+                ctrl.recaptcha.can_save(true);
+                return m.redraw();
             }
 
             load();
@@ -18605,20 +18709,22 @@
                                             type:'input',
                                             placeholder: 'Gmail accont',
                                             value: ctrl.gmail.email(),
-                                            oninput: m.withAttr('value', ctrl.gmail.email),
-                                            onchange: m.withAttr('value', ctrl.gmail.email),
+
+                                            // e => update_url(e.target.value)
+                                            oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); }
                                         }),
 
                                         m('input.form-control', {
                                             type:'input',
                                             placeholder: 'password',
                                             value: ctrl.gmail.password(),
-                                            oninput: m.withAttr('value', ctrl.gmail.password),
-                                            onchange: m.withAttr('value', ctrl.gmail.password),
+                                            oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }
                                         })
                                     ]),
                                     ctrl.gmail.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('gmail', false); }},'Cancel'),
-                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
+                                    m('button.btn.btn-primary.btn-block', {disabled: !ctrl.gmail.can_save(), onclick: ctrl.set_gmail},'Update'),
                                     !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
                                     !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
                                 ])
@@ -18641,25 +18747,74 @@
                                             type:'input',
                                             placeholder: 'client id',
                                             value: ctrl.dbx.client_id(),
-                                            oninput: m.withAttr('value', ctrl.dbx.client_id),
-                                            onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                            oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {client_id: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {client_id: e.target.value}); }
                                         }),
 
                                         m('input.form-control', {
                                             type:'input',
                                             placeholder: 'client secret',
                                             value: ctrl.dbx.client_secret(),
-                                            oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                                            onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                            oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {client_secret: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {client_secret: e.target.value}); }
+
                                         })
                                     ]),
                                     ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('dbx', false); }},'Cancel'),
-                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                    m('button.btn.btn-primary.btn-block', {disabled: !ctrl.dbx.can_save(), onclick: ctrl.set_dbx},'Update'),
                                     !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
                                     !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                                 ])
+
+                                // <i class="far fa-shield-check"></i>
                         ])
                     ),
+                    m('.row.centrify',
+                        m('.card.card-inverse.col-md-5.centrify', [
+                            !ctrl.recaptcha.enable() ?
+                                m('a', {onclick: function (){ return ctrl.toggle_visibility('recaptcha', true); }},
+                                    m('button.btn.btn-primary.btn-block', [
+                                        m('i.fa.fa-fw.fa-refresh'), ' Enable support with reCAPTCHA'
+                                    ])
+                                )
+                                :
+                                m('.card-block',[
+                                    m('h4', 'Enter details for google reCAPTCHA'),
+                                    m('form', [
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'Site key',
+                                            value: ctrl.recaptcha.site_key(),
+                                            oninput: function (e){ return ctrl.update_recaptcha_fields(ctrl, {site_key: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_recaptcha_fields(ctrl, {site_key: e.target.value}); }
+
+                                        }),
+
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'Secret key',
+                                            value: ctrl.recaptcha.secret_key(),
+                                            oninput: function (e){ return ctrl.update_recaptcha_fields(ctrl, {secret_key: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_recaptcha_fields(ctrl, {secret_key: e.target.value}); }
+
+                                        }),
+                                        m('input.form-control', {
+                                            type:'number',
+                                            min: '0',
+                                            placeholder: 'Attempts',
+                                            value: ctrl.recaptcha.attempts(),
+                                            oninput: function (e){ return ctrl.update_recaptcha_fields(ctrl, {attempts: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_recaptcha_fields(ctrl, {attempts: e.target.value}); }
+
+                                        })
+                                    ]),
+                                    ctrl.recaptcha.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('recaptcha', false); }},'Cancel'),
+                                    m('button.btn.btn-primary.btn-block', {disabled: !ctrl.recaptcha.can_save(), onclick: ctrl.set_recaptcha},'Update'),
+                                    !ctrl.recaptcha.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_recaptcha},'remove'),
+                                    !ctrl.recaptcha.error() ? '' : m('p.alert.alert-danger', ctrl.recaptcha.error()),
+                                ])
+                        ])
+                    )
                 ]);
         }
     };

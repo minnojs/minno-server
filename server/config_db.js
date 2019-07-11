@@ -11,15 +11,53 @@ function get_config () {
             let dbx = data.find(vars=>vars.var==='dbx');
             if(dbx)
                 dbx = {client_id: dbx.client_id, client_secret: dbx.client_secret};
-            return ({gmail, dbx});
+            let recaptcha = data.find(vars=>vars.var==='recaptcha');
+            if(recaptcha)
+                recaptcha = {site_key: recaptcha.site_key, secret_key: recaptcha.secret_key, attempts:recaptcha.attempts};
+            return ({gmail, dbx, recaptcha});
         });
     });
 }
+
+function get_recaptcha() {
+    return get_config ()
+        .then(config=>config.recaptcha);
+}
+
+
+
+
+function set_recaptcha (site_key, secret_key, attempts) {
+    console.log(Number.isInteger(attempts));
+    if(!secret_key || !secret_key || !attempts || isNaN(attempts))
+        return Promise.reject({status:400, message: 'ERROR: Missing parameters'});
+
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.update({var: 'recaptcha'},
+            {$set: {site_key, secret_key, attempts}}, { upsert : true })
+            .then(() => ({})).catch(err=>console.log(err));
+    });
+}
+
+
+function unset_recaptcha () {
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.remove({var: 'recaptcha'})
+            .then(() => ({})).catch(err=>console.log(err));
+    });
+}
+
+
 
 function get_gmail () {
     return get_config ()
         .then(config=>config.gmail);
 }
+
+
+
 
 function set_gmail (email, password) {
     if(!password)
@@ -74,4 +112,4 @@ function get_dbx() {
 }
 
 
-module.exports = {get_config, set_gmail, unset_gmail, get_gmail, set_dbx, unset_dbx, get_dbx};
+module.exports = {get_config, set_gmail, unset_gmail, get_gmail, set_dbx, unset_dbx, get_dbx, get_recaptcha, set_recaptcha, unset_recaptcha};

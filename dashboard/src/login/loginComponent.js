@@ -8,23 +8,16 @@ let loginComponent = {
             username:m.prop(''),
             password:m.prop(''),
             isloggedin: false,
+            recaptcha_site_key:m.prop(''),
             loginAction,
             error: m.prop('')
         };
         is_loggedin();
-
-        setTimeout(function(){
-            const captcha_dom = document.getElementById('g-recaptcha');
-            if(captcha_dom.children.length === 0) {
-                grecaptcha.render('g-recaptcha');
-            }
-        }, 500);
-
-        return ctrl;
+        reload_captcha();
 
         function loginAction(){
-            const recaptcha = document.getElementsByClassName('g-recaptcha-response')[0].value;
-
+            ctrl.error('');
+            const recaptcha = !ctrl.recaptcha_site_key() ? '' : document.getElementsByClassName('g-recaptcha-response')[0].value;
             if(ctrl.username() && ctrl.password())
                 login(ctrl.username, ctrl.password, recaptcha)
                     .then(() => {
@@ -32,17 +25,37 @@ let loginComponent = {
                     })
                     .catch(response => {
                         ctrl.error(response.message);
+                        ctrl.recaptcha_site_key(response.recaptcha);
                         m.redraw();
+                        reload_captcha()
                     })
                 ;
         }
+
+        function reload_captcha(){
+            setTimeout(function(){
+                const captcha_dom = document.getElementById('g-recaptcha');
+                if(captcha_dom && captcha_dom.children.length === 0)
+                    grecaptcha.render('g-recaptcha');
+
+                if(captcha_dom && captcha_dom.children.length > 0)
+                    grecaptcha.reset();
+
+            }, 500);
+
+        }
+
 
         function is_loggedin(){
             getAuth().then((response) => {
                 if(response.isloggedin)
                     m.route('./');
+                    ctrl.recaptcha_site_key(response.recaptcha);
+                    m.redraw();
+
             });
         }
+        return ctrl;
     },
     view(ctrl){
 
@@ -73,8 +86,8 @@ let loginComponent = {
                             onchange: m.withAttr('value', ctrl.password),
                             config: getStartValue(ctrl.password)
                         }),
-                        m('.g-recaptcha#g-recaptcha', {
-                            'data-sitekey':'6Lfo-6oUAAAAAPNqAYcmbiqTQnN8QzEINfDiajY7'
+                        !ctrl.recaptcha_site_key() ? '' : m('.g-recaptcha#g-recaptcha', {
+                            'data-sitekey':ctrl.recaptcha_site_key()
                         }),
                     ]),
                     !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),

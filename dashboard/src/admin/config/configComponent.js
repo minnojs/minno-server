@@ -7,11 +7,12 @@ let configComponent = {
     controller(){
         let ctrl = {
             loaded:m.prop(false),
-            recaptcha: {
+            gmail: {
                 setted: m.prop(false),
                 enable: m.prop(false),
-                site_key:m.prop(''),
-                secret_key:m.prop(''),
+                email:m.prop(''),
+                password:m.prop(''),
+                can_save:m.prop(false),
                 error:m.prop('')
             },
             dbx: {
@@ -19,13 +20,16 @@ let configComponent = {
                 enable: m.prop(false),
                 client_id:m.prop(''),
                 client_secret:m.prop(''),
+                can_save:m.prop(false),
                 error:m.prop('')
             },
-            gmail: {
+            recaptcha: {
                 setted: m.prop(false),
                 enable: m.prop(false),
-                email:m.prop(''),
-                password:m.prop(''),
+                site_key:m.prop(''),
+                secret_key:m.prop(''),
+                attempts:m.prop('3'),
+                can_save:m.prop(false),
                 error:m.prop('')
             },
 
@@ -35,8 +39,10 @@ let configComponent = {
             set_dbx,
             unset_dbx,
             set_recaptcha,
-            unset_recaptcha
-
+            unset_recaptcha,
+            update_gmail_fields,
+            update_dbx_fields,
+            update_recaptcha_fields
         };
 
 
@@ -45,11 +51,13 @@ let configComponent = {
                 ctrl.gmail.setted(true) && ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
             if(response.config.dbx)
                 ctrl.dbx.setted(true) && ctrl.dbx.enable(true) && ctrl.dbx.client_id(response.config.dbx.client_id) && ctrl.dbx.client_secret(response.config.dbx.client_secret);
+            if(response.config.recaptcha)
+                ctrl.recaptcha.setted(true) && ctrl.recaptcha.enable(true) && ctrl.recaptcha.site_key(response.config.recaptcha.site_key) && ctrl.recaptcha.secret_key(response.config.recaptcha.secret_key) && ctrl.recaptcha.attempts(response.config.recaptcha.attempts);
         }
 
-        function toggle_visibility(varable, state){
-            ctrl[varable].error('');
-            ctrl[varable].enable(state);
+        function toggle_visibility(variable, state){
+            ctrl[variable].error('');
+            ctrl[variable].enable(state);
         }
 
         function load() {
@@ -86,6 +94,13 @@ let configComponent = {
                 .then(m.redraw);
         }
 
+        function update_gmail_fields(ctrl, fields){
+            ctrl.gmail.email(fields.email ? fields.email : ctrl.gmail.email());
+            ctrl.gmail.password(fields.password ? fields.password : ctrl.gmail.password());
+            ctrl.gmail.can_save(true);
+            return m.redraw();
+        }
+
         function set_dbx() {
             ctrl.dbx.error('');
             set_dbx_params(ctrl.dbx.client_id, ctrl.dbx.client_secret)
@@ -108,9 +123,18 @@ let configComponent = {
                 .then(ctrl.dbx.client_secret(''))
                 .then(m.redraw);
         }
+
+
+        function update_dbx_fields(ctrl, fields){
+            ctrl.dbx.client_id(fields.client_id ? fields.client_id : ctrl.dbx.client_id());
+            ctrl.dbx.client_secret(fields.client_secret ? fields.client_secret : ctrl.dbx.client_secret());
+            ctrl.dbx.can_save(true);
+            return m.redraw();
+        }
+
         function set_recaptcha() {
             ctrl.recaptcha.error('');
-            set_recaptcha_params(ctrl.recaptcha.site_key, ctrl.recaptcha.secret_key)
+            set_recaptcha_params(ctrl.recaptcha.site_key, ctrl.recaptcha.secret_key, ctrl.recaptcha.attempts)
                 .catch(error => {
                     ctrl.recaptcha.error(error.message);
                 })
@@ -129,6 +153,14 @@ let configComponent = {
                 .then(ctrl.recaptcha.site_key(''))
                 .then(ctrl.recaptcha.secret_key(''))
                 .then(m.redraw);
+        }
+
+        function update_recaptcha_fields(ctrl, fields){
+            ctrl.recaptcha.site_key(fields.site_key ? fields.site_key : ctrl.recaptcha.site_key());
+            ctrl.recaptcha.secret_key(fields.secret_key ? fields.secret_key : ctrl.recaptcha.secret_key());
+            ctrl.recaptcha.attempts(fields.attempts ? fields.attempts : ctrl.recaptcha.attempts());
+            ctrl.recaptcha.can_save(true);
+            return m.redraw();
         }
 
         load();
@@ -163,20 +195,22 @@ let configComponent = {
                                         type:'input',
                                         placeholder: 'Gmail accont',
                                         value: ctrl.gmail.email(),
-                                        oninput: m.withAttr('value', ctrl.gmail.email),
-                                        onchange: m.withAttr('value', ctrl.gmail.email),
+
+                                        // e => update_url(e.target.value)
+                                        oninput: (e)=> ctrl.update_gmail_fields(ctrl, {email: e.target.value}),
+                                        onchange: (e)=> ctrl.update_gmail_fields(ctrl, {email: e.target.value})
                                     }),
 
                                     m('input.form-control', {
                                         type:'input',
                                         placeholder: 'password',
                                         value: ctrl.gmail.password(),
-                                        oninput: m.withAttr('value', ctrl.gmail.password),
-                                        onchange: m.withAttr('value', ctrl.gmail.password),
+                                        oninput: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value}),
+                                        onchange: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value})
                                     })
                                 ]),
                                 ctrl.gmail.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('gmail', false)},'Cancel'),
-                                m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
+                                m('button.btn.btn-primary.btn-block', {disabled: !ctrl.gmail.can_save(), onclick: ctrl.set_gmail},'Update'),
                                 !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
                                 !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
                             ])
@@ -199,20 +233,21 @@ let configComponent = {
                                         type:'input',
                                         placeholder: 'client id',
                                         value: ctrl.dbx.client_id(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_id),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                        oninput: (e)=> ctrl.update_dbx_fields(ctrl, {client_id: e.target.value}),
+                                        onchange: (e)=> ctrl.update_dbx_fields(ctrl, {client_id: e.target.value})
                                     }),
 
                                     m('input.form-control', {
                                         type:'input',
                                         placeholder: 'client secret',
                                         value: ctrl.dbx.client_secret(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                        oninput: (e)=> ctrl.update_dbx_fields(ctrl, {client_secret: e.target.value}),
+                                        onchange: (e)=> ctrl.update_dbx_fields(ctrl, {client_secret: e.target.value})
+
                                     })
                                 ]),
                                 ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
-                                m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                                m('button.btn.btn-primary.btn-block', {disabled: !ctrl.dbx.can_save(), onclick: ctrl.set_dbx},'Update'),
                                 !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
                                 !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                             ])
@@ -222,39 +257,48 @@ let configComponent = {
                 ),
                 m('.row.centrify',
                     m('.card.card-inverse.col-md-5.centrify', [
-                        !ctrl.dbx.enable() ?
-                            m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
+                        !ctrl.recaptcha.enable() ?
+                            m('a', {onclick: ()=>ctrl.toggle_visibility('recaptcha', true)},
                                 m('button.btn.btn-primary.btn-block', [
-                                    m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
+                                    m('i.fa.fa-fw.fa-refresh'), ' Enable support with reCAPTCHA'
                                 ])
                             )
                             :
                             m('.card-block',[
-                                m('h4', 'Enter details for Dropbox application'),
+                                m('h4', 'Enter details for google reCAPTCHA'),
                                 m('form', [
                                     m('input.form-control', {
                                         type:'input',
-                                        placeholder: 'client id',
-                                        value: ctrl.dbx.client_id(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_id),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                        placeholder: 'Site key',
+                                        value: ctrl.recaptcha.site_key(),
+                                        oninput: (e)=> ctrl.update_recaptcha_fields(ctrl, {site_key: e.target.value}),
+                                        onchange: (e)=> ctrl.update_recaptcha_fields(ctrl, {site_key: e.target.value})
+
                                     }),
 
                                     m('input.form-control', {
                                         type:'input',
-                                        placeholder: 'client secret',
-                                        value: ctrl.dbx.client_secret(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                        placeholder: 'Secret key',
+                                        value: ctrl.recaptcha.secret_key(),
+                                        oninput: (e)=> ctrl.update_recaptcha_fields(ctrl, {secret_key: e.target.value}),
+                                        onchange: (e)=> ctrl.update_recaptcha_fields(ctrl, {secret_key: e.target.value})
+
+                                    }),
+                                    m('input.form-control', {
+                                        type:'number',
+                                        min: '0',
+                                        placeholder: 'Attempts',
+                                        value: ctrl.recaptcha.attempts(),
+                                        oninput: (e)=> ctrl.update_recaptcha_fields(ctrl, {attempts: e.target.value}),
+                                        onchange: (e)=> ctrl.update_recaptcha_fields(ctrl, {attempts: e.target.value})
+
                                     })
                                 ]),
-                                ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
-                                m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
-                                !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
-                                !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
+                                ctrl.recaptcha.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('recaptcha', false)},'Cancel'),
+                                m('button.btn.btn-primary.btn-block', {disabled: !ctrl.recaptcha.can_save(), onclick: ctrl.set_recaptcha},'Update'),
+                                !ctrl.recaptcha.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_recaptcha},'remove'),
+                                !ctrl.recaptcha.error() ? '' : m('p.alert.alert-danger', ctrl.recaptcha.error()),
                             ])
-
-                        // <i class="far fa-shield-check"></i>
                     ])
                 )
             ]);

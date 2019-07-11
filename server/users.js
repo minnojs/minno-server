@@ -1,4 +1,5 @@
 const config      = require('../config');
+const config_db    = require('./config_db');
 const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
@@ -65,8 +66,6 @@ function update_details(user_id, params) {
 }
 
 function set_email(user_id, email) {
-
-
     if (!email)
         return Promise.reject({status: 400, message: 'Missing email'});
 
@@ -295,63 +294,77 @@ function reset_password(reset_code, password, confirm) {
 }
 
 
-function connect(user_name, pass, recaptcha, remoteAddress) {
+function check_recaptcha(use_captcha, recaptcha, local_address)
+{
+    if (!use_captcha)
+        return Promise.resolve();
+
+    return config_db.get_recaptcha()
+        .then(function (recaptcha_details){
+            if(!recaptcha_details)
+                return Promise.resolve();
+            if (recaptcha === undefined || recaptcha === '' || recaptcha === null)
+                return Promise.reject({status: 400, message: 'Please select captcha!'});
+            const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify?secret=' + recaptcha_details.secret_key + '&response=' + recaptcha + '&remoteip=' + local_address;
+            return request(verificationUrl)
+                .then(body => {
+                    body = JSON.parse(body);
+                    // Success will be true or false depending upon captcha validation.
+                    if (body.success !== undefined && !body.success)
+                        return Promise.reject({status: 400, message: 'Failed captcha verification'});
+                });
+        });
+}
+
+function connect(user_name, pass, use_captcha, recaptcha, local_address) {
     if (!user_name || !pass )
         return Promise.reject({status:400, message: 'missing parameters!'});
-    if(recaptcha === undefined || recaptcha === '' || recaptcha === null)
-        return Promise.reject({status:400, message: 'Please select captcha!'});
+    return check_recaptcha(use_captcha, recaptcha, local_address)
+        .then(()=>connection.then(function (db) {
+            const users = db.collection('users');
+            const studies = db.collection('studies');
+            let query = {user_name, pass: utils.sha1(pass)};
 
-    const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify?secret=' + config.secretKey + '&response=' + recaptcha + '&remoteip=' + remoteAddress;
+            if (!user_name.includes('#'))
+                return user_obj();
 
-    return request(verificationUrl)
-        .then(body=> {
-            body = JSON.parse(body);
-            // Success will be true or false depending upon captcha validation.
-            if (body.success !== undefined && !body.success)
-                return Promise.reject({status: 400, message: 'Failed captcha verification'});
-            return connection.then(function (db) {
-                const users    = db.collection('users');
-                const studies  = db.collection('studies');
-                let query = {user_name, pass: utils.sha1(pass)};
+            const users_names = user_name.split('#');
+            query = {user_name: users_names[0], pass: utils.sha1(pass)};
 
-                if (!user_name.includes('#'))
+            return user_obj()
+                .then(function (user_data) {
+                    if (user_data.role !== 'su')
+                        return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
+                    query = {user_name: users_names[1]};
                     return user_obj();
+                });
 
-                const users_names = user_name.split('#');
-                query = {user_name: users_names[0], pass: utils.sha1(pass)};
+            function user_obj() {
+                return users.findOne(query)
+                    .then(function (user_data) {
+                        if (!user_data)
+                            return Promise.reject({
+                                status: 400,
+                                message: 'ERROR: wrong user name / password'
+                            });
+                        user_data.id = user_data._id;
+                        if (!user_data.studies) user_data.studies = [];
+                        if (user_name === 'admin' && pass === config.admin_default_pass)
+                            user_data.first_admin_login = true;
 
-                return user_obj()
-                    .then(function(user_data){
-                        if(user_data.role!=='su')
-                            return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-                        query = {user_name: users_names[1]};
-                        return user_obj();
+                        const study_ids = user_data.studies.map(obj => obj.id);
+                        return studies
+                            .find({_id: {$in: study_ids}})
+                            .toArray()
+                            .then(function (studies) {
+                                user_data.studies = studies;
+                                return user_data;
+                            });
                     });
+            }
+        }));
 
-                function user_obj(){
-                    return users.findOne(query)
-                        .then(function (user_data) {
-                            if (!user_data)
-                                return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-                            user_data.id = user_data._id;
-                            if (!user_data.studies) user_data.studies = [];
-                            if(user_name ==='admin' && pass === config.admin_default_pass)
-                            {
-                                user_data.first_admin_login = true;
-                            }
 
-                            const study_ids = user_data.studies.map(obj=>obj.id);
-                            return studies
-                                .find({_id: {$in: study_ids}})
-                                .toArray()
-                                .then(function (studies) {
-                                    user_data.studies = studies;
-                                    return user_data;
-                                });
-                        });
-                }
-            });
-        });
 }
 
 

@@ -1,13 +1,32 @@
-const express     = require('express');
+const express   = require('express');
 const users     = require('../users');
+const requests     = require('../requests');
+const config_db = require('../config_db');
 const connectionsRouter = express.Router();
 
 module.exports = connectionsRouter;
 
 
+
 connectionsRouter.get('/is_loggedin',function(req, res){
-    if (!req.session || !req.session.user)
-        return res.json({isloggedin: false, timeoutInSeconds: 0});
+    if (!req.session || !req.session.user){
+        let user_object = {
+            isloggedin: false, timeoutInSeconds: 0};
+        return requests.get_requests(req.connection.remoteAddress)
+            .then(function(ip_data) {
+                const reqs = ip_data.reqs;
+                return config_db.get_recaptcha()
+                    .then(function (recaptcha_details){
+                        if (recaptcha_details && reqs>=recaptcha_details.attempts) {
+                            req.session.recaptcha = recaptcha_details.site_key;
+                            user_object.recaptcha = req.session.recaptcha;
+                            return res.json(user_object);
+                        }
+                        return res.json(user_object);
+
+                    });
+            });
+    }
 
     return users.new_msgs(req.session.user._id).then(new_msgs=>{
         let user_object = {new_msgs: new_msgs,
@@ -16,28 +35,38 @@ connectionsRouter.get('/is_loggedin',function(req, res){
         if (req.session.user.first_admin_login)
             user_object.first_admin_login = true;
         return res.json(user_object);
-
     });
 });
 
 
 connectionsRouter.post('/connect',function(req, res){
-    // req.connection.remoteAddress will provide IP address of connected user.
-
-    const recaptcha = req.body.recaptcha;
-    const remoteAddress = req.connection.remoteAddress;
-
-    return users.connect(req.body.username, req.body.password, recaptcha, remoteAddress)
-        .catch(err=>
-            res.status(err.status || 500).json({message:err.message}))
+    const recaptcha     = req.body.recaptcha;
+    const local_address = req.get('host');
+    const use_captcha   = req.session.recaptcha;
+    return users.connect(req.body.username, req.body.password, use_captcha, recaptcha, local_address)
         .then(
-            function(user_data) {
-                req.session.user = user_data;
-                res.json(user_data._id);
+            function(user_data){
+                req.session.recaptcha = false;
+                req.session.user      = user_data;
+                return requests.reset_requests(req.connection.remoteAddress)
+                    .then(()=>res.json(user_data._id));
             }
+        )
+        .catch(err=>
+            requests.add_requests(req.connection.remoteAddress)
+                .then(function(ip_data){
+                    const reqs = ip_data.reqs;
+                    return config_db.get_recaptcha()
+                        .then(function (recaptcha_details){
+                            if (recaptcha_details && reqs>=recaptcha_details.attempts){
+                                req.session.recaptcha = recaptcha_details.site_key;
+                                return res.status(err.status || 500).json({message: err.message, recaptcha: recaptcha_details.site_key});
+                            }
+                            return res.status(err.status || 500).json({message: err.message});
+                        });
+                })
         );
 });
-
 
 connectionsRouter.post('/logout',function(req, res) {
     req.session.destroy(function (err) {

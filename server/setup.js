@@ -38,7 +38,6 @@ function create_counters(){
                     return;
                 const object2add = counters2add.map(counter=>({'_id':counter, 'seq':0}));
                 return counters.insertMany(object2add);
-
             });
 
         });

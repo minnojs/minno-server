@@ -45,8 +45,8 @@ export let unset_dbx_params = () => fetchJson(dbx_url(), {
     method: 'delete'
 });
 
-export let set_recaptcha_params = (site_key, secret_key) => fetchJson(recaptcha_url(), {
-    body: {site_key, secret_key},
+export let set_recaptcha_params = (site_key, secret_key, attempts) => fetchJson(recaptcha_url(), {
+    body: {site_key, secret_key, attempts},
     method: 'put'
 });
 
