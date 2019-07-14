@@ -18584,82 +18584,155 @@
                 m('.container.sharing-page', [
                     m('.row',[
                         m('.col-sm-10', [
-                            m('h3', 'Edit configuration')
+                            m('h3', 'Configuration')
                         ])
                     ]),
 
-                    m('.row.centrify',
-                        [m('.card.card-inverse.col-md-5.centrify', [
+                    m('.row',
+                        [m('.col-sm-3', [ m('strong', 'Gmail:'),
+                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')])
+                        ])
+                        ,m('.col-sm-8',[
+                            m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.toggle_visibility('gmail', false); },
+                                        checked: !ctrl.gmail.enable(),
+                                    }), m('span.c-indicator'), ' Disable Gmail'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.toggle_visibility('gmail', true); },
+                                        checked: ctrl.gmail.enable(),
+                                    }), m('span.c-indicator'), ' Enable Gmail'
+                            ])),
 
-                            !ctrl.gmail.enable() ?
-                                m('a', {onclick: function (){ return ctrl.toggle_visibility('gmail', true); }},
-                                    m('button.btn.btn-primary.btn-block', [
-                                        m('i.fa.fa-fw.fa-envelope'), ' Enable support with email'
-                                    ])
-                                )
-                                :
-                                m('.card-block',[
-                                    m('h4', 'Enter details for Gmail accont'),
-                                    m('form', [
-                                        m('input.form-control', {
-                                            type:'input',
-                                            placeholder: 'Gmail accont',
-                                            value: ctrl.gmail.email(),
-                                            oninput: m.withAttr('value', ctrl.gmail.email),
-                                            onchange: m.withAttr('value', ctrl.gmail.email),
-                                        }),
-
-                                        m('input.form-control', {
-                                            type:'input',
-                                            placeholder: 'password',
-                                            value: ctrl.gmail.password(),
-                                            oninput: m.withAttr('value', ctrl.gmail.password),
-                                            onchange: m.withAttr('value', ctrl.gmail.password),
-                                        })
-                                    ]),
-                                    ctrl.gmail.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('gmail', false); }},'Cancel'),
-                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
-                                    !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
-                                    !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'User name')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'User name',
+                                        value: ctrl.gmail.email(),
+                                        oninput: m.withAttr('value', ctrl.gmail.email),
+                                        onchange: m.withAttr('value', ctrl.gmail.email),
+                                    })
                                 ])
+                            ]),
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Password')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'password',
+                                        value: ctrl.gmail.password(),
+                                        oninput: m.withAttr('value', ctrl.gmail.password),
+                                        onchange: m.withAttr('value', ctrl.gmail.password),
+                                    })
+                                ])
+                            ]),
+
+                                // ctrl.gmail.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('gmail', false)},'Cancel'),
+                                // m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
+                                // !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
+                                // !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
+                            ])
+
+                        ]),
+                    m('hr'),
+
+                    m('.row',
+                        [m('.col-sm-3', [ m('strong', 'Dropbox:'),
+                            m('.text-muted', ['Dropbox application is used to synchronize file with Dropbox ', m('i.fa.fa-info-circle')])
+                        ]),m('.col-sm-8',[
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('dbx', false); },
+                                    checked: !ctrl.dbx.enable(),
+                                }), m('span.c-indicator'), ' Disable Dropbox synchronization'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('dbx', true); },
+                                    checked: ctrl.dbx.enable(),
+                                }), m('span.c-indicator'), ' Enable Dropbox synchronization'
+                            ])),
+
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'User name')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'client id',
+                                        value: ctrl.dbx.client_id(),
+                                        oninput: m.withAttr('value', ctrl.dbx.client_id),
+                                        onchange: m.withAttr('value', ctrl.dbx.client_id),
+                                    })
+                                ])
+                            ]),
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Password')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'client secret',
+                                        value: ctrl.dbx.client_secret(),
+                                        oninput: m.withAttr('value', ctrl.dbx.client_secret),
+                                        onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                                    })
+                                ])
+                            ]),
+
+                            // ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
+                            // m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
+                            // !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
+                            // !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                         ])
 
                         ]),
-                    m('.row.centrify',
-                        m('.card.card-inverse.col-md-5.centrify', [
-                            !ctrl.dbx.enable() ?
-                                m('a', {onclick: function (){ return ctrl.toggle_visibility('dbx', true); }},
-                                    m('button.btn.btn-primary.btn-block', [
-                                        m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
-                                    ])
-                                )
-                                :
-                                m('.card-block',[
-                                    m('h4', 'Enter details for Dropbox application'),
-                                    m('form', [
-                                        m('input.form-control', {
-                                            type:'input',
-                                            placeholder: 'client id',
-                                            value: ctrl.dbx.client_id(),
-                                            oninput: m.withAttr('value', ctrl.dbx.client_id),
-                                            onchange: m.withAttr('value', ctrl.dbx.client_id),
-                                        }),
 
-                                        m('input.form-control', {
-                                            type:'input',
-                                            placeholder: 'client secret',
-                                            value: ctrl.dbx.client_secret(),
-                                            oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                                            onchange: m.withAttr('value', ctrl.dbx.client_secret),
-                                        })
-                                    ]),
-                                    ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: function (){ return ctrl.toggle_visibility('dbx', false); }},'Cancel'),
-                                    m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
-                                    !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
-                                    !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
-                                ])
-                        ])
-                    ),
+                    // m('.row.centrify',
+                    //     m('.card.card-inverse.col-md-5.centrify', [
+                    //         !ctrl.dbx.enable() ?
+                    //             m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
+                    //                 m('button.btn.btn-primary.btn-block', [
+                    //                     m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
+                    //                 ])
+                    //             )
+                    //             :
+                    //             m('.card-block',[
+                    //                 m('h4', 'Enter details for Dropbox application'),
+                    //                 m('form', [
+                    //                     m('input.form-control', {
+                    //                         type:'input',
+                    //                         placeholder: 'client id',
+                    //                         value: ctrl.dbx.client_id(),
+                    //                         oninput: m.withAttr('value', ctrl.dbx.client_id),
+                    //                         onchange: m.withAttr('value', ctrl.dbx.client_id),
+                    //                     }),
+                    //
+                    //                     m('input.form-control', {
+                    //                         type:'input',
+                    //                         placeholder: 'client secret',
+                    //                         value: ctrl.dbx.client_secret(),
+                    //                         oninput: m.withAttr('value', ctrl.dbx.client_secret),
+                    //                         onchange: m.withAttr('value', ctrl.dbx.client_secret),
+                    //                     })
+                    //                 ]),
+                    //             ])
+                    //     ])
+                    // ),
+                    m('.row.central_panel', [
+                        m('.col-sm-2', m('button.btn.btn-secondry', {onclick: ''},'cancel')),
+                        m('.col-sm-2', m('button.btn.btn-primary', {onclick: ''},'Save'))
+                    ])
                 ]);
         }
     };
