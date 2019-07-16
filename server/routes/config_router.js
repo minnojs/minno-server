@@ -38,6 +38,28 @@ configRouter.route('')
                     res.status(err.status || 500).json({message:err.message}));
     });
 
+configRouter.route('/params')
+    .put(
+        function(req, res){
+            return Promise.all([
+                config_db.update_gmail(req.body.gmail),
+                config_db.update_dbx(req.body.dbx),
+                config_db.update_server(req.body.server_data)
+            ])
+            .then((output)=>res.json(output))
+            .catch((gmail_err, dbx_err)=>
+                res.status(gmail_err.status || dbx_err.status || 500).json({message:{gmail:gmail_err ? gmail_err.message : '', dbx: dbx_err ? dbx_err.message : ''}}));
+        })
+    .delete(
+        function(req, res){
+            return config_db.unset_gmail()
+                .then(()=>res.json({}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+
+
+        });
+
 
 configRouter.route('/gmail')
     .put(

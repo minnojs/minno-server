@@ -18443,14 +18443,9 @@
         return (baseUrl + "/config");
     }
 
-    function gmail_url()
+    function params_url()
     {
-        return (baseUrl + "/config/gmail");
-    }
-
-    function dbx_url()
-    {
-        return (baseUrl + "/config/dbx");
+        return (baseUrl + "/config/params");
     }
 
 
@@ -18458,62 +18453,84 @@
         method: 'get'
     }); };
 
-    var set_gmail_params = function (email, password) { return fetchJson(gmail_url(), {
-        body: {email: email, password: password},
+    var update_config = function (gmail, dbx, server_data) { return fetchJson(params_url(), {
+        body: {gmail: gmail, dbx: dbx, server_data: server_data},
         method: 'put'
-    }); };
 
-    var unset_gmail_params = function () { return fetchJson(gmail_url(), {
-        method: 'delete'
-    }); };
-
-
-    var set_dbx_params = function (client_id, client_secret) { return fetchJson(dbx_url(), {
-        body: {client_id: client_id, client_secret: client_secret},
-        method: 'put'
-    }); };
-
-    var unset_dbx_params = function () { return fetchJson(dbx_url(), {
-        method: 'delete'
     }); };
 
     var configComponent = {
         controller: function controller(){
             var ctrl = {
                 loaded:m.prop(false),
-                dbx: {
-                    setted: m.prop(false),
-                    enable: m.prop(false),
-                    client_id:m.prop(''),
-                    client_secret:m.prop(''),
-                    error:m.prop('')
-                },
+                notifications: createNotifications(),
+                given_conf:m.prop(''),
+                given_domains:m.prop([]),
                 gmail: {
-                    setted: m.prop(false),
                     enable: m.prop(false),
                     email:m.prop(''),
                     password:m.prop(''),
+                    updated: m.prop(false),
+                    error:m.prop('')
+                },
+                dbx: {
+                    enable: m.prop(false),
+                    app_key:m.prop(''),
+                    app_secret:m.prop(''),
+                    updated: m.prop(false),
+                    error:m.prop('')
+                },
+                server_data: {
+                    type:m.prop(''),
+                    https:{
+                        private_key:m.prop(''),
+                        certificate:m.prop('')
+                    },
+                    greenlock:{
+                        owner_email:m.prop(''),
+                        newdomains:m.prop([]),
+                        domains:m.prop([])
+                    },
+                    updated: m.prop(false),
                     error:m.prop('')
                 },
 
                 toggle_visibility: toggle_visibility,
-                set_gmail: set_gmail,
-                unset_gmail: unset_gmail,
-                set_dbx: set_dbx,
-                unset_dbx: unset_dbx
+                update_gmail_fields: update_gmail_fields,
+                update_dbx_fields: update_dbx_fields,
+                update_server_type_fields: update_server_type_fields,
+                do_update_config: do_update_config,
             };
 
-
             function set_values(response){
+                ctrl.given_conf(response.config);
                 if(response.config.gmail)
-                    ctrl.gmail.setted(true) && ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
+                    ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
                 if(response.config.dbx)
-                    ctrl.dbx.setted(true) && ctrl.dbx.enable(true) && ctrl.dbx.client_id(response.config.dbx.client_id) && ctrl.dbx.client_secret(response.config.dbx.client_secret);
+                    ctrl.dbx.enable(true) && ctrl.dbx.app_key(response.config.dbx.client_id) && ctrl.dbx.app_secret(response.config.dbx.client_secret);
+                if(response.config.server_data) {
+                    if(response.config.server_data.http)
+                        ctrl.server_data.type('http');
+                    if(response.config.server_data.https){
+                        ctrl.server_data.type('https');
+                        ctrl.server_data.https.private_key(response.config.server_data.https.private_key);
+                        ctrl.server_data.https.certificate(response.config.server_data.https.certificate);
+                    }
+                    if(response.config.server_data.greenlock){
+                        ctrl.server_data.type('greenlock');
+                        ctrl.server_data.greenlock.owner_email(response.config.server_data.greenlock.owner_email);
+                        ctrl.server_data.greenlock.domains(response.config.server_data.greenlock.domains);
+                        ctrl.given_domains(response.config.server_data.greenlock.domains);
+                    }
+                }
+                return m.redraw();
+
             }
 
             function toggle_visibility(varable, state){
                 ctrl[varable].error('');
                 ctrl[varable].enable(state);
+                ctrl[varable].updated(true);
             }
 
             function load() {
@@ -18521,58 +18538,118 @@
                     .then(function (response) { return set_values(response); })
                     .then(function (){ return ctrl.loaded(true); })
                     .catch(function (error) {
-                        ctrl.col_error(error.message);
+                        console.log(error.message);
                     }).then(m.redraw);
             }
 
+            function update_gmail_fields(ctrl, fields){
+                if(fields.hasOwnProperty('email'))
+                    ctrl.gmail.email(fields.email);
+                if(fields.hasOwnProperty('password'))
+                    ctrl.gmail.password(fields.password);
+                ctrl.gmail.enable(ctrl.gmail.email() || ctrl.gmail.password());
+                var updated = (ctrl.given_conf().gmail.email && !ctrl.gmail.enable()) ||
+                    (ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
+                    (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password);
 
-            function set_gmail() {
-                ctrl.gmail.error('');
-                set_gmail_params(ctrl.gmail.email, ctrl.gmail.password)
-                    .catch(function (error) {
-                        ctrl.gmail.error(error.message);
-                    })
-                    .then(ctrl.gmail.setted(true))
-                    .then(ctrl.gmail.enable(true))
-                    .then(m.redraw);
+                ctrl.gmail.updated(updated);
+                return m.redraw();
             }
 
-            function unset_gmail() {
-                ctrl.gmail.error('');
-                unset_gmail_params()
-                    .catch(function (error) {
-                        ctrl.gmail.error(error.message);
-                    })
-                    .then(ctrl.gmail.setted(false))
-                    .then(ctrl.gmail.enable(false))
-                    .then(ctrl.gmail.email(''))
-                    .then(ctrl.gmail.password(''))
-                    .then(m.redraw);
+            function update_dbx_fields(ctrl, fields){
+                if(fields.hasOwnProperty('app_key'))
+                    ctrl.dbx.app_key(fields.app_key);
+                if(fields.hasOwnProperty('app_secret'))
+                ctrl.dbx.app_secret(fields.app_secret);
+                ctrl.dbx.enable(ctrl.dbx.app_key() || ctrl.dbx.app_secret());
+                var updated = (ctrl.given_conf().dbx.client_id && !ctrl.dbx.enable()) ||
+                    (ctrl.dbx.enable() && ctrl.dbx.app_key() !== ctrl.given_conf().dbx.client_id) ||
+                    (ctrl.dbx.enable() && ctrl.dbx.app_secret() !== ctrl.given_conf().dbx.client_secret);
+                ctrl.dbx.updated(updated);
+                return m.redraw();
             }
 
-            function set_dbx() {
-                ctrl.dbx.error('');
-                set_dbx_params(ctrl.dbx.client_id, ctrl.dbx.client_secret)
-                    .catch(function (error) {
-                        ctrl.dbx.error(error.message);
-                    })
-                    .then(ctrl.dbx.setted(true))
-                    .then(ctrl.dbx.enable(true))
-                    .then(m.redraw);
+            function update_server_type_fields(ctrl, fields){
+
+                if(fields.hasOwnProperty('type'))
+                    ctrl.server_data.type(fields.type);
+
+                if(fields.hasOwnProperty('https')){
+                    if(fields.https.hasOwnProperty('private_key'))
+                        ctrl.server_data.https.private_key(fields.https.private_key);
+                    if(fields.https.hasOwnProperty('certificate'))
+                        ctrl.server_data.https.certificate(fields.https.certificate);
+                }
+                if(fields.hasOwnProperty('greenlock')){
+                    if(fields.greenlock.hasOwnProperty('owner_email'))
+                        ctrl.server_data.greenlock.owner_email(fields.greenlock.owner_email);
+                    if(fields.greenlock.hasOwnProperty('domain'))
+                    {
+                        var domains = ctrl.server_data.greenlock.domains().slice();
+                        if(fields.greenlock.hasOwnProperty('id')){
+                            if (fields.greenlock.id >= 0) {
+                                domains[fields.greenlock.id] = fields.greenlock.domain;
+                            }
+                            if (fields.greenlock.id < 0)
+                                domains.push(fields.greenlock.domain);
+                        }
+                        ctrl.server_data.greenlock.domains(domains);
+                    }
+                    if(fields.greenlock.hasOwnProperty('remove')){
+                        var domains$1 = ctrl.server_data.greenlock.domains();
+                        domains$1.splice(fields.greenlock.remove, 1);
+                        ctrl.server_data.greenlock.domains(domains$1);
+                    }
+                }
+                var updated = (ctrl.server_data.type() === 'http' && !ctrl.given_conf().server_data.http)
+                    ||
+                    (ctrl.server_data.type() === 'https' &&
+                        ((ctrl.server_data.https.private_key() && ctrl.server_data.https.certificate()) &&
+                        ((!ctrl.given_conf().server_data.https) ||
+                        (ctrl.given_conf().server_data.https.private_key !== ctrl.server_data.https.private_key() ||
+                            ctrl.given_conf().server_data.https.certificate !== ctrl.server_data.https.certificate())))
+                    )
+                    ||
+                    (ctrl.server_data.type() === 'greenlock' &&
+                        ((ctrl.server_data.greenlock.owner_email() && ctrl.server_data.greenlock.domains().some(function (domain) { return !!domain; })) &&
+                            ((!ctrl.given_conf().server_data.greenlock) ||
+                                (ctrl.given_conf().server_data.greenlock.owner_email !== ctrl.server_data.greenlock.owner_email() ||
+                                    (ctrl.given_conf().server_data.greenlock.domains.length !== ctrl.server_data.greenlock.domains().filter(function (domain) { return !!domain; }).length ||
+                                        !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index]}))
+                                    )
+                                )
+                            )
+                        )
+                    );
+                ctrl.server_data.updated(updated);
+                return m.redraw();
             }
 
-            function unset_dbx() {
-                unset_dbx_params()
-                    .catch(function (error) {
-                        ctrl.dbx.error(error.message);
-                    })
-                    .then(ctrl.dbx.setted(false))
-                    .then(ctrl.dbx.enable(false))
-                    .then(ctrl.dbx.client_id(''))
-                    .then(ctrl.dbx.client_secret(''))
-                    .then(m.redraw);
+            function show_success_notification(res) {
+                if(res)
+                    ctrl.notifications.show_success(res.filter(function (mes){ return !!mes; }).join(' | '));
             }
 
+            function show_fail_notification(res) {
+
+                if(res.gmail)
+                    ctrl.notifications.show_danger(res.gmail);
+                if(res.gmail)
+                    ctrl.notifications.show_danger(res.gmail);
+
+            }
+
+            function do_update_config(){
+                update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+                    .catch(function (error) { return show_fail_notification(error.message); })
+                    .then(function (res){ return show_success_notification(res)
+                        .then(ctrl.gmail.updated(false))
+                        .then(ctrl.dbx.updated(false))
+                        .then(ctrl.server_data.updated(false))
+                        .then(get_config()
+                            .then(function (response) { return set_values(response); })); })
+                    .then(m.redraw);
+            }
             load();
             return ctrl;
         },
@@ -18588,8 +18665,8 @@
                         ])
                     ]),
 
-                    m('.row',
-                        [m('.col-sm-3', [ m('strong', 'Gmail:'),
+                    m('.row', [
+                        m('.col-sm-3', [ m('strong', 'Gmail:'),
                             m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')])
                         ])
                         ,m('.col-sm-8',[
@@ -18615,9 +18692,8 @@
                                         type:'input',
                                         placeholder: 'User name',
                                         value: ctrl.gmail.email(),
-                                        oninput: m.withAttr('value', ctrl.gmail.email),
-                                        onchange: m.withAttr('value', ctrl.gmail.email),
-                                    })
+                                        oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); }                                })
                                 ])
                             ]),
                             m('.form-group.row', [
@@ -18629,23 +18705,16 @@
                                         type:'input',
                                         placeholder: 'password',
                                         value: ctrl.gmail.password(),
-                                        oninput: m.withAttr('value', ctrl.gmail.password),
-                                        onchange: m.withAttr('value', ctrl.gmail.password),
-                                    })
+                                        oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }                                })
                                 ])
-                            ]),
-
-                                // ctrl.gmail.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('gmail', false)},'Cancel'),
-                                // m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_gmail},'Update'),
-                                // !ctrl.gmail.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_gmail},'remove'),
-                                // !ctrl.gmail.error() ? '' : m('p.alert.alert-danger', ctrl.gmail.error()),
                             ])
+                         ])
 
-                        ]),
+                    ]),
                     m('hr'),
-
-                    m('.row',
-                        [m('.col-sm-3', [ m('strong', 'Dropbox:'),
+                    m('.row', [
+                        m('.col-sm-3', [ m('strong', 'Dropbox:'),
                             m('.text-muted', ['Dropbox application is used to synchronize file with Dropbox ', m('i.fa.fa-info-circle')])
                         ]),m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
@@ -18663,76 +18732,127 @@
 
                             m('.form-group.row', [
                                 m('.col-sm-2', [
-                                    m('label.form-control-label', 'User name')
+                                    m('label.form-control-label', 'App key')
                                 ]),
                                 m('.col-sm-5', [
                                     m('input.form-control', {
                                         type:'input',
-                                        placeholder: 'client id',
-                                        value: ctrl.dbx.client_id(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_id),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_id),
-                                    })
+                                        placeholder: 'App key',
+                                        value: ctrl.dbx.app_key(),
+                                        oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {app_key: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_key: e.target.value}); }                                })
                                 ])
                             ]),
                             m('.form-group.row', [
                                 m('.col-sm-2', [
-                                    m('label.form-control-label', 'Password')
+                                    m('label.form-control-label', 'App secret')
                                 ]),
                                 m('.col-sm-5', [
                                     m('input.form-control', {
                                         type:'input',
-                                        placeholder: 'client secret',
-                                        value: ctrl.dbx.client_secret(),
-                                        oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                                        onchange: m.withAttr('value', ctrl.dbx.client_secret),
-                                    })
+                                        placeholder: 'App secret',
+                                        value: ctrl.dbx.app_secret(),
+                                        oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value}); }                                })
                                 ])
                             ]),
-
-                            // ctrl.dbx.setted() ? ''  : m('button.btn.btn-secondery.btn-block', {onclick: ()=>ctrl.toggle_visibility('dbx', false)},'Cancel'),
-                            // m('button.btn.btn-primary.btn-block', {onclick: ctrl.set_dbx},'Update'),
-                            // !ctrl.dbx.setted() ? '' : m('button.btn.btn-danger.btn-block', {onclick: ctrl.unset_dbx},'remove'),
-                            // !ctrl.dbx.error() ? '' : m('p.alert.alert-danger', ctrl.dbx.error()),
                         ])
+                    ]),
+                    m('hr'),
 
+                    m('.row', [
+                        m('.col-sm-3', [ m('strong', 'Server type:'),
+                            m('.text-muted', ['Certifications details for the server ', m('i.fa.fa-info-circle')])
                         ]),
+                        m('.col-sm-5',[
+                            m('.input-group', [m('strong', 'Server type'),
+                                m('select.c-select.form-control',{onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {type: e.target.value}); }}, [
+                                    m('option', {selected:ctrl.server_data.type()==='http', value:'http'}, 'Http'),
+                                    m('option', {selected:ctrl.server_data.type()==='https', value:'https'}, 'Https'),
+                                    m('option', {selected:ctrl.server_data.type()==='greenlock', value:'greenlock'}, 'Green-lock'),
+                                ])
+                            ])
+                        ]),
+                        m('.col-sm-8',[
+                            ctrl.server_data.type()!=='https' ? ''
+                                : [
+                                    m('.form-group.row.space', [
+                                        m('.col-sm-2', [
+                                            m('label.form-control-label', 'Private key')
+                                        ]),
+                                        m('.col-sm-7', [
+                                            m('textarea.form-control',  {
+                                                value: ctrl.server_data.https.private_key(),
+                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {https:{private_key: e.target.value}}); },
+                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {https:{private_key: e.target.value}}); }
+                                            })
+                                        ])
+                                    ]),
+                                    m('.form-group.row.space', [
+                                        m('.col-sm-2', [
+                                            m('label.form-control-label', 'Certificate')
+                                        ]),
+                                        m('.col-sm-7', [
+                                            m('textarea.form-control',  {value: ctrl.server_data.https.certificate(),
+                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {https:{certificate: e.target.value}}); },
+                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {https:{certificate: e.target.value}}); }                                })
+                                        ])
+                                    ]),
+                            ],
+                            ctrl.server_data.type()!=='greenlock' ? ''
+                                : [
+                                    m('.form-group.row.space', [
+                                        m('.col-sm-2', [
+                                            m('label.form-control-label', 'Owner email')
+                                        ]),
+                                        m('.col-sm-6', [
+                                            m('input.form-control', {
+                                                type:'input',
+                                                placeholder: 'Owner email',
+                                                value: ctrl.server_data.greenlock.owner_email(),
+                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); },
+                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); }                                })
+                                        ])
+                                    ]),
+                                    m('.form-group.row.space', [
+                                        m('.col-sm-2', [
+                                            m('label.form-control-label', 'Domains')
+                                        ]),
+                                        m('.col-sm-9',
+                                            ctrl.server_data.greenlock.domains().map(function (domain, id){ return m('.form-group.row', [
+                                                    m('.col-sm-8',
+                                                        m('input.form-control', {
+                                                            type:'input',
+                                                            placeholder: ("Domain " + (id+1)),
+                                                            value: domain,
+                                                            oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); },
+                                                            onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); }
+                                                        })),
+                                                        m('.col-sm-1',
+                                                            m('button.btn.btn-primary', {onclick: function (){ return ctrl.update_server_type_fields(ctrl, {greenlock:{remove:id}}); }},'X')
+                                                        )
+                                                ]); }),
+                                                ctrl.server_data.greenlock.domains().some(function (domain){ return domain===''; }) ? '' :
+                                                    m('.form-group.row', [
+                                                        m('.col-sm-8',
+                                                            m('input.form-control', {
+                                                                type:'input',
+                                                                placeholder: ("Domain " + (ctrl.server_data.greenlock.domains().length+1)),
+                                                                value: '',
+                                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); },
+                                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); }
+                                                            })
+                                                    )])
+                                        )]),
+                                ],
+                        ])
+                    ]),
 
-                    // m('.row.centrify',
-                    //     m('.card.card-inverse.col-md-5.centrify', [
-                    //         !ctrl.dbx.enable() ?
-                    //             m('a', {onclick: ()=>ctrl.toggle_visibility('dbx', true)},
-                    //                 m('button.btn.btn-primary.btn-block', [
-                    //                     m('i.fa.fa-fw.fa-dropbox'), ' Enable support with dropbox'
-                    //                 ])
-                    //             )
-                    //             :
-                    //             m('.card-block',[
-                    //                 m('h4', 'Enter details for Dropbox application'),
-                    //                 m('form', [
-                    //                     m('input.form-control', {
-                    //                         type:'input',
-                    //                         placeholder: 'client id',
-                    //                         value: ctrl.dbx.client_id(),
-                    //                         oninput: m.withAttr('value', ctrl.dbx.client_id),
-                    //                         onchange: m.withAttr('value', ctrl.dbx.client_id),
-                    //                     }),
-                    //
-                    //                     m('input.form-control', {
-                    //                         type:'input',
-                    //                         placeholder: 'client secret',
-                    //                         value: ctrl.dbx.client_secret(),
-                    //                         oninput: m.withAttr('value', ctrl.dbx.client_secret),
-                    //                         onchange: m.withAttr('value', ctrl.dbx.client_secret),
-                    //                     })
-                    //                 ]),
-                    //             ])
-                    //     ])
-                    // ),
                     m('.row.central_panel', [
-                        m('.col-sm-2', m('button.btn.btn-secondry', {onclick: ''},'cancel')),
-                        m('.col-sm-2', m('button.btn.btn-primary', {onclick: ''},'Save'))
-                    ])
+                        m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
+                    ]),
+                    m('div', ctrl.notifications.view()),
+
                 ]);
         }
     };

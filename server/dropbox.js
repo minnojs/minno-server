@@ -25,16 +25,18 @@ function get_auth_link(user_id){
 function revoke_user(user_id){
     return get_user_token(user_id)
         .then(function(access_token) {
-            if(!access_token)
-                return;
-            const options = {
-                url: 'https://api.dropboxapi.com/2/auth/token/revoke',
-                headers: {
-                    'Authorization': 'Bearer ' + access_token
-                }
-            };
-            return request_promise.post(options)
-            .then(()=>users_comp.revoke_dbx_token(user_id));
+            return users_comp.revoke_dbx_token(user_id)
+            .then(function(){
+                if(!access_token)
+                    return;
+                const options = {
+                    url: 'https://api.dropboxapi.com/2/auth/token/revoke',
+                    headers: {
+                        'Authorization': 'Bearer ' + access_token
+                    }
+                };
+                return request_promise.post(options);
+            });
 
         });
 }

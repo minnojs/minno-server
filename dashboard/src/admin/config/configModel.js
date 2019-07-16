@@ -7,6 +7,11 @@ function config_url()
     return `${baseUrl}/config`;
 }
 
+function params_url()
+{
+    return `${baseUrl}/config/params`;
+}
+
 function gmail_url()
 {
     return `${baseUrl}/config/gmail`;
@@ -20,6 +25,12 @@ function dbx_url()
 
 export let get_config = () => fetchJson(config_url(), {
     method: 'get'
+});
+
+export let update_config = (gmail, dbx, server_data) => fetchJson(params_url(), {
+    body: {gmail, dbx, server_data},
+    method: 'put'
+
 });
 
 export let set_gmail_params = (email, password) => fetchJson(gmail_url(), {
