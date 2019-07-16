@@ -18596,7 +18596,7 @@
                         ctrl.server_data.greenlock.domains(domains);
                     }
                     if(fields.greenlock.hasOwnProperty('remove')){
-                        var domains$1 = ctrl.server_data.greenlock.domains();
+                        var domains$1 = ctrl.server_data.greenlock.domains().slice();
                         domains$1.splice(fields.greenlock.remove, 1);
                         ctrl.server_data.greenlock.domains(domains$1);
                     }
@@ -18641,13 +18641,16 @@
 
             function do_update_config(){
                 update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+                    .then(function (res){
+                        show_success_notification(res);
+                        ctrl.gmail.updated(false);
+                        ctrl.dbx.updated(false);
+                        ctrl.server_data.updated(false);
+                        return get_config()
+                            .then(function (response) { return set_values(response); });
+                    })
                     .catch(function (error) { return show_fail_notification(error.message); })
-                    .then(function (res){ return show_success_notification(res)
-                        .then(ctrl.gmail.updated(false))
-                        .then(ctrl.dbx.updated(false))
-                        .then(ctrl.server_data.updated(false))
-                        .then(get_config()
-                            .then(function (response) { return set_values(response); })); })
+
                     .then(m.redraw);
             }
             load();

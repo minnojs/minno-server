@@ -141,7 +141,7 @@ let configComponent = {
                     ctrl.server_data.greenlock.domains(domains);
                 }
                 if(fields.greenlock.hasOwnProperty('remove')){
-                    let domains = ctrl.server_data.greenlock.domains();
+                    let domains = ctrl.server_data.greenlock.domains().slice();
                     domains.splice(fields.greenlock.remove, 1);
                     ctrl.server_data.greenlock.domains(domains);
                 }
@@ -186,13 +186,16 @@ let configComponent = {
 
         function do_update_config(){
             update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+                .then((res)=> {
+                    show_success_notification(res);
+                    ctrl.gmail.updated(false);
+                    ctrl.dbx.updated(false);
+                    ctrl.server_data.updated(false);
+                    return get_config()
+                        .then(response => set_values(response));
+                })
                 .catch((error) => show_fail_notification(error.message))
-                .then((res)=>show_success_notification(res)
-                    .then(ctrl.gmail.updated(false))
-                    .then(ctrl.dbx.updated(false))
-                    .then(ctrl.server_data.updated(false))
-                    .then(get_config()
-                        .then(response => set_values(response))))
+
                 .then(m.redraw);
         }
         load();
