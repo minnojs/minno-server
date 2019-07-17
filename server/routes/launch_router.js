@@ -32,7 +32,10 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
 function displayExperiment(params, res,fingerprint){
     return function(exp_data){
-
+		if(typeof config.useFingerprint !== 'undefined' && config.useFingerprint==false)
+		{
+			fingerprint=['{useragent:"null"}'];
+		}
         const render = promisify(res.render,res);
         const dataUrl = urljoin(config.relative_path, 'data');
         const {version_data = {}} = exp_data;
@@ -51,7 +54,6 @@ function displayExperiment(params, res,fingerprint){
             version:version_data.version,
             state:version_data.state
         }, postAlways); // post the post always stuff too - so that we can connect them...
-		console.log(fingerprint);
 		const experimentSessionData=
 		{
             descriptiveId: exp_data.descriptive_id, 
