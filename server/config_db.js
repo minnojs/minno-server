@@ -21,7 +21,12 @@ function get_config () {
 
 function get_gmail () {
     return get_config ()
-        .then(config=>config.gmail);
+        .then(config=>config.server_data);
+}
+
+function get_server_data () {
+    return get_config ()
+        .then(config=>config.server_data);
 }
 
 function update_gmail (gmail) {
@@ -76,9 +81,7 @@ function update_server(server_data) {
     return update_config_db(server_data_obj);
 }
 
-function check_url(domain){
 
-}
 function update_config_db(server_data_obj){
     return connection.then(function (db) {
         const config_data = db.collection('config');
@@ -143,4 +146,4 @@ function get_dbx() {
 }
 
 
-module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, update_server};
+module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server};

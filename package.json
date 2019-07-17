@@ -40,6 +40,7 @@
     "fs-extra": "^5.0.0",
     "greenlock": "^2.8.1",
     "greenlock-express": "^2.7.9",
+    "greenlock-store-fs": "^3.0.2",
     "mongoose": "^5.4.21",
     "mongoose_schema-json": "^1.0.3",
     "multer": "^1.1.0",

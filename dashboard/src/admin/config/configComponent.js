@@ -10,7 +10,6 @@ let configComponent = {
             loaded:m.prop(false),
             notifications: createNotifications(),
             given_conf:m.prop(''),
-            given_domains:m.prop([]),
             gmail: {
                 enable: m.prop(false),
                 email:m.prop(''),
@@ -29,11 +28,11 @@ let configComponent = {
                 type:m.prop(''),
                 https:{
                     private_key:m.prop(''),
-                    certificate:m.prop('')
+                    certificate:m.prop(''),
+                    port:m.prop('443')
                 },
                 greenlock:{
                     owner_email:m.prop(''),
-                    newdomains:m.prop([]),
                     domains:m.prop([])
                 },
                 updated: m.prop(false),
@@ -60,12 +59,13 @@ let configComponent = {
                     ctrl.server_data.type('https');
                     ctrl.server_data.https.private_key(response.config.server_data.https.private_key);
                     ctrl.server_data.https.certificate(response.config.server_data.https.certificate);
+                    ctrl.server_data.https.port(response.config.server_data.https.port);
                 }
                 if(response.config.server_data.greenlock){
                     ctrl.server_data.type('greenlock');
                     ctrl.server_data.greenlock.owner_email(response.config.server_data.greenlock.owner_email);
                     ctrl.server_data.greenlock.domains(response.config.server_data.greenlock.domains);
-                    ctrl.given_domains(response.config.server_data.greenlock.domains);
+                    // ctrl.given_domains(response.config.server_data.greenlock.domains);
                 }
             }
             return m.redraw();
@@ -124,6 +124,8 @@ let configComponent = {
                     ctrl.server_data.https.private_key(fields.https.private_key);
                 if(fields.https.hasOwnProperty('certificate'))
                     ctrl.server_data.https.certificate(fields.https.certificate);
+                if(fields.https.hasOwnProperty('port'))
+                    ctrl.server_data.https.port(fields.https.port);
             }
             if(fields.hasOwnProperty('greenlock')){
                 if(fields.greenlock.hasOwnProperty('owner_email'))
@@ -152,6 +154,7 @@ let configComponent = {
                     ((ctrl.server_data.https.private_key() && ctrl.server_data.https.certificate()) &&
                     ((!ctrl.given_conf().server_data.https) ||
                     (ctrl.given_conf().server_data.https.private_key !== ctrl.server_data.https.private_key() ||
+                    ctrl.given_conf().server_data.https.port !== ctrl.server_data.https.port() ||
                         ctrl.given_conf().server_data.https.certificate !== ctrl.server_data.https.certificate())))
                 )
                 ||
@@ -312,7 +315,7 @@ let configComponent = {
                     m('.col-sm-3', [ m('strong', 'Server type:'),
                         m('.text-muted', ['Certifications details for the server ', m('i.fa.fa-info-circle')])
                     ]),
-                    m('.col-sm-5',[
+                    m('.col-sm-4',[
                         m('.input-group', [m('strong', 'Server type'),
                             m('select.c-select.form-control',{onchange: (e)=> ctrl.update_server_type_fields(ctrl, {type: e.target.value})}, [
                                 m('option', {selected:ctrl.server_data.type()==='http', value:'http'}, 'Http'),
@@ -328,7 +331,7 @@ let configComponent = {
                                     m('.col-sm-2', [
                                         m('label.form-control-label', 'Private key')
                                     ]),
-                                    m('.col-sm-7', [
+                                    m('.col-sm-5', [
                                         m('textarea.form-control',  {
                                             value: ctrl.server_data.https.private_key(),
                                             oninput: (e)=> ctrl.update_server_type_fields(ctrl, {https:{private_key: e.target.value}}),
@@ -340,10 +343,23 @@ let configComponent = {
                                     m('.col-sm-2', [
                                         m('label.form-control-label', 'Certificate')
                                     ]),
-                                    m('.col-sm-7', [
+                                    m('.col-sm-5', [
                                         m('textarea.form-control',  {value: ctrl.server_data.https.certificate(),
                                             oninput: (e)=> ctrl.update_server_type_fields(ctrl, {https:{certificate: e.target.value}}),
                                             onchange: (e)=> ctrl.update_server_type_fields(ctrl, {https:{certificate: e.target.value}})                                })
+                                    ])
+                                ]),
+                                m('.form-group.row.space', [
+                                    m('.col-sm-2', [
+                                        m('label.form-control-label', 'Port')
+                                    ]),
+                                    m('.col-sm-5', [
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'Port',
+                                            value: ctrl.server_data.https.port(),
+                                            oninput: (e)=> ctrl.update_server_type_fields(ctrl, {https:{port: e.target.value}}),
+                                            onchange: (e)=> ctrl.update_server_type_fields(ctrl, {https:{port: e.target.value}})                                })
                                     ])
                                 ]),
                         ],

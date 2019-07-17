@@ -2,6 +2,7 @@ const express     = require('express');
 const session     = require('express-session');
 const config      = require('../config');
 const files       = require('./files');
+const config_db   = require('./config_db');
 const dateFormat  = require('dateformat');
 
 
@@ -160,13 +161,14 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', function() {
-    if(config.server_type==='greenlock')
-        Server.startupGreenlock(app);
-    if(config.server_type==='http')
-        Server.startupHttp(app);
-    if(config.server_type==='https')
-        Server.startupHttps(app);
-
+    config_db.get_server_data().then(function (server_data){
+        if(server_data.http)
+            Server.startupHttp(app);
+        if(server_data.https)
+            Server.startupHttps(app, server_data.https);
+        if(server_data.greenlock)
+            Server.startupGreenlock(app, server_data.greenlock);
+    });
     /*app.listen(config.port,function(){
         console.log('Minno-server Started on PORT '+config.port);
     });*/
