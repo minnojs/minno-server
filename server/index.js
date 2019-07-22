@@ -23,6 +23,7 @@ const dropbox_router        = require('./routes/dropbox_router');
 const collaboration_router  = require('./routes/collaboration_router');
 const Server				= require('./server.js');
 const Fingerprint 			= require('express-fingerprint');
+const configDb = require('./config_db');
 
 const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
@@ -169,6 +170,7 @@ app.on('ready', function() {
         if(server_data.greenlock)
             Server.startupGreenlock(app, server_data.greenlock);
     });
+
     /*app.listen(config.port,function(){
         console.log('Minno-server Started on PORT '+config.port);
     });*/

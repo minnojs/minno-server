@@ -2,7 +2,9 @@ let httpServer = null;
 let httpsServer = null;
 const Greenlock = require('greenlock-express');
 const config = require('../config');
+const configDb = require('./config_db');
 
+<<<<<<< HEAD
 exports.startupGreenlock = function(app, greenlock_data) {
     exports.shutdownHttps();
     const greenlock = Greenlock.create({
@@ -32,6 +34,38 @@ exports.startupGreenlock = function(app, greenlock_data) {
     httpServer.listen(config.port, function() {
         console.log('Listening for ACME http-01 challenges on', this.address());
     });
+=======
+exports.startupGreenlock = function(app) {
+	exports.shutdownHttps();
+	const greenlock = Greenlock.create({
+		// Let's Encrypt v2 is ACME draft 11
+		version: 'draft-11',
+		server: 'https://acme-v02.api.letsencrypt.org/directory',
+		// Note: If at first you don't succeed, stop and switch to staging
+		//server: "https://acme-staging-v02.api.letsencrypt.org/directory",
+		// You MUST change this to a valid email address
+		email: config.owner_email,
+		// You MUST NOT build clients that accept the ToS without asking the user
+		agreeTos: true,
+		// You MUST change these to valid domains
+		// NOTE: all domains will validated and listed on the certificate
+		approvedDomains: config.domains,
+		// You MUST have access to write to directory where certs are saved
+		// ex: /home/foouser/acme/etc
+		configDir: '~/.config/acme/', // MUST have write access
+		// Get notified of important updates and help me make greenlock better
+		communityMember: true,
+		debug: true
+	});
+	/*const redirectHttps = require('redirect-https')();
+	const acmeChallengeHandler = greenlock.middleware(redirectHttps);
+	const acmeChallengeHandler = greenlock.middleware(redirectHttps);
+	httpServer = require('http')
+		.createServer(acmeChallengeHandler);
+	httpServer.listen(config.port, function() {
+		console.log('Listening for ACME http-01 challenges on', this.address());
+	});*/
+>>>>>>> greenlock updates
 
     ////////////////////////
     // http2 via SPDY h2  //
@@ -75,6 +109,7 @@ exports.startupHttps = function(app, server_data) {
     const privateKey = server_data.private_key;
     const certificate = server_data.certificate;
 
+<<<<<<< HEAD
     const credentials = {
         key: privateKey,
         cert: certificate
@@ -103,3 +138,20 @@ exports.shutdownHttps = function() {
         httpsServer = null;
     }
 };
+=======
+	const credentials = {
+		key: privateKey,
+		cert: certificate
+	};
+	httpsServer = https.createServer(credentials, app);
+	httpsServer.listen(config.sslport);
+	console.log('Minno-server Started on PORT ' + config.port + 'and ' + config.sslport);
+}
+
+exports.shutdownHttps = function() {
+	if (httpsServer != null) {
+		httpsServer.close();
+		httpsServer = null;
+	}
+}
+>>>>>>> greenlock updates
