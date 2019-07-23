@@ -23,6 +23,7 @@ const dropbox_router        = require('./routes/dropbox_router');
 const collaboration_router  = require('./routes/collaboration_router');
 const Server				= require('./server.js');
 const Fingerprint 			= require('express-fingerprint');
+const configDb = require('./config_db');
 
 const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
@@ -160,18 +161,24 @@ mongoose.connection.once('open', function() {
     app.emit('ready');
 });
 
-app.on('ready', function() {
-    config_db.get_server_data().then(function (server_data){
-        if(server_data.http)
-            Server.startupHttp(app);
-        if(server_data.https)
-            Server.startupHttps(app, server_data.https);
-        if(server_data.greenlock)
-            Server.startupGreenlock(app, server_data.greenlock);
-    });
-    /*app.listen(config.port,function(){
-        console.log('Minno-server Started on PORT '+config.port);
-    });*/
+app.on('ready', async function() {
+	Server.startupHttp(app);
+	let serverType=null;
+	const serverConfig=await configDb.get_config().server_data;
+	if( typeof server_data !== 'undefined' && server_data )
+	{
+    if(server_data.https)
+        Server.startupHttps(app, server_data.https);
+    if(server_data.greenlock)
+        Server.startupGreenlock(app, server_data.greenlock);	
+	}
+	else{
+	
+    if(config.server_type==='greenlock')
+        Server.startupGreenlock(app);
+    if(config.server_type==='https')
+        Server.startupHttps(app);
+    }
 });
 
 process.on('unhandledRejection', (reason, p) => {

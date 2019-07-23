@@ -2,9 +2,15 @@ let httpServer = null;
 let httpsServer = null;
 const Greenlock = require('greenlock-express');
 const config = require('../config');
+const configDb = require('./config_db');
+
 
 exports.startupGreenlock = function(app, greenlock_data) {
     exports.shutdownHttps();
+	if(greenlock_data==null)
+	{
+		greenlock_data={owner_email: config.owner_email, domains:config.domains}
+	}
     const greenlock = Greenlock.create({
         // Let's Encrypt v2 is ACME draft 11
         version: 'draft-11',
@@ -25,13 +31,14 @@ exports.startupGreenlock = function(app, greenlock_data) {
         communityMember: true,
         debug: true
     });
-    const redirectHttps = require('redirect-https')();
+   /* const redirectHttps = require('redirect-https')();
     const acmeChallengeHandler = greenlock.middleware(redirectHttps);
     httpServer = require('http')
         .createServer(acmeChallengeHandler);
     httpServer.listen(config.port, function() {
         console.log('Listening for ACME http-01 challenges on', this.address());
-    });
+    });*/
+
 
     ////////////////////////
     // http2 via SPDY h2  //
@@ -72,34 +79,31 @@ exports.startupHttps = function(app, server_data) {
     const fs = require('fs');
     const http = require('http');
     const https = require('https');
-    const privateKey = server_data.private_key;
-    const certificate = server_data.certificate;
+if(server_data==null)
+{
+	server_data={privateKey:config.keyFile,certificate:config.certFile,port:config.sslport}
+}
 
     const credentials = {
-        key: privateKey,
-        cert: certificate
+        key: server_data.privateKey,
+        cert: server_data.certificate
     };
-    httpServer = http.createServer(app);
-    httpServer.listen(config.port);
 
     try{
         httpsServer = https.createServer(credentials, app);
         httpsServer.listen(server_data.port);
-        console.log('Minno-server Started on PORT ' + config.port + ' and ' + server_data.port);
+        console.log('Minno-server Started on PORT ' + server_data.port);
     }
     catch(e){
 		console.log(e);
-        return this.startupHttp(app);
+        return true;
     }
 };
 
+
 exports.shutdownHttps = function() {
-    if (httpServer != null) {
-        httpServer.close();
-        httpServer = null;
-    }
-    if (httpsServer != null) {
-        httpsServer.close();
-        httpsServer = null;
-    }
-};
+	if (httpsServer != null) {
+		httpsServer.close();
+		httpsServer = null;
+	}
+}
