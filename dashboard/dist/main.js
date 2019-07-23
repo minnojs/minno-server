@@ -18547,11 +18547,13 @@
                     ctrl.gmail.email(fields.email);
                 if(fields.hasOwnProperty('password'))
                     ctrl.gmail.password(fields.password);
-                ctrl.gmail.enable(ctrl.gmail.email() || ctrl.gmail.password());
-                var updated = (ctrl.given_conf().gmail.email && !ctrl.gmail.enable()) ||
-                    (ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
-                    (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password);
+                ctrl.gmail.enable(!!ctrl.gmail.email() || !!ctrl.gmail.password());
 
+                var updated = (ctrl.given_conf().hasOwnProperty('gmail') && !ctrl.gmail.enable()) ||
+                    (!ctrl.given_conf().hasOwnProperty('gmail') && ctrl.gmail.email() && ctrl.gmail.password()) ||
+                    ctrl.given_conf().hasOwnProperty('gmail') &&
+                    ((ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
+                    (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password));
                 ctrl.gmail.updated(updated);
                 return m.redraw();
             }
@@ -18561,10 +18563,13 @@
                     ctrl.dbx.app_key(fields.app_key);
                 if(fields.hasOwnProperty('app_secret'))
                 ctrl.dbx.app_secret(fields.app_secret);
-                ctrl.dbx.enable(ctrl.dbx.app_key() || ctrl.dbx.app_secret());
-                var updated = (ctrl.given_conf().dbx.client_id && !ctrl.dbx.enable()) ||
-                    (ctrl.dbx.enable() && ctrl.dbx.app_key() !== ctrl.given_conf().dbx.client_id) ||
-                    (ctrl.dbx.enable() && ctrl.dbx.app_secret() !== ctrl.given_conf().dbx.client_secret);
+                ctrl.dbx.enable(!!ctrl.dbx.app_key() || !!ctrl.dbx.app_secret());
+
+                var updated = (ctrl.given_conf().hasOwnProperty('dbx') && !ctrl.dbx.enable()) ||
+                    (!ctrl.given_conf().hasOwnProperty('dbx') && ctrl.dbx.app_key() && ctrl.dbx.app_secret()) ||
+                    ctrl.given_conf().hasOwnProperty('dbx') &&
+                    ((ctrl.dbx.app_key() !== ctrl.given_conf().dbx.client_id) ||
+                        (ctrl.dbx.app_secret() !== ctrl.given_conf().dbx.client_secret));
                 ctrl.dbx.updated(updated);
                 return m.redraw();
             }
@@ -18673,7 +18678,9 @@
 
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Gmail:'),
-                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')])
+                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
+
                         ])
                         ,m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
@@ -18721,7 +18728,8 @@
                     m('hr'),
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Dropbox:'),
-                            m('.text-muted', ['Dropbox application is used to synchronize file with Dropbox ', m('i.fa.fa-info-circle')])
+                            m('.text-muted', ['Dropbox application is used to synchronize file with Dropbox ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
                         ]),m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
@@ -18768,7 +18776,8 @@
 
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Server type:'),
-                            m('.text-muted', ['Certifications details for the server ', m('i.fa.fa-info-circle')])
+                            m('.text-muted', ['Certifications details for the server ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
                         ]),
                         m('.col-sm-4',[
                             m('.input-group', [m('strong', 'Server type'),

@@ -95,15 +95,20 @@ function update_config_db(server_data_obj){
 function set_gmail (email, password) {
     if(!password)
         return Promise.reject({status:400, message: 'ERROR: Missing Gmail password'});
-    if (!evalidator.validate(email))
-        return Promise.reject({status:400, message: 'ERROR: Invalid Gmail email address'});
+    let validator = new Validator({email},
+        {email: 'required|email'});
+    return validator.check()
+        .then(function () {
+            if (Object.keys(validator.errors).length !== 0)
+                return Promise.reject({status: 400, message: 'ERROR: Invalid Gmail email address'});
 
-    return connection.then(function (db) {
-        const config_data   = db.collection('config');
-        return config_data.updateOne({var: 'gmail'},
-            {$set: {email: email, password:password}}, { upsert : true })
-            .then(() => ('Gmail successfully updated'));
-    });
+            return connection.then(function (db) {
+                const config_data = db.collection('config');
+                return config_data.updateOne({var: 'gmail'},
+                    {$set: {email: email, password: password}}, {upsert: true})
+                    .then(() => ('Gmail successfully updated'));
+            });
+        });
 }
 
 
@@ -119,7 +124,6 @@ function unset_gmail () {
 
 
 function set_dbx(client_id, client_secret) {
-    console.log({client_id, client_secret});
     if(!client_id || !client_secret)
         return Promise.reject({status:400, message: 'ERROR: Missing Dropvox parameters'});
 
@@ -134,7 +138,7 @@ function set_dbx(client_id, client_secret) {
 function unset_dbx() {
     return connection.then(function (db) {
         const config_data   = db.collection('config');
-        return config_data.remove({var: 'dbx'})
+        return config_data.deleteOne({var: 'dbx'})
             .then(() => ('Dropbox successfully removed')).catch(err=>console.log(err));
     });
 }
