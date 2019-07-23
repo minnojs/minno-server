@@ -157,7 +157,7 @@ let configComponent = {
                 ||
                 (ctrl.server_data.type() === 'https' &&
                     ((ctrl.server_data.https.private_key() && ctrl.server_data.https.certificate()) &&
-                    ((!ctrl.given_conf().server_data.https) ||
+                    ((!ctrl.given_conf().server_data || !ctrl.given_conf().server_data.https) ||
                     (ctrl.given_conf().server_data.https.private_key !== ctrl.server_data.https.private_key() ||
                     ctrl.given_conf().server_data.https.port !== ctrl.server_data.https.port() ||
                         ctrl.given_conf().server_data.https.certificate !== ctrl.server_data.https.certificate())))
@@ -165,7 +165,7 @@ let configComponent = {
                 ||
                 (ctrl.server_data.type() === 'greenlock' &&
                     ((ctrl.server_data.greenlock.owner_email() && ctrl.server_data.greenlock.domains().some(domain => !!domain)) &&
-                        ((!ctrl.given_conf().server_data.greenlock) ||
+                        ((!ctrl.given_conf().server_data || !ctrl.given_conf().server_data.greenlock) ||
                             (ctrl.given_conf().server_data.greenlock.owner_email !== ctrl.server_data.greenlock.owner_email() ||
                                 (ctrl.given_conf().server_data.greenlock.domains.length !== ctrl.server_data.greenlock.domains().filter(domain => !!domain).length ||
                                     !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index]}))
