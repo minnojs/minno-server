@@ -7,6 +7,7 @@
   "scripts": {
     "start": "nodemon server/index --watch server",
     "setup": "node server/setup",
+    "reset_admin": "node server/reset_admin",
     "test": "eslint .",
     "js": "rollup --config --sourcemap",
     "css": "node-sass dashboard/src/style/style.scss --output dashboard/dist --source-map=true",
