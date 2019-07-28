@@ -18678,11 +18678,13 @@
 
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Gmail:'),
-                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')]),
-                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
 
-                        ])
-                        ,m('.col-sm-8',[
+                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', ['Gmail account allows you to send emails (e.g., activation & reset password) in the system. ', m('a', {href:'#'}, 'Read more here'), '.']),
+
+
+                        ]),
+                        m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
                                         onclick: function (){ return ctrl.toggle_visibility('gmail', false); },
@@ -18706,7 +18708,8 @@
                                         placeholder: 'User name',
                                         value: ctrl.gmail.email(),
                                         oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); },
-                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); }                                })
+                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {email: e.target.value}); }
+                                    })
                                 ])
                             ]),
                             m('.form-group.row', [
@@ -18719,7 +18722,8 @@
                                         placeholder: 'password',
                                         value: ctrl.gmail.password(),
                                         oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); },
-                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }                                })
+                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }
+                                    })
                                 ])
                             ])
                          ])
@@ -18729,7 +18733,7 @@
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Dropbox:'),
                             m('.text-muted', ['Dropbox application is used to synchronize file with Dropbox ', m('i.fa.fa-info-circle')]),
-                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
+                            m('.card.info-box.card-header', ['Dropbox application allows your user to synchronize their files with their Dropbox account. ', m('a', {href:'#'}, 'Read more here'), '.']),
                         ]),m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
@@ -18754,7 +18758,8 @@
                                         placeholder: 'App key',
                                         value: ctrl.dbx.app_key(),
                                         oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {app_key: e.target.value}); },
-                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_key: e.target.value}); }                                })
+                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_key: e.target.value}); }
+                                    })
                                 ])
                             ]),
                             m('.form-group.row', [
@@ -18767,7 +18772,8 @@
                                         placeholder: 'App secret',
                                         value: ctrl.dbx.app_secret(),
                                         oninput: function (e){ return ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value}); },
-                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value}); }                                })
+                                        onchange: function (e){ return ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value}); }
+                                    })
                                 ])
                             ]),
                         ])
@@ -18777,7 +18783,7 @@
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Server type:'),
                             m('.text-muted', ['Certifications details for the server ', m('i.fa.fa-info-circle')]),
-                            m('.card.info-box.card-header', 'Here you can define bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla')
+                            m('.card.info-box.card-header', ['Her you can define what will be the type of the server and the kind of certifications it will be included. ', m('a', {href:'#'}, 'Read more here'), '.']),
                         ]),
                         m('.col-sm-4',[
                             m('.input-group', [m('strong', 'Server type'),
