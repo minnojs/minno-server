@@ -162,15 +162,21 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', async function() {
-	Server.startupHttp(app);
+	
 	let serverType=null;
-	const serverConfig=await configDb.get_config().server_data;
+	const serverConfig=await configDb.get_config();
+	const server_data=serverConfig.server_data;
+	try{
 	if( typeof server_data !== 'undefined' && server_data )
 	{
     if(server_data.https)
-        Server.startupHttps(app, server_data.https);
+		{await Server.startupHttps(app, server_data.https);}
     if(server_data.greenlock)
-        Server.startupGreenlock(app, server_data.greenlock);	
+		{await Server.startupGreenlock(app, server_data.greenlock);}
+	if(!server_data.https && !server_data.greenlock)
+	{
+		await Server.startupHttp(app);
+	}
 	}
 	else{
 	
@@ -178,7 +184,16 @@ app.on('ready', async function() {
         Server.startupGreenlock(app);
     if(config.server_type==='https')
         Server.startupHttps(app);
+    if(config.server_type==='http')
+        Server.startupHttp(app);
     }
+}
+catch(e)
+{
+	await Server.startupHttp(app);
+	console.log(e);
+}
+
 });
 
 process.on('unhandledRejection', (reason, p) => {

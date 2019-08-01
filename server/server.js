@@ -5,12 +5,13 @@ const config = require('../config');
 const configDb = require('./config_db');
 
 
-exports.startupGreenlock = function(app, greenlock_data) {
-    exports.shutdownHttps();
+exports.startupGreenlock = async function(app, greenlock_data) {
+    await exports.startupHttp(app);	
 	if(greenlock_data==null)
 	{
 		greenlock_data={owner_email: config.owner_email, domains:config.domains}
 	}
+	console.log(greenlock_data);
     const greenlock = Greenlock.create({
         // Let's Encrypt v2 is ACME draft 11
         version: 'draft-11',
@@ -39,7 +40,6 @@ exports.startupGreenlock = function(app, greenlock_data) {
         console.log('Listening for ACME http-01 challenges on', this.address());
     });*/
 
-
     ////////////////////////
     // http2 via SPDY h2  //
     ////////////////////////
@@ -50,9 +50,10 @@ exports.startupGreenlock = function(app, greenlock_data) {
         protocols: ['h2', 'http/1.1'],
         plain: false
     };
-    httpsServer = require('spdy').createServer(spdyOptions, app);
+    httpsServer = await require('spdy').createServer(spdyOptions, app);
     httpsServer.on('error', function(err) {
-        console.error(err);
+		console.log(err);
+        throw(err);
     });
     httpsServer.on('listening', function() {
         console.log('Minno-server Started and listening for SPDY/http2/https requests on', this.address());
@@ -60,22 +61,23 @@ exports.startupGreenlock = function(app, greenlock_data) {
     httpsServer.listen(config.sslport);
 };
 
-exports.startupHttp = function(app) {
-    exports.shutdownHttps();
-    httpServer = app.listen(config.port, function() {
+exports.startupHttp = async function(app) {
+    await exports.shutdownHttps();
+    await exports.shutdownHttp();
+    httpServer = await app.listen(config.port, function() {
         console.log('Minno-server Started on PORT ' + config.port);
     });
 };
 
-exports.shutdownHttp = function() {
+exports.shutdownHttp = async function() {
     if (httpServer != null) {
-        httpServer.close();
+        await httpServer.close();
         httpServer = null;
     }
 };
 
-exports.startupHttps = function(app, server_data) {
-    exports.shutdownHttps();
+exports.startupHttps = async function(app, server_data) {
+    await exports.startupHttp(app);	
     const fs = require('fs');
     const http = require('http');
     const https = require('https');
@@ -88,22 +90,23 @@ if(server_data==null)
         key: server_data.privateKey,
         cert: server_data.certificate
     };
-
+    
+    
     try{
-        httpsServer = https.createServer(credentials, app);
+        httpsServer = await https.createServer(credentials, app);
         httpsServer.listen(server_data.port);
         console.log('Minno-server Started on PORT ' + server_data.port);
     }
     catch(e){
 		console.log(e);
-        return true;
+        throw e;
     }
 };
 
 
-exports.shutdownHttps = function() {
+exports.shutdownHttps = async function() {
 	if (httpsServer != null) {
-		httpsServer.close();
+		await httpsServer.close();
 		httpsServer = null;
 	}
 }

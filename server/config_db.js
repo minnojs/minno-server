@@ -1,5 +1,7 @@
 const connection    = Promise.resolve(require('mongoose').connection);
 const Validator = require('node-input-validator');
+const Server				= require('./server.js');
+//const app					= require('./index').app;
 
 function get_config () {
     return connection.then(function (db) {
@@ -45,14 +47,27 @@ function update_dbx (dbx) {
     return set_dbx(dbx.app_key, dbx.app_secret);
 }
 
-function update_server(server_data) {
+async function update_server(server_data,app) {
 
     if(!server_data.updated)
         return;
-
     let server_data_obj = {http:{}};
-    if (server_data.type==='https')
+	if (server_data.type==='http'){
+		await Server.startupHttp(app);
+	}
+    if (server_data.type==='https'){
         server_data_obj = {https: server_data.https};
+		try{
+			await Server.startupHttps(app,server_data_obj);
+		}
+		catch(e)
+		{
+			console.log(e);
+			await server.startupHttp(app);
+			return Promise.reject({status: 400, message: e});
+			
+		}
+	}
     if (server_data.type==='greenlock') {
         const email = server_data.greenlock.owner_email;
         let validator = new Validator({email},
@@ -71,9 +86,19 @@ function update_server(server_data) {
                             });
                         })
                     )
-                    .then(()=>
+                    .then(async ()=>
                     {
+						try{
                         server_data_obj = {greenlock: server_data.greenlock};
+					    await Server.startupGreenlock(app,server_data.greenlock);
+					}
+					catch(e)
+					{
+						console.log(e);
+						await server.startupHttp(app);
+						return Promise.reject({status: 400, message: e});
+					}
+						
                         return update_config_db(server_data_obj);
                     })
             });

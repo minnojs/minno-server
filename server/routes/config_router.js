@@ -44,7 +44,7 @@ configRouter.route('/params')
             return Promise.all([
                 config_db.update_gmail(req.body.gmail),
                 config_db.update_dbx(req.body.dbx),
-                config_db.update_server(req.body.server_data)
+                config_db.update_server(req.body.server_data,req.app)
             ])
             .then((output)=>res.json(output))
             .catch((gmail_err, dbx_err)=>
