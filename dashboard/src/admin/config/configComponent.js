@@ -38,11 +38,19 @@ let configComponent = {
                 updated: m.prop(false),
                 error:m.prop('')
             },
-
+            reCaptcha: {
+                enable: m.prop(false),
+                site_key:m.prop(''),
+                secret_key:m.prop(''),
+                attempts:m.prop('3'),
+                updated: m.prop(false),
+                error:m.prop('')
+            },
             toggle_visibility,
             update_gmail_fields,
             update_dbx_fields,
             update_server_type_fields,
+            update_reCaptcha_fields,
             do_update_config,
         };
 
@@ -52,6 +60,8 @@ let configComponent = {
                 ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
             if(response.config.dbx)
                 ctrl.dbx.enable(true) && ctrl.dbx.app_key(response.config.dbx.client_id) && ctrl.dbx.app_secret(response.config.dbx.client_secret);
+            if(response.config.reCaptcha)
+                ctrl.reCaptcha.enable(true) && ctrl.reCaptcha.site_key(response.config.reCaptcha.site_key) && ctrl.reCaptcha.secret_key(response.config.reCaptcha.secret_key) && ctrl.reCaptcha.attempts(response.config.reCaptcha.attempts);
             if(response.config.server_data) {
                 if(response.config.server_data.http)
                     ctrl.server_data.type('http');
@@ -65,7 +75,6 @@ let configComponent = {
                     ctrl.server_data.type('greenlock');
                     ctrl.server_data.greenlock.owner_email(response.config.server_data.greenlock.owner_email);
                     ctrl.server_data.greenlock.domains(response.config.server_data.greenlock.domains);
-                    // ctrl.given_domains(response.config.server_data.greenlock.domains);
                 }
             }
             return m.redraw();
@@ -178,6 +187,25 @@ let configComponent = {
             return m.redraw();
         }
 
+        function update_reCaptcha_fields(ctrl, fields){
+            if(fields.hasOwnProperty('site_key'))
+                ctrl.reCaptcha.site_key(fields.site_key);
+            if(fields.hasOwnProperty('secret_key'))
+                ctrl.reCaptcha.secret_key(fields.secret_key);
+            if(fields.hasOwnProperty('attempts'))
+                ctrl.reCaptcha.attempts(fields.attempts);
+            ctrl.reCaptcha.enable(!!ctrl.reCaptcha.site_key() || !!ctrl.reCaptcha.secret_key());
+
+            let updated = (ctrl.given_conf().hasOwnProperty('reCaptcha') && !ctrl.reCaptcha.enable()) ||
+                (!ctrl.given_conf().hasOwnProperty('reCaptcha') && ctrl.reCaptcha.site_key() && ctrl.reCaptcha.secret_key() && ctrl.reCaptcha.attempts()) ||
+                ctrl.given_conf().hasOwnProperty('reCaptcha') &&
+                ((ctrl.reCaptcha.attempts() !== ctrl.given_conf().reCaptcha.attempts) ||
+                    (ctrl.reCaptcha.site_key() !== ctrl.given_conf().reCaptcha.site_key) ||
+                    (ctrl.reCaptcha.secret_key() !== ctrl.given_conf().reCaptcha.secret_key));
+            ctrl.reCaptcha.updated(updated);
+            return m.redraw();
+        }
+
         function show_success_notification(res) {
             if(res)
                 ctrl.notifications.show_success(res.filter(mes=>!!mes).join(' | '));
@@ -193,12 +221,13 @@ let configComponent = {
         }
 
         function do_update_config(){
-            update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+            update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data, ctrl.reCaptcha)
                 .then((res)=> {
                     show_success_notification(res);
                     ctrl.gmail.updated(false);
                     ctrl.dbx.updated(false);
                     ctrl.server_data.updated(false);
+                    ctrl.reCaptcha.updated(false);
                     return get_config()
                         .then(response => set_values(response));
                 })
@@ -427,9 +456,77 @@ let configComponent = {
                             ],
                     ])
                 ]),
+                m('hr'),
+                m('.row', [
+                    m('.col-sm-3', [ m('strong', 'reCaptcha:'),
+                        m('.text-muted', ['reCaptcha is used to protects your websites from spam and abuse ', m('i.fa.fa-info-circle')]),
+                        m('.card.info-box.card-header', ['reCaptcha is used to protects your websites from spam and abuse. ', m('a', {href:'#'}, 'Read more here'), '.']),
+                    ]),m('.col-sm-8',[
+                        m('div', m('label.c-input.c-radio', [
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('reCaptcha', false),
+                                checked: !ctrl.reCaptcha.enable(),
+                            }), m('span.c-indicator'), ' Disable reCaptcha'
+                        ])),
+                        m('div', m('label.c-input.c-radio', [
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('reCaptcha', true),
+                                checked: ctrl.reCaptcha.enable(),
+                            }), m('span.c-indicator'), ' Enable reCaptcha'
+                        ])),
+
+
+
+            m('.form-group.row', [
+                            m('.col-sm-2', [
+                                m('label.form-control-label', 'Site key')
+                            ]),
+                            m('.col-sm-5', [
+                                m('input.form-control', {
+                                    type:'input',
+                                    placeholder: 'Site key',
+                                    value: ctrl.reCaptcha.site_key(),
+                                    oninput: (e)=> ctrl.update_reCaptcha_fields(ctrl, {site_key: e.target.value}),
+                                    onchange: (e)=> ctrl.update_reCaptcha_fields(ctrl, {site_key: e.target.value})
+                                })
+                            ])
+                        ]),
+                        m('.form-group.row', [
+                            m('.col-sm-2', [
+                                m('label.form-control-label', 'Secret key')
+                            ]),
+                            m('.col-sm-5', [
+                                m('input.form-control', {
+                                    type:'input',
+                                    placeholder: 'Secret key',
+                                    value: ctrl.reCaptcha.secret_key(),
+                                    oninput: (e)=> ctrl.update_reCaptcha_fields(ctrl, {secret_key: e.target.value}),
+                                    onchange: (e)=> ctrl.update_reCaptcha_fields(ctrl, {secret_key: e.target.value})
+                                })
+                            ])
+                        ]),
+
+                        m('.form-group.row', [
+                            m('.col-sm-2', [
+                                m('label.form-control-label', 'Attempts')
+                            ]),
+                            m('.col-sm-5', [
+                                m('input.form-control', {
+                                    type:'number',
+                                    min:'0',
+                                    placeholder: 'Attempts',
+                                    value: ctrl.reCaptcha.attempts(),
+                                    oninput: (e)=> ctrl.update_reCaptcha_fields(ctrl, {attempts: e.target.value}),
+                                    onchange: (e)=> ctrl.update_reCaptcha_fields(ctrl, {attempts: e.target.value})
+                                })
+                            ])
+                        ])
+                    ])
+                ]),
+
 
                 m('.row.central_panel', [
-                    m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
+                    m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated() && !ctrl.reCaptcha.updated(), onclick: ctrl.do_update_config},'Save'))
                 ]),
                 m('div', ctrl.notifications.view()),
 

@@ -98,10 +98,11 @@ basePathRouter.route('/data')
     .put(data_controller.insertData)
     .get(data_controller.getData);
 
+
 // setup client side
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'dashboard/')));
 basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
-basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
+basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', {data: req.session.reCaptcha}));
 basePathRouter.use('/static', express.static(config.static_path));
 
 

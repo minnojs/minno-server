@@ -14,7 +14,11 @@ function get_config () {
             let server_data = data.find(vars=>vars.var==='server');
             if(server_data)
                 server_data = server_data.server_data;
-            return ({gmail, dbx, server_data});
+            let reCaptcha = data.find(vars=>vars.var==='reCaptcha');
+
+            if(reCaptcha)
+                reCaptcha = {site_key: reCaptcha.site_key, secret_key: reCaptcha.secret_key, attempts:reCaptcha.attempts};
+            return ({gmail, dbx, server_data, reCaptcha});
         });
     });
 }
@@ -150,4 +154,38 @@ function get_dbx() {
 }
 
 
-module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server};
+function update_reCaptcha (reCaptcha) {
+    if(!reCaptcha.updated)
+        return;
+    if(!reCaptcha.enable)
+        return unset_reCaptcha();
+    return set_reCaptcha(reCaptcha.site_key, reCaptcha.secret_key, reCaptcha.attempts);
+}
+
+
+function get_reCaptcha() {
+    return get_config ()
+        .then(config=>config.reCaptcha);
+}
+
+function set_reCaptcha (site_key, secret_key, attempts) {
+    if(!secret_key || !secret_key || !attempts || isNaN(attempts))
+        return Promise.reject({status:400, message: 'ERROR: Missing parameters'});
+
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.updateOne({var: 'reCaptcha'},
+            {$set: {site_key, secret_key, attempts}}, { upsert : true })
+            .then(() => ({})).catch(err=>console.log(err));
+    });
+}
+
+function unset_reCaptcha () {
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.deleteOne({var: 'reCaptcha'})
+            .then(() => ({})).catch(err=>console.log(err));
+    });
+}
+
+module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server, update_reCaptcha, get_reCaptcha};

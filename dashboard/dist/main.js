@@ -10834,9 +10834,9 @@
     var logoutUrl = baseUrl + "/logout";
     var is_logedinUrl = baseUrl + "/is_loggedin";
 
-    var login = function (username, password) { return fetchJson(loginUrl, {
+    var login = function (username, password, reCaptcha) { return fetchJson(loginUrl, {
         method: 'post',
-        body: {username: username, password: password}
+        body: {username: username, password: password, reCaptcha: reCaptcha}
     }); };
 
     var logout = function () { return fetchVoid(logoutUrl, {method:'post'}).then(getAuth); };
@@ -12168,33 +12168,88 @@
                 username:m.prop(''),
                 password:m.prop(''),
                 isloggedin: false,
+                recaptcha_site_key:m.prop(''),
+                reCaptcha:m.prop(''),
+                sent:m.prop(false),
                 loginAction: loginAction,
                 error: m.prop('')
             };
             is_loggedin();
-            return ctrl;
 
             function loginAction(){
+                ctrl.error('');
+                var reCaptcha = ctrl.reCaptcha();//!ctrl.recaptcha_site_key() ? '' : document.getElementsByClassName('g-recaptcha-response')[0].value;
+                if (!reCaptcha)
+                    return;
+                ctrl.sent(true);
+
                 if(ctrl.username() && ctrl.password())
-                    login(ctrl.username, ctrl.password)
+                    login(ctrl.username, ctrl.password, reCaptcha)
                         .then(function () {
                             m.route(!location.hash ? './' : decodeURIComponent(location.hash).substring(1));
                         })
                         .catch(function (response) {
                             ctrl.error(response.message);
+                            ctrl.recaptcha_site_key(response.reCaptcha);
+
+                            reload_captcha();
+                            ctrl.sent(false);
+
                             m.redraw();
+
                         })
                     ;
             }
+
+            function reload_captcha(){
+                ctrl.sent(true);
+
+                var script = document.createElement('script');
+                script.onload = function () {
+                    //do stuff with the script
+                };
+                script.src = "https://www.google.com/recaptcha/api.js?render="+ctrl.recaptcha_site_key();
+
+
+                document.head.appendChild(script);
+                ctrl.sent(false);
+
+                setTimeout(function(){
+                    grecaptcha.ready(function() {
+                        grecaptcha.execute(ctrl.recaptcha_site_key(), {action: 'login'}).then(function(token) {
+                            ctrl.reCaptcha(token);
+                        });
+                    });
+
+            }, 500);
+
+                return;
+                setTimeout(function(){
+                    var captcha_dom = document.getElementById('g-recaptcha');
+                    if(captcha_dom && captcha_dom.children.length === 0)
+                        grecaptcha.render('g-recaptcha');
+
+                    if(captcha_dom && captcha_dom.children.length > 0)
+                        grecaptcha.reset();
+
+                }, 500);
+
+            }
+
 
             function is_loggedin(){
                 getAuth().then(function (response) {
                     if(response.isloggedin)
                         m.route('./');
+                        ctrl.recaptcha_site_key(response.reCaptcha);
+                        reload_captcha();
+                    m.redraw();
                 });
             }
+            return ctrl;
         },
         view: function view(ctrl){
+
             return m('.login.centrify', {config:fullHeight},[
                 m('.card.card-inverse.col-md-4', [
                     m('.card-block',[
@@ -12221,14 +12276,17 @@
                                 onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
-                            })
+                            }),
+                            !ctrl.recaptcha_site_key() ? '' : m('.g-recaptcha#g-recaptcha', {
+                                'data-sitekey':ctrl.recaptcha_site_key()
+                            }),
                         ]),
-
                         !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                        m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
+                        m('button.btn.btn-primary.btn-block', {disabled:ctrl.sent(), onclick: ctrl.loginAction},'Sign in'),
                         m('p.text-center',
                             m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
                         )
+
                     ])
                 ])
             ]);
@@ -18453,8 +18511,8 @@
         method: 'get'
     }); };
 
-    var update_config = function (gmail, dbx, server_data) { return fetchJson(params_url(), {
-        body: {gmail: gmail, dbx: dbx, server_data: server_data},
+    var update_config = function (gmail, dbx, server_data, reCaptcha) { return fetchJson(params_url(), {
+        body: {gmail: gmail, dbx: dbx, server_data: server_data, reCaptcha: reCaptcha},
         method: 'put'
 
     }); };
@@ -18493,11 +18551,19 @@
                     updated: m.prop(false),
                     error:m.prop('')
                 },
-
+                reCaptcha: {
+                    enable: m.prop(false),
+                    site_key:m.prop(''),
+                    secret_key:m.prop(''),
+                    attempts:m.prop('3'),
+                    updated: m.prop(false),
+                    error:m.prop('')
+                },
                 toggle_visibility: toggle_visibility,
                 update_gmail_fields: update_gmail_fields,
                 update_dbx_fields: update_dbx_fields,
                 update_server_type_fields: update_server_type_fields,
+                update_reCaptcha_fields: update_reCaptcha_fields,
                 do_update_config: do_update_config,
             };
 
@@ -18507,6 +18573,8 @@
                     ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
                 if(response.config.dbx)
                     ctrl.dbx.enable(true) && ctrl.dbx.app_key(response.config.dbx.client_id) && ctrl.dbx.app_secret(response.config.dbx.client_secret);
+                if(response.config.reCaptcha)
+                    ctrl.reCaptcha.enable(true) && ctrl.reCaptcha.site_key(response.config.reCaptcha.site_key) && ctrl.reCaptcha.secret_key(response.config.reCaptcha.secret_key) && ctrl.reCaptcha.attempts(response.config.reCaptcha.attempts);
                 if(response.config.server_data) {
                     if(response.config.server_data.http)
                         ctrl.server_data.type('http');
@@ -18520,7 +18588,6 @@
                         ctrl.server_data.type('greenlock');
                         ctrl.server_data.greenlock.owner_email(response.config.server_data.greenlock.owner_email);
                         ctrl.server_data.greenlock.domains(response.config.server_data.greenlock.domains);
-                        // ctrl.given_domains(response.config.server_data.greenlock.domains);
                     }
                 }
                 return m.redraw();
@@ -18633,6 +18700,25 @@
                 return m.redraw();
             }
 
+            function update_reCaptcha_fields(ctrl, fields){
+                if(fields.hasOwnProperty('site_key'))
+                    ctrl.reCaptcha.site_key(fields.site_key);
+                if(fields.hasOwnProperty('secret_key'))
+                    ctrl.reCaptcha.secret_key(fields.secret_key);
+                if(fields.hasOwnProperty('attempts'))
+                    ctrl.reCaptcha.attempts(fields.attempts);
+                ctrl.reCaptcha.enable(!!ctrl.reCaptcha.site_key() || !!ctrl.reCaptcha.secret_key());
+
+                var updated = (ctrl.given_conf().hasOwnProperty('reCaptcha') && !ctrl.reCaptcha.enable()) ||
+                    (!ctrl.given_conf().hasOwnProperty('reCaptcha') && ctrl.reCaptcha.site_key() && ctrl.reCaptcha.secret_key() && ctrl.reCaptcha.attempts()) ||
+                    ctrl.given_conf().hasOwnProperty('reCaptcha') &&
+                    ((ctrl.reCaptcha.attempts() !== ctrl.given_conf().reCaptcha.attempts) ||
+                        (ctrl.reCaptcha.site_key() !== ctrl.given_conf().reCaptcha.site_key) ||
+                        (ctrl.reCaptcha.secret_key() !== ctrl.given_conf().reCaptcha.secret_key));
+                ctrl.reCaptcha.updated(updated);
+                return m.redraw();
+            }
+
             function show_success_notification(res) {
                 if(res)
                     ctrl.notifications.show_success(res.filter(function (mes){ return !!mes; }).join(' | '));
@@ -18648,12 +18734,13 @@
             }
 
             function do_update_config(){
-                update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+                update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data, ctrl.reCaptcha)
                     .then(function (res){
                         show_success_notification(res);
                         ctrl.gmail.updated(false);
                         ctrl.dbx.updated(false);
                         ctrl.server_data.updated(false);
+                        ctrl.reCaptcha.updated(false);
                         return get_config()
                             .then(function (response) { return set_values(response); });
                     })
@@ -18881,9 +18968,77 @@
                                 ],
                         ])
                     ]),
+                    m('hr'),
+                    m('.row', [
+                        m('.col-sm-3', [ m('strong', 'reCaptcha:'),
+                            m('.text-muted', ['reCaptcha is used to protects your websites from spam and abuse ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', ['reCaptcha is used to protects your websites from spam and abuse. ', m('a', {href:'#'}, 'Read more here'), '.']),
+                        ]),m('.col-sm-8',[
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('reCaptcha', false); },
+                                    checked: !ctrl.reCaptcha.enable(),
+                                }), m('span.c-indicator'), ' Disable reCaptcha'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('reCaptcha', true); },
+                                    checked: ctrl.reCaptcha.enable(),
+                                }), m('span.c-indicator'), ' Enable reCaptcha'
+                            ])),
+
+
+
+                m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Site key')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'Site key',
+                                        value: ctrl.reCaptcha.site_key(),
+                                        oninput: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {site_key: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {site_key: e.target.value}); }
+                                    })
+                                ])
+                            ]),
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Secret key')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'Secret key',
+                                        value: ctrl.reCaptcha.secret_key(),
+                                        oninput: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {secret_key: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {secret_key: e.target.value}); }
+                                    })
+                                ])
+                            ]),
+
+                            m('.form-group.row', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Attempts')
+                                ]),
+                                m('.col-sm-5', [
+                                    m('input.form-control', {
+                                        type:'number',
+                                        min:'0',
+                                        placeholder: 'Attempts',
+                                        value: ctrl.reCaptcha.attempts(),
+                                        oninput: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {attempts: e.target.value}); },
+                                        onchange: function (e){ return ctrl.update_reCaptcha_fields(ctrl, {attempts: e.target.value}); }
+                                    })
+                                ])
+                            ])
+                        ])
+                    ]),
+
 
                     m('.row.central_panel', [
-                        m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
+                        m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated() && !ctrl.reCaptcha.updated(), onclick: ctrl.do_update_config},'Save'))
                     ]),
                     m('div', ctrl.notifications.view()),
 
