@@ -29,11 +29,11 @@ let copyFileComponent = {
     ])
 };
 
-function update_study_details(event, new_study_id, new_study_name){
-    new_study_id(event.target.value);
-    new_study_name(event.target[event.target.selectedIndex].text);
-}
 
+function update_study_details(study, new_study_id, new_study_name){
+    new_study_id(study.target.value);
+    new_study_name(study.target[study.target.selectedIndex].text);
+}
 
 function sort_studies_by_name2(study1, study2){
     return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;

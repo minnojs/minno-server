@@ -103,3 +103,25 @@ configRouter.route('/dbx')
 
 
         });
+
+
+configRouter.route('/recaptcha')
+    .put(
+        function(req, res){
+            return config_db.set_recaptcha(req.body.site_key, req.body.secret_key, req.body.attempts)
+                .then(()=>res.json({}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+
+
+        })
+    .delete(
+        function(req, res){
+            return config_db.unset_recaptcha()
+                .then(()=>res.json({}))
+                .catch(err=>
+                    res.status(err.status || 500).json({message:err.message}));
+
+
+        });
+
