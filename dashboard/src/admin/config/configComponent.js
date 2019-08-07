@@ -14,6 +14,7 @@ let configComponent = {
                 enable: m.prop(false),
                 email:m.prop(''),
                 password:m.prop(''),
+                show_password:m.prop(false),
                 updated: m.prop(false),
                 error:m.prop('')
             },
@@ -41,6 +42,7 @@ let configComponent = {
 
             toggle_visibility,
             update_gmail_fields,
+            show_gmail_password,
             update_dbx_fields,
             update_server_type_fields,
             do_update_config,
@@ -78,6 +80,13 @@ let configComponent = {
             ctrl[varable].updated(true);
         }
 
+
+        function show_gmail_password(ctrl){
+            console.log('xx');
+            ctrl.gmail.show_password(true);
+            return m.redraw();
+
+        }
         function load() {
             get_config()
                 .then(response => set_values(response))
@@ -88,6 +97,7 @@ let configComponent = {
         }
 
         function update_gmail_fields(ctrl, fields){
+            ctrl.gmail.show_password(true);
             if(fields.hasOwnProperty('email'))
                 ctrl.gmail.email(fields.email);
             if(fields.hasOwnProperty('password'))
@@ -245,12 +255,13 @@ let configComponent = {
 
                         m('.form-group.row', [
                             m('.col-sm-2', [
-                                m('label.form-control-label', 'User name')
+                                m('label.form-control-label', 'Email')
                             ]),
                             m('.col-sm-5', [
                                 m('input.form-control', {
                                     type:'input',
-                                    placeholder: 'User name',
+                                    autocomplete: 'off',
+                                    placeholder: 'Email',
                                     value: ctrl.gmail.email(),
                                     oninput: (e)=> ctrl.update_gmail_fields(ctrl, {email: e.target.value}),
                                     onchange: (e)=> ctrl.update_gmail_fields(ctrl, {email: e.target.value})
@@ -261,10 +272,15 @@ let configComponent = {
                             m('.col-sm-2', [
                                 m('label.form-control-label', 'Password')
                             ]),
+
                             m('.col-sm-5', [
-                                m('input.form-control', {
+                                ctrl.gmail.enable() && !ctrl.gmail.show_password() && ctrl.gmail.password()?
+
+                                    m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.show_gmail_password(ctrl)},'Show password')  :
+
+                                    m('input.form-control', {
                                     type:'input',
-                                    placeholder: 'password',
+                                    placeholder: 'Password',
                                     value: ctrl.gmail.password(),
                                     oninput: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value}),
                                     onchange: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value})

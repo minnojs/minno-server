@@ -39,6 +39,7 @@
     "fetch": "^1.1.0",
     "formidable": "^1.2.0",
     "fs-extra": "^5.0.0",
+    "get-ssl-certificate": "^2.3.3",
     "greenlock": "^2.8.1",
     "greenlock-express": "^2.7.9",
     "greenlock-store-fs": "^3.0.2",
