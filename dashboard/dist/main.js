@@ -18693,10 +18693,10 @@
                         ])
                     ]),
                     m('.row', [
-                        m('.col-sm-3', [ m('strong', 'Gmail:'),
+                        m('.col-sm-3', [ m('strong', 'Fingerprint:'),
 
-                            m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')]),
-                            m('.card.info-box.card-header', ['Gmail account allows you to send emails (e.g., activation & reset password) in the system. ', m('a', {href:'#'}, 'Read more here'), '.']),
+                            m('.text-muted', ['Fingerprint Bla Bla Bla... ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', ['Bla Bla Bla... ', m('a', {href:'#'}, 'Read more here'), '.']),
 
 
                         ]),
