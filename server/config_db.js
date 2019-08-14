@@ -7,6 +7,10 @@ function get_config () {
     return connection.then(function (db) {
         const config_data   = db.collection('config');
         return config_data.find({}).toArray().then(data=>{
+            let fingerprint = data.find(vars=>vars.var==='fingerprint');
+            if(fingerprint)
+                fingerprint = {use_fingerprint: fingerprint.use_fingerprint};
+
             let gmail = data.find(vars=>vars.var==='gmail');
             if(gmail)
                 gmail = {email: gmail.email, password: gmail.password};
@@ -16,9 +20,14 @@ function get_config () {
             let server_data = data.find(vars=>vars.var==='server');
             if(server_data)
                 server_data = server_data.server_data;
-            return ({gmail, dbx, server_data});
+            return ({gmail, dbx, server_data, fingerprint});
         });
     });
+}
+
+function get_fingerprint () {
+    return get_config ()
+        .then(config=>config.fingerprint);
 }
 
 function get_gmail () {
@@ -38,6 +47,15 @@ function update_gmail (gmail) {
         return unset_gmail();
     return set_gmail(gmail.email, gmail.password);
 }
+
+function update_fingerprint (fingerprint) {
+    if(!fingerprint.updated)
+        return;
+    if(!fingerprint.enable)
+        return unuse_fingerprint();
+    return use_fingerprint();
+}
+
 
 function update_dbx (dbx) {
     if(!dbx.updated)
@@ -146,7 +164,23 @@ function unset_gmail () {
 }
 
 
+function unuse_fingerprint () {
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.deleteOne({var: 'fingerprint'})
+            .then(() => ('Fingerprint successfully removed')).catch(err=>console.log(err));
+    });
+}
 
+function use_fingerprint () {
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.updateOne({var: 'fingerprint'},
+            {$set: {use_fingerprint: true}}, {upsert: true})
+            .then(() => ('Fingerprint successfully added'));
+
+    });
+}
 
 function set_dbx(client_id, client_secret) {
     if(!client_id || !client_secret)
@@ -175,4 +209,4 @@ function get_dbx() {
 }
 
 
-module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server};
+module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server, update_fingerprint, get_fingerprint};

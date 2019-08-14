@@ -18,6 +18,11 @@ let configComponent = {
                 updated: m.prop(false),
                 error:m.prop('')
             },
+            fingerprint: {
+                enable: m.prop(false),
+                updated: m.prop(false),
+                error:m.prop('')
+            },
             dbx: {
                 enable: m.prop(false),
                 app_key:m.prop(''),
@@ -50,6 +55,7 @@ let configComponent = {
 
         function set_values(response){
             ctrl.given_conf(response.config);
+            ctrl.fingerprint.enable(response.config.fingerprint && response.config.fingerprint.use_fingerprint);
             if(response.config.gmail)
                 ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
             if(response.config.dbx)
@@ -203,9 +209,10 @@ let configComponent = {
         }
 
         function do_update_config(){
-            update_config(ctrl.gmail, ctrl.dbx, ctrl.server_data)
+            update_config(ctrl.fingerprint, ctrl.gmail, ctrl.dbx, ctrl.server_data)
                 .then((res)=> {
                     show_success_notification(res);
+                    ctrl.fingerprint.updated(false);
                     ctrl.gmail.updated(false);
                     ctrl.dbx.updated(false);
                     ctrl.server_data.updated(false);
@@ -230,6 +237,30 @@ let configComponent = {
                         m('h3', 'Configuration')
                     ])
                 ]),
+                m('.row', [
+                    m('.col-sm-3', [ m('strong', 'Gmail:'),
+
+                        m('.text-muted', ['Gmail account is used for email sending ', m('i.fa.fa-info-circle')]),
+                        m('.card.info-box.card-header', ['Gmail account allows you to send emails (e.g., activation & reset password) in the system. ', m('a', {href:'#'}, 'Read more here'), '.']),
+
+
+                    ]),
+                    m('.col-sm-8',[
+                        m('div', m('label.c-input.c-radio', [
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('fingerprint', false),
+                                checked: !ctrl.fingerprint.enable(),
+                            }), m('span.c-indicator'), ' Disable Fingerprint'
+                        ])),
+                        m('div', m('label.c-input.c-radio', [
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('fingerprint', true),
+                                checked: ctrl.fingerprint.enable(),
+                            }), m('span.c-indicator'), ' Enable Fingerprint'
+                        ]))
+                    ])
+                ]),
+                m('hr'),
 
                 m('.row', [
                     m('.col-sm-3', [ m('strong', 'Gmail:'),
@@ -351,7 +382,7 @@ let configComponent = {
                             m('select.c-select.form-control',{onchange: (e)=> ctrl.update_server_type_fields(ctrl, {type: e.target.value})}, [
                                 m('option', {selected:ctrl.server_data.type()==='http', value:'http'}, 'Http'),
                                 m('option', {selected:ctrl.server_data.type()==='https', value:'https'}, 'Https'),
-                                m('option', {selected:ctrl.server_data.type()==='greenlock', value:'greenlock'}, 'Green-lock'),
+                                m('option', {selected:ctrl.server_data.type()==='greenlock', value:'greenlock'}, 'Greenlock'),
                             ])
                         ])
                     ]),
@@ -445,7 +476,7 @@ let configComponent = {
                 ]),
 
                 m('.row.central_panel', [
-                    m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
+                    m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.fingerprint.updated() && !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
                 ]),
                 m('div', ctrl.notifications.view()),
 

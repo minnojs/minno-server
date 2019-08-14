@@ -42,6 +42,7 @@ configRouter.route('/params')
     .put(
         function(req, res){
             return Promise.all([
+                config_db.update_fingerprint(req.body.fingerprint),
                 config_db.update_gmail(req.body.gmail),
                 config_db.update_dbx(req.body.dbx),
                 config_db.update_server(req.body.server_data,req.app)

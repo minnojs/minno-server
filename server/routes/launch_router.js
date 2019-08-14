@@ -3,6 +3,7 @@ const experiments   = require('../experiments');
 const express       = require('express');
 const fs            = require('fs-extra');
 const urljoin       = require('url-join');
+const config_db     = require('../config_db');
 const data_server   = require('../data_server/controllers/controller');
 
 const router        = express.Router();
@@ -26,63 +27,65 @@ router.get('/play/:study_id/:file_id',function(req, res){
 
     return experiments
         .get_play_url(sess.user.id, req.params.study_id, req.params.file_id)
-        .then(displayExperiment(req.query, res,req.fingerprint))
+        .then(displayExperiment(req.query, res, req.fingerprint))
         .catch(displayErrorPage(res));
 });
 
-function displayExperiment(params, res,fingerprint){
+function displayExperiment(params, res, fingerprint){
     return function(exp_data){
-		if(typeof config.useFingerprint !== 'undefined' && config.useFingerprint==false)
-		{
-			fingerprint=['{useragent:"null"}'];
-		}
-        const render = promisify(res.render,res);
-        const dataUrl = urljoin(config.relative_path, 'data');
-        const {version_data = {}} = exp_data;
+        return config_db.get_fingerprint()
+            .then(use_fingerprint=>{
+                if(!use_fingerprint)
+                    fingerprint = ['{useragent:"null"}'];
 
-        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-        res.header('Expires', '-1');
-        res.header('Pragma', 'no-cache');
+                const render = promisify(res.render,res);
+                const dataUrl = urljoin(config.relative_path, 'data');
+                const {version_data = {}} = exp_data;
 
-        const postAlways = {
-            sessionId:exp_data.session_id, 
-            studyId:exp_data.exp_id,
-            versionId:version_data.id
-        };
-        const postOnce = Object.assign({}, params, {
-            descriptiveId: exp_data.descriptive_id, 
-            version:version_data.version,
-            state:version_data.state
-        }, postAlways); // post the post always stuff too - so that we can connect them...
-		const experimentSessionData=
-		{
-            descriptiveId: exp_data.descriptive_id, 
-            version:version_data.version,
-            state:version_data.state,
-            sessionId:exp_data.session_id, 
-			taskName:"_session_data",
-            studyId:exp_data.exp_id,
-            versionId:version_data.id,
-			data:[fingerprint]
-		};
-		data_server.insertExperimentSession(experimentSessionData);
-        if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
-            .then(transformHtml(exp_data,postOnce,postAlways))
-            .then(res.send.bind(res));
+                res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+                res.header('Expires', '-1');
+                res.header('Pragma', 'no-cache');
 
-        return render(exp_data.type || 'minno02', {
-            isDev: postOnce.state === 'Develop' || postOnce.state === undefined,
-            minnojsUrl: config.minnojsUrl,
-            minnojsDevUrl: config.minnojsDevUrl,
-            errorception: config.errorception,
-            url: exp_data.url, 
-            base_url: exp_data.base_url, 
-            dataUrl,
-            postOnce,
-            postAlways
+                const postAlways = {
+                    sessionId:exp_data.session_id,
+                    studyId:exp_data.exp_id,
+                    versionId:version_data.id
+                };
+                const postOnce = Object.assign({}, params, {
+                    descriptiveId: exp_data.descriptive_id,
+                    version:version_data.version,
+                    state:version_data.state
+                }, postAlways); // post the post always stuff too - so that we can connect them...
+                const experimentSessionData=
+                {
+                    descriptiveId: exp_data.descriptive_id,
+                    version:version_data.version,
+                    state:version_data.state,
+                    sessionId:exp_data.session_id,
+                    taskName:"_session_data",
+                    studyId:exp_data.exp_id,
+                    versionId:version_data.id,
+                    data:[fingerprint]
+                };
+                data_server.insertExperimentSession(experimentSessionData);
+                if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
+                    .then(transformHtml(exp_data,postOnce,postAlways))
+                    .then(res.send.bind(res));
+
+                return render(exp_data.type || 'minno02', {
+                    isDev: postOnce.state === 'Develop' || postOnce.state === undefined,
+                    minnojsUrl: config.minnojsUrl,
+                    minnojsDevUrl: config.minnojsDevUrl,
+                    errorception: config.errorception,
+                    url: exp_data.url,
+                    base_url: exp_data.base_url,
+                    dataUrl,
+                    postOnce,
+                    postAlways
+                })
+                .then(res.send.bind(res))
+                .catch(err => Promise.reject({status:500,message:err.message}));
         })
-        .then(res.send.bind(res))
-        .catch(err => Promise.reject({status:500,message:err.message}));
     };
 }
 

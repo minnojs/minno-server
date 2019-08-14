@@ -27,8 +27,8 @@ export let get_config = () => fetchJson(config_url(), {
     method: 'get'
 });
 
-export let update_config = (gmail, dbx, server_data) => fetchJson(params_url(), {
-    body: {gmail, dbx, server_data},
+export let update_config = (fingerprint, gmail, dbx, server_data) => fetchJson(params_url(), {
+    body: {fingerprint, gmail, dbx, server_data},
     method: 'put'
 
 });
