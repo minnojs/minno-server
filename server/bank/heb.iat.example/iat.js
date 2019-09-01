@@ -1,4 +1,4 @@
-define(['https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat6.js'], function(iatExtension){
+define(['https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat7.js'], function(iatExtension){
 
     return iatExtension({
         category1 : {
