@@ -65,8 +65,7 @@ function update_dbx (dbx) {
     return set_dbx(dbx.app_key, dbx.app_secret);
 }
 
-async function update_server(server_data,app) {
-
+async function update_server(server_data, app) {
     if(!server_data.updated)
         return;
     let server_data_obj = {http:{}};
@@ -76,14 +75,13 @@ async function update_server(server_data,app) {
     if (server_data.type==='https'){
         server_data_obj = {https: server_data.https};
 		try{
-			await Server.startupHttps(app,server_data_obj);
+			await Server.startupHttps(app, server_data_obj);
 		}
 		catch(e)
 		{
 			console.log(e);
 			await server.startupHttp(app);
 			return Promise.reject({status: 400, message: e});
-			
 		}
 	}
     if (server_data.type==='greenlock') {

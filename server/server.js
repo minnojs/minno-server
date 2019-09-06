@@ -78,24 +78,20 @@ exports.shutdownHttp = async function() {
 
 exports.startupHttps = async function(app, server_data) {
     await exports.startupHttp(app);	
-    const fs = require('fs');
-    const http = require('http');
     const https = require('https');
-if(server_data==null)
-{
-	server_data={privateKey:config.keyFile,certificate:config.certFile,port:config.sslport}
-}
+    if(server_data==null)
+        server_data = {privateKey:config.keyFile, certificate:config.certFile, port:config.sslport}
 
     const credentials = {
-        key: server_data.privateKey,
-        cert: server_data.certificate
+        key: server_data.https.privateKey,
+        cert: server_data.https.certificate
     };
-    
-    
+
     try{
         httpsServer = await https.createServer(credentials, app);
-        httpsServer.listen(server_data.port);
-        console.log('Minno-server Started on PORT ' + server_data.port);
+        httpsServer.listen(server_data.https.port);
+        console.log(server_data);
+        console.log('Minno-server Started on PORT ' + server_data.https.port);
     }
     catch(e){
 		console.log(e);
