@@ -162,20 +162,31 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', async function() {
-	
 	let serverType=null;
 	const serverConfig=await configDb.get_config();
 	const server_data=serverConfig.server_data;
 	try{
-        if( typeof server_data !== 'undefined' && server_data){
-            if(server_data.https)
-                {await Server.startupHttps(app, server_data.https);}
-            if(server_data.greenlock)
-                {await Server.startupGreenlock(app, server_data.greenlock);}
-            if(!server_data.https && !server_data.greenlock)
-            {
-                await Server.startupHttp(app);
-            }
+	if( typeof server_data !== 'undefined' && server_data )
+	{
+    if(server_data.https)
+		{await Server.startupHttps(app, server_data.https);}
+    if(server_data.greenlock)
+		{
+
+			await Server.startupGreenlock(app, server_data.greenlock);
+			try{
+				await Server.testSSL(server_data.greenlock.domains[0])}
+				catch(err)
+				{
+					console.log(err);
+					await Server.shutdownHttps(app);
+					await Server.startupHttp(app);
+				}
+		}
+	if(!server_data.https && !server_data.greenlock)
+	{
+		await Server.startupHttp(app);
+	}
 	}
 	else{
 	
