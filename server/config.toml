@@ -1,0 +1,32 @@
+#baseURL = "/"
+baseURL="minnojs.github.io/docsite"
+languageCode = "en-US"
+defaultContentLanguage = "en"
+
+title = "HDocumentation for minnoSuite"
+theme = "learn"
+themesdir = "themes/"
+metaDataFormat = "yaml"
+defaultContentLanguageInSubdir= true
+search = true
+uglyURLs = true
+canonifyURLs = true
+publishDir = "docs"
+
+[params]
+  editURL = "https://github.com/matcornic/hugo-theme-learn/edit/master/exampleSite/content/"
+  description = "Documentation for minnoSuite"
+  author = "Andrew Dzikiewicz"
+  showVisitedLinks = false
+  disableBreadcrumb = false
+  disableNextPrev = false
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+[Languages]
+[Languages.en]
+title = "Documentation for minnoSuite"
+weight = 1
+languageName = "English"
+

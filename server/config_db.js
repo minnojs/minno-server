@@ -106,6 +106,15 @@ async function update_server(server_data, app) {
 						try{
                         server_data_obj = {greenlock: server_data.greenlock};
 					    await Server.startupGreenlock(app,server_data.greenlock);
+						try{
+							await Server.testSSL(server_data.greenlock.domains[0])}
+							catch(err)
+							{
+								console.log(err);
+								await Server.shutdownHttps(app);
+								await Server.startupHttp(app);
+								return Promise.reject({status: 400, message: "Error updating to Greenlock: "+err})
+							}
 					}
 					catch(e)
 					{

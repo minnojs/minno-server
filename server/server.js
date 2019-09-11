@@ -3,10 +3,12 @@ let httpsServer = null;
 const Greenlock = require('greenlock-express');
 const config = require('../config');
 const configDb = require('./config_db');
-
+const sslChecker 			= require('ssl-checker');
 
 exports.startupGreenlock = async function(app, greenlock_data) {
-    await exports.startupHttp(app);	
+    //await exports.startupHttp(app);
+   await exports.shutdownHttp();
+   await exports.shutdownHttps();	
 	if(greenlock_data==null)
 	{
 		greenlock_data={owner_email: config.owner_email, domains:config.domains}
@@ -32,13 +34,13 @@ exports.startupGreenlock = async function(app, greenlock_data) {
         communityMember: true,
         debug: true
     });
-   /* const redirectHttps = require('redirect-https')();
+    const redirectHttps = require('redirect-https')();
     const acmeChallengeHandler = greenlock.middleware(redirectHttps);
     httpServer = require('http')
         .createServer(acmeChallengeHandler);
     httpServer.listen(config.port, function() {
         console.log('Listening for ACME http-01 challenges on', this.address());
-    });*/
+    });
 
     ////////////////////////
     // http2 via SPDY h2  //
@@ -77,6 +79,7 @@ exports.shutdownHttp = async function() {
 };
 
 exports.startupHttps = async function(app, server_data) {
+	await exports.shutdownHttps();	
     await exports.startupHttp(app);	
     const https = require('https');
     if(server_data==null)
@@ -105,4 +108,15 @@ exports.shutdownHttps = async function() {
 		await httpsServer.close();
 		httpsServer = null;
 	}
+}
+exports.testSSL= async function(domain){
+	await sslChecker(domain,'HEAD',443).then(console.log).catch((err) => {
+	  if (err.code === 'ENOTFOUND') {
+	    throw("Domain invalid.  Please make sure that DNS is configured correctly");
+	  } else {
+	    throw("The error is"+err);
+	  }
+	});
+	return true;
+	
 }
