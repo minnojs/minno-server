@@ -9,7 +9,6 @@
     "setup": "node server/setup",
     "reset_admin": "node server/reset_admin",
     "reset_ssl": "node server/reset_ssl",
-
     "test": "eslint .",
     "js": "rollup --config --sourcemap",
     "css": "node-sass dashboard/src/style/style.scss --output dashboard/dist --source-map=true",
@@ -73,7 +72,7 @@
     "buble": "^0.12.3",
     "eslint": "^5.16.0",
     "eslint-plugin-import": "^2.18.2",
-    "mithril": "^0.2.8",
+    "mithril": "^2.0.4",
     "node-sass": "^3.13.1",
     "npm-run-all": "^2.3.0",
     "pikaday": "^1.4.0",

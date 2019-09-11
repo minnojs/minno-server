@@ -111,12 +111,15 @@
       var constructor = this.constructor;
       return this.then(
         function(value) {
+          // @ts-ignore
           return constructor.resolve(callback()).then(function() {
             return value;
           });
         },
         function(reason) {
+          // @ts-ignore
           return constructor.resolve(callback()).then(function() {
+            // @ts-ignore
             return constructor.reject(reason);
           });
         }
@@ -126,6 +129,10 @@
     // Store setTimeout reference so promise-polyfill will be unaffected by
     // other code modifying setTimeout (like sinon.useFakeTimers())
     var setTimeoutFunc = setTimeout;
+
+    function isArray(x) {
+      return Boolean(x && typeof x.length !== 'undefined');
+    }
 
     function noop() {}
 
@@ -284,8 +291,10 @@
 
     Promise$1.all = function(arr) {
       return new Promise$1(function(resolve, reject) {
-        if (!arr || typeof arr.length === 'undefined')
-          throw new TypeError('Promise.all accepts an array');
+        if (!isArray(arr)) {
+          return reject(new TypeError('Promise.all accepts an array'));
+        }
+
         var args = Array.prototype.slice.call(arr);
         if (args.length === 0) return resolve([]);
         var remaining = args.length;
@@ -336,18 +345,24 @@
       });
     };
 
-    Promise$1.race = function(values) {
+    Promise$1.race = function(arr) {
       return new Promise$1(function(resolve, reject) {
-        for (var i = 0, len = values.length; i < len; i++) {
-          values[i].then(resolve, reject);
+        if (!isArray(arr)) {
+          return reject(new TypeError('Promise.race accepts an array'));
+        }
+
+        for (var i = 0, len = arr.length; i < len; i++) {
+          Promise$1.resolve(arr[i]).then(resolve, reject);
         }
       });
     };
 
     // Use polyfill for setImmediate for performance gains
     Promise$1._immediateFn =
+      // @ts-ignore
       (typeof setImmediate === 'function' &&
         function(fn) {
+          // @ts-ignore
           setImmediate(fn);
         }) ||
       function(fn) {
@@ -902,7 +917,7 @@
       self.Response = Response;
     }
 
-    var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+    var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
     function commonjsRequire () {
     	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
@@ -2068,22 +2083,36 @@
         function createDate (y, m, d, h, M, s, ms) {
             // can't just apply() to create a date:
             // https://stackoverflow.com/q/181348
-            var date = new Date(y, m, d, h, M, s, ms);
-
+            var date;
             // the date constructor remaps years 0-99 to 1900-1999
-            if (y < 100 && y >= 0 && isFinite(date.getFullYear())) {
-                date.setFullYear(y);
+            if (y < 100 && y >= 0) {
+                // preserve leap years using a full 400 year cycle, then reset
+                date = new Date(y + 400, m, d, h, M, s, ms);
+                if (isFinite(date.getFullYear())) {
+                    date.setFullYear(y);
+                }
+            } else {
+                date = new Date(y, m, d, h, M, s, ms);
             }
+
             return date;
         }
 
         function createUTCDate (y) {
-            var date = new Date(Date.UTC.apply(null, arguments));
-
+            var date;
             // the Date.UTC function remaps years 0-99 to 1900-1999
-            if (y < 100 && y >= 0 && isFinite(date.getUTCFullYear())) {
-                date.setUTCFullYear(y);
+            if (y < 100 && y >= 0) {
+                var args = Array.prototype.slice.call(arguments);
+                // preserve leap years using a full 400 year cycle, then reset
+                args[0] = y + 400;
+                date = new Date(Date.UTC.apply(null, args));
+                if (isFinite(date.getUTCFullYear())) {
+                    date.setUTCFullYear(y);
+                }
+            } else {
+                date = new Date(Date.UTC.apply(null, arguments));
             }
+
             return date;
         }
 
@@ -2185,7 +2214,7 @@
 
         var defaultLocaleWeek = {
             dow : 0, // Sunday is the first day of the week.
-            doy : 6  // The week that contains Jan 1st is the first week of the year.
+            doy : 6  // The week that contains Jan 6th is the first week of the year.
         };
 
         function localeFirstDayOfWeek () {
@@ -2294,25 +2323,28 @@
         }
 
         // LOCALES
+        function shiftWeekdays (ws, n) {
+            return ws.slice(n, 7).concat(ws.slice(0, n));
+        }
 
         var defaultLocaleWeekdays = 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_');
         function localeWeekdays (m, format) {
-            if (!m) {
-                return isArray(this._weekdays) ? this._weekdays :
-                    this._weekdays['standalone'];
-            }
-            return isArray(this._weekdays) ? this._weekdays[m.day()] :
-                this._weekdays[this._weekdays.isFormat.test(format) ? 'format' : 'standalone'][m.day()];
+            var weekdays = isArray(this._weekdays) ? this._weekdays :
+                this._weekdays[(m && m !== true && this._weekdays.isFormat.test(format)) ? 'format' : 'standalone'];
+            return (m === true) ? shiftWeekdays(weekdays, this._week.dow)
+                : (m) ? weekdays[m.day()] : weekdays;
         }
 
         var defaultLocaleWeekdaysShort = 'Sun_Mon_Tue_Wed_Thu_Fri_Sat'.split('_');
         function localeWeekdaysShort (m) {
-            return (m) ? this._weekdaysShort[m.day()] : this._weekdaysShort;
+            return (m === true) ? shiftWeekdays(this._weekdaysShort, this._week.dow)
+                : (m) ? this._weekdaysShort[m.day()] : this._weekdaysShort;
         }
 
         var defaultLocaleWeekdaysMin = 'Su_Mo_Tu_We_Th_Fr_Sa'.split('_');
         function localeWeekdaysMin (m) {
-            return (m) ? this._weekdaysMin[m.day()] : this._weekdaysMin;
+            return (m === true) ? shiftWeekdays(this._weekdaysMin, this._week.dow)
+                : (m) ? this._weekdaysMin[m.day()] : this._weekdaysMin;
         }
 
         function handleStrictParse$1(weekdayName, format, strict) {
@@ -2402,9 +2434,9 @@
 
                 mom = createUTC([2000, 1]).day(i);
                 if (strict && !this$1._fullWeekdaysParse[i]) {
-                    this$1._fullWeekdaysParse[i] = new RegExp('^' + this$1.weekdays(mom, '').replace('.', '\.?') + '$', 'i');
-                    this$1._shortWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysShort(mom, '').replace('.', '\.?') + '$', 'i');
-                    this$1._minWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysMin(mom, '').replace('.', '\.?') + '$', 'i');
+                    this$1._fullWeekdaysParse[i] = new RegExp('^' + this$1.weekdays(mom, '').replace('.', '\\.?') + '$', 'i');
+                    this$1._shortWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysShort(mom, '').replace('.', '\\.?') + '$', 'i');
+                    this$1._minWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysMin(mom, '').replace('.', '\\.?') + '$', 'i');
                 }
                 if (!this$1._weekdaysParse[i]) {
                     regex = '^' + this$1.weekdays(mom, '') + '|^' + this$1.weekdaysShort(mom, '') + '|^' + this$1.weekdaysMin(mom, '');
@@ -3067,13 +3099,13 @@
                         weekdayOverflow = true;
                     }
                 } else if (w.e != null) {
-                    // local weekday -- counting starts from begining of week
+                    // local weekday -- counting starts from beginning of week
                     weekday = w.e + dow;
                     if (w.e < 0 || w.e > 6) {
                         weekdayOverflow = true;
                     }
                 } else {
-                    // default to begining of week
+                    // default to beginning of week
                     weekday = dow;
                 }
             }
@@ -3209,7 +3241,7 @@
 
         function preprocessRFC2822(s) {
             // Remove comments and folding whitespace and replace multiple-spaces with a single space
-            return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').trim();
+            return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').replace(/^\s\s*/, '').replace(/\s\s*$/, '');
         }
 
         function checkWeekday(weekdayStr, parsedInput, config) {
@@ -3667,7 +3699,7 @@
                 years = normalizedInput.year || 0,
                 quarters = normalizedInput.quarter || 0,
                 months = normalizedInput.month || 0,
-                weeks = normalizedInput.week || 0,
+                weeks = normalizedInput.week || normalizedInput.isoWeek || 0,
                 days = normalizedInput.day || 0,
                 hours = normalizedInput.hour || 0,
                 minutes = normalizedInput.minute || 0,
@@ -3971,7 +4003,7 @@
                     ms : toInt(absRound(match[MILLISECOND] * 1000)) * sign // the millisecond decimal point is included in the match
                 };
             } else if (!!(match = isoRegex.exec(input))) {
-                sign = (match[1] === '-') ? -1 : (match[1] === '+') ? 1 : 1;
+                sign = (match[1] === '-') ? -1 : 1;
                 duration = {
                     y : parseIso(match[2], sign),
                     M : parseIso(match[3], sign),
@@ -4013,7 +4045,7 @@
         }
 
         function positiveMomentsDifference(base, other) {
-            var res = {milliseconds: 0, months: 0};
+            var res = {};
 
             res.months = other.month() - base.month() +
                 (other.year() - base.year()) * 12;
@@ -4122,7 +4154,7 @@
             if (!(this.isValid() && localInput.isValid())) {
                 return false;
             }
-            units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+            units = normalizeUnits(units) || 'millisecond';
             if (units === 'millisecond') {
                 return this.valueOf() > localInput.valueOf();
             } else {
@@ -4135,7 +4167,7 @@
             if (!(this.isValid() && localInput.isValid())) {
                 return false;
             }
-            units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+            units = normalizeUnits(units) || 'millisecond';
             if (units === 'millisecond') {
                 return this.valueOf() < localInput.valueOf();
             } else {
@@ -4144,9 +4176,14 @@
         }
 
         function isBetween (from, to, units, inclusivity) {
+            var localFrom = isMoment(from) ? from : createLocal(from),
+                localTo = isMoment(to) ? to : createLocal(to);
+            if (!(this.isValid() && localFrom.isValid() && localTo.isValid())) {
+                return false;
+            }
             inclusivity = inclusivity || '()';
-            return (inclusivity[0] === '(' ? this.isAfter(from, units) : !this.isBefore(from, units)) &&
-                (inclusivity[1] === ')' ? this.isBefore(to, units) : !this.isAfter(to, units));
+            return (inclusivity[0] === '(' ? this.isAfter(localFrom, units) : !this.isBefore(localFrom, units)) &&
+                (inclusivity[1] === ')' ? this.isBefore(localTo, units) : !this.isAfter(localTo, units));
         }
 
         function isSame (input, units) {
@@ -4155,7 +4192,7 @@
             if (!(this.isValid() && localInput.isValid())) {
                 return false;
             }
-            units = normalizeUnits(units || 'millisecond');
+            units = normalizeUnits(units) || 'millisecond';
             if (units === 'millisecond') {
                 return this.valueOf() === localInput.valueOf();
             } else {
@@ -4165,11 +4202,11 @@
         }
 
         function isSameOrAfter (input, units) {
-            return this.isSame(input, units) || this.isAfter(input,units);
+            return this.isSame(input, units) || this.isAfter(input, units);
         }
 
         function isSameOrBefore (input, units) {
-            return this.isSame(input, units) || this.isBefore(input,units);
+            return this.isSame(input, units) || this.isBefore(input, units);
         }
 
         function diff (input, units, asFloat) {
@@ -4346,62 +4383,130 @@
             return this._locale;
         }
 
+        var MS_PER_SECOND = 1000;
+        var MS_PER_MINUTE = 60 * MS_PER_SECOND;
+        var MS_PER_HOUR = 60 * MS_PER_MINUTE;
+        var MS_PER_400_YEARS = (365 * 400 + 97) * 24 * MS_PER_HOUR;
+
+        // actual modulo - handles negative numbers (for dates before 1970):
+        function mod$1(dividend, divisor) {
+            return (dividend % divisor + divisor) % divisor;
+        }
+
+        function localStartOfDate(y, m, d) {
+            // the date constructor remaps years 0-99 to 1900-1999
+            if (y < 100 && y >= 0) {
+                // preserve leap years using a full 400 year cycle, then reset
+                return new Date(y + 400, m, d) - MS_PER_400_YEARS;
+            } else {
+                return new Date(y, m, d).valueOf();
+            }
+        }
+
+        function utcStartOfDate(y, m, d) {
+            // Date.UTC remaps years 0-99 to 1900-1999
+            if (y < 100 && y >= 0) {
+                // preserve leap years using a full 400 year cycle, then reset
+                return Date.UTC(y + 400, m, d) - MS_PER_400_YEARS;
+            } else {
+                return Date.UTC(y, m, d);
+            }
+        }
+
         function startOf (units) {
+            var time;
             units = normalizeUnits(units);
-            // the following switch intentionally omits break keywords
-            // to utilize falling through the cases.
+            if (units === undefined || units === 'millisecond' || !this.isValid()) {
+                return this;
+            }
+
+            var startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
+
             switch (units) {
                 case 'year':
-                    this.month(0);
-                    /* falls through */
+                    time = startOfDate(this.year(), 0, 1);
+                    break;
                 case 'quarter':
+                    time = startOfDate(this.year(), this.month() - this.month() % 3, 1);
+                    break;
                 case 'month':
-                    this.date(1);
-                    /* falls through */
+                    time = startOfDate(this.year(), this.month(), 1);
+                    break;
                 case 'week':
+                    time = startOfDate(this.year(), this.month(), this.date() - this.weekday());
+                    break;
                 case 'isoWeek':
+                    time = startOfDate(this.year(), this.month(), this.date() - (this.isoWeekday() - 1));
+                    break;
                 case 'day':
                 case 'date':
-                    this.hours(0);
-                    /* falls through */
+                    time = startOfDate(this.year(), this.month(), this.date());
+                    break;
                 case 'hour':
-                    this.minutes(0);
-                    /* falls through */
+                    time = this._d.valueOf();
+                    time -= mod$1(time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE), MS_PER_HOUR);
+                    break;
                 case 'minute':
-                    this.seconds(0);
-                    /* falls through */
+                    time = this._d.valueOf();
+                    time -= mod$1(time, MS_PER_MINUTE);
+                    break;
                 case 'second':
-                    this.milliseconds(0);
+                    time = this._d.valueOf();
+                    time -= mod$1(time, MS_PER_SECOND);
+                    break;
             }
 
-            // weeks are a special case
-            if (units === 'week') {
-                this.weekday(0);
-            }
-            if (units === 'isoWeek') {
-                this.isoWeekday(1);
-            }
-
-            // quarters are also special
-            if (units === 'quarter') {
-                this.month(Math.floor(this.month() / 3) * 3);
-            }
-
+            this._d.setTime(time);
+            hooks.updateOffset(this, true);
             return this;
         }
 
         function endOf (units) {
+            var time;
             units = normalizeUnits(units);
-            if (units === undefined || units === 'millisecond') {
+            if (units === undefined || units === 'millisecond' || !this.isValid()) {
                 return this;
             }
 
-            // 'date' is an alias for 'day', so it should be considered as such.
-            if (units === 'date') {
-                units = 'day';
+            var startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
+
+            switch (units) {
+                case 'year':
+                    time = startOfDate(this.year() + 1, 0, 1) - 1;
+                    break;
+                case 'quarter':
+                    time = startOfDate(this.year(), this.month() - this.month() % 3 + 3, 1) - 1;
+                    break;
+                case 'month':
+                    time = startOfDate(this.year(), this.month() + 1, 1) - 1;
+                    break;
+                case 'week':
+                    time = startOfDate(this.year(), this.month(), this.date() - this.weekday() + 7) - 1;
+                    break;
+                case 'isoWeek':
+                    time = startOfDate(this.year(), this.month(), this.date() - (this.isoWeekday() - 1) + 7) - 1;
+                    break;
+                case 'day':
+                case 'date':
+                    time = startOfDate(this.year(), this.month(), this.date() + 1) - 1;
+                    break;
+                case 'hour':
+                    time = this._d.valueOf();
+                    time += MS_PER_HOUR - mod$1(time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE), MS_PER_HOUR) - 1;
+                    break;
+                case 'minute':
+                    time = this._d.valueOf();
+                    time += MS_PER_MINUTE - mod$1(time, MS_PER_MINUTE) - 1;
+                    break;
+                case 'second':
+                    time = this._d.valueOf();
+                    time += MS_PER_SECOND - mod$1(time, MS_PER_SECOND) - 1;
+                    break;
             }
 
-            return this.startOf(units).add(1, (units === 'isoWeek' ? 'week' : units)).subtract(1, 'ms');
+            this._d.setTime(time);
+            hooks.updateOffset(this, true);
+            return this;
         }
 
         function valueOf () {
@@ -5107,10 +5212,14 @@
 
             units = normalizeUnits(units);
 
-            if (units === 'month' || units === 'year') {
-                days   = this._days   + milliseconds / 864e5;
+            if (units === 'month' || units === 'quarter' || units === 'year') {
+                days = this._days + milliseconds / 864e5;
                 months = this._months + daysToMonths(days);
-                return units === 'month' ? months : months / 12;
+                switch (units) {
+                    case 'month':   return months;
+                    case 'quarter': return months / 3;
+                    case 'year':    return months / 12;
+                }
             } else {
                 // handle milliseconds separately because of floating point math errors (issue #1867)
                 days = this._days + Math.round(monthsToDays(this._months));
@@ -5153,6 +5262,7 @@
         var asDays         = makeAs('d');
         var asWeeks        = makeAs('w');
         var asMonths       = makeAs('M');
+        var asQuarters     = makeAs('Q');
         var asYears        = makeAs('y');
 
         function clone$1 () {
@@ -5344,6 +5454,7 @@
         proto$2.asDays         = asDays;
         proto$2.asWeeks        = asWeeks;
         proto$2.asMonths       = asMonths;
+        proto$2.asQuarters     = asQuarters;
         proto$2.asYears        = asYears;
         proto$2.valueOf        = valueOf$1;
         proto$2._bubble        = bubble;
@@ -5388,7 +5499,7 @@
         // Side effect imports
 
 
-        hooks.version = '2.22.1';
+        hooks.version = '2.24.0';
 
         setHookCallback(createLocal);
 
@@ -5429,7 +5540,7 @@
             TIME: 'HH:mm',                                  // <input type="time" />
             TIME_SECONDS: 'HH:mm:ss',                       // <input type="time" step="1" />
             TIME_MS: 'HH:mm:ss.SSS',                        // <input type="time" step="0.001" />
-            WEEK: 'YYYY-[W]WW',                             // <input type="week" />
+            WEEK: 'GGGG-[W]WW',                             // <input type="week" />
             MONTH: 'YYYY-MM'                                // <input type="month" />
         };
 
@@ -6691,2302 +6802,1991 @@
     }));
     });
 
-    var mithril = createCommonjsModule(function (module) {
-    (function (global, factory) { // eslint-disable-line
-    	/* eslint-disable no-undef */
-    	var m = factory(global);
-    	/*	Set dependencies when no window for isomorphic compatibility */
-    	if(typeof window === "undefined") {
-    		m.deps({
-    			document: typeof document !== "undefined" ? document : {},
-    			location: typeof location !== "undefined" ? location : {},
-    			clearTimeout: clearTimeout,
-    			setTimeout: setTimeout
-    		});
+    function Vnode(tag, key, attrs, children, text, dom) {
+    	return {tag: tag, key: key, attrs: attrs, children: children, text: text, dom: dom, domSize: undefined, state: undefined, events: undefined, instance: undefined}
+    }
+    Vnode.normalize = function(node) {
+    	if (Array.isArray(node)) return Vnode("[", undefined, undefined, Vnode.normalizeChildren(node), undefined, undefined)
+    	if (node == null || typeof node === "boolean") return null
+    	if (typeof node === "object") return node
+    	return Vnode("#", undefined, undefined, String(node), undefined, undefined)
+    };
+    Vnode.normalizeChildren = function(input) {
+    	var children = [];
+    	if (input.length) {
+    		var isKeyed = input[0] != null && input[0].key != null;
+    		// Note: this is a *very* perf-sensitive check.
+    		// Fun fact: merging the loop like this is somehow faster than splitting
+    		// it, noticeably so.
+    		for (var i = 1; i < input.length; i++) {
+    			if ((input[i] != null && input[i].key != null) !== isKeyed) {
+    				throw new TypeError("Vnodes must either always have keys or never have keys!")
+    			}
+    		}
+    		for (var i = 0; i < input.length; i++) {
+    			children[i] = Vnode.normalize(input[i]);
+    		}
     	}
-    	if (module != null && module.exports) {
-    		module.exports = m;
+    	return children
+    };
+
+    var vnode = Vnode;
+
+    // Call via `hyperscriptVnode.apply(startOffset, arguments)`
+    //
+    // The reason I do it this way, forwarding the arguments and passing the start
+    // offset in `this`, is so I don't have to create a temporary array in a
+    // performance-critical path.
+    //
+    // In native ES6, I'd instead add a final `...args` parameter to the
+    // `hyperscript` and `fragment` factories and define this as
+    // `hyperscriptVnode(...args)`, since modern engines do optimize that away. But
+    // ES5 (what Mithril requires thanks to IE support) doesn't give me that luxury,
+    // and engines aren't nearly intelligent enough to do either of these:
+    //
+    // 1. Elide the allocation for `[].slice.call(arguments, 1)` when it's passed to
+    //    another function only to be indexed.
+    // 2. Elide an `arguments` allocation when it's passed to any function other
+    //    than `Function.prototype.apply` or `Reflect.apply`.
+    //
+    // In ES6, it'd probably look closer to this (I'd need to profile it, though):
+    // module.exports = function(attrs, ...children) {
+    //     if (attrs == null || typeof attrs === "object" && attrs.tag == null && !Array.isArray(attrs)) {
+    //         if (children.length === 1 && Array.isArray(children[0])) children = children[0]
+    //     } else {
+    //         children = children.length === 0 && Array.isArray(attrs) ? attrs : [attrs, ...children]
+    //         attrs = undefined
+    //     }
+    //
+    //     if (attrs == null) attrs = {}
+    //     return Vnode("", attrs.key, attrs, children)
+    // }
+    var hyperscriptVnode = function() {
+    	var arguments$1 = arguments;
+
+    	var attrs = arguments[this], start = this + 1, children;
+
+    	if (attrs == null) {
+    		attrs = {};
+    	} else if (typeof attrs !== "object" || attrs.tag != null || Array.isArray(attrs)) {
+    		attrs = {};
+    		start = this;
+    	}
+
+    	if (arguments.length === start + 1) {
+    		children = arguments[start];
+    		if (!Array.isArray(children)) children = [children];
     	} else {
-    		global.m = m;
-    	}
-    	/* eslint-enable no-undef */
-    })(typeof window !== "undefined" ? window : commonjsGlobal, function factory(global, undefined) { // eslint-disable-line
-
-    	m.version = function () {
-    		return "v0.2.8"
-    	};
-
-    	var hasOwn = {}.hasOwnProperty;
-    	var type = {}.toString;
-
-    	function isFunction(object) {
-    		return typeof object === "function"
+    		children = [];
+    		while (start < arguments.length) children.push(arguments$1[start++]);
     	}
 
-    	function isObject(object) {
-    		return type.call(object) === "[object Object]"
+    	return vnode("", attrs.key, attrs, children)
+    };
+
+    var selectorParser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g;
+    var selectorCache = {};
+    var hasOwn = {}.hasOwnProperty;
+
+    function isEmpty(object) {
+    	for (var key in object) if (hasOwn.call(object, key)) return false
+    	return true
+    }
+
+    function compileSelector(selector) {
+    	var match, tag = "div", classes = [], attrs = {};
+    	while (match = selectorParser.exec(selector)) {
+    		var type = match[1], value = match[2];
+    		if (type === "" && value !== "") tag = value;
+    		else if (type === "#") attrs.id = value;
+    		else if (type === ".") classes.push(value);
+    		else if (match[3][0] === "[") {
+    			var attrValue = match[6];
+    			if (attrValue) attrValue = attrValue.replace(/\\(["'])/g, "$1").replace(/\\\\/g, "\\");
+    			if (match[4] === "class") classes.push(attrValue);
+    			else attrs[match[4]] = attrValue === "" ? attrValue : attrValue || true;
+    		}
     	}
+    	if (classes.length > 0) attrs.className = classes.join(" ");
+    	return selectorCache[selector] = {tag: tag, attrs: attrs}
+    }
 
-    	function isString(object) {
-    		return type.call(object) === "[object String]"
-    	}
+    function execSelector(state, vnode$$1) {
+    	var attrs = vnode$$1.attrs;
+    	var children = vnode.normalizeChildren(vnode$$1.children);
+    	var hasClass = hasOwn.call(attrs, "class");
+    	var className = hasClass ? attrs.class : attrs.className;
 
-    	var isArray = Array.isArray || function (object) {
-    		return type.call(object) === "[object Array]"
-    	};
+    	vnode$$1.tag = state.tag;
+    	vnode$$1.attrs = null;
+    	vnode$$1.children = undefined;
 
-    	function noop() {}
+    	if (!isEmpty(state.attrs) && !isEmpty(attrs)) {
+    		var newAttrs = {};
 
-    	var voidElements = {
-    		AREA: 1,
-    		BASE: 1,
-    		BR: 1,
-    		COL: 1,
-    		COMMAND: 1,
-    		EMBED: 1,
-    		HR: 1,
-    		IMG: 1,
-    		INPUT: 1,
-    		KEYGEN: 1,
-    		LINK: 1,
-    		META: 1,
-    		PARAM: 1,
-    		SOURCE: 1,
-    		TRACK: 1,
-    		WBR: 1
-    	};
-
-    	// caching commonly used variables
-    	var $document, $location, $requestAnimationFrame, $cancelAnimationFrame;
-
-    	// self invoking function needed because of the way mocks work
-    	function initialize(mock) {
-    		$document = mock.document;
-    		$location = mock.location;
-    		$cancelAnimationFrame = mock.cancelAnimationFrame || mock.clearTimeout;
-    		$requestAnimationFrame = mock.requestAnimationFrame || mock.setTimeout;
-    	}
-
-    	// testing API
-    	m.deps = function (mock) {
-    		initialize(global = mock || window);
-    		return global
-    	};
-
-    	m.deps.factory = m.factory = factory;
-
-    	m.deps(global);
-
-    	/**
-    	 * @typedef {String} Tag
-    	 * A string that looks like -> div.classname#id[param=one][param2=two]
-    	 * Which describes a DOM node
-    	 */
-
-    	function parseTagAttrs(cell, tag) {
-    		var classes = [];
-    		/* eslint-disable max-len */
-    		var parser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g;
-    		/* eslint-enable max-len */
-    		var match;
-
-    		while ((match = parser.exec(tag))) {
-    			if (match[1] === "" && match[2]) {
-    				cell.tag = match[2];
-    			} else if (match[1] === "#") {
-    				cell.attrs.id = match[2];
-    			} else if (match[1] === ".") {
-    				classes.push(match[2]);
-    			} else if (match[3].charAt(0) === "[") { // #1195
-    				var attrValue = match[6];
-    				if (attrValue) attrValue = attrValue.replace(/\\(["'])/g, "$1");
-    				if (match[4] === "class") classes.push(attrValue);
-    				else cell.attrs[match[4]] = attrValue || true;
-    			}
+    		for (var key in attrs) {
+    			if (hasOwn.call(attrs, key)) newAttrs[key] = attrs[key];
     		}
 
-    		return classes
+    		attrs = newAttrs;
     	}
 
-    	function getVirtualChildren(args, hasAttrs) {
-    		var children = hasAttrs ? args.slice(1) : args;
+    	for (var key in state.attrs) {
+    		if (hasOwn.call(state.attrs, key) && key !== "className" && !hasOwn.call(attrs, key)){
+    			attrs[key] = state.attrs[key];
+    		}
+    	}
+    	if (className != null || state.attrs.className != null) attrs.className =
+    		className != null
+    			? state.attrs.className != null
+    				? String(state.attrs.className) + " " + String(className)
+    				: className
+    			: state.attrs.className != null
+    				? state.attrs.className
+    				: null;
 
-    		if (children.length === 1 && isArray(children[0])) {
-    			return children[0]
-    		} else {
-    			return children
+    	if (hasClass) attrs.class = null;
+
+    	for (var key in attrs) {
+    		if (hasOwn.call(attrs, key) && key !== "key") {
+    			vnode$$1.attrs = attrs;
+    			break
     		}
     	}
 
-    	function assignAttrs(target, attrs, classes) {
-    		var classAttr = "class" in attrs ? "class" : "className";
+    	if (Array.isArray(children) && children.length === 1 && children[0] != null && children[0].tag === "#") {
+    		vnode$$1.text = children[0].children;
+    	} else {
+    		vnode$$1.children = children;
+    	}
 
-    		for (var attrName in attrs) {
-    			if (hasOwn.call(attrs, attrName)) {
-    				if (attrName === classAttr &&
-    						attrs[attrName] != null &&
-    						attrs[attrName] !== "") {
-    					classes.push(attrs[attrName]);
-    					// create key in correct iteration order
-    					target[attrName] = "";
-    				} else {
-    					target[attrName] = attrs[attrName];
+    	return vnode$$1
+    }
+
+    function hyperscript(selector) {
+    	if (selector == null || typeof selector !== "string" && typeof selector !== "function" && typeof selector.view !== "function") {
+    		throw Error("The selector must be either a string or a component.");
+    	}
+
+    	var vnode$$1 = hyperscriptVnode.apply(1, arguments);
+
+    	if (typeof selector === "string") {
+    		vnode$$1.children = vnode.normalizeChildren(vnode$$1.children);
+    		if (selector !== "[") return execSelector(selectorCache[selector] || compileSelector(selector), vnode$$1)
+    	}
+
+    	vnode$$1.tag = selector;
+    	return vnode$$1
+    }
+
+    var hyperscript_1 = hyperscript;
+
+    var trust = function(html) {
+    	if (html == null) html = "";
+    	return vnode("<", undefined, undefined, html, undefined, undefined)
+    };
+
+    var fragment = function() {
+    	var vnode$$1 = hyperscriptVnode.apply(0, arguments);
+
+    	vnode$$1.tag = "[";
+    	vnode$$1.children = vnode.normalizeChildren(vnode$$1.children);
+    	return vnode$$1
+    };
+
+    hyperscript_1.trust = trust;
+    hyperscript_1.fragment = fragment;
+
+    var hyperscript_1$1 = hyperscript_1;
+
+    /** @constructor */
+    var PromisePolyfill = function(executor) {
+    	if (!(this instanceof PromisePolyfill)) throw new Error("Promise must be called with `new`")
+    	if (typeof executor !== "function") throw new TypeError("executor must be a function")
+
+    	var self = this, resolvers = [], rejectors = [], resolveCurrent = handler(resolvers, true), rejectCurrent = handler(rejectors, false);
+    	var instance = self._instance = {resolvers: resolvers, rejectors: rejectors};
+    	var callAsync = typeof setImmediate === "function" ? setImmediate : setTimeout;
+    	function handler(list, shouldAbsorb) {
+    		return function execute(value) {
+    			var then;
+    			try {
+    				if (shouldAbsorb && value != null && (typeof value === "object" || typeof value === "function") && typeof (then = value.then) === "function") {
+    					if (value === self) throw new TypeError("Promise can't be resolved w/ itself")
+    					executeOnce(then.bind(value));
+    				}
+    				else {
+    					callAsync(function() {
+    						if (!shouldAbsorb && list.length === 0) console.error("Possible unhandled promise rejection:", value);
+    						for (var i = 0; i < list.length; i++) list[i](value);
+    						resolvers.length = 0, rejectors.length = 0;
+    						instance.state = shouldAbsorb;
+    						instance.retry = function() {execute(value);};
+    					});
     				}
     			}
-    		}
-
-    		if (classes.length) target[classAttr] = classes.join(" ");
-    	}
-
-    	/**
-    	 *
-    	 * @param {Tag} The DOM node tag
-    	 * @param {Object=[]} optional key-value pairs to be mapped to DOM attrs
-    	 * @param {...mNode=[]} Zero or more Mithril child nodes. Can be an array,
-    	 *                      or splat (optional)
-    	 */
-    	function m(tag, pairs) {
-    		var arguments$1 = arguments;
-
-    		var args = [];
-
-    		for (var i = 1, length = arguments.length; i < length; i++) {
-    			args[i - 1] = arguments$1[i];
-    		}
-
-    		if (tag && isFunction(tag.view)) return parameterize(tag, args)
-
-    		if (!isString(tag)) {
-    			throw new Error("selector in m(selector, attrs, children) should " +
-    				"be a string")
-    		}
-
-    		var hasAttrs = pairs != null && isObject(pairs) &&
-    			!("tag" in pairs || "view" in pairs || "subtree" in pairs);
-
-    		var attrs = hasAttrs ? pairs : {};
-    		var cell = {
-    			tag: "div",
-    			attrs: {},
-    			children: getVirtualChildren(args, hasAttrs)
-    		};
-
-    		assignAttrs(cell.attrs, attrs, parseTagAttrs(cell, tag));
-    		return cell
-    	}
-
-    	function forEach(list, f) {
-    		for (var i = 0; i < list.length && !f(list[i], i++);) {
-    			// function called in condition
+    			catch (e) {
+    				rejectCurrent(e);
+    			}
     		}
     	}
+    	function executeOnce(then) {
+    		var runs = 0;
+    		function run(fn) {
+    			return function(value) {
+    				if (runs++ > 0) return
+    				fn(value);
+    			}
+    		}
+    		var onerror = run(rejectCurrent);
+    		try {then(run(resolveCurrent), onerror);} catch (e) {onerror(e);}
+    	}
 
-    	function forKeys(list, f) {
-    		forEach(list, function (attrs, i) {
-    			return (attrs = attrs && attrs.attrs) &&
-    				attrs.key != null &&
-    				f(attrs, i)
+    	executeOnce(executor);
+    };
+    PromisePolyfill.prototype.then = function(onFulfilled, onRejection) {
+    	var self = this, instance = self._instance;
+    	function handle(callback, list, next, state) {
+    		list.push(function(value) {
+    			if (typeof callback !== "function") next(value);
+    			else try {resolveNext(callback(value));} catch (e) {if (rejectNext) rejectNext(e);}
     		});
+    		if (typeof instance.retry === "function" && state === instance.state) instance.retry();
     	}
-    	// This function was causing deopts in Chrome.
-    	function dataToString(data) {
-    		// data.toString() might throw or return null if data is the return
-    		// value of Console.log in some versions of Firefox (behavior depends on
-    		// version)
-    		try {
-    			if (typeof data !== "boolean" &&
-    					data != null &&
-    					data.toString() != null) return data
-    		} catch (e) {
-    			// silently ignore errors
+    	var resolveNext, rejectNext;
+    	var promise = new PromisePolyfill(function(resolve, reject) {resolveNext = resolve, rejectNext = reject;});
+    	handle(onFulfilled, instance.resolvers, resolveNext, true), handle(onRejection, instance.rejectors, rejectNext, false);
+    	return promise
+    };
+    PromisePolyfill.prototype.catch = function(onRejection) {
+    	return this.then(null, onRejection)
+    };
+    PromisePolyfill.prototype.finally = function(callback) {
+    	return this.then(
+    		function(value) {
+    			return PromisePolyfill.resolve(callback()).then(function() {
+    				return value
+    			})
+    		},
+    		function(reason) {
+    			return PromisePolyfill.resolve(callback()).then(function() {
+    				return PromisePolyfill.reject(reason);
+    			})
     		}
-    		return ""
-    	}
-
-    	// This function was causing deopts in Chrome.
-    	function injectTextNode(parentElement, first, index, data) {
-    		try {
-    			insertNode(parentElement, first, index);
-    			first.nodeValue = data;
-    		} catch (e) {
-    			// IE erroneously throws error when appending an empty text node
-    			// after a null
+    	)
+    };
+    PromisePolyfill.resolve = function(value) {
+    	if (value instanceof PromisePolyfill) return value
+    	return new PromisePolyfill(function(resolve) {resolve(value);})
+    };
+    PromisePolyfill.reject = function(value) {
+    	return new PromisePolyfill(function(resolve, reject) {reject(value);})
+    };
+    PromisePolyfill.all = function(list) {
+    	return new PromisePolyfill(function(resolve, reject) {
+    		var total = list.length, count = 0, values = [];
+    		if (list.length === 0) resolve([]);
+    		else for (var i = 0; i < list.length; i++) {
+    			(function(i) {
+    				function consume(value) {
+    					count++;
+    					values[i] = value;
+    					if (count === total) resolve(values);
+    				}
+    				if (list[i] != null && (typeof list[i] === "object" || typeof list[i] === "function") && typeof list[i].then === "function") {
+    					list[i].then(consume, reject);
+    				}
+    				else consume(list[i]);
+    			})(i);
     		}
-    	}
-
-    	function flatten(list) {
-    		// recursively flatten array
+    	})
+    };
+    PromisePolyfill.race = function(list) {
+    	return new PromisePolyfill(function(resolve, reject) {
     		for (var i = 0; i < list.length; i++) {
-    			if (isArray(list[i])) {
-    				list = list.concat.apply([], list);
-    				// check current index again and flatten until there are no more
-    				// nested arrays at that index
-    				i--;
-    			}
+    			list[i].then(resolve, reject);
     		}
-    		return list
+    	})
+    };
+
+    var polyfill = PromisePolyfill;
+
+    var promise = createCommonjsModule(function (module) {
+
+
+
+    if (typeof window !== "undefined") {
+    	if (typeof window.Promise === "undefined") {
+    		window.Promise = polyfill;
+    	} else if (!window.Promise.prototype.finally) {
+    		window.Promise.prototype.finally = polyfill.prototype.finally;
+    	}
+    	module.exports = window.Promise;
+    } else if (typeof commonjsGlobal !== "undefined") {
+    	if (typeof commonjsGlobal.Promise === "undefined") {
+    		commonjsGlobal.Promise = polyfill;
+    	} else if (!commonjsGlobal.Promise.prototype.finally) {
+    		commonjsGlobal.Promise.prototype.finally = polyfill.prototype.finally;
+    	}
+    	module.exports = commonjsGlobal.Promise;
+    } else {
+    	module.exports = polyfill;
+    }
+    });
+
+    var render = function($window) {
+    	var $doc = $window && $window.document;
+    	var currentRedraw;
+
+    	var nameSpace = {
+    		svg: "http://www.w3.org/2000/svg",
+    		math: "http://www.w3.org/1998/Math/MathML"
+    	};
+
+    	function getNameSpace(vnode$$1) {
+    		return vnode$$1.attrs && vnode$$1.attrs.xmlns || nameSpace[vnode$$1.tag]
     	}
 
-    	function insertNode(parentElement, node, index) {
-    		parentElement.insertBefore(node,
-    			parentElement.childNodes[index] || null);
+    	//sanity check to discourage people from doing `vnode.state = ...`
+    	function checkState(vnode$$1, original) {
+    		if (vnode$$1.state !== original) throw new Error("`vnode.state` must not be modified")
     	}
 
-    	var DELETION = 1;
-    	var INSERTION = 2;
-    	var MOVE = 3;
-
-    	function handleKeysDiffer(data, existing, cached, parentElement) {
-    		forKeys(data, function (key, i) {
-    			existing[key = key.key] = existing[key] ? {
-    				action: MOVE,
-    				index: i,
-    				from: existing[key].index,
-    				element: cached.nodes[existing[key].index] ||
-    					$document.createElement("div")
-    			} : {action: INSERTION, index: i};
-    		});
-
-    		var actions = [];
-    		for (var prop in existing) {
-    			if (hasOwn.call(existing, prop)) {
-    				actions.push(existing[prop]);
-    			}
+    	//Note: the hook is passed as the `this` argument to allow proxying the
+    	//arguments without requiring a full array allocation to do so. It also
+    	//takes advantage of the fact the current `vnode` is the first argument in
+    	//all lifecycle methods.
+    	function callHook(vnode$$1) {
+    		var original = vnode$$1.state;
+    		try {
+    			return this.apply(original, arguments)
+    		} finally {
+    			checkState(vnode$$1, original);
     		}
-
-    		var changes = actions.sort(sortChanges);
-    		var newCached = new Array(cached.length);
-
-    		newCached.nodes = cached.nodes.slice();
-
-    		forEach(changes, function (change) {
-    			var index = change.index;
-    			if (change.action === DELETION) {
-    				clear(cached[index].nodes, cached[index]);
-    				newCached.splice(index, 1);
-    			}
-    			if (change.action === INSERTION) {
-    				var dummy = $document.createElement("div");
-    				dummy.key = data[index].attrs.key;
-    				insertNode(parentElement, dummy, index);
-    				newCached.splice(index, 0, {
-    					attrs: {key: data[index].attrs.key},
-    					nodes: [dummy]
-    				});
-    				newCached.nodes[index] = dummy;
-    			}
-
-    			if (change.action === MOVE) {
-    				var changeElement = change.element;
-    				var maybeChanged = parentElement.childNodes[index];
-    				if (maybeChanged !== changeElement && changeElement !== null) {
-    					parentElement.insertBefore(changeElement,
-    						maybeChanged || null);
-    				}
-    				newCached[index] = cached[change.from];
-    				newCached.nodes[index] = changeElement;
-    			}
-    		});
-
-    		return newCached
     	}
 
-    	function diffKeys(data, cached, existing, parentElement) {
-    		var keysDiffer = data.length !== cached.length;
-
-    		if (!keysDiffer) {
-    			forKeys(data, function (attrs, i) {
-    				var cachedCell = cached[i];
-    				return keysDiffer = cachedCell &&
-    					cachedCell.attrs &&
-    					cachedCell.attrs.key !== attrs.key
-    			});
+    	// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
+    	// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
+    	function activeElement() {
+    		try {
+    			return $doc.activeElement
+    		} catch (e) {
+    			return null
     		}
-
-    		if (keysDiffer) {
-    			return handleKeysDiffer(data, existing, cached, parentElement)
+    	}
+    	//create
+    	function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
+    		for (var i = start; i < end; i++) {
+    			var vnode$$1 = vnodes[i];
+    			if (vnode$$1 != null) {
+    				createNode(parent, vnode$$1, hooks, ns, nextSibling);
+    			}
+    		}
+    	}
+    	function createNode(parent, vnode$$1, hooks, ns, nextSibling) {
+    		var tag = vnode$$1.tag;
+    		if (typeof tag === "string") {
+    			vnode$$1.state = {};
+    			if (vnode$$1.attrs != null) initLifecycle(vnode$$1.attrs, vnode$$1, hooks);
+    			switch (tag) {
+    				case "#": createText(parent, vnode$$1, nextSibling); break
+    				case "<": createHTML(parent, vnode$$1, ns, nextSibling); break
+    				case "[": createFragment(parent, vnode$$1, hooks, ns, nextSibling); break
+    				default: createElement(parent, vnode$$1, hooks, ns, nextSibling);
+    			}
+    		}
+    		else createComponent(parent, vnode$$1, hooks, ns, nextSibling);
+    	}
+    	function createText(parent, vnode$$1, nextSibling) {
+    		vnode$$1.dom = $doc.createTextNode(vnode$$1.children);
+    		insertNode(parent, vnode$$1.dom, nextSibling);
+    	}
+    	var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
+    	function createHTML(parent, vnode$$1, ns, nextSibling) {
+    		var match = vnode$$1.children.match(/^\s*?<(\w+)/im) || [];
+    		// not using the proper parent makes the child element(s) vanish.
+    		//     var div = document.createElement("div")
+    		//     div.innerHTML = "<td>i</td><td>j</td>"
+    		//     console.log(div.innerHTML)
+    		// --> "ij", no <td> in sight.
+    		var temp = $doc.createElement(possibleParents[match[1]] || "div");
+    		if (ns === "http://www.w3.org/2000/svg") {
+    			temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode$$1.children + "</svg>";
+    			temp = temp.firstChild;
     		} else {
-    			return cached
+    			temp.innerHTML = vnode$$1.children;
     		}
+    		vnode$$1.dom = temp.firstChild;
+    		vnode$$1.domSize = temp.childNodes.length;
+    		// Capture nodes to remove, so we don't confuse them.
+    		vnode$$1.instance = [];
+    		var fragment = $doc.createDocumentFragment();
+    		var child;
+    		while (child = temp.firstChild) {
+    			vnode$$1.instance.push(child);
+    			fragment.appendChild(child);
+    		}
+    		insertNode(parent, fragment, nextSibling);
     	}
+    	function createFragment(parent, vnode$$1, hooks, ns, nextSibling) {
+    		var fragment = $doc.createDocumentFragment();
+    		if (vnode$$1.children != null) {
+    			var children = vnode$$1.children;
+    			createNodes(fragment, children, 0, children.length, hooks, null, ns);
+    		}
+    		vnode$$1.dom = fragment.firstChild;
+    		vnode$$1.domSize = fragment.childNodes.length;
+    		insertNode(parent, fragment, nextSibling);
+    	}
+    	function createElement(parent, vnode$$1, hooks, ns, nextSibling) {
+    		var tag = vnode$$1.tag;
+    		var attrs = vnode$$1.attrs;
+    		var is = attrs && attrs.is;
 
-    	function diffArray(data, cached, nodes) {
-    		// diff the array itself
+    		ns = getNameSpace(vnode$$1) || ns;
 
-    		// update the list of DOM nodes by collecting the nodes from each item
-    		forEach(data, function (_, i) {
-    			if (cached[i] != null) nodes.push.apply(nodes, cached[i].nodes);
-    		});
-    		// remove items from the end of the array if the new array is shorter
-    		// than the old one. if errors ever happen here, the issue is most
-    		// likely a bug in the construction of the `cached` data structure
-    		// somewhere earlier in the program
-    		forEach(cached.nodes, function (node, i) {
-    			if (node.parentNode != null && nodes.indexOf(node) < 0) {
-    				clear([node], [cached[i]]);
+    		var element = ns ?
+    			is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
+    			is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
+    		vnode$$1.dom = element;
+
+    		if (attrs != null) {
+    			setAttrs(vnode$$1, attrs, ns);
+    		}
+
+    		insertNode(parent, element, nextSibling);
+
+    		if (!maybeSetContentEditable(vnode$$1)) {
+    			if (vnode$$1.text != null) {
+    				if (vnode$$1.text !== "") element.textContent = vnode$$1.text;
+    				else vnode$$1.children = [vnode("#", undefined, undefined, vnode$$1.text, undefined, undefined)];
     			}
-    		});
-
-    		if (data.length < cached.length) cached.length = data.length;
-    		cached.nodes = nodes;
+    			if (vnode$$1.children != null) {
+    				var children = vnode$$1.children;
+    				createNodes(element, children, 0, children.length, hooks, null, ns);
+    				if (vnode$$1.tag === "select" && attrs != null) setLateSelectAttrs(vnode$$1, attrs);
+    			}
+    		}
+    	}
+    	function initComponent(vnode$$1, hooks) {
+    		var sentinel;
+    		if (typeof vnode$$1.tag.view === "function") {
+    			vnode$$1.state = Object.create(vnode$$1.tag);
+    			sentinel = vnode$$1.state.view;
+    			if (sentinel.$$reentrantLock$$ != null) return
+    			sentinel.$$reentrantLock$$ = true;
+    		} else {
+    			vnode$$1.state = void 0;
+    			sentinel = vnode$$1.tag;
+    			if (sentinel.$$reentrantLock$$ != null) return
+    			sentinel.$$reentrantLock$$ = true;
+    			vnode$$1.state = (vnode$$1.tag.prototype != null && typeof vnode$$1.tag.prototype.view === "function") ? new vnode$$1.tag(vnode$$1) : vnode$$1.tag(vnode$$1);
+    		}
+    		initLifecycle(vnode$$1.state, vnode$$1, hooks);
+    		if (vnode$$1.attrs != null) initLifecycle(vnode$$1.attrs, vnode$$1, hooks);
+    		vnode$$1.instance = vnode.normalize(callHook.call(vnode$$1.state.view, vnode$$1));
+    		if (vnode$$1.instance === vnode$$1) throw Error("A view cannot return the vnode it received as argument")
+    		sentinel.$$reentrantLock$$ = null;
+    	}
+    	function createComponent(parent, vnode$$1, hooks, ns, nextSibling) {
+    		initComponent(vnode$$1, hooks);
+    		if (vnode$$1.instance != null) {
+    			createNode(parent, vnode$$1.instance, hooks, ns, nextSibling);
+    			vnode$$1.dom = vnode$$1.instance.dom;
+    			vnode$$1.domSize = vnode$$1.dom != null ? vnode$$1.instance.domSize : 0;
+    		}
+    		else {
+    			vnode$$1.domSize = 0;
+    		}
     	}
 
-    	function buildArrayKeys(data) {
-    		var guid = 0;
-    		forKeys(data, function () {
-    			forEach(data, function (attrs) {
-    				if ((attrs = attrs && attrs.attrs) && attrs.key == null) {
-    					attrs.key = "__mithril__" + guid++;
+    	//update
+    	/**
+    	 * @param {Element|Fragment} parent - the parent element
+    	 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
+    	 *                               this part of the tree
+    	 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
+    	 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
+    	 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
+    	 *                                       fragment that is not the last item in its
+    	 *                                       parent
+    	 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
+    	 * @returns void
+    	 */
+    	// This function diffs and patches lists of vnodes, both keyed and unkeyed.
+    	//
+    	// We will:
+    	//
+    	// 1. describe its general structure
+    	// 2. focus on the diff algorithm optimizations
+    	// 3. discuss DOM node operations.
+
+    	// ## Overview:
+    	//
+    	// The updateNodes() function:
+    	// - deals with trivial cases
+    	// - determines whether the lists are keyed or unkeyed based on the first non-null node
+    	//   of each list.
+    	// - diffs them and patches the DOM if needed (that's the brunt of the code)
+    	// - manages the leftovers: after diffing, are there:
+    	//   - old nodes left to remove?
+    	// 	 - new nodes to insert?
+    	// 	 deal with them!
+    	//
+    	// The lists are only iterated over once, with an exception for the nodes in `old` that
+    	// are visited in the fourth part of the diff and in the `removeNodes` loop.
+
+    	// ## Diffing
+    	//
+    	// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
+    	// may be good for context on longest increasing subsequence-based logic for moving nodes.
+    	//
+    	// In order to diff keyed lists, one has to
+    	//
+    	// 1) match nodes in both lists, per key, and update them accordingly
+    	// 2) create the nodes present in the new list, but absent in the old one
+    	// 3) remove the nodes present in the old list, but absent in the new one
+    	// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
+    	//
+    	// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
+    	// over the new list and for each new vnode, find the corresponding vnode in the old list using
+    	// the map.
+    	// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
+    	// and must be created.
+    	// For the removals, we actually remove the nodes that have been updated from the old list.
+    	// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
+    	// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
+    	// algorithm.
+    	//
+    	// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
+    	// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
+    	// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
+    	//  match the above lists, for example).
+    	//
+    	// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
+    	// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
+    	//
+    	// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
+    	// the longest increasing subsequence *of old nodes still present in the new list*).
+    	//
+    	// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
+    	// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
+    	// the `LIS` and a temporary one to create the LIS).
+    	//
+    	// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
+    	// the LIS and can be updated without moving them.
+    	//
+    	// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
+    	// the exception of the last node if the list is fully reversed).
+    	//
+    	// ## Finding the next sibling.
+    	//
+    	// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
+    	// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
+    	// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
+    	// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
+    	//
+    	// In the other scenarios (swaps, upwards traversal, map-based diff),
+    	// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
+    	// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
+    	// as the next sibling (cached in the `nextSibling` variable).
+
+
+    	// ## DOM node moves
+    	//
+    	// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
+    	// this is not the case if the node moved (second and fourth part of the diff algo). We move
+    	// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
+    	// variable rather than fetching it using `getNextSibling()`.
+    	//
+    	// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
+    	// like #1791 and #1999. We need to be smarter about those situations where adjascent old
+    	// nodes remain together in the new list in a way that isn't covered by parts one and
+    	// three of the diff algo.
+
+    	function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
+    		if (old === vnodes || old == null && vnodes == null) return
+    		else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
+    		else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
+    		else {
+    			var isOldKeyed = old[0] != null && old[0].key != null;
+    			var isKeyed = vnodes[0] != null && vnodes[0].key != null;
+    			var start = 0, oldStart = 0;
+    			if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
+    			if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
+    			if (isKeyed === null && isOldKeyed == null) return // both lists are full of nulls
+    			if (isOldKeyed !== isKeyed) {
+    				removeNodes(parent, old, oldStart, old.length);
+    				createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    			} else if (!isKeyed) {
+    				// Don't index past the end of either list (causes deopts).
+    				var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
+    				// Rewind if necessary to the first non-null index on either side.
+    				// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
+    				// but that would be optimizing for sparse lists which are more rare than dense ones.
+    				start = start < oldStart ? start : oldStart;
+    				for (; start < commonLength; start++) {
+    					o = old[start];
+    					v = vnodes[start];
+    					if (o === v || o == null && v == null) continue
+    					else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
+    					else if (v == null) removeNode(parent, o);
+    					else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
     				}
-    			});
-    			return 1
-    		});
+    				if (old.length > commonLength) removeNodes(parent, old, start, old.length);
+    				if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    			} else {
+    				// keyed diff
+    				var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
+
+    				// bottom-up
+    				while (oldEnd >= oldStart && end >= start) {
+    					oe = old[oldEnd];
+    					ve = vnodes[end];
+    					if (oe.key !== ve.key) break
+    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    					if (ve.dom != null) nextSibling = ve.dom;
+    					oldEnd--, end--;
+    				}
+    				// top-down
+    				while (oldEnd >= oldStart && end >= start) {
+    					o = old[oldStart];
+    					v = vnodes[start];
+    					if (o.key !== v.key) break
+    					oldStart++, start++;
+    					if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
+    				}
+    				// swaps and list reversals
+    				while (oldEnd >= oldStart && end >= start) {
+    					if (start === end) break
+    					if (o.key !== ve.key || oe.key !== v.key) break
+    					topSibling = getNextSibling(old, oldStart, nextSibling);
+    					moveNodes(parent, oe, topSibling);
+    					if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
+    					if (++start <= --end) moveNodes(parent, o, nextSibling);
+    					if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
+    					if (ve.dom != null) nextSibling = ve.dom;
+    					oldStart++; oldEnd--;
+    					oe = old[oldEnd];
+    					ve = vnodes[end];
+    					o = old[oldStart];
+    					v = vnodes[start];
+    				}
+    				// bottom up once again
+    				while (oldEnd >= oldStart && end >= start) {
+    					if (oe.key !== ve.key) break
+    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    					if (ve.dom != null) nextSibling = ve.dom;
+    					oldEnd--, end--;
+    					oe = old[oldEnd];
+    					ve = vnodes[end];
+    				}
+    				if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
+    				else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    				else {
+    					// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
+    					var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
+    					for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
+    					for (i = end; i >= start; i--) {
+    						if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
+    						ve = vnodes[i];
+    						var oldIndex = map[ve.key];
+    						if (oldIndex != null) {
+    							pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
+    							oldIndices[i-start] = oldIndex;
+    							oe = old[oldIndex];
+    							old[oldIndex] = null;
+    							if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    							if (ve.dom != null) nextSibling = ve.dom;
+    							matched++;
+    						}
+    					}
+    					nextSibling = originalNextSibling;
+    					if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
+    					if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    					else {
+    						if (pos === -1) {
+    							// the indices of the indices of the items that are part of the
+    							// longest increasing subsequence in the oldIndices list
+    							lisIndices = makeLisIndices(oldIndices);
+    							li = lisIndices.length - 1;
+    							for (i = end; i >= start; i--) {
+    								v = vnodes[i];
+    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    								else {
+    									if (lisIndices[li] === i - start) li--;
+    									else moveNodes(parent, v, nextSibling);
+    								}
+    								if (v.dom != null) nextSibling = vnodes[i].dom;
+    							}
+    						} else {
+    							for (i = end; i >= start; i--) {
+    								v = vnodes[i];
+    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    								if (v.dom != null) nextSibling = vnodes[i].dom;
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
+    	function updateNode(parent, old, vnode$$1, hooks, nextSibling, ns) {
+    		var oldTag = old.tag, tag = vnode$$1.tag;
+    		if (oldTag === tag) {
+    			vnode$$1.state = old.state;
+    			vnode$$1.events = old.events;
+    			if (shouldNotUpdate(vnode$$1, old)) return
+    			if (typeof oldTag === "string") {
+    				if (vnode$$1.attrs != null) {
+    					updateLifecycle(vnode$$1.attrs, vnode$$1, hooks);
+    				}
+    				switch (oldTag) {
+    					case "#": updateText(old, vnode$$1); break
+    					case "<": updateHTML(parent, old, vnode$$1, ns, nextSibling); break
+    					case "[": updateFragment(parent, old, vnode$$1, hooks, nextSibling, ns); break
+    					default: updateElement(old, vnode$$1, hooks, ns);
+    				}
+    			}
+    			else updateComponent(parent, old, vnode$$1, hooks, nextSibling, ns);
+    		}
+    		else {
+    			removeNode(parent, old);
+    			createNode(parent, vnode$$1, hooks, ns, nextSibling);
+    		}
+    	}
+    	function updateText(old, vnode$$1) {
+    		if (old.children.toString() !== vnode$$1.children.toString()) {
+    			old.dom.nodeValue = vnode$$1.children;
+    		}
+    		vnode$$1.dom = old.dom;
+    	}
+    	function updateHTML(parent, old, vnode$$1, ns, nextSibling) {
+    		if (old.children !== vnode$$1.children) {
+    			removeHTML(parent, old);
+    			createHTML(parent, vnode$$1, ns, nextSibling);
+    		}
+    		else {
+    			vnode$$1.dom = old.dom;
+    			vnode$$1.domSize = old.domSize;
+    			vnode$$1.instance = old.instance;
+    		}
+    	}
+    	function updateFragment(parent, old, vnode$$1, hooks, nextSibling, ns) {
+    		updateNodes(parent, old.children, vnode$$1.children, hooks, nextSibling, ns);
+    		var domSize = 0, children = vnode$$1.children;
+    		vnode$$1.dom = null;
+    		if (children != null) {
+    			for (var i = 0; i < children.length; i++) {
+    				var child = children[i];
+    				if (child != null && child.dom != null) {
+    					if (vnode$$1.dom == null) vnode$$1.dom = child.dom;
+    					domSize += child.domSize || 1;
+    				}
+    			}
+    			if (domSize !== 1) vnode$$1.domSize = domSize;
+    		}
+    	}
+    	function updateElement(old, vnode$$1, hooks, ns) {
+    		var element = vnode$$1.dom = old.dom;
+    		ns = getNameSpace(vnode$$1) || ns;
+
+    		if (vnode$$1.tag === "textarea") {
+    			if (vnode$$1.attrs == null) vnode$$1.attrs = {};
+    			if (vnode$$1.text != null) {
+    				vnode$$1.attrs.value = vnode$$1.text; //FIXME handle multiple children
+    				vnode$$1.text = undefined;
+    			}
+    		}
+    		updateAttrs(vnode$$1, old.attrs, vnode$$1.attrs, ns);
+    		if (!maybeSetContentEditable(vnode$$1)) {
+    			if (old.text != null && vnode$$1.text != null && vnode$$1.text !== "") {
+    				if (old.text.toString() !== vnode$$1.text.toString()) old.dom.firstChild.nodeValue = vnode$$1.text;
+    			}
+    			else {
+    				if (old.text != null) old.children = [vnode("#", undefined, undefined, old.text, undefined, old.dom.firstChild)];
+    				if (vnode$$1.text != null) vnode$$1.children = [vnode("#", undefined, undefined, vnode$$1.text, undefined, undefined)];
+    				updateNodes(element, old.children, vnode$$1.children, hooks, null, ns);
+    			}
+    		}
+    	}
+    	function updateComponent(parent, old, vnode$$1, hooks, nextSibling, ns) {
+    		vnode$$1.instance = vnode.normalize(callHook.call(vnode$$1.state.view, vnode$$1));
+    		if (vnode$$1.instance === vnode$$1) throw Error("A view cannot return the vnode it received as argument")
+    		updateLifecycle(vnode$$1.state, vnode$$1, hooks);
+    		if (vnode$$1.attrs != null) updateLifecycle(vnode$$1.attrs, vnode$$1, hooks);
+    		if (vnode$$1.instance != null) {
+    			if (old.instance == null) createNode(parent, vnode$$1.instance, hooks, ns, nextSibling);
+    			else updateNode(parent, old.instance, vnode$$1.instance, hooks, nextSibling, ns);
+    			vnode$$1.dom = vnode$$1.instance.dom;
+    			vnode$$1.domSize = vnode$$1.instance.domSize;
+    		}
+    		else if (old.instance != null) {
+    			removeNode(parent, old.instance);
+    			vnode$$1.dom = undefined;
+    			vnode$$1.domSize = 0;
+    		}
+    		else {
+    			vnode$$1.dom = old.dom;
+    			vnode$$1.domSize = old.domSize;
+    		}
+    	}
+    	function getKeyMap(vnodes, start, end) {
+    		var map = Object.create(null);
+    		for (; start < end; start++) {
+    			var vnode$$1 = vnodes[start];
+    			if (vnode$$1 != null) {
+    				var key = vnode$$1.key;
+    				if (key != null) map[key] = start;
+    			}
+    		}
+    		return map
+    	}
+    	// Lifted from ivi https://github.com/ivijs/ivi/
+    	// takes a list of unique numbers (-1 is special and can
+    	// occur multiple times) and returns an array with the indices
+    	// of the items that are part of the longest increasing
+    	// subsequece
+    	var lisTemp = [];
+    	function makeLisIndices(a) {
+    		var result = [0];
+    		var u = 0, v = 0, i = 0;
+    		var il = lisTemp.length = a.length;
+    		for (var i = 0; i < il; i++) lisTemp[i] = a[i];
+    		for (var i = 0; i < il; ++i) {
+    			if (a[i] === -1) continue
+    			var j = result[result.length - 1];
+    			if (a[j] < a[i]) {
+    				lisTemp[i] = j;
+    				result.push(i);
+    				continue
+    			}
+    			u = 0;
+    			v = result.length - 1;
+    			while (u < v) {
+    				// Fast integer average without overflow.
+    				// eslint-disable-next-line no-bitwise
+    				var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
+    				if (a[result[c]] < a[i]) {
+    					u = c + 1;
+    				}
+    				else {
+    					v = c;
+    				}
+    			}
+    			if (a[i] < a[result[u]]) {
+    				if (u > 0) lisTemp[i] = result[u - 1];
+    				result[u] = i;
+    			}
+    		}
+    		u = result.length;
+    		v = result[u - 1];
+    		while (u-- > 0) {
+    			result[u] = v;
+    			v = lisTemp[v];
+    		}
+    		lisTemp.length = 0;
+    		return result
     	}
 
-    	function isDifferentEnough(data, cached, dataAttrKeys) {
-    		if (data.tag !== cached.tag) return true
+    	function getNextSibling(vnodes, i, nextSibling) {
+    		for (; i < vnodes.length; i++) {
+    			if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
+    		}
+    		return nextSibling
+    	}
 
-    		if (dataAttrKeys.sort().join() !==
-    				Object.keys(cached.attrs).sort().join()) {
-    			return true
+    	// This covers a really specific edge case:
+    	// - Parent node is keyed and contains child
+    	// - Child is removed, returns unresolved promise in `onbeforeremove`
+    	// - Parent node is moved in keyed diff
+    	// - Remaining children still need moved appropriately
+    	//
+    	// Ideally, I'd track removed nodes as well, but that introduces a lot more
+    	// complexity and I'm not exactly interested in doing that.
+    	function moveNodes(parent, vnode$$1, nextSibling) {
+    		var frag = $doc.createDocumentFragment();
+    		moveChildToFrag(parent, frag, vnode$$1);
+    		insertNode(parent, frag, nextSibling);
+    	}
+    	function moveChildToFrag(parent, frag, vnode$$1) {
+    		// Dodge the recursion overhead in a few of the most common cases.
+    		while (vnode$$1.dom != null && vnode$$1.dom.parentNode === parent) {
+    			if (typeof vnode$$1.tag !== "string") {
+    				vnode$$1 = vnode$$1.instance;
+    				if (vnode$$1 != null) continue
+    			} else if (vnode$$1.tag === "<") {
+    				for (var i = 0; i < vnode$$1.instance.length; i++) {
+    					frag.appendChild(vnode$$1.instance[i]);
+    				}
+    			} else if (vnode$$1.tag !== "[") {
+    				// Don't recurse for text nodes *or* elements, just fragments
+    				frag.appendChild(vnode$$1.dom);
+    			} else if (vnode$$1.children.length === 1) {
+    				vnode$$1 = vnode$$1.children[0];
+    				if (vnode$$1 != null) continue
+    			} else {
+    				for (var i = 0; i < vnode$$1.children.length; i++) {
+    					var child = vnode$$1.children[i];
+    					if (child != null) moveChildToFrag(parent, frag, child);
+    				}
+    			}
+    			break
+    		}
+    	}
+
+    	function insertNode(parent, dom, nextSibling) {
+    		if (nextSibling != null) parent.insertBefore(dom, nextSibling);
+    		else parent.appendChild(dom);
+    	}
+
+    	function maybeSetContentEditable(vnode$$1) {
+    		if (vnode$$1.attrs == null || (
+    			vnode$$1.attrs.contenteditable == null && // attribute
+    			vnode$$1.attrs.contentEditable == null // property
+    		)) return false
+    		var children = vnode$$1.children;
+    		if (children != null && children.length === 1 && children[0].tag === "<") {
+    			var content = children[0].children;
+    			if (vnode$$1.dom.innerHTML !== content) vnode$$1.dom.innerHTML = content;
+    		}
+    		else if (vnode$$1.text != null || children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted")
+    		return true
+    	}
+
+    	//remove
+    	function removeNodes(parent, vnodes, start, end) {
+    		for (var i = start; i < end; i++) {
+    			var vnode$$1 = vnodes[i];
+    			if (vnode$$1 != null) removeNode(parent, vnode$$1);
+    		}
+    	}
+    	function removeNode(parent, vnode$$1) {
+    		var mask = 0;
+    		var original = vnode$$1.state;
+    		var stateResult, attrsResult;
+    		if (typeof vnode$$1.tag !== "string" && typeof vnode$$1.state.onbeforeremove === "function") {
+    			var result = callHook.call(vnode$$1.state.onbeforeremove, vnode$$1);
+    			if (result != null && typeof result.then === "function") {
+    				mask = 1;
+    				stateResult = result;
+    			}
+    		}
+    		if (vnode$$1.attrs && typeof vnode$$1.attrs.onbeforeremove === "function") {
+    			var result = callHook.call(vnode$$1.attrs.onbeforeremove, vnode$$1);
+    			if (result != null && typeof result.then === "function") {
+    				// eslint-disable-next-line no-bitwise
+    				mask |= 2;
+    				attrsResult = result;
+    			}
+    		}
+    		checkState(vnode$$1, original);
+
+    		// If we can, try to fast-path it and avoid all the overhead of awaiting
+    		if (!mask) {
+    			onremove(vnode$$1);
+    			removeChild(parent, vnode$$1);
+    		} else {
+    			if (stateResult != null) {
+    				var next = function () {
+    					// eslint-disable-next-line no-bitwise
+    					if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
+    				};
+    				stateResult.then(next, next);
+    			}
+    			if (attrsResult != null) {
+    				var next = function () {
+    					// eslint-disable-next-line no-bitwise
+    					if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
+    				};
+    				attrsResult.then(next, next);
+    			}
     		}
 
-    		if (data.attrs.id !== cached.attrs.id) {
-    			return true
+    		function reallyRemove() {
+    			checkState(vnode$$1, original);
+    			onremove(vnode$$1);
+    			removeChild(parent, vnode$$1);
+    		}
+    	}
+    	function removeHTML(parent, vnode$$1) {
+    		for (var i = 0; i < vnode$$1.instance.length; i++) {
+    			parent.removeChild(vnode$$1.instance[i]);
+    		}
+    	}
+    	function removeChild(parent, vnode$$1) {
+    		// Dodge the recursion overhead in a few of the most common cases.
+    		while (vnode$$1.dom != null && vnode$$1.dom.parentNode === parent) {
+    			if (typeof vnode$$1.tag !== "string") {
+    				vnode$$1 = vnode$$1.instance;
+    				if (vnode$$1 != null) continue
+    			} else if (vnode$$1.tag === "<") {
+    				removeHTML(parent, vnode$$1);
+    			} else {
+    				if (vnode$$1.tag !== "[") {
+    					parent.removeChild(vnode$$1.dom);
+    					if (!Array.isArray(vnode$$1.children)) break
+    				}
+    				if (vnode$$1.children.length === 1) {
+    					vnode$$1 = vnode$$1.children[0];
+    					if (vnode$$1 != null) continue
+    				} else {
+    					for (var i = 0; i < vnode$$1.children.length; i++) {
+    						var child = vnode$$1.children[i];
+    						if (child != null) removeChild(parent, child);
+    					}
+    				}
+    			}
+    			break
+    		}
+    	}
+    	function onremove(vnode$$1) {
+    		if (typeof vnode$$1.tag !== "string" && typeof vnode$$1.state.onremove === "function") callHook.call(vnode$$1.state.onremove, vnode$$1);
+    		if (vnode$$1.attrs && typeof vnode$$1.attrs.onremove === "function") callHook.call(vnode$$1.attrs.onremove, vnode$$1);
+    		if (typeof vnode$$1.tag !== "string") {
+    			if (vnode$$1.instance != null) onremove(vnode$$1.instance);
+    		} else {
+    			var children = vnode$$1.children;
+    			if (Array.isArray(children)) {
+    				for (var i = 0; i < children.length; i++) {
+    					var child = children[i];
+    					if (child != null) onremove(child);
+    				}
+    			}
+    		}
+    	}
+
+    	//attrs
+    	function setAttrs(vnode$$1, attrs, ns) {
+    		for (var key in attrs) {
+    			setAttr(vnode$$1, key, null, attrs[key], ns);
+    		}
+    	}
+    	function setAttr(vnode$$1, key, old, value, ns) {
+    		if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode$$1, key)) && typeof value !== "object") return
+    		if (key[0] === "o" && key[1] === "n") return updateEvent(vnode$$1, key, value)
+    		if (key.slice(0, 6) === "xlink:") vnode$$1.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
+    		else if (key === "style") updateStyle(vnode$$1.dom, old, value);
+    		else if (hasPropertyKey(vnode$$1, key, ns)) {
+    			if (key === "value") {
+    				// Only do the coercion if we're actually going to check the value.
+    				/* eslint-disable no-implicit-coercion */
+    				//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
+    				if ((vnode$$1.tag === "input" || vnode$$1.tag === "textarea") && vnode$$1.dom.value === "" + value && vnode$$1.dom === activeElement()) return
+    				//setting select[value] to same value while having select open blinks select dropdown in Chrome
+    				if (vnode$$1.tag === "select" && old !== null && vnode$$1.dom.value === "" + value) return
+    				//setting option[value] to same value while having select open blinks select dropdown in Chrome
+    				if (vnode$$1.tag === "option" && old !== null && vnode$$1.dom.value === "" + value) return
+    				/* eslint-enable no-implicit-coercion */
+    			}
+    			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+    			if (vnode$$1.tag === "input" && key === "type") vnode$$1.dom.setAttribute(key, value);
+    			else vnode$$1.dom[key] = value;
+    		} else {
+    			if (typeof value === "boolean") {
+    				if (value) vnode$$1.dom.setAttribute(key, "");
+    				else vnode$$1.dom.removeAttribute(key);
+    			}
+    			else vnode$$1.dom.setAttribute(key === "className" ? "class" : key, value);
+    		}
+    	}
+    	function removeAttr(vnode$$1, key, old, ns) {
+    		if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
+    		if (key[0] === "o" && key[1] === "n" && !isLifecycleMethod(key)) updateEvent(vnode$$1, key, undefined);
+    		else if (key === "style") updateStyle(vnode$$1.dom, old, null);
+    		else if (
+    			hasPropertyKey(vnode$$1, key, ns)
+    			&& key !== "className"
+    			&& !(key === "value" && (
+    				vnode$$1.tag === "option"
+    				|| vnode$$1.tag === "select" && vnode$$1.dom.selectedIndex === -1 && vnode$$1.dom === activeElement()
+    			))
+    			&& !(vnode$$1.tag === "input" && key === "type")
+    		) {
+    			vnode$$1.dom[key] = null;
+    		} else {
+    			var nsLastIndex = key.indexOf(":");
+    			if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
+    			if (old !== false) vnode$$1.dom.removeAttribute(key === "className" ? "class" : key);
+    		}
+    	}
+    	function setLateSelectAttrs(vnode$$1, attrs) {
+    		if ("value" in attrs) {
+    			if(attrs.value === null) {
+    				if (vnode$$1.dom.selectedIndex !== -1) vnode$$1.dom.value = null;
+    			} else {
+    				var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
+    				if (vnode$$1.dom.value !== normalized || vnode$$1.dom.selectedIndex === -1) {
+    					vnode$$1.dom.value = normalized;
+    				}
+    			}
+    		}
+    		if ("selectedIndex" in attrs) setAttr(vnode$$1, "selectedIndex", null, attrs.selectedIndex, undefined);
+    	}
+    	function updateAttrs(vnode$$1, old, attrs, ns) {
+    		if (attrs != null) {
+    			for (var key in attrs) {
+    				setAttr(vnode$$1, key, old && old[key], attrs[key], ns);
+    			}
+    		}
+    		var val;
+    		if (old != null) {
+    			for (var key in old) {
+    				if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
+    					removeAttr(vnode$$1, key, val, ns);
+    				}
+    			}
+    		}
+    	}
+    	function isFormAttribute(vnode$$1, attr) {
+    		return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode$$1.dom === activeElement() || vnode$$1.tag === "option" && vnode$$1.dom.parentNode === $doc.activeElement
+    	}
+    	function isLifecycleMethod(attr) {
+    		return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
+    	}
+    	function hasPropertyKey(vnode$$1, key, ns) {
+    		// Filter out namespaced keys
+    		return ns === undefined && (
+    			// If it's a custom element, just keep it.
+    			vnode$$1.tag.indexOf("-") > -1 || vnode$$1.attrs != null && vnode$$1.attrs.is ||
+    			// If it's a normal element, let's try to avoid a few browser bugs.
+    			key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
+    			// Defer the property check until *after* we check everything.
+    		) && key in vnode$$1.dom
+    	}
+
+    	//style
+    	var uppercaseRegex = /[A-Z]/g;
+    	function toLowerCase(capital) { return "-" + capital.toLowerCase() }
+    	function normalizeKey(key) {
+    		return key[0] === "-" && key[1] === "-" ? key :
+    			key === "cssFloat" ? "float" :
+    				key.replace(uppercaseRegex, toLowerCase)
+    	}
+    	function updateStyle(element, old, style) {
+    		if (old === style) ; else if (style == null) {
+    			// New style is missing, just clear it.
+    			element.style.cssText = "";
+    		} else if (typeof style !== "object") {
+    			// New style is a string, let engine deal with patching.
+    			element.style.cssText = style;
+    		} else if (old == null || typeof old !== "object") {
+    			// `old` is missing or a string, `style` is an object.
+    			element.style.cssText = "";
+    			// Add new style properties
+    			for (var key in style) {
+    				var value = style[key];
+    				if (value != null) element.style.setProperty(normalizeKey(key), String(value));
+    			}
+    		} else {
+    			// Both old & new are (different) objects.
+    			// Update style properties that have changed
+    			for (var key in style) {
+    				var value = style[key];
+    				if (value != null && (value = String(value)) !== String(old[key])) {
+    					element.style.setProperty(normalizeKey(key), value);
+    				}
+    			}
+    			// Remove style properties that no longer exist
+    			for (var key in old) {
+    				if (old[key] != null && style[key] == null) {
+    					element.style.removeProperty(normalizeKey(key));
+    				}
+    			}
+    		}
+    	}
+
+    	// Here's an explanation of how this works:
+    	// 1. The event names are always (by design) prefixed by `on`.
+    	// 2. The EventListener interface accepts either a function or an object
+    	//    with a `handleEvent` method.
+    	// 3. The object does not inherit from `Object.prototype`, to avoid
+    	//    any potential interference with that (e.g. setters).
+    	// 4. The event name is remapped to the handler before calling it.
+    	// 5. In function-based event handlers, `ev.target === this`. We replicate
+    	//    that below.
+    	// 6. In function-based event handlers, `return false` prevents the default
+    	//    action and stops event propagation. We replicate that below.
+    	function EventDict() {
+    		// Save this, so the current redraw is correctly tracked.
+    		this._ = currentRedraw;
+    	}
+    	EventDict.prototype = Object.create(null);
+    	EventDict.prototype.handleEvent = function (ev) {
+    		var handler = this["on" + ev.type];
+    		var result;
+    		if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
+    		else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
+    		if (this._ && ev.redraw !== false) (0, this._)();
+    		if (result === false) {
+    			ev.preventDefault();
+    			ev.stopPropagation();
+    		}
+    	};
+
+    	//event
+    	function updateEvent(vnode$$1, key, value) {
+    		if (vnode$$1.events != null) {
+    			if (vnode$$1.events[key] === value) return
+    			if (value != null && (typeof value === "function" || typeof value === "object")) {
+    				if (vnode$$1.events[key] == null) vnode$$1.dom.addEventListener(key.slice(2), vnode$$1.events, false);
+    				vnode$$1.events[key] = value;
+    			} else {
+    				if (vnode$$1.events[key] != null) vnode$$1.dom.removeEventListener(key.slice(2), vnode$$1.events, false);
+    				vnode$$1.events[key] = undefined;
+    			}
+    		} else if (value != null && (typeof value === "function" || typeof value === "object")) {
+    			vnode$$1.events = new EventDict();
+    			vnode$$1.dom.addEventListener(key.slice(2), vnode$$1.events, false);
+    			vnode$$1.events[key] = value;
+    		}
+    	}
+
+    	//lifecycle
+    	function initLifecycle(source, vnode$$1, hooks) {
+    		if (typeof source.oninit === "function") callHook.call(source.oninit, vnode$$1);
+    		if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode$$1));
+    	}
+    	function updateLifecycle(source, vnode$$1, hooks) {
+    		if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode$$1));
+    	}
+    	function shouldNotUpdate(vnode$$1, old) {
+    		do {
+    			if (vnode$$1.attrs != null && typeof vnode$$1.attrs.onbeforeupdate === "function") {
+    				var force = callHook.call(vnode$$1.attrs.onbeforeupdate, vnode$$1, old);
+    				if (force !== undefined && !force) break
+    			}
+    			if (typeof vnode$$1.tag !== "string" && typeof vnode$$1.state.onbeforeupdate === "function") {
+    				var force = callHook.call(vnode$$1.state.onbeforeupdate, vnode$$1, old);
+    				if (force !== undefined && !force) break
+    			}
+    			return false
+    		} while (false); // eslint-disable-line no-constant-condition
+    		vnode$$1.dom = old.dom;
+    		vnode$$1.domSize = old.domSize;
+    		vnode$$1.instance = old.instance;
+    		// One would think having the actual latest attributes would be ideal,
+    		// but it doesn't let us properly diff based on our current internal
+    		// representation. We have to save not only the old DOM info, but also
+    		// the attributes used to create it, as we diff *that*, not against the
+    		// DOM directly (with a few exceptions in `setAttr`). And, of course, we
+    		// need to save the children and text as they are conceptually not
+    		// unlike special "attributes" internally.
+    		vnode$$1.attrs = old.attrs;
+    		vnode$$1.children = old.children;
+    		vnode$$1.text = old.text;
+    		return true
+    	}
+
+    	return function(dom, vnodes, redraw) {
+    		if (!dom) throw new TypeError("Ensure the DOM element being passed to m.route/m.mount/m.render is not undefined.")
+    		var hooks = [];
+    		var active = activeElement();
+    		var namespace = dom.namespaceURI;
+
+    		// First time rendering into a node clears it out
+    		if (dom.vnodes == null) dom.textContent = "";
+
+    		vnodes = vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
+    		var prevRedraw = currentRedraw;
+    		try {
+    			currentRedraw = typeof redraw === "function" ? redraw : undefined;
+    			updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
+    		} finally {
+    			currentRedraw = prevRedraw;
+    		}
+    		dom.vnodes = vnodes;
+    		// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
+    		if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
+    		for (var i = 0; i < hooks.length; i++) hooks[i]();
+    	}
+    };
+
+    var render$1 = render(window);
+
+    var mountRedraw = function(render, schedule, console) {
+    	var subscriptions = [];
+    	var rendering = false;
+    	var pending = false;
+
+    	function sync() {
+    		if (rendering) throw new Error("Nested m.redraw.sync() call")
+    		rendering = true;
+    		for (var i = 0; i < subscriptions.length; i += 2) {
+    			try { render(subscriptions[i], vnode(subscriptions[i + 1]), redraw); }
+    			catch (e) { console.error(e); }
+    		}
+    		rendering = false;
+    	}
+
+    	function redraw() {
+    		if (!pending) {
+    			pending = true;
+    			schedule(function() {
+    				pending = false;
+    				sync();
+    			});
+    		}
+    	}
+
+    	redraw.sync = sync;
+
+    	function mount(root, component) {
+    		if (component != null && component.view == null && typeof component !== "function") {
+    			throw new TypeError("m.mount(element, component) expects a component, not a vnode")
     		}
 
-    		if (data.attrs.key !== cached.attrs.key) {
-    			return true
+    		var index = subscriptions.indexOf(root);
+    		if (index >= 0) {
+    			subscriptions.splice(index, 2);
+    			render(root, [], redraw);
     		}
 
-    		if (m.redraw.strategy() === "all") {
-    			return !cached.configContext || cached.configContext.retain !== true
+    		if (component != null) {
+    			subscriptions.push(root, component);
+    			render(root, vnode(component), redraw);
     		}
+    	}
 
-    		if (m.redraw.strategy() === "diff") {
-    			return cached.configContext && cached.configContext.retain === false
+    	return {mount: mount, redraw: redraw}
+    };
+
+    var mountRedraw$1 = mountRedraw(render$1, requestAnimationFrame, console);
+
+    var build = function(object) {
+    	if (Object.prototype.toString.call(object) !== "[object Object]") return ""
+
+    	var args = [];
+    	for (var key in object) {
+    		destructure(key, object[key]);
+    	}
+
+    	return args.join("&")
+
+    	function destructure(key, value) {
+    		if (Array.isArray(value)) {
+    			for (var i = 0; i < value.length; i++) {
+    				destructure(key + "[" + i + "]", value[i]);
+    			}
     		}
+    		else if (Object.prototype.toString.call(value) === "[object Object]") {
+    			for (var i in value) {
+    				destructure(key + "[" + i + "]", value[i]);
+    			}
+    		}
+    		else args.push(encodeURIComponent(key) + (value != null && value !== "" ? "=" + encodeURIComponent(value) : ""));
+    	}
+    };
 
+    var assign = Object.assign || function(target, source) {
+    	if(source) Object.keys(source).forEach(function(key) { target[key] = source[key]; });
+    };
+
+    // Returns `path` from `template` + `params`
+    var build$1 = function(template, params) {
+    	if ((/:([^\/\.-]+)(\.{3})?:/).test(template)) {
+    		throw new SyntaxError("Template parameter names *must* be separated")
+    	}
+    	if (params == null) return template
+    	var queryIndex = template.indexOf("?");
+    	var hashIndex = template.indexOf("#");
+    	var queryEnd = hashIndex < 0 ? template.length : hashIndex;
+    	var pathEnd = queryIndex < 0 ? queryEnd : queryIndex;
+    	var path = template.slice(0, pathEnd);
+    	var query = {};
+
+    	assign(query, params);
+
+    	var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m, key, variadic) {
+    		delete query[key];
+    		// If no such parameter exists, don't interpolate it.
+    		if (params[key] == null) return m
+    		// Escape normal parameters, but not variadic ones.
+    		return variadic ? params[key] : encodeURIComponent(String(params[key]))
+    	});
+
+    	// In case the template substitution adds new query/hash parameters.
+    	var newQueryIndex = resolved.indexOf("?");
+    	var newHashIndex = resolved.indexOf("#");
+    	var newQueryEnd = newHashIndex < 0 ? resolved.length : newHashIndex;
+    	var newPathEnd = newQueryIndex < 0 ? newQueryEnd : newQueryIndex;
+    	var result = resolved.slice(0, newPathEnd);
+
+    	if (queryIndex >= 0) result += template.slice(queryIndex, queryEnd);
+    	if (newQueryIndex >= 0) result += (queryIndex < 0 ? "?" : "&") + resolved.slice(newQueryIndex, newQueryEnd);
+    	var querystring = build(query);
+    	if (querystring) result += (queryIndex < 0 && newQueryIndex < 0 ? "?" : "&") + querystring;
+    	if (hashIndex >= 0) result += template.slice(hashIndex);
+    	if (newHashIndex >= 0) result += (hashIndex < 0 ? "" : "&") + resolved.slice(newHashIndex);
+    	return result
+    };
+
+    var request = function($window, Promise, oncompletion) {
+    	var callbackCount = 0;
+
+    	function PromiseProxy(executor) {
+    		return new Promise(executor)
+    	}
+
+    	// In case the global Promise is some userland library's where they rely on
+    	// `foo instanceof this.constructor`, `this.constructor.resolve(value)`, or
+    	// similar. Let's *not* break them.
+    	PromiseProxy.prototype = Promise.prototype;
+    	PromiseProxy.__proto__ = Promise; // eslint-disable-line no-proto
+
+    	function makeRequest(factory) {
+    		return function(url, args) {
+    			if (typeof url !== "string") { args = url; url = url.url; }
+    			else if (args == null) args = {};
+    			var promise = new Promise(function(resolve, reject) {
+    				factory(build$1(url, args.params), args, function (data) {
+    					if (typeof args.type === "function") {
+    						if (Array.isArray(data)) {
+    							for (var i = 0; i < data.length; i++) {
+    								data[i] = new args.type(data[i]);
+    							}
+    						}
+    						else data = new args.type(data);
+    					}
+    					resolve(data);
+    				}, reject);
+    			});
+    			if (args.background === true) return promise
+    			var count = 0;
+    			function complete() {
+    				if (--count === 0 && typeof oncompletion === "function") oncompletion();
+    			}
+
+    			return wrap(promise)
+
+    			function wrap(promise) {
+    				var then = promise.then;
+    				// Set the constructor, so engines know to not await or resolve
+    				// this as a native promise. At the time of writing, this is
+    				// only necessary for V8, but their behavior is the correct
+    				// behavior per spec. See this spec issue for more details:
+    				// https://github.com/tc39/ecma262/issues/1577. Also, see the
+    				// corresponding comment in `request/tests/test-request.js` for
+    				// a bit more background on the issue at hand.
+    				promise.constructor = PromiseProxy;
+    				promise.then = function() {
+    					count++;
+    					var next = then.apply(promise, arguments);
+    					next.then(complete, function(e) {
+    						complete();
+    						if (count === 0) throw e
+    					});
+    					return wrap(next)
+    				};
+    				return promise
+    			}
+    		}
+    	}
+
+    	function hasHeader(args, name) {
+    		for (var key in args.headers) {
+    			if ({}.hasOwnProperty.call(args.headers, key) && name.test(key)) return true
+    		}
     		return false
     	}
 
-    	function maybeRecreateObject(data, cached, dataAttrKeys) {
-    		// if an element is different enough from the one in cache, recreate it
-    		if (isDifferentEnough(data, cached, dataAttrKeys)) {
-    			if (cached.nodes.length) clear(cached.nodes);
-
-    			if (cached.configContext &&
-    					isFunction(cached.configContext.onunload)) {
-    				cached.configContext.onunload();
-    			}
-
-    			if (cached.controllers) {
-    				forEach(cached.controllers, function (controller) {
-    					if (controller.onunload) {
-    						controller.onunload({preventDefault: noop});
-    					}
-    				});
-    			}
-    		}
-    	}
-
-    	function getObjectNamespace(data, namespace) {
-    		if (data.attrs.xmlns) return data.attrs.xmlns
-    		if (data.tag === "svg") return "http://www.w3.org/2000/svg"
-    		if (data.tag === "math") return "http://www.w3.org/1998/Math/MathML"
-    		return namespace
-    	}
-
-    	var pendingRequests = 0;
-    	m.startComputation = function () { pendingRequests++; };
-    	m.endComputation = function () {
-    		if (pendingRequests > 1) {
-    			pendingRequests--;
-    		} else {
-    			pendingRequests = 0;
-    			m.redraw();
-    		}
-    	};
-
-    	function unloadCachedControllers(cached, views, controllers) {
-    		if (controllers.length) {
-    			cached.views = views;
-    			cached.controllers = controllers;
-    			forEach(controllers, function (controller) {
-    				if (controller.onunload && controller.onunload.$old) {
-    					controller.onunload = controller.onunload.$old;
-    				}
-
-    				if (pendingRequests && controller.onunload) {
-    					var onunload = controller.onunload;
-    					controller.onunload = function (){};
-    					controller.onunload.$old = onunload;
-    				}
-    			});
-    		}
-    	}
-
-    	function scheduleConfigsToBeCalled(configs, data, node, isNew, cached) {
-    		// schedule configs to be called. They are called after `build` finishes
-    		// running
-    		if (isFunction(data.attrs.config)) {
-    			var context = cached.configContext = cached.configContext || {};
-
-    			// bind
-    			configs.push(function () {
-    				return data.attrs.config.call(data, node, !isNew, context,
-    					cached)
-    			});
-    		}
-    	}
-
-    	function buildUpdatedNode(
-    		cached,
-    		data,
-    		editable,
-    		hasKeys,
-    		namespace,
-    		views,
-    		configs,
-    		controllers
-    	) {
-    		var node = cached.nodes[0];
-
-    		if (hasKeys) {
-    			setAttributes(node, data.tag, data.attrs, cached.attrs, namespace);
-    		}
-
-    		cached.children = build(
-    			node,
-    			data.tag,
-    			undefined,
-    			undefined,
-    			data.children,
-    			cached.children,
-    			false,
-    			0,
-    			data.attrs.contenteditable ? node : editable,
-    			namespace,
-    			configs
-    		);
-
-    		cached.nodes.intact = true;
-
-    		if (controllers.length) {
-    			cached.views = views;
-    			cached.controllers = controllers;
-    		}
-
-    		return node
-    	}
-
-    	function handleNonexistentNodes(data, parentElement, index) {
-    		var nodes;
-    		if (data.$trusted) {
-    			nodes = injectHTML(parentElement, index, data);
-    		} else {
-    			nodes = [$document.createTextNode(data)];
-    			if (!(parentElement.nodeName in voidElements)) {
-    				insertNode(parentElement, nodes[0], index);
-    			}
-    		}
-
-    		var cached;
-
-    		if (typeof data === "string" ||
-    				typeof data === "number" ||
-    				typeof data === "boolean") {
-    			cached = new data.constructor(data);
-    		} else {
-    			cached = data;
-    		}
-
-    		cached.nodes = nodes;
-    		return cached
-    	}
-
-    	function reattachNodes(
-    		data,
-    		cached,
-    		parentElement,
-    		editable,
-    		index,
-    		parentTag
-    	) {
-    		var nodes = cached.nodes;
-    		if (!editable || editable !== $document.activeElement ||
-    				data !== cached) {
-    			if (data.$trusted) {
-    				clear(nodes, cached);
-    				nodes = injectHTML(parentElement, index, data);
-    			} else if (parentTag === "textarea") {
-    				// <textarea> uses `value` instead of `nodeValue`.
-    				parentElement.value = data;
-    			} else if (editable) {
-    				// contenteditable nodes use `innerHTML` instead of `nodeValue`.
-    				editable.innerHTML = data;
-    				nodes = [].slice.call(editable.childNodes);
-    			} else {
-    				// was a trusted string
-    				if (nodes[0].nodeType === 1 || nodes.length > 1 ||
-    						(nodes[0].nodeValue.trim &&
-    							!nodes[0].nodeValue.trim())) {
-    					clear(cached.nodes, cached);
-    					nodes = [$document.createTextNode(data)];
-    				}
-
-    				injectTextNode(parentElement, nodes[0], index, data);
-    			}
-    		}
-    		cached = new data.constructor(data);
-    		cached.nodes = nodes;
-    		cached.$trusted = data.$trusted;
-    		return cached
-    	}
-
-    	function handleTextNode(
-    		cached,
-    		data,
-    		index,
-    		parentElement,
-    		shouldReattach,
-    		editable,
-    		parentTag
-    	) {
-    		if (!cached.nodes.length) {
-    			return handleNonexistentNodes(data, parentElement, index)
-    		} else if (cached.valueOf() !== data.valueOf() || shouldReattach) {
-    			return reattachNodes(data, cached, parentElement, editable, index,
-    				parentTag)
-    		} else {
-    			return (cached.nodes.intact = true, cached)
-    		}
-    	}
-
-    	function getSubArrayCount(item) {
-    		if (item.$trusted) {
-    			// fix offset of next element if item was a trusted string w/ more
-    			// than one html element
-    			return item.nodes.length
-    		} else if (isArray(item)) {
-    			return item.length
-    		}
-    		return 1
-    	}
-
-    	function buildArray(
-    		data,
-    		cached,
-    		parentElement,
-    		index,
-    		parentTag,
-    		shouldReattach,
-    		editable,
-    		namespace,
-    		configs
-    	) {
-    		data = flatten(data);
-    		var nodes = [];
-    		var intact = cached.length === data.length;
-    		var subArrayCount = 0;
-
-    		// keys algorithm: sort elements without recreating them if keys are
-    		// present
-    		//
-    		// 1) create a map of all existing keys, and mark all for deletion
-    		// 2) add new keys to map and mark them for addition
-    		// 3) if key exists in new list, change action from deletion to a move
-    		// 4) for each key, handle its corresponding action as marked in
-    		//    previous steps
-
-    		var existing = {};
-    		var shouldMaintainIdentities = false;
-
-    		forKeys(cached, function (attrs, i) {
-    			shouldMaintainIdentities = true;
-    			existing[cached[i].attrs.key] = {action: DELETION, index: i};
-    		});
-
-    		buildArrayKeys(data);
-    		if (shouldMaintainIdentities) {
-    			cached = diffKeys(data, cached, existing, parentElement);
-    		}
-    		// end key algorithm
-
-    		var cacheCount = 0;
-    		// faster explicitly written
-    		for (var i = 0, len = data.length; i < len; i++) {
-    			// diff each item in the array
-    			var item = build(
-    				parentElement,
-    				parentTag,
-    				cached,
-    				index,
-    				data[i],
-    				cached[cacheCount],
-    				shouldReattach,
-    				index + subArrayCount || subArrayCount,
-    				editable,
-    				namespace,
-    				configs);
-
-    			if (item !== undefined) {
-    				intact = intact && item.nodes.intact;
-    				subArrayCount += getSubArrayCount(item);
-    				cached[cacheCount++] = item;
-    			}
-    		}
-
-    		if (!intact) diffArray(data, cached, nodes);
-    		return cached
-    	}
-
-    	function makeCache(data, cached, index, parentIndex, parentCache) {
-    		if (cached != null) {
-    			if (type.call(cached) === type.call(data)) return cached
-
-    			if (parentCache && parentCache.nodes) {
-    				var offset = index - parentIndex;
-    				var end = offset + (isArray(data) ? data : cached.nodes).length;
-    				clear(
-    					parentCache.nodes.slice(offset, end),
-    					parentCache.slice(offset, end));
-    			} else if (cached.nodes) {
-    				clear(cached.nodes, cached);
-    			}
-    		}
-
-    		cached = new data.constructor();
-    		// if constructor creates a virtual dom element, use a blank object as
-    		// the base cached node instead of copying the virtual el (#277)
-    		if (cached.tag) cached = {};
-    		cached.nodes = [];
-    		return cached
-    	}
-
-    	function constructNode(data, namespace) {
-    		if (data.attrs.is) {
-    			if (namespace == null) {
-    				return $document.createElement(data.tag, data.attrs.is)
-    			} else {
-    				return $document.createElementNS(namespace, data.tag,
-    					data.attrs.is)
-    			}
-    		} else if (namespace == null) {
-    			return $document.createElement(data.tag)
-    		} else {
-    			return $document.createElementNS(namespace, data.tag)
-    		}
-    	}
-
-    	function constructAttrs(data, node, namespace, hasKeys) {
-    		if (hasKeys) {
-    			return setAttributes(node, data.tag, data.attrs, {}, namespace)
-    		} else {
-    			return data.attrs
-    		}
-    	}
-
-    	function constructChildren(
-    		data,
-    		node,
-    		cached,
-    		editable,
-    		namespace,
-    		configs
-    	) {
-    		if (data.children != null && data.children.length > 0) {
-    			return build(
-    				node,
-    				data.tag,
-    				undefined,
-    				undefined,
-    				data.children,
-    				cached.children,
-    				true,
-    				0,
-    				data.attrs.contenteditable ? node : editable,
-    				namespace,
-    				configs)
-    		} else {
-    			return data.children
-    		}
-    	}
-
-    	function reconstructCached(
-    		data,
-    		attrs,
-    		children,
-    		node,
-    		namespace,
-    		views,
-    		controllers
-    	) {
-    		var cached = {
-    			tag: data.tag,
-    			attrs: attrs,
-    			children: children,
-    			nodes: [node]
-    		};
-
-    		unloadCachedControllers(cached, views, controllers);
-
-    		if (cached.children && !cached.children.nodes) {
-    			cached.children.nodes = [];
-    		}
-
-    		return cached
-    	}
-
-    	function getController(views, view, cachedControllers, controller) {
-    		var controllerIndex;
-
-    		if (m.redraw.strategy() === "diff" && views) {
-    			controllerIndex = views.indexOf(view);
-    		} else {
-    			controllerIndex = -1;
-    		}
-
-    		if (controllerIndex > -1) {
-    			return cachedControllers[controllerIndex]
-    		} else if (isFunction(controller)) {
-    			return new controller()
-    		} else {
-    			return {}
-    		}
-    	}
-
-    	var unloaders = [];
-
-    	function updateLists(views, controllers, view, controller) {
-    		if (controller.onunload != null &&
-    				unloaders.map(function (u) { return u.handler })
-    					.indexOf(controller.onunload) < 0) {
-    			unloaders.push({
-    				controller: controller,
-    				handler: controller.onunload
-    			});
-    		}
-
-    		views.push(view);
-    		controllers.push(controller);
-    	}
-
-    	var forcing = false;
-    	function checkView(
-    		data,
-    		view,
-    		cached,
-    		cachedControllers,
-    		controllers,
-    		views
-    	) {
-    		var controller = getController(
-    			cached.views,
-    			view,
-    			cachedControllers,
-    			data.controller);
-
-    		var key = data && data.attrs && data.attrs.key;
-
-    		if (pendingRequests === 0 ||
-    				forcing ||
-    				cachedControllers &&
-    					cachedControllers.indexOf(controller) > -1) {
-    			data = data.view(controller);
-    		} else {
-    			data = {tag: "placeholder"};
-    		}
-
-    		if (data.subtree === "retain") return data
-    		data.attrs = data.attrs || {};
-    		data.attrs.key = key;
-    		updateLists(views, controllers, view, controller);
-    		return data
-    	}
-
-    	function markViews(data, cached, views, controllers) {
-    		var cachedControllers = cached && cached.controllers;
-
-    		while (data.view != null) {
-    			data = checkView(
-    				data,
-    				data.view.$original || data.view,
-    				cached,
-    				cachedControllers,
-    				controllers,
-    				views);
-    		}
-
-    		return data
-    	}
-
-    	function buildObject( // eslint-disable-line max-statements
-    		data,
-    		cached,
-    		editable,
-    		parentElement,
-    		index,
-    		shouldReattach,
-    		namespace,
-    		configs
-    	) {
-    		var views = [];
-    		var controllers = [];
-
-    		data = markViews(data, cached, views, controllers);
-
-    		if (data.subtree === "retain") return cached
-
-    		if (!data.tag && controllers.length) {
-    			throw new Error("Component template must return a virtual " +
-    				"element, not an array, string, etc.")
-    		}
-
-    		data.attrs = data.attrs || {};
-    		cached.attrs = cached.attrs || {};
-
-    		var dataAttrKeys = Object.keys(data.attrs);
-    		var hasKeys = dataAttrKeys.length > ("key" in data.attrs ? 1 : 0);
-
-    		maybeRecreateObject(data, cached, dataAttrKeys);
-
-    		if (!isString(data.tag)) return
-
-    		var isNew = cached.nodes.length === 0;
-
-    		namespace = getObjectNamespace(data, namespace);
-
-    		var node;
-    		if (isNew) {
-    			node = constructNode(data, namespace);
-    			// set attributes first, then create children
-    			var attrs = constructAttrs(data, node, namespace, hasKeys);
-
-    			// add the node to its parent before attaching children to it
-    			insertNode(parentElement, node, index);
-
-    			var children = constructChildren(data, node, cached, editable,
-    				namespace, configs);
-
-    			cached = reconstructCached(
-    				data,
-    				attrs,
-    				children,
-    				node,
-    				namespace,
-    				views,
-    				controllers);
-    		} else {
-    			node = buildUpdatedNode(
-    				cached,
-    				data,
-    				editable,
-    				hasKeys,
-    				namespace,
-    				views,
-    				configs,
-    				controllers);
-    		}
-
-    		// edge case: setting value on <select> doesn't work before children
-    		// exist, so set it again after children have been created/updated
-    		if (data.tag === "select" && "value" in data.attrs) {
-    			setAttributes(node, data.tag, {value: data.attrs.value}, {},
-    				namespace);
-    		}
-
-    		if (!isNew && shouldReattach === true && node != null) {
-    			insertNode(parentElement, node, index);
-    		}
-
-    		// The configs are called after `build` finishes running
-    		scheduleConfigsToBeCalled(configs, data, node, isNew, cached);
-
-    		return cached
-    	}
-
-    	function build(
-    		parentElement,
-    		parentTag,
-    		parentCache,
-    		parentIndex,
-    		data,
-    		cached,
-    		shouldReattach,
-    		index,
-    		editable,
-    		namespace,
-    		configs
-    	) {
-    		/*
-    		 * `build` is a recursive function that manages creation/diffing/removal
-    		 * of DOM elements based on comparison between `data` and `cached` the
-    		 * diff algorithm can be summarized as this:
-    		 *
-    		 * 1 - compare `data` and `cached`
-    		 * 2 - if they are different, copy `data` to `cached` and update the DOM
-    		 *     based on what the difference is
-    		 * 3 - recursively apply this algorithm for every array and for the
-    		 *     children of every virtual element
-    		 *
-    		 * The `cached` data structure is essentially the same as the previous
-    		 * redraw's `data` data structure, with a few additions:
-    		 * - `cached` always has a property called `nodes`, which is a list of
-    		 *    DOM elements that correspond to the data represented by the
-    		 *    respective virtual element
-    		 * - in order to support attaching `nodes` as a property of `cached`,
-    		 *    `cached` is *always* a non-primitive object, i.e. if the data was
-    		 *    a string, then cached is a String instance. If data was `null` or
-    		 *    `undefined`, cached is `new String("")`
-    		 * - `cached also has a `configContext` property, which is the state
-    		 *    storage object exposed by config(element, isInitialized, context)
-    		 * - when `cached` is an Object, it represents a virtual element; when
-    		 *    it's an Array, it represents a list of elements; when it's a
-    		 *    String, Number or Boolean, it represents a text node
-    		 *
-    		 * `parentElement` is a DOM element used for W3C DOM API calls
-    		 * `parentTag` is only used for handling a corner case for textarea
-    		 * values
-    		 * `parentCache` is used to remove nodes in some multi-node cases
-    		 * `parentIndex` and `index` are used to figure out the offset of nodes.
-    		 * They're artifacts from before arrays started being flattened and are
-    		 * likely refactorable
-    		 * `data` and `cached` are, respectively, the new and old nodes being
-    		 * diffed
-    		 * `shouldReattach` is a flag indicating whether a parent node was
-    		 * recreated (if so, and if this node is reused, then this node must
-    		 * reattach itself to the new parent)
-    		 * `editable` is a flag that indicates whether an ancestor is
-    		 * contenteditable
-    		 * `namespace` indicates the closest HTML namespace as it cascades down
-    		 * from an ancestor
-    		 * `configs` is a list of config functions to run after the topmost
-    		 * `build` call finishes running
-    		 *
-    		 * there's logic that relies on the assumption that null and undefined
-    		 * data are equivalent to empty strings
-    		 * - this prevents lifecycle surprises from procedural helpers that mix
-    		 *   implicit and explicit return statements (e.g.
-    		 *   function foo() {if (cond) return m("div")}
-    		 * - it simplifies diffing code
-    		 */
-    		data = dataToString(data);
-    		if (data.subtree === "retain") return cached
-    		cached = makeCache(data, cached, index, parentIndex, parentCache);
-
-    		if (isArray(data)) {
-    			return buildArray(
-    				data,
-    				cached,
-    				parentElement,
-    				index,
-    				parentTag,
-    				shouldReattach,
-    				editable,
-    				namespace,
-    				configs)
-    		} else if (data != null && isObject(data)) {
-    			return buildObject(
-    				data,
-    				cached,
-    				editable,
-    				parentElement,
-    				index,
-    				shouldReattach,
-    				namespace,
-    				configs)
-    		} else if (!isFunction(data)) {
-    			return handleTextNode(
-    				cached,
-    				data,
-    				index,
-    				parentElement,
-    				shouldReattach,
-    				editable,
-    				parentTag)
-    		} else {
-    			return cached
-    		}
-    	}
-
-    	function sortChanges(a, b) {
-    		return a.action - b.action || a.index - b.index
-    	}
-
-    	function copyStyleAttrs(node, dataAttr, cachedAttr) {
-    		if (cachedAttr === dataAttr) {
-    			node.style = "";
-    			cachedAttr = {};
-    		}
-    		for (var rule in dataAttr) {
-    			if (hasOwn.call(dataAttr, rule)) {
-    				if (cachedAttr == null || cachedAttr[rule] !== dataAttr[rule]) {
-    					node.style[rule] = dataAttr[rule];
-    				}
-    			}
-    		}
-
-    		for (rule in cachedAttr) {
-    			if (hasOwn.call(cachedAttr, rule)) {
-    				if (!hasOwn.call(dataAttr, rule)) node.style[rule] = "";
-    			}
-    		}
-    	}
-
-    	var shouldUseSetAttribute = {
-    		list: 1,
-    		style: 1,
-    		form: 1,
-    		type: 1,
-    		width: 1,
-    		height: 1
-    	};
-
-    	function setSingleAttr(
-    		node,
-    		attrName,
-    		dataAttr,
-    		cachedAttr,
-    		tag,
-    		namespace
-    	) {
-    		if (attrName === "config" || attrName === "key") {
-    			// `config` isn't a real attribute, so ignore it
-    			return true
-    		} else if (isFunction(dataAttr) && attrName.slice(0, 2) === "on") {
-    			// hook event handlers to the auto-redrawing system
-    			node[attrName] = autoredraw(dataAttr, node);
-    		} else if (attrName === "style" && dataAttr != null &&
-    				isObject(dataAttr)) {
-    			// handle `style: {...}`
-    			copyStyleAttrs(node, dataAttr, cachedAttr);
-    		} else if (namespace != null) {
-    			// handle SVG
-    			if (attrName === "href") {
-    				node.setAttributeNS("http://www.w3.org/1999/xlink",
-    					"href", dataAttr);
-    			} else {
-    				node.setAttribute(
-    					attrName === "className" ? "class" : attrName,
-    					dataAttr);
-    			}
-    		} else if (attrName in node && !shouldUseSetAttribute[attrName]) {
-    			// handle cases that are properties (but ignore cases where we
-    			// should use setAttribute instead)
-    			//
-    			// - list and form are typically used as strings, but are DOM
-    			//   element references in js
-    			//
-    			// - when using CSS selectors (e.g. `m("[style='']")`), style is
-    			//   used as a string, but it's an object in js
-    			//
-    			// #348 don't set the value if not needed - otherwise, cursor
-    			// placement breaks in Chrome
-    			// #1252 likewise when `contenteditable` is set on an element.
-    			try {
-    				if (
-    					tag !== "input" && !node.isContentEditable ||
-    					node[attrName] != dataAttr // eslint-disable-line eqeqeq
-    				) {
-    					node[attrName] = dataAttr;
-    				}
-    			} catch (e) {
-    				node.setAttribute(attrName, dataAttr);
-    			}
-    		} else {
-    			try {
-    				node.setAttribute(attrName, dataAttr);
-    			} catch (e) {
-    				// IE8 doesn't allow change input attributes and throws
-    				// an exception. Unfortunately it cannot be handled, because
-    				// error code is not informative.
-    			}
-    		}
-    	}
-
-    	function trySetAttr(
-    		node,
-    		attrName,
-    		dataAttr,
-    		cachedAttr,
-    		cachedAttrs,
-    		tag,
-    		namespace
-    	) {
-    		if (!(attrName in cachedAttrs) ||
-    				(cachedAttr !== dataAttr) ||
-    				typeof dataAttr === "object" ||
-    				($document.activeElement === node)) {
-    			cachedAttrs[attrName] = dataAttr;
-    			try {
-    				return setSingleAttr(
-    					node,
-    					attrName,
-    					dataAttr,
-    					cachedAttr,
-    					tag,
-    					namespace)
-    			} catch (e) {
-    				// swallow IE's invalid argument errors to mimic HTML's
-    				// fallback-to-doing-nothing-on-invalid-attributes behavior
-    				if (e.message.indexOf("Invalid argument") < 0) throw e
-    			}
-    		} else if (attrName === "value" && tag === "input" &&
-    								/* eslint-disable eqeqeq */
-    								node.value != dataAttr) {
-    								// #348 dataAttr may not be a string,
-    								// so use loose comparison
-    								/* eslint-enable eqeqeq */
-    			node.value = dataAttr;
-    		}
-    	}
-
-    	function setAttributes(node, tag, dataAttrs, cachedAttrs, namespace) {
-    		for (var attrName in dataAttrs) {
-    			if (hasOwn.call(dataAttrs, attrName)) {
-    				if (trySetAttr(
-    						node,
-    						attrName,
-    						dataAttrs[attrName],
-    						cachedAttrs[attrName],
-    						cachedAttrs,
-    						tag,
-    						namespace)) {
-    					continue
-    				}
-    			}
-    		}
-    		return cachedAttrs
-    	}
-
-    	function clear(nodes, cached) {
-    		for (var i = nodes.length - 1; i > -1; i--) {
-    			if (nodes[i] && nodes[i].parentNode) {
-    				try {
-    					nodes[i].parentNode.removeChild(nodes[i]);
-    				} catch (e) {
-    					/* eslint-disable max-len */
-    					// ignore if this fails due to order of events (see
-    					// http://stackoverflow.com/questions/21926083/failed-to-execute-removechild-on-node)
-    					/* eslint-enable max-len */
-    				}
-    				cached = [].concat(cached);
-    				if (cached[i]) unload(cached[i]);
-    			}
-    		}
-    		// release memory if nodes is an array. This check should fail if nodes
-    		// is a NodeList (see loop above)
-    		if (nodes.length) {
-    			nodes.length = 0;
-    		}
-    	}
-
-    	function unload(cached) {
-    		if (cached.configContext && isFunction(cached.configContext.onunload)) {
-    			cached.configContext.onunload();
-    			cached.configContext.onunload = null;
-    		}
-    		if (cached.controllers) {
-    			forEach(cached.controllers, function (controller) {
-    				if (isFunction(controller.onunload)) {
-    					controller.onunload({preventDefault: noop});
-    				}
-    			});
-    		}
-    		if (cached.children) {
-    			if (isArray(cached.children)) forEach(cached.children, unload);
-    			else if (cached.children.tag) unload(cached.children);
-    		}
-    	}
-
-    	function appendTextFragment(parentElement, data) {
-    		try {
-    			parentElement.appendChild(
-    				$document.createRange().createContextualFragment(data));
-    		} catch (e) {
-    			parentElement.insertAdjacentHTML("beforeend", data);
-    			replaceScriptNodes(parentElement);
-    		}
-    	}
-
-    	// Replace script tags inside given DOM element with executable ones.
-    	// Will also check children recursively and replace any found script
-    	// tags in same manner.
-    	function replaceScriptNodes(node) {
-    		if (node.tagName === "SCRIPT") {
-    			node.parentNode.replaceChild(buildExecutableNode(node), node);
-    		} else {
-    			var children = node.childNodes;
-    			if (children && children.length) {
-    				for (var i = 0; i < children.length; i++) {
-    					replaceScriptNodes(children[i]);
-    				}
-    			}
-    		}
-
-    		return node
-    	}
-
-    	// Replace script element with one whose contents are executable.
-    	function buildExecutableNode(node){
-    		var scriptEl = document.createElement("script");
-    		var attrs = node.attributes;
-
-    		for (var i = 0; i < attrs.length; i++) {
-    			scriptEl.setAttribute(attrs[i].name, attrs[i].value);
-    		}
-
-    		scriptEl.text = node.innerHTML;
-    		return scriptEl
-    	}
-
-    	function injectHTML(parentElement, index, data) {
-    		var nextSibling = parentElement.childNodes[index];
-    		if (nextSibling) {
-    			var isElement = nextSibling.nodeType !== 1;
-    			var placeholder = $document.createElement("span");
-    			if (isElement) {
-    				parentElement.insertBefore(placeholder, nextSibling || null);
-    				placeholder.insertAdjacentHTML("beforebegin", data);
-    				parentElement.removeChild(placeholder);
-    			} else {
-    				nextSibling.insertAdjacentHTML("beforebegin", data);
-    			}
-    		} else {
-    			appendTextFragment(parentElement, data);
-    		}
-
-    		var nodes = [];
-
-    		while (parentElement.childNodes[index] !== nextSibling) {
-    			nodes.push(parentElement.childNodes[index]);
-    			index++;
-    		}
-
-    		return nodes
-    	}
-
-    	function autoredraw(callback, object) {
-    		return function (e) {
-    			e = e || event;
-    			m.redraw.strategy("diff");
-    			m.startComputation();
-    			try {
-    				return callback.call(object, e)
-    			} finally {
-    				endFirstComputation();
-    			}
-    		}
-    	}
-
-    	var html;
-    	var documentNode = {
-    		appendChild: function (node) {
-    			if (html === undefined) html = $document.createElement("html");
-    			if ($document.documentElement &&
-    					$document.documentElement !== node) {
-    				$document.replaceChild(node, $document.documentElement);
-    			} else {
-    				$document.appendChild(node);
-    			}
-
-    			this.childNodes = $document.childNodes;
-    		},
-
-    		insertBefore: function (node) {
-    			this.appendChild(node);
-    		},
-
-    		childNodes: []
-    	};
-
-    	var nodeCache = [];
-    	var cellCache = {};
-
-    	m.render = function (root, cell, forceRecreation) {
-    		if (!root) {
-    			throw new Error("Ensure the DOM element being passed to " +
-    				"m.route/m.mount/m.render is not undefined.")
-    		}
-    		var configs = [];
-    		var id = getCellCacheKey(root);
-    		var isDocumentRoot = root === $document;
-    		var node;
-
-    		if (isDocumentRoot || root === $document.documentElement) {
-    			node = documentNode;
-    		} else {
-    			node = root;
-    		}
-
-    		if (isDocumentRoot && cell.tag !== "html") {
-    			cell = {tag: "html", attrs: {}, children: cell};
-    		}
-
-    		if (cellCache[id] === undefined) clear(node.childNodes);
-    		if (forceRecreation === true) reset(root);
-
-    		cellCache[id] = build(
-    			node,
-    			null,
-    			undefined,
-    			undefined,
-    			cell,
-    			cellCache[id],
-    			false,
-    			0,
-    			null,
-    			undefined,
-    			configs);
-
-    		forEach(configs, function (config) { config(); });
-    	};
-
-    	function getCellCacheKey(element) {
-    		var index = nodeCache.indexOf(element);
-    		return index < 0 ? nodeCache.push(element) - 1 : index
-    	}
-
-    	m.trust = function (value) {
-    		value = new String(value); // eslint-disable-line no-new-wrappers
-    		value.$trusted = true;
-    		return value
-    	};
-
-    	function gettersetter(store) {
-    		function prop() {
-    			if (arguments.length) store = arguments[0];
-    			return store
-    		}
-
-    		prop.toJSON = function () {
-    			if (store && isFunction(store.toJSON)) return store.toJSON()
-    			return store
-    		};
-
-    		return prop
-    	}
-
-    	m.prop = function (store) {
-    		if ((store != null && (isObject(store) || isFunction(store)) ||
-    					((typeof Promise !== "undefined") &&
-    						(store instanceof Promise))) &&
-    				isFunction(store.then)) {
-    			return propify(store)
-    		}
-
-    		return gettersetter(store)
-    	};
-
-    	var roots = [];
-    	var components = [];
-    	var controllers = [];
-    	var lastRedrawId = null;
-    	var lastRedrawCallTime = 0;
-    	var computePreRedrawHook = null;
-    	var computePostRedrawHook = null;
-    	var topComponent;
-    	var FRAME_BUDGET = 16; // 60 frames per second = 1 call per 16 ms
-
-    	function parameterize(component, args) {
-    		function controller() {
-    			/* eslint-disable no-invalid-this */
-    			return (component.controller || noop).apply(this, args) || this
-    			/* eslint-enable no-invalid-this */
-    		}
-
-    		if (component.controller) {
-    			controller.prototype = component.controller.prototype;
-    		}
-
-    		function view(ctrl) {
-    			var arguments$1 = arguments;
-
-    			var currentArgs = [ctrl].concat(args);
-    			for (var i = 1; i < arguments.length; i++) {
-    				currentArgs.push(arguments$1[i]);
-    			}
-
-    			return component.view.apply(component, currentArgs)
-    		}
-
-    		view.$original = component.view;
-    		var output = {controller: controller, view: view};
-    		if (args[0] && args[0].key != null) output.attrs = {key: args[0].key};
-    		return output
-    	}
-
-    	m.component = function (component) {
-    		var arguments$1 = arguments;
-
-    		var args = new Array(arguments.length - 1);
-
-    		for (var i = 1; i < arguments.length; i++) {
-    			args[i - 1] = arguments$1[i];
-    		}
-
-    		return parameterize(component, args)
-    	};
-
-    	var currentRoute, previousRoute;
-
-    	function checkPrevented(component, root, index, isPrevented) {
-    		if (!isPrevented) {
-    			m.redraw.strategy("all");
-    			m.startComputation();
-    			roots[index] = root;
-    			var currentComponent;
-
-    			if (component) {
-    				currentComponent = topComponent = component;
-    			} else {
-    				currentComponent = topComponent = component = {controller: noop};
-    			}
-
-    			var controller = new (component.controller || noop)();
-
-    			// controllers may call m.mount recursively (via m.route redirects,
-    			// for example)
-    			// this conditional ensures only the last recursive m.mount call is
-    			// applied
-    			if (currentComponent === topComponent) {
-    				controllers[index] = controller;
-    				components[index] = component;
-    			}
-    			endFirstComputation();
-    			if (component === null) {
-    				removeRootElement(root, index);
-    			}
-    			return controllers[index]
-    		} else {
-    			if (component == null) {
-    				removeRootElement(root, index);
-    			}
-
-    			if (previousRoute) {
-    				currentRoute = previousRoute;
-    			}
-    		}
-    	}
-
-    	m.mount = m.module = function (root, component) {
-    		if (!root) {
-    			throw new Error("Ensure the DOM element being passed to " +
-    				"m.route/m.mount/m.render is not undefined.")
-    		}
-
-    		var index = roots.indexOf(root);
-    		if (index < 0) index = roots.length;
-
-    		var isPrevented = false;
-    		var event = {
-    			preventDefault: function () {
-    				isPrevented = true;
-    				computePreRedrawHook = computePostRedrawHook = null;
-    			}
-    		};
-
-    		forEach(unloaders, function (unloader) {
-    			unloader.handler.call(unloader.controller, event);
-    			unloader.controller.onunload = null;
-    		});
-
-    		if (isPrevented) {
-    			forEach(unloaders, function (unloader) {
-    				unloader.controller.onunload = unloader.handler;
-    			});
-    		} else {
-    			unloaders = [];
-    		}
-
-    		if (controllers[index] && isFunction(controllers[index].onunload)) {
-    			controllers[index].onunload(event);
-    		}
-
-    		return checkPrevented(component, root, index, isPrevented)
-    	};
-
-    	function removeRootElement(root, index) {
-    		roots.splice(index, 1);
-    		controllers.splice(index, 1);
-    		components.splice(index, 1);
-    		reset(root);
-    		nodeCache.splice(getCellCacheKey(root), 1);
-    		unloaders = [];
-    	}
-
-    	var redrawing = false;
-    	m.redraw = function (force) {
-    		if (redrawing) return
-    		redrawing = true;
-    		if (force) forcing = true;
-
-    		try {
-    			// lastRedrawId is a positive number if a second redraw is requested
-    			// before the next animation frame
-    			// lastRedrawId is null if it's the first redraw and not an event
-    			// handler
-    			if (lastRedrawId && !force) {
-    				// when setTimeout: only reschedule redraw if time between now
-    				// and previous redraw is bigger than a frame, otherwise keep
-    				// currently scheduled timeout
-    				// when rAF: always reschedule redraw
-    				if ($requestAnimationFrame === global.requestAnimationFrame ||
-    						new Date() - lastRedrawCallTime > FRAME_BUDGET) {
-    					if (lastRedrawId > 0) $cancelAnimationFrame(lastRedrawId);
-    					lastRedrawId = $requestAnimationFrame(redraw, FRAME_BUDGET);
-    				}
-    			} else {
-    				redraw();
-    				lastRedrawId = $requestAnimationFrame(function () {
-    					lastRedrawId = null;
-    				}, FRAME_BUDGET);
-    			}
-    		} finally {
-    			redrawing = forcing = false;
-    		}
-    	};
-
-    	m.redraw.strategy = m.prop();
-    	function redraw() {
-    		if (computePreRedrawHook) {
-    			computePreRedrawHook();
-    			computePreRedrawHook = null;
-    		}
-    		forEach(roots, function (root, i) {
-    			var component = components[i];
-    			if (controllers[i]) {
-    				var args = [controllers[i]];
-    				m.render(root,
-    					component.view ? component.view(controllers[i], args) : "");
-    			}
-    		});
-    		// after rendering within a routed context, we need to scroll back to
-    		// the top, and fetch the document title for history.pushState
-    		if (computePostRedrawHook) {
-    			computePostRedrawHook();
-    			computePostRedrawHook = null;
-    		}
-    		lastRedrawId = null;
-    		lastRedrawCallTime = new Date();
-    		m.redraw.strategy("diff");
-    	}
-
-    	function endFirstComputation() {
-    		if (m.redraw.strategy() === "none") {
-    			pendingRequests--;
-    			m.redraw.strategy("diff");
-    		} else {
-    			m.endComputation();
-    		}
-    	}
-
-    	m.withAttr = function (prop, withAttrCallback, callbackThis) {
-    		return function (e) {
-    			e = e || window.event;
-    			/* eslint-disable no-invalid-this */
-    			var currentTarget = e.currentTarget || this;
-    			var _this = callbackThis || this;
-    			/* eslint-enable no-invalid-this */
-    			var target = prop in currentTarget ?
-    				currentTarget[prop] :
-    				currentTarget.getAttribute(prop);
-    			withAttrCallback.call(_this, target);
-    		}
-    	};
-
-    	// routing
-    	var modes = {pathname: "", hash: "#", search: "?"};
-    	var redirect = noop;
-    	var isDefaultRoute = false;
-    	var routeParams;
-
-    	m.route = function (root, arg1, arg2, vdom) { // eslint-disable-line
-    		// m.route()
-    		if (arguments.length === 0) return currentRoute
-    		// m.route(el, defaultRoute, routes)
-    		if (arguments.length === 3 && isString(arg1)) {
-    			redirect = function (source) {
-    				var path = currentRoute = normalizeRoute(source);
-    				if (!routeByValue(root, arg2, path)) {
-    					if (isDefaultRoute) {
-    						throw new Error("Ensure the default route matches " +
-    							"one of the routes defined in m.route")
-    					}
-
-    					isDefaultRoute = true;
-    					m.route(arg1, true);
-    					isDefaultRoute = false;
-    				}
+    	return {
+    		request: makeRequest(function(url, args, resolve, reject) {
+    			var method = args.method != null ? args.method.toUpperCase() : "GET";
+    			var body = args.body;
+    			var assumeJSON = (args.serialize == null || args.serialize === JSON.serialize) && !(body instanceof $window.FormData);
+    			var responseType = args.responseType || (typeof args.extract === "function" ? "" : "json");
+
+    			var xhr = new $window.XMLHttpRequest(), aborted = false;
+    			var original = xhr, replacedAbort;
+    			var abort = xhr.abort;
+
+    			xhr.abort = function() {
+    				aborted = true;
+    				abort.call(this);
     			};
 
-    			var listener = m.route.mode === "hash" ?
-    				"onhashchange" :
-    				"onpopstate";
+    			xhr.open(method, url, args.async !== false, typeof args.user === "string" ? args.user : undefined, typeof args.password === "string" ? args.password : undefined);
 
-    			global[listener] = function () {
-    				var path = $location[m.route.mode];
-    				if (m.route.mode === "pathname") path += $location.search;
-    				if (currentRoute !== normalizeRoute(path)) redirect(path);
-    			};
-
-    			computePreRedrawHook = setScroll;
-    			global[listener]();
-
-    			return
-    		}
-
-    		// config: m.route
-    		if (root.addEventListener || root.attachEvent) {
-    			var base = m.route.mode !== "pathname" ? $location.pathname : "";
-    			root.href = base + modes[m.route.mode] + vdom.attrs.href;
-    			if (root.addEventListener) {
-    				root.removeEventListener("click", routeUnobtrusive);
-    				root.addEventListener("click", routeUnobtrusive);
-    			} else {
-    				root.detachEvent("onclick", routeUnobtrusive);
-    				root.attachEvent("onclick", routeUnobtrusive);
+    			if (assumeJSON && body != null && !hasHeader(args, /^content-type$/i)) {
+    				xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
     			}
-
-    			return
-    		}
-    		// m.route(route, params, shouldReplaceHistoryEntry)
-    		if (isString(root)) {
-    			previousRoute = currentRoute;
-    			currentRoute = root;
-
-    			var args = arg1 || {};
-    			var queryIndex = currentRoute.indexOf("?");
-    			var params;
-
-    			if (queryIndex > -1) {
-    				params = parseQueryString(currentRoute.slice(queryIndex + 1));
-    			} else {
-    				params = {};
+    			if (typeof args.deserialize !== "function" && !hasHeader(args, /^accept$/i)) {
+    				xhr.setRequestHeader("Accept", "application/json, text/*");
     			}
+    			if (args.withCredentials) xhr.withCredentials = args.withCredentials;
+    			if (args.timeout) xhr.timeout = args.timeout;
+    			xhr.responseType = responseType;
 
-    			for (var i in args) {
-    				if (hasOwn.call(args, i)) {
-    					params[i] = args[i];
+    			for (var key in args.headers) {
+    				if ({}.hasOwnProperty.call(args.headers, key)) {
+    					xhr.setRequestHeader(key, args.headers[key]);
     				}
     			}
 
-    			var querystring = buildQueryString(params);
-    			var currentPath;
+    			xhr.onreadystatechange = function(ev) {
+    				// Don't throw errors on xhr.abort().
+    				if (aborted) return
 
-    			if (queryIndex > -1) {
-    				currentPath = currentRoute.slice(0, queryIndex);
-    			} else {
-    				currentPath = currentRoute;
-    			}
-
-    			if (querystring) {
-    				currentRoute = currentPath +
-    					(currentPath.indexOf("?") === -1 ? "?" : "&") +
-    					querystring;
-    			}
-
-    			var replaceHistory =
-    				(arguments.length === 3 ? arg2 : arg1) === true ||
-    				previousRoute === currentRoute;
-
-    			if (global.history.pushState) {
-    				var method = replaceHistory ? "replaceState" : "pushState";
-    				computePreRedrawHook = setScroll;
-    				computePostRedrawHook = function () {
+    				if (ev.target.readyState === 4) {
     					try {
-    						global.history[method](null, $document.title,
-    							modes[m.route.mode] + currentRoute);
-    					} catch (err) {
-    						// In the event of a pushState or replaceState failure,
-    						// fallback to a standard redirect. This is specifically
-    						// to address a Safari security error when attempting to
-    						// call pushState more than 100 times.
-    						$location[m.route.mode] = currentRoute;
+    						var success = (ev.target.status >= 200 && ev.target.status < 300) || ev.target.status === 304 || (/^file:\/\//i).test(url);
+    						// When the response type isn't "" or "text",
+    						// `xhr.responseText` is the wrong thing to use.
+    						// Browsers do the right thing and throw here, and we
+    						// should honor that and do the right thing by
+    						// preferring `xhr.response` where possible/practical.
+    						var response = ev.target.response, message;
+
+    						if (responseType === "json") {
+    							// For IE and Edge, which don't implement
+    							// `responseType: "json"`.
+    							if (!ev.target.responseType && typeof args.extract !== "function") response = JSON.parse(ev.target.responseText);
+    						} else if (!responseType || responseType === "text") {
+    							// Only use this default if it's text. If a parsed
+    							// document is needed on old IE and friends (all
+    							// unsupported), the user should use a custom
+    							// `config` instead. They're already using this at
+    							// their own risk.
+    							if (response == null) response = ev.target.responseText;
+    						}
+
+    						if (typeof args.extract === "function") {
+    							response = args.extract(ev.target, args);
+    							success = true;
+    						} else if (typeof args.deserialize === "function") {
+    							response = args.deserialize(response);
+    						}
+    						if (success) resolve(response);
+    						else {
+    							try { message = ev.target.responseText; }
+    							catch (e) { message = response; }
+    							var error = new Error(message);
+    							error.code = ev.target.status;
+    							error.response = response;
+    							reject(error);
+    						}
+    					}
+    					catch (e) {
+    						reject(e);
+    					}
+    				}
+    			};
+
+    			if (typeof args.config === "function") {
+    				xhr = args.config(xhr, args, url) || xhr;
+
+    				// Propagate the `abort` to any replacement XHR as well.
+    				if (xhr !== original) {
+    					replacedAbort = xhr.abort;
+    					xhr.abort = function() {
+    						aborted = true;
+    						replacedAbort.call(this);
+    					};
+    				}
+    			}
+
+    			if (body == null) xhr.send();
+    			else if (typeof args.serialize === "function") xhr.send(args.serialize(body));
+    			else if (body instanceof $window.FormData) xhr.send(body);
+    			else xhr.send(JSON.stringify(body));
+    		}),
+    		jsonp: makeRequest(function(url, args, resolve, reject) {
+    			var callbackName = args.callbackName || "_mithril_" + Math.round(Math.random() * 1e16) + "_" + callbackCount++;
+    			var script = $window.document.createElement("script");
+    			$window[callbackName] = function(data) {
+    				delete $window[callbackName];
+    				script.parentNode.removeChild(script);
+    				resolve(data);
+    			};
+    			script.onerror = function() {
+    				delete $window[callbackName];
+    				script.parentNode.removeChild(script);
+    				reject(new Error("JSONP request failed"));
+    			};
+    			script.src = url + (url.indexOf("?") < 0 ? "?" : "&") +
+    				encodeURIComponent(args.callbackKey || "callback") + "=" +
+    				encodeURIComponent(callbackName);
+    			$window.document.documentElement.appendChild(script);
+    		}),
+    	}
+    };
+
+    var request$1 = request(window, promise, mountRedraw$1.redraw);
+
+    var parse = function(string) {
+    	if (string === "" || string == null) return {}
+    	if (string.charAt(0) === "?") string = string.slice(1);
+
+    	var entries = string.split("&"), counters = {}, data = {};
+    	for (var i = 0; i < entries.length; i++) {
+    		var entry = entries[i].split("=");
+    		var key = decodeURIComponent(entry[0]);
+    		var value = entry.length === 2 ? decodeURIComponent(entry[1]) : "";
+
+    		if (value === "true") value = true;
+    		else if (value === "false") value = false;
+
+    		var levels = key.split(/\]\[?|\[/);
+    		var cursor = data;
+    		if (key.indexOf("[") > -1) levels.pop();
+    		for (var j = 0; j < levels.length; j++) {
+    			var level = levels[j], nextLevel = levels[j + 1];
+    			var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
+    			if (level === "") {
+    				var key = levels.slice(0, j).join();
+    				if (counters[key] == null) {
+    					counters[key] = Array.isArray(cursor) ? cursor.length : 0;
+    				}
+    				level = counters[key]++;
+    			}
+    			// Disallow direct prototype pollution
+    			else if (level === "__proto__") break
+    			if (j === levels.length - 1) cursor[level] = value;
+    			else {
+    				// Read own properties exclusively to disallow indirect
+    				// prototype pollution
+    				var desc = Object.getOwnPropertyDescriptor(cursor, level);
+    				if (desc != null) desc = desc.value;
+    				if (desc == null) cursor[level] = desc = isNumber ? [] : {};
+    				cursor = desc;
+    			}
+    		}
+    	}
+    	return data
+    };
+
+    // Returns `{path, params}` from `url`
+    var parse$1 = function(url) {
+    	var queryIndex = url.indexOf("?");
+    	var hashIndex = url.indexOf("#");
+    	var queryEnd = hashIndex < 0 ? url.length : hashIndex;
+    	var pathEnd = queryIndex < 0 ? queryEnd : queryIndex;
+    	var path = url.slice(0, pathEnd).replace(/\/{2,}/g, "/");
+
+    	if (!path) path = "/";
+    	else {
+    		if (path[0] !== "/") path = "/" + path;
+    		if (path.length > 1 && path[path.length - 1] === "/") path = path.slice(0, -1);
+    	}
+    	return {
+    		path: path,
+    		params: queryIndex < 0
+    			? {}
+    			: parse(url.slice(queryIndex + 1, queryEnd)),
+    	}
+    };
+
+    // Compiles a template into a function that takes a resolved path (without query
+    // strings) and returns an object containing the template parameters with their
+    // parsed values. This expects the input of the compiled template to be the
+    // output of `parsePathname`. Note that it does *not* remove query parameters
+    // specified in the template.
+    var compileTemplate = function(template) {
+    	var templateData = parse$1(template);
+    	var templateKeys = Object.keys(templateData.params);
+    	var keys = [];
+    	var regexp = new RegExp("^" + templateData.path.replace(
+    		// I escape literal text so people can use things like `:file.:ext` or
+    		// `:lang-:locale` in routes. This is all merged into one pass so I
+    		// don't also accidentally escape `-` and make it harder to detect it to
+    		// ban it from template parameters.
+    		/:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
+    		function(m, key, extra) {
+    			if (key == null) return "\\" + m
+    			keys.push({k: key, r: extra === "..."});
+    			if (extra === "...") return "(.*)"
+    			if (extra === ".") return "([^/]+)\\."
+    			return "([^/]+)" + (extra || "")
+    		}
+    	) + "$");
+    	return function(data) {
+    		// First, check the params. Usually, there isn't any, and it's just
+    		// checking a static set.
+    		for (var i = 0; i < templateKeys.length; i++) {
+    			if (templateData.params[templateKeys[i]] !== data.params[templateKeys[i]]) return false
+    		}
+    		// If no interpolations exist, let's skip all the ceremony
+    		if (!keys.length) return regexp.test(data.path)
+    		var values = regexp.exec(data.path);
+    		if (values == null) return false
+    		for (var i = 0; i < keys.length; i++) {
+    			data.params[keys[i].k] = keys[i].r ? values[i + 1] : decodeURIComponent(values[i + 1]);
+    		}
+    		return true
+    	}
+    };
+
+    var sentinel = {};
+
+    var router = function($window, mountRedraw) {
+    	var fireAsync;
+
+    	function setPath(path, data, options) {
+    		path = build$1(path, data);
+    		if (fireAsync != null) {
+    			fireAsync();
+    			var state = options ? options.state : null;
+    			var title = options ? options.title : null;
+    			if (options && options.replace) $window.history.replaceState(state, title, route.prefix + path);
+    			else $window.history.pushState(state, title, route.prefix + path);
+    		}
+    		else {
+    			$window.location.href = route.prefix + path;
+    		}
+    	}
+
+    	var currentResolver = sentinel, component, attrs, currentPath, lastUpdate;
+
+    	var SKIP = route.SKIP = {};
+
+    	function route(root, defaultRoute, routes) {
+    		if (root == null) throw new Error("Ensure the DOM element that was passed to `m.route` is not undefined")
+    		// 0 = start
+    		// 1 = init
+    		// 2 = ready
+    		var state = 0;
+
+    		var compiled = Object.keys(routes).map(function(route) {
+    			if (route[0] !== "/") throw new SyntaxError("Routes must start with a `/`")
+    			if ((/:([^\/\.-]+)(\.{3})?:/).test(route)) {
+    				throw new SyntaxError("Route parameter names must be separated with either `/`, `.`, or `-`")
+    			}
+    			return {
+    				route: route,
+    				component: routes[route],
+    				check: compileTemplate(route),
+    			}
+    		});
+    		var callAsync = typeof setImmediate === "function" ? setImmediate : setTimeout;
+    		var p = promise.resolve();
+    		var scheduled = false;
+    		var onremove;
+
+    		fireAsync = null;
+
+    		if (defaultRoute != null) {
+    			var defaultData = parse$1(defaultRoute);
+
+    			if (!compiled.some(function (i) { return i.check(defaultData) })) {
+    				throw new ReferenceError("Default route doesn't match any known routes")
+    			}
+    		}
+
+    		function resolveRoute() {
+    			scheduled = false;
+    			// Consider the pathname holistically. The prefix might even be invalid,
+    			// but that's not our problem.
+    			var prefix = $window.location.hash;
+    			if (route.prefix[0] !== "#") {
+    				prefix = $window.location.search + prefix;
+    				if (route.prefix[0] !== "?") {
+    					prefix = $window.location.pathname + prefix;
+    					if (prefix[0] !== "/") prefix = "/" + prefix;
+    				}
+    			}
+    			// This seemingly useless `.concat()` speeds up the tests quite a bit,
+    			// since the representation is consistently a relatively poorly
+    			// optimized cons string.
+    			var path = prefix.concat()
+    				.replace(/(?:%[a-f89][a-f0-9])+/gim, decodeURIComponent)
+    				.slice(route.prefix.length);
+    			var data = parse$1(path);
+
+    			assign(data.params, $window.history.state);
+
+    			function fail() {
+    				if (path === defaultRoute) throw new Error("Could not resolve default route " + defaultRoute)
+    				setPath(defaultRoute, null, {replace: true});
+    			}
+
+    			loop(0);
+    			function loop(i) {
+    				// 0 = init
+    				// 1 = scheduled
+    				// 2 = done
+    				for (; i < compiled.length; i++) {
+    					if (compiled[i].check(data)) {
+    						var payload = compiled[i].component;
+    						var matchedRoute = compiled[i].route;
+    						var localComp = payload;
+    						var update = lastUpdate = function(comp) {
+    							if (update !== lastUpdate) return
+    							if (comp === SKIP) return loop(i + 1)
+    							component = comp != null && (typeof comp.view === "function" || typeof comp === "function")? comp : "div";
+    							attrs = data.params, currentPath = path, lastUpdate = null;
+    							currentResolver = payload.render ? payload : null;
+    							if (state === 2) mountRedraw.redraw();
+    							else {
+    								state = 2;
+    								mountRedraw.redraw.sync();
+    							}
+    						};
+    						// There's no understating how much I *wish* I could
+    						// use `async`/`await` here...
+    						if (payload.view || typeof payload === "function") {
+    							payload = {};
+    							update(localComp);
+    						}
+    						else if (payload.onmatch) {
+    							p.then(function () {
+    								return payload.onmatch(data.params, path, matchedRoute)
+    							}).then(update, fail);
+    						}
+    						else update("div");
+    						return
+    					}
+    				}
+    				fail();
+    			}
+    		}
+
+    		// Set it unconditionally so `m.route.set` and `m.route.Link` both work,
+    		// even if neither `pushState` nor `hashchange` are supported. It's
+    		// cleared if `hashchange` is used, since that makes it automatically
+    		// async.
+    		fireAsync = function() {
+    			if (!scheduled) {
+    				scheduled = true;
+    				callAsync(resolveRoute);
+    			}
+    		};
+
+    		if (typeof $window.history.pushState === "function") {
+    			onremove = function() {
+    				$window.removeEventListener("popstate", fireAsync, false);
+    			};
+    			$window.addEventListener("popstate", fireAsync, false);
+    		} else if (route.prefix[0] === "#") {
+    			fireAsync = null;
+    			onremove = function() {
+    				$window.removeEventListener("hashchange", resolveRoute, false);
+    			};
+    			$window.addEventListener("hashchange", resolveRoute, false);
+    		}
+
+    		return mountRedraw.mount(root, {
+    			onbeforeupdate: function() {
+    				state = state ? 2 : 1;
+    				return !(!state || sentinel === currentResolver)
+    			},
+    			oncreate: resolveRoute,
+    			onremove: onremove,
+    			view: function() {
+    				if (!state || sentinel === currentResolver) return
+    				// Wrap in a fragment to preserve existing key semantics
+    				var vnode$$1 = [vnode(component, attrs.key, attrs)];
+    				if (currentResolver) vnode$$1 = currentResolver.render(vnode$$1[0]);
+    				return vnode$$1
+    			},
+    		})
+    	}
+    	route.set = function(path, data, options) {
+    		if (lastUpdate != null) {
+    			options = options || {};
+    			options.replace = true;
+    		}
+    		lastUpdate = null;
+    		setPath(path, data, options);
+    	};
+    	route.get = function() {return currentPath};
+    	route.prefix = "#!";
+    	route.Link = {
+    		view: function(vnode$$1) {
+    			var options = vnode$$1.attrs.options;
+    			// Remove these so they don't get overwritten
+    			var attrs = {}, onclick, href;
+    			assign(attrs, vnode$$1.attrs);
+    			// The first two are internal, but the rest are magic attributes
+    			// that need censored to not screw up rendering.
+    			attrs.selector = attrs.options = attrs.key = attrs.oninit =
+    			attrs.oncreate = attrs.onbeforeupdate = attrs.onupdate =
+    			attrs.onbeforeremove = attrs.onremove = null;
+
+    			// Do this now so we can get the most current `href` and `disabled`.
+    			// Those attributes may also be specified in the selector, and we
+    			// should honor that.
+    			var child = hyperscript_1(vnode$$1.attrs.selector || "a", attrs, vnode$$1.children);
+
+    			// Let's provide a *right* way to disable a route link, rather than
+    			// letting people screw up accessibility on accident.
+    			//
+    			// The attribute is coerced so users don't get surprised over
+    			// `disabled: 0` resulting in a button that's somehow routable
+    			// despite being visibly disabled.
+    			if (child.attrs.disabled = Boolean(child.attrs.disabled)) {
+    				child.attrs.href = null;
+    				child.attrs["aria-disabled"] = "true";
+    				// If you *really* do want to do this on a disabled link, use
+    				// an `oncreate` hook to add it.
+    				child.attrs.onclick = null;
+    			} else {
+    				onclick = child.attrs.onclick;
+    				href = child.attrs.href;
+    				child.attrs.href = route.prefix + href;
+    				child.attrs.onclick = function(e) {
+    					var result;
+    					if (typeof onclick === "function") {
+    						result = onclick.call(e.currentTarget, e);
+    					} else if (onclick == null || typeof onclick !== "object") ; else if (typeof onclick.handleEvent === "function") {
+    						onclick.handleEvent(e);
+    					}
+
+    					// Adapted from React Router's implementation:
+    					// https://github.com/ReactTraining/react-router/blob/520a0acd48ae1b066eb0b07d6d4d1790a1d02482/packages/react-router-dom/modules/Link.js
+    					//
+    					// Try to be flexible and intuitive in how we handle links.
+    					// Fun fact: links aren't as obvious to get right as you
+    					// would expect. There's a lot more valid ways to click a
+    					// link than this, and one might want to not simply click a
+    					// link, but right click or command-click it to copy the
+    					// link target, etc. Nope, this isn't just for blind people.
+    					if (
+    						// Skip if `onclick` prevented default
+    						result !== false && !e.defaultPrevented &&
+    						// Ignore everything but left clicks
+    						(e.button === 0 || e.which === 0 || e.which === 1) &&
+    						// Let the browser handle `target=_blank`, etc.
+    						(!e.currentTarget.target || e.currentTarget.target === "_self") &&
+    						// No modifier keys
+    						!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey
+    					) {
+    						e.preventDefault();
+    						e.redraw = false;
+    						route.set(href, null, options);
     					}
     				};
-    				redirect(modes[m.route.mode] + currentRoute);
-    			} else {
-    				$location[m.route.mode] = currentRoute;
-    				redirect(modes[m.route.mode] + currentRoute);
     			}
-
-    			previousRoute = null;
-    		}
+    			return child
+    		},
+    	};
+    	route.param = function(key) {
+    		return attrs && key != null ? attrs[key] : attrs
     	};
 
-    	m.route.param = function (key) {
-    		if (!routeParams) {
-    			throw new Error("You must call m.route(element, defaultRoute, " +
-    				"routes) before calling m.route.param()")
-    		}
-
-    		if (!key) {
-    			return routeParams
-    		}
-
-    		return routeParams[key]
-    	};
-
-    	m.route.mode = "search";
-
-    	function normalizeRoute(route) {
-    		return route.slice(modes[m.route.mode].length)
-    	}
-
-    	function routeByValue(root, router, path) {
-    		routeParams = {};
-
-    		var queryStart = path.indexOf("?");
-    		if (queryStart !== -1) {
-    			routeParams = parseQueryString(
-    				path.substr(queryStart + 1, path.length));
-    			path = path.substr(0, queryStart);
-    		}
-
-    		// Get all routes and check if there's
-    		// an exact match for the current path
-    		var keys = Object.keys(router);
-    		var index = keys.indexOf(path);
-
-    		if (index !== -1){
-    			m.mount(root, router[keys [index]]);
-    			return true
-    		}
-
-    		for (var route in router) {
-    			if (hasOwn.call(router, route)) {
-    				if (route === path) {
-    					m.mount(root, router[route]);
-    					return true
-    				}
-
-    				var matcher = new RegExp("^" + route
-    					.replace(/:[^\/]+?\.{3}/g, "(.*?)")
-    					.replace(/:[^\/]+/g, "([^\\/]+)") + "\/?$");
-
-    				if (matcher.test(path)) {
-    					/* eslint-disable no-loop-func */
-    					path.replace(matcher, function () {
-    						var keys = route.match(/:[^\/]+/g) || [];
-    						var values = [].slice.call(arguments, 1, -2);
-    						forEach(keys, function (key, i) {
-    							routeParams[key.replace(/:|\./g, "")] =
-    								decodeURIComponent(values[i]);
-    						});
-    						m.mount(root, router[route]);
-    					});
-    					/* eslint-enable no-loop-func */
-    					return true
-    				}
-    			}
-    		}
-    	}
-
-    	function routeUnobtrusive(e) {
-    		e = e || event;
-    		if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return
-
-    		if (e.preventDefault) {
-    			e.preventDefault();
-    		} else {
-    			e.returnValue = false;
-    		}
-
-    		var currentTarget = e.currentTarget || e.srcElement;
-    		var args;
-
-    		if (m.route.mode === "pathname" && currentTarget.search) {
-    			args = parseQueryString(currentTarget.search.slice(1));
-    		} else {
-    			args = {};
-    		}
-
-    		while (currentTarget && !/a/i.test(currentTarget.nodeName)) {
-    			currentTarget = currentTarget.parentNode;
-    		}
-
-    		// clear pendingRequests because we want an immediate route change
-    		pendingRequests = 0;
-    		m.route(currentTarget[m.route.mode]
-    			.slice(modes[m.route.mode].length), args);
-    	}
-
-    	function setScroll() {
-    		if (m.route.mode !== "hash" && $location.hash) {
-    			$location.hash = $location.hash;
-    		} else {
-    			global.scrollTo(0, 0);
-    		}
-    	}
-
-    	function buildQueryString(object, prefix) {
-    		var duplicates = {};
-    		var str = [];
-
-    		for (var prop in object) {
-    			if (hasOwn.call(object, prop)) {
-    				var key = prefix ? prefix + "[" + prop + "]" : prop;
-    				var value = object[prop];
-
-    				if (value === null) {
-    					str.push(encodeURIComponent(key));
-    				} else if (isObject(value)) {
-    					str.push(buildQueryString(value, key));
-    				} else if (isArray(value)) {
-    					var keys = [];
-    					duplicates[key] = duplicates[key] || {};
-    					/* eslint-disable no-loop-func */
-    					forEach(value, function (item) {
-    						/* eslint-enable no-loop-func */
-    						if (!duplicates[key][item]) {
-    							duplicates[key][item] = true;
-    							keys.push(encodeURIComponent(key) + "=" +
-    								encodeURIComponent(item));
-    						}
-    					});
-    					str.push(keys.join("&"));
-    				} else if (value !== undefined) {
-    					str.push(encodeURIComponent(key) + "=" +
-    						encodeURIComponent(value));
-    				}
-    			}
-    		}
-
-    		return str.join("&")
-    	}
-
-    	function parseQueryString(str) {
-    		if (str === "" || str == null) return {}
-    		if (str.charAt(0) === "?") str = str.slice(1);
-
-    		var pairs = str.split("&");
-    		var params = {};
-
-    		forEach(pairs, function (string) {
-    			var pair = string.split("=");
-    			var key = decodeURIComponent(pair[0]);
-    			var value = pair.length === 2 ? decodeURIComponent(pair[1]) : null;
-    			if (params[key] != null) {
-    				if (!isArray(params[key])) params[key] = [params[key]];
-    				params[key].push(value);
-    			} else params[key] = value;
-    		});
-
-    		return params
-    	}
-
-    	m.route.buildQueryString = buildQueryString;
-    	m.route.parseQueryString = parseQueryString;
-
-    	function reset(root) {
-    		var cacheKey = getCellCacheKey(root);
-    		clear(root.childNodes, cellCache[cacheKey]);
-    		cellCache[cacheKey] = undefined;
-    	}
-
-    	m.deferred = function () {
-    		var deferred = new Deferred();
-    		deferred.promise = propify(deferred.promise);
-    		return deferred
-    	};
-
-    	function propify(promise, initialValue) {
-    		var prop = m.prop(initialValue);
-    		promise.then(prop);
-    		prop.then = function (resolve, reject) {
-    			return propify(promise.then(resolve, reject), initialValue)
-    		};
-
-    		prop["catch"] = prop.then.bind(null, null);
-    		return prop
-    	}
-    	// Promiz.mithril.js | Zolmeister | MIT
-    	// a modified version of Promiz.js, which does not conform to Promises/A+
-    	// for two reasons:
-    	//
-    	// 1) `then` callbacks are called synchronously (because setTimeout is too
-    	//    slow, and the setImmediate polyfill is too big
-    	//
-    	// 2) throwing subclasses of Error cause the error to be bubbled up instead
-    	//    of triggering rejection (because the spec does not account for the
-    	//    important use case of default browser error handling, i.e. message w/
-    	//    line number)
-
-    	var RESOLVING = 1;
-    	var REJECTING = 2;
-    	var RESOLVED = 3;
-    	var REJECTED = 4;
-
-    	function Deferred(onSuccess, onFailure) {
-    		var self = this;
-    		var state = 0;
-    		var promiseValue = 0;
-    		var next = [];
-
-    		self.promise = {};
-
-    		self.resolve = function (value) {
-    			if (!state) {
-    				promiseValue = value;
-    				state = RESOLVING;
-
-    				fire();
-    			}
-
-    			return self
-    		};
-
-    		self.reject = function (value) {
-    			if (!state) {
-    				promiseValue = value;
-    				state = REJECTING;
-
-    				fire();
-    			}
-
-    			return self
-    		};
-
-    		self.promise.then = function (onSuccess, onFailure) {
-    			var deferred = new Deferred(onSuccess, onFailure);
-
-    			if (state === RESOLVED) {
-    				deferred.resolve(promiseValue);
-    			} else if (state === REJECTED) {
-    				deferred.reject(promiseValue);
-    			} else {
-    				next.push(deferred);
-    			}
-
-    			return deferred.promise
-    		};
-
-    		function finish(type) {
-    			state = type || REJECTED;
-    			next.map(function (deferred) {
-    				if (state === RESOLVED) {
-    					deferred.resolve(promiseValue);
-    				} else {
-    					deferred.reject(promiseValue);
-    				}
-    			});
-    		}
-
-    		function thennable(then, success, failure, notThennable) {
-    			if (((promiseValue != null && isObject(promiseValue)) ||
-    					isFunction(promiseValue)) && isFunction(then)) {
-    				try {
-    					// count protects against abuse calls from spec checker
-    					var count = 0;
-    					then.call(promiseValue, function (value) {
-    						if (count++) return
-    						promiseValue = value;
-    						success();
-    					}, function (value) {
-    						if (count++) return
-    						promiseValue = value;
-    						failure();
-    					});
-    				} catch (e) {
-    					m.deferred.onerror(e);
-    					promiseValue = e;
-    					failure();
-    				}
-    			} else {
-    				notThennable();
-    			}
-    		}
-
-    		function fire() {
-    			// check if it's a thenable
-    			var then;
-    			try {
-    				then = promiseValue && promiseValue.then;
-    			} catch (e) {
-    				m.deferred.onerror(e);
-    				promiseValue = e;
-    				state = REJECTING;
-    				return fire()
-    			}
-
-    			if (state === REJECTING) {
-    				m.deferred.onerror(promiseValue);
-    			}
-
-    			thennable(then, function () {
-    				state = RESOLVING;
-    				fire();
-    			}, function () {
-    				state = REJECTING;
-    				fire();
-    			}, function () {
-    				try {
-    					if (state === RESOLVING && isFunction(onSuccess)) {
-    						promiseValue = onSuccess(promiseValue);
-    					} else if (state === REJECTING && isFunction(onFailure)) {
-    						promiseValue = onFailure(promiseValue);
-    						state = RESOLVING;
-    					}
-    				} catch (e) {
-    					m.deferred.onerror(e);
-    					promiseValue = e;
-    					return finish()
-    				}
-
-    				if (promiseValue === self) {
-    					promiseValue = TypeError();
-    					finish();
-    				} else {
-    					thennable(then, function () {
-    						finish(RESOLVED);
-    					}, finish, function () {
-    						finish(state === RESOLVING && RESOLVED);
-    					});
-    				}
-    			});
-    		}
-    	}
-
-    	m.deferred.onerror = function (e) {
-    		if (type.call(e) === "[object Error]" &&
-    				!/ Error/.test(e.constructor.toString())) {
-    			pendingRequests = 0;
-    			throw e
-    		}
-    	};
-
-    	m.sync = function (args) {
-    		var deferred = m.deferred();
-    		var outstanding = args.length;
-    		var results = [];
-    		var method = "resolve";
-
-    		function synchronizer(pos, resolved) {
-    			return function (value) {
-    				results[pos] = value;
-    				if (!resolved) method = "reject";
-    				if (--outstanding === 0) {
-    					deferred.promise(results);
-    					deferred[method](results);
-    				}
-    				return value
-    			}
-    		}
-
-    		if (args.length > 0) {
-    			forEach(args, function (arg, i) {
-    				arg.then(synchronizer(i, true), synchronizer(i, false));
-    			});
-    		} else {
-    			deferred.resolve([]);
-    		}
-
-    		return deferred.promise
-    	};
-
-    	function identity(value) { return value }
-
-    	function handleJsonp(options) {
-    		var callbackKey = options.callbackName || "mithril_callback_" +
-    			new Date().getTime() + "_" +
-    			(Math.round(Math.random() * 1e16)).toString(36);
-
-    		var script = $document.createElement("script");
-
-    		global[callbackKey] = function (resp) {
-    			script.parentNode.removeChild(script);
-    			options.onload({
-    				type: "load",
-    				target: {
-    					responseText: resp
-    				}
-    			});
-    			global[callbackKey] = undefined;
-    		};
-
-    		script.onerror = function () {
-    			script.parentNode.removeChild(script);
-
-    			options.onerror({
-    				type: "error",
-    				target: {
-    					status: 500,
-    					responseText: JSON.stringify({
-    						error: "Error making jsonp request"
-    					})
-    				}
-    			});
-    			global[callbackKey] = undefined;
-
-    			return false
-    		};
-
-    		script.onload = function () {
-    			return false
-    		};
-
-    		script.src = options.url +
-    			(options.url.indexOf("?") > 0 ? "&" : "?") +
-    			(options.callbackKey ? options.callbackKey : "callback") +
-    			"=" + callbackKey +
-    			"&" + buildQueryString(options.data || {});
-
-    		$document.body.appendChild(script);
-    	}
-
-    	function createXhr(options) {
-    		var xhr = new global.XMLHttpRequest();
-    		xhr.open(options.method, options.url, true, options.user,
-    			options.password);
-
-    		xhr.onreadystatechange = function () {
-    			if (xhr.readyState === 4) {
-    				if (xhr.status >= 200 && xhr.status < 300) {
-    					options.onload({type: "load", target: xhr});
-    				} else {
-    					options.onerror({type: "error", target: xhr});
-    				}
-    			}
-    		};
-
-    		if (options.serialize === JSON.stringify &&
-    				options.data &&
-    				options.method !== "GET") {
-    			xhr.setRequestHeader("Content-Type",
-    				"application/json; charset=utf-8");
-    		}
-
-    		if (options.deserialize === JSON.parse) {
-    			xhr.setRequestHeader("Accept", "application/json, text/*");
-    		}
-
-    		if (isObject(options.headers)) {
-    			for (var header in options.headers) {
-    				if (hasOwn.call(options.headers, header)) {
-    					xhr.setRequestHeader(header, options.headers[header]);
-    				}
-    			}
-    		}
-
-    		if (isFunction(options.config)) {
-    			var maybeXhr = options.config(xhr, options);
-    			if (maybeXhr != null) xhr = maybeXhr;
-    		}
-
-    		var data = options.method === "GET" || !options.data ? "" : options.data;
-
-    		if (data && !isString(data) && data.constructor !== global.FormData) {
-    			throw new Error("Request data should be either be a string or " +
-    				"FormData. Check the `serialize` option in `m.request`")
-    		}
-
-    		xhr.send(data);
-    		return xhr
-    	}
-
-    	function ajax(options) {
-    		if (options.dataType && options.dataType.toLowerCase() === "jsonp") {
-    			return handleJsonp(options)
-    		} else {
-    			return createXhr(options)
-    		}
-    	}
-
-    	function bindData(options, data, serialize) {
-    		if (options.method === "GET" && options.dataType !== "jsonp") {
-    			var prefix = options.url.indexOf("?") < 0 ? "?" : "&";
-    			var querystring = buildQueryString(data);
-    			options.url += (querystring ? prefix + querystring : "");
-    		} else {
-    			options.data = serialize(data);
-    		}
-    	}
-
-    	function parameterizeUrl(url, data) {
-    		if (data) {
-    			url = url.replace(/:[a-z]\w+/gi, function (token){
-    				var key = token.slice(1);
-    				var value = data[key] || token;
-    				delete data[key];
-    				return value
-    			});
-    		}
-    		return url
-    	}
-
-    	m.request = function (options) {
-    		if (options.background !== true) m.startComputation();
-    		var deferred = new Deferred();
-    		var isJSONP = options.dataType &&
-    			options.dataType.toLowerCase() === "jsonp";
-
-    		var serialize, deserialize, extract;
-
-    		if (isJSONP) {
-    			serialize = options.serialize =
-    			deserialize = options.deserialize = identity;
-
-    			extract = function (jsonp) { return jsonp.responseText };
-    		} else {
-    			serialize = options.serialize = options.serialize || JSON.stringify;
-
-    			deserialize = options.deserialize =
-    				options.deserialize || JSON.parse;
-    			extract = options.extract || function (xhr) {
-    				if (xhr.responseText.length || deserialize !== JSON.parse) {
-    					return xhr.responseText
-    				} else {
-    					return null
-    				}
-    			};
-    		}
-
-    		options.method = (options.method || "GET").toUpperCase();
-    		options.url = parameterizeUrl(options.url, options.data);
-    		bindData(options, options.data, serialize);
-    		options.onload = options.onerror = function (ev) {
-    			try {
-    				ev = ev || event;
-    				var response = deserialize(extract(ev.target, options));
-    				if (ev.type === "load") {
-    					if (options.unwrapSuccess) {
-    						response = options.unwrapSuccess(response, ev.target);
-    					}
-
-    					if (isArray(response) && options.type) {
-    						forEach(response, function (res, i) {
-    							response[i] = new options.type(res);
-    						});
-    					} else if (options.type) {
-    						response = new options.type(response);
-    					}
-
-    					deferred.resolve(response);
-    				} else {
-    					if (options.unwrapError) {
-    						response = options.unwrapError(response, ev.target);
-    					}
-
-    					deferred.reject(response);
-    				}
-    			} catch (e) {
-    				deferred.reject(e);
-    				m.deferred.onerror(e);
-    			} finally {
-    				if (options.background !== true) m.endComputation();
-    			}
-    		};
-
-    		ajax(options);
-    		deferred.promise = propify(deferred.promise, options.initialValue);
-    		return deferred.promise
-    	};
-
-    	return m
-    }); // eslint-disable-line
-    });
+    	return route
+    };
+
+    var route = router(window, mountRedraw$1);
+
+    var m$1 = function m() { return hyperscript_1$1.apply(this, arguments) };
+    m$1.m = hyperscript_1$1;
+    m$1.trust = hyperscript_1$1.trust;
+    m$1.fragment = hyperscript_1$1.fragment;
+    m$1.mount = mountRedraw$1.mount;
+    m$1.route = route;
+    m$1.render = render$1;
+    m$1.redraw = mountRedraw$1.redraw;
+    m$1.request = request$1.request;
+    m$1.jsonp = request$1.jsonp;
+    m$1.parseQueryString = parse;
+    m$1.buildQueryString = build;
+    m$1.parsePathname = parse$1;
+    m$1.buildPathname = build$1;
+    m$1.vnode = vnode;
+    m$1.PromisePolyfill = polyfill;
+
+    var mithril = m$1;
 
     window.m = mithril;
     window.Pikaday = pikaday;
@@ -10436,7 +10236,7 @@
 
     // taken from here:
     // https://github.com/JedWatson/classnames/blob/master/index.js
-    var hasOwn = {}.hasOwnProperty;
+    var hasOwn$1 = {}.hasOwnProperty;
 
     function classNames () {
         var arguments$1 = arguments;
@@ -10455,7 +10255,7 @@
                 classes += ' ' + classNames.apply(null, arg);
             } else if (argType === 'object') {
                 for (var key in arg) {
-                    if (hasOwn.call(arg, key) && arg[key]) {
+                    if (hasOwn$1.call(arg, key) && arg[key]) {
                         classes += ' ' + key;
                     }
                 }
