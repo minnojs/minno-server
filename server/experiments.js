@@ -238,6 +238,8 @@ function delete_experiment(user_id, study_id, file_id) {
                 const studies = db.collection('studies');
                 return studies.findOne({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}})
                     .then(function(study_data){
+                        if (!study_data)
+                            return;
                         const exps = study_data.experiments.map(exp=>exp.file_id!==file_id ? exp : {id:exp.id, file_id:exp.file_id, descriptive_id: exp.descriptive_id, inactive:true});
                         return studies.updateOne({_id: study_id},
                             {$set:{experiments: exps}}

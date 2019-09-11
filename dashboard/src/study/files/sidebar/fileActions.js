@@ -42,7 +42,7 @@ export const moveFile = (file, study, notifications) => () => {
     });
 };
 
-export let duplicateFile = (file,study) => () => {
+export let duplicateFile = (file, study) => () => {
     let newPath = m.prop(file.path);
     return messages.prompt({
         header: 'Duplicate File',
@@ -50,7 +50,7 @@ export let duplicateFile = (file,study) => () => {
         prop: newPath
     })
         .then(response => {
-            if (response && newPath() !== file.name) return createFile(study, newPath, file.content);
+            if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
         });
 };
 
@@ -130,7 +130,7 @@ function moveAction(newPath, file, study){
     const isFocused = file.id === m.route.param('fileId');
 
     const def = study
-        .move(newPath,file) // the actual movement
+        .move(newPath, file) // the actual movement
         .then(redirect)
         .catch(response => messages.alert({
             header: 'Move/Rename File',
@@ -163,14 +163,14 @@ function copyAction(path, file, study_id, new_study_id){
 
 let playground;
 export const play = (file,study) => () => {
-    const isSaved = study.files().every(file => !file.hasChanged());  
+    const isSaved = study.files().every(file => !file.hasChanged());
     const isOpenServer = true;
     const open = isOpenServer ? openNew : openOld;
 
     if (isSaved) open();
     else messages.confirm({
         header: 'Play task',
-        content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?' 
+        content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?'
     }).then(response => response && open());
 
     function openNew(){
@@ -223,6 +223,22 @@ export let  createFile = (study, name, content) => {
         .then(response => {
             m.route(`/editor/${study.id}/file/${encodeURIComponent(response.id)}`);
             return response;
+        })
+        .catch(err => messages.alert({
+            header: 'Failed to create file:',
+            content: err.message
+        }));
+};
+
+
+export let  duplicateAction = (study, file, new_path) => {
+    study.duplicateFile({study, new_path:new_path(), path:file.path, isDir:file.isDir})
+        .then(() => {
+
+            if (!file.isDir)
+                m.route(`/editor/${study.id}/file/${encodeURIComponent(new_path())}`);
+            else
+                m.redraw();
         })
         .catch(err => messages.alert({
             header: 'Failed to create file:',

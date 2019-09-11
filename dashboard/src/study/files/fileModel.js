@@ -127,7 +127,6 @@ const fileFactory = fileObj => {
     });
 
     file.content(fileObj.content || '');
-
     if (fileObj.files) file.files = fileObj.files.map(fileFactory).map(file => Object.assign(file, {studyId: fileObj.studyId}));
 
     return file;

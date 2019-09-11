@@ -56,7 +56,6 @@ function update_fingerprint (fingerprint) {
     return use_fingerprint();
 }
 
-
 function update_dbx (dbx) {
     if(!dbx.updated)
         return;

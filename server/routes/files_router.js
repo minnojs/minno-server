@@ -94,11 +94,20 @@ filesRouter.route('/:study_id/file/:file_id/move')
 
         });
 
+filesRouter.route('/:study_id/file/:file_id/duplicate')
+    .post(
+        function(req, res){
+            return files.duplicate_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.new_path)
+                .then(data=>res.json(data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        });
+
+
 filesRouter.route('/:study_id/file/:file_id/copy')
     .put(
         function(req, res){
             return files.copy_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, parseInt(req.body.new_study_id))
-                .then(tags_data=>res.json(tags_data))
+                .then(data=>res.json(data))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 

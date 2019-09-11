@@ -12395,7 +12395,6 @@
         });
 
         file.content(fileObj.content || '');
-
         if (fileObj.files) file.files = fileObj.files.map(fileFactory).map(function (file) { return Object.assign(file, {studyId: fileObj.studyId}); });
 
         return file;
@@ -12561,6 +12560,28 @@
                     return response;
                 })
                 .then(this.sort.bind(this));
+        },
+        duplicateFile: function duplicateFile(ref){
+            var study = ref.study;
+            var path = ref.path;
+            var new_path = ref.new_path;
+            var isDir = ref.isDir;
+
+            // validation (make sure there are no invalid characters)
+            if(/[^/-_.A-Za-z0-9]/.test(new_path)) return Promise.reject({message: ("The file name \"" + new_path + "\" is not valid")});
+
+            // validation (make sure file does not already exist)
+            var exists = this.files().some(function (file) { return file.path === new_path; });
+            if (exists) return Promise.reject({message: ("The file \"" + new_path + "\" already exists")});
+
+            // validateion (make sure direcotry exists)
+            var basePath = (new_path.substring(0, new_path.lastIndexOf('/'))).replace(/^\//, '');
+            var dirExists = basePath === '' || this.files().some(function (file) { return isDir && file.path === basePath; });
+            if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
+            return fetchJson(this.apiURL(("/file/" + path + "/duplicate")), {method:'post', body: {new_path: new_path}})
+                .then(study.mergeFiles.bind(study))
+                .then(this.sort.bind(this));
+
         },
 
         sort: function sort(response){
@@ -13010,7 +13031,7 @@
         });
     }; };
 
-    var duplicateFile = function (file,study) { return function () {
+    var duplicateFile = function (file, study) { return function () {
         var newPath = m.prop(file.path);
         return messages.prompt({
             header: 'Duplicate File',
@@ -13018,7 +13039,7 @@
             prop: newPath
         })
             .then(function (response) {
-                if (response && newPath() !== file.name) return createFile(study, newPath, file.content);
+                if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
             });
     }; };
 
@@ -13098,7 +13119,7 @@
         var isFocused = file.id === m.route.param('fileId');
 
         var def = study
-            .move(newPath,file) // the actual movement
+            .move(newPath, file) // the actual movement
             .then(redirect)
             .catch(function (response) { return messages.alert({
                 header: 'Move/Rename File',
@@ -13131,13 +13152,13 @@
 
     var playground;
     var play$2 = function (file,study) { return function () {
-        var isSaved = study.files().every(function (file) { return !file.hasChanged(); });  
+        var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
         var open = openNew;
 
         if (isSaved) open();
         else messages.confirm({
             header: 'Play task',
-            content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?' 
+            content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?'
         }).then(function (response) { return response && open(); });
 
         function openNew(){
@@ -13172,6 +13193,22 @@
             .then(function (response) {
                 m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(response.id))));
                 return response;
+            })
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to create file:',
+                content: err.message
+            }); });
+    };
+
+
+    var  duplicateAction = function (study, file, new_path) {
+        study.duplicateFile({study: study, new_path:new_path(), path:file.path, isDir:file.isDir})
+            .then(function () {
+
+                if (!file.isDir)
+                    m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(new_path()))));
+                else
+                    m.redraw();
             })
             .catch(function (err) { return messages.alert({
                 header: 'Failed to create file:',
@@ -17149,7 +17186,6 @@
                 })
                 .then(this.sort.bind(this));
         },
-
         sort: function sort(response){
             var files = this.files().sort(sort);
             this.files(files);

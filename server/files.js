@@ -244,6 +244,37 @@ function copy_file(user_id, study_id, file_id, new_study_id) {
     });
 }
 
+
+function duplicate_file(user_id, study_id, file_id, new_file_id) {
+    return has_write_permission(user_id, study_id)
+        .then(function({study_data:study_data}){
+
+            file_id = urlencode.decode(file_id);
+            const new_file_path = path.join(config.user_folder,study_data.folder_name,new_file_id);
+            const exist_file_path = path.join(config.user_folder,study_data.folder_name,file_id);
+
+            return fs.copy(exist_file_path, new_file_path)
+                .then(()=> studies_comp.update_modify(study_id))
+                .then(()=>studies_comp.update_modify(study_id))
+                .then(()=>
+                    fs.stat(new_file_path)
+                        .then(res => {
+                            // if(!res.isDirectory())
+                            //     return  fs.readFile(new_file_path, 'utf8')
+                            //         .then(content=>({content, id: new_file_id, url:new_file_id}));
+                            return     get_study_files(user_id, study_id)
+                                .then(study => study.files);
+
+
+
+                            // walk(path.join(study_data.folder_name,new_file_id), [], path.join(config.user_folder, study_data.folder_name))
+                            //     .then(data=>({id: new_file_id, url:new_file_id, files:data.files}));
+                        })
+
+                );
+        });
+}
+
 function upload(user_id, study_id, req) {
     const form = new formidable.IncomingForm();
     form.maxFileSize = config.maxFileSize;
@@ -283,4 +314,4 @@ function upload(user_id, study_id, req) {
     });
 }
 
-module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, download_data, rename_file, copy_file, upload};
+module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, download_data, rename_file, copy_file, duplicate_file, upload};

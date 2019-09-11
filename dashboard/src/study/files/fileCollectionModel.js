@@ -138,6 +138,23 @@ const studyPrototype = {
             })
             .then(this.sort.bind(this));
     },
+    duplicateFile({study, path, new_path, isDir}){
+        // validation (make sure there are no invalid characters)
+        if(/[^/-_.A-Za-z0-9]/.test(new_path)) return Promise.reject({message: `The file name "${new_path}" is not valid`});
+
+        // validation (make sure file does not already exist)
+        const exists = this.files().some(file => file.path === new_path);
+        if (exists) return Promise.reject({message: `The file "${new_path}" already exists`});
+
+        // validateion (make sure direcotry exists)
+        const basePath = (new_path.substring(0, new_path.lastIndexOf('/'))).replace(/^\//, '');
+        const dirExists = basePath === '' || this.files().some(file => isDir && file.path === basePath);
+        if (!dirExists) return Promise.reject({message: `The directory "${basePath}" does not exist`});
+        return fetchJson(this.apiURL(`/file/${path}/duplicate`), {method:'post', body: {new_path}})
+            .then(study.mergeFiles.bind(study))
+            .then(this.sort.bind(this));
+
+    },
 
     sort(response){
         let files = this.files().sort(sort);

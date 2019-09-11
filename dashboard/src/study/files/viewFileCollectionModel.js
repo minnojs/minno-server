@@ -113,7 +113,6 @@ let studyPrototype = {
             })
             .then(this.sort.bind(this));
     },
-
     sort(response){
         let files = this.files().sort(sort);
         this.files(files);
