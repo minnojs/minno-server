@@ -18842,8 +18842,8 @@
                     m('.row', [
                         m('.col-sm-3', [ m('strong', 'Fingerprint:'),
 
-                            m('.text-muted', ['Fingerprint Bla Bla Bla... ', m('i.fa.fa-info-circle')]),
-                            m('.card.info-box.card-header', ['Bla Bla Bla... ', m('a', {href:'#'}, 'Read more here'), '.']),
+                            m('.text-muted', ['Configuring your fingerprint preferences ', m('i.fa.fa-info-circle')]),
+                            m('.card.info-box.card-header', ['Fingerprint is a method of identifying unique browsers and tracking online activity ', m('a', {href:'#'}, 'Read more here'), '.']),
 
 
                         ]),
