@@ -149,7 +149,7 @@ function download_zip(pth, res) {
                     if (err) {
                         return res.status(err.status || 500).json({message: err.message});
                     } else {
-                        fs.remove(path.join(config.base_folder, config.dataFolder, pth));
+                        fs.remove(path.join(config.base_folder, config.zip_folder, pth));
                     }
                 })
         );
