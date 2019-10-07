@@ -36,9 +36,9 @@ exports.startupGreenlock = async function(app, greenlock_data) {
  
 	    approveDomains: greenlock_data.domains
 	});	
-httpServer=require("http")
+httpServer=await require("http")
     .createServer(glx.middleware(require("redirect-https")()));
-    httpServer.listen(80, function() {
+    httpServer.listen(config.port, function() {
         console.log("Listening for ACME http-01 challenges on", this.address());
     });
 
