@@ -13,54 +13,45 @@ exports.startupGreenlock = async function(app, greenlock_data) {
 	{
 		greenlock_data={owner_email: config.owner_email, domains:config.domains}
 	}
-	console.log(greenlock_data);
-    const greenlock = Greenlock.create({
-        // Let's Encrypt v2 is ACME draft 11
-        version: 'draft-11',
-        server: 'https://acme-v02.api.letsencrypt.org/directory',
-        // Note: If at first you don't succeed, stop and switch to staging
-        //server: "https://acme-staging-v02.api.letsencrypt.org/directory",
-        // You MUST change this to a valid email address
+	var glx = Greenlock.create({
+	    server: "https://acme-v02.api.letsencrypt.org/directory",
+	    // Note: If at first you don't succeed, stop and switch to staging:
+	    // https://acme-staging-v02.api.letsencrypt.org/directory
+	    version: "draft-11", // Let's Encrypt v2 (ACME v2)
         email: greenlock_data.owner_email,
         // You MUST NOT build clients that accept the ToS without asking the user
         agreeTos: true,
-        // You MUST change these to valid domains
-        // NOTE: all domains will validated and listed on the certificate
-        approvedDomains: greenlock_data.domains,
-        // You MUST have access to write to directory where certs are saved
-        // ex: /home/foouser/acme/etc
-        configDir: '~/.config/acme/', // MUST have write access
-        // Get notified of important updates and help me make greenlock better
-        communityMember: true,
-        debug: true
-    });
-    const redirectHttps = require('redirect-https')();
-    const acmeChallengeHandler = greenlock.middleware(redirectHttps);
-    httpServer = require('http')
-        .createServer(acmeChallengeHandler);
+	    // If you wish to replace the default account and domain key storage plugin
+	    store: require("le-store-certbot").create({
+	        configDir: '~/.config/acme/',
+	        webrootPath: "'~/.config/acmeweb/'"
+	    }),
+ 
+	    // Contribute telemetry data to the project
+	    telemetry: false,
+ 
+	    // the default servername to use when the client doesn't specify
+	    // (because some IoT devices don't support servername indication)
+	    servername: greenlock_data.domains[0],
+ 
+	    approveDomains: greenlock_data.domains
+	});	
+httpServer=await require("http")
+    .createServer(glx.middleware(require("redirect-https")()));
     httpServer.listen(config.port, function() {
-        console.log('Listening for ACME http-01 challenges on', this.address());
+        console.log("Listening for ACME http-01 challenges on", this.address());
     });
 
     ////////////////////////
     // http2 via SPDY h2  //
     ////////////////////////
+httpsServer=await require("https")
+    .createServer(glx.httpsOptions, app);
+	httpsServer.listen(config.sslport, function() {
+        console.log("Listening for ACME tls-sni-01 challenges and serve app on", this.address());
+    });
 
-    // spdy is a drop-in replacement for the https API
-    const spdyOptions = Object.assign({}, greenlock.tlsOptions);
-    spdyOptions.spdy = {
-        protocols: ['h2', 'http/1.1'],
-        plain: false
-    };
-    httpsServer = await require('spdy').createServer(spdyOptions, app);
-    httpsServer.on('error', function(err) {
-		console.log(err);
-        throw(err);
-    });
-    httpsServer.on('listening', function() {
-        console.log('Minno-server Started and listening for SPDY/http2/https requests on', this.address());
-    });
-    httpsServer.listen(config.sslport);
+   
 };
 
 exports.startupHttp = async function(app) {
@@ -80,21 +71,33 @@ exports.shutdownHttp = async function() {
 
 exports.startupHttps = async function(app, server_data) {
 	await exports.shutdownHttps();	
-    await exports.startupHttp(app);	
+	await exports.shutdownHttp();
+   //await exports.startupHttp(app);	
+httpServer=await require("http")
+    .createServer(function (req, res) {
+});
+httpServer.listen(config.port);
+ console.log('Minno-server HTTPS redirect Started on PORT ' + config.port);
+
+	httpServer.on('request', require('redirect-https')({
+  port: config.sslport
+, body: '<!-- Hello! Please use HTTPS instead -->'
+, trustProxy: true // default is false
+}));
     const https = require('https');
     if(server_data==null)
         server_data = {privateKey:config.keyFile, certificate:config.certFile, port:config.sslport}
-
+	console.log( JSON.stringify(server_data));
     const credentials = {
-        key: server_data.https.privateKey,
-        cert: server_data.https.certificate
+        key: server_data.privateKey,
+        cert: server_data.certificate
     };
 
     try{
         httpsServer = await https.createServer(credentials, app);
-        httpsServer.listen(server_data.https.port);
+        httpsServer.listen(config.sslport);
         console.log(server_data);
-        console.log('Minno-server Started on PORT ' + server_data.https.port);
+        console.log('Minno-server Started on PORT ' + config.sslport);
     }
     catch(e){
 		console.log(e);
