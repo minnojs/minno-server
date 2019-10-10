@@ -1,6 +1,8 @@
-const express     = require('express');
-const users     = require('../users');
+const express           = require('express');
+const users             = require('../users');
 const connectionsRouter = express.Router();
+const config            = require('../../config');
+const url               = require('url');
 
 module.exports = connectionsRouter;
 
@@ -45,7 +47,9 @@ connectionsRouter.post('/logout',function(req, res) {
 
 
 connectionsRouter.post('/recovery',function(req, res){
-    return users.reset_password_request(req.body.username)
+    const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+
+    return users.reset_password_request(req.body.username, server_url)
         .then(()=>res.json({}))
         .catch(err=>
             res.status(err.status || 500).json({message:err.message}));

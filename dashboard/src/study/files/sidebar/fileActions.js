@@ -232,11 +232,10 @@ export let  createFile = (study, name, content) => {
 
 
 export let  duplicateAction = (study, file, new_path) => {
-    study.duplicateFile({study, new_path:new_path(), path:file.path, isDir:file.isDir})
+    study.duplicateFile({study, id:file.id, new_path:new_path(), isDir:file.isDir})
         .then(() => {
-
             if (!file.isDir)
-                m.route(`/editor/${study.id}/file/${encodeURIComponent(new_path())}`);
+                m.route(`/editor/${study.id}/file/${encodeURIComponent(encodeURIComponent(new_path()))}`);
             else
                 m.redraw();
         })

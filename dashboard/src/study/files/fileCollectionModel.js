@@ -138,7 +138,7 @@ const studyPrototype = {
             })
             .then(this.sort.bind(this));
     },
-    duplicateFile({study, path, new_path, isDir}){
+    duplicateFile({study, id, new_path, isDir}){
         // validation (make sure there are no invalid characters)
         if(/[^/-_.A-Za-z0-9]/.test(new_path)) return Promise.reject({message: `The file name "${new_path}" is not valid`});
 
@@ -148,12 +148,11 @@ const studyPrototype = {
 
         // validateion (make sure direcotry exists)
         const basePath = (new_path.substring(0, new_path.lastIndexOf('/'))).replace(/^\//, '');
-        const dirExists = basePath === '' || this.files().some(file => isDir && file.path === basePath);
+        const dirExists = basePath === '' || this.files().filter(file => isDir && file.path === basePath);
         if (!dirExists) return Promise.reject({message: `The directory "${basePath}" does not exist`});
-        return fetchJson(this.apiURL(`/file/${path}/duplicate`), {method:'post', body: {new_path}})
+        return fetchJson(this.apiURL(`/file/${id}/duplicate`), {method:'post', body: {new_path}})
             .then(study.mergeFiles.bind(study))
             .then(this.sort.bind(this));
-
     },
 
     sort(response){
@@ -190,7 +189,7 @@ const studyPrototype = {
             method:'put',
             body: {path:newpath, url:file.url}
         })
-            .then(study.mergeFiles.bind(study));
+        .then(study.mergeFiles.bind(study));
     },
 
     uploadFiles({path, fd, force}){

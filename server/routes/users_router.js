@@ -1,5 +1,7 @@
 const express     = require('express');
-const users        = require('../users');
+const users       = require('../users');
+const config      = require('../../config');
+const url         = require('url');
 
 const usersRouter = express.Router();
 
@@ -41,8 +43,9 @@ usersRouter.route('')
 usersRouter.route('/add_user')
     .post(
         function(req, res){
+            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
 
-            return users.insert_new_user(req.body)
+            return users.insert_new_user(req.body, server_url)
                 .then((data)=> data  ? res.json(data) : res.json({}))
                 .catch(err=>
                     res.status(err.status || 500).json({message:err.message}));

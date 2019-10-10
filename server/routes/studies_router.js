@@ -2,9 +2,11 @@ const express     = require('express');
 const studies     = require('../studies');
 const tags        = require('../tags');
 const experiments = require('../experiments');
-const versions = require('../versions');
-
+const versions    = require('../versions');
 const studiesRouter = express.Router();
+const config      = require('../../config');
+const url               = require('url');
+
 
 module.exports = studiesRouter;
 
@@ -112,7 +114,6 @@ studiesRouter.route('/:study_id/statistics')
 studiesRouter.route('/:study_id/restore')
     .post(
         function(req, res){
-            console.log({user_id: req.user_id, study_id:req.params.study_id, version_id:req.body.version_id});
             versions.restore_version(req.user_id, req.params.study_id, req.body.version_id);
 
         });
@@ -191,7 +192,8 @@ studiesRouter.route('/:study_id/collaboration')
         })
     .post(
         function(req, res){
-            studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission, req.body.data_permission)
+            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission, req.body.data_permission, server_url)
                 .then(function(data){
                     res.json({data_file:data});
                 })

@@ -41,7 +41,6 @@ function restore_version(user_id, study_id, version_id) {
 
         const version = study_data.versions.find(version=>version.id===version_id).version;
         const data_files_path = path.join(config.history_folder, study_data.folder_name, version);
-        console.log();
 
         // fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
         //

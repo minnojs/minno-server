@@ -134,8 +134,8 @@ function get_users() {
                         last_name: user.last_name,
                         email:user.email,
                         role:user.role,
-                        activation_code: !user.activation_code ? '' : `${config.server_url}/dashboard/?/activation/${user.activation_code}`,
-                        reset_code: !user.reset_code ? '' : `${config.server_url}/dashboard/?/reset_password/${user.reset_code}`
+                        activation_code: !user.activation_code ? '' : `/dashboard/?/activation/${user.activation_code}`,
+                        reset_code: !user.reset_code ? '' : `/dashboard/?/reset_password/${user.reset_code}`
                     })));
             });
     });
@@ -158,7 +158,7 @@ function remove_user(user_id) {
     });
 }
 
-function insert_new_user({username, first_name, last_name, email, role, password, confirm}) {
+function insert_new_user({username, first_name, last_name, email, role, password, confirm}, server_url) {
     let validator = new Validator(
         {username, email, first_name, last_name},
         {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'}
@@ -211,8 +211,8 @@ function insert_new_user({username, first_name, last_name, email, role, password
 
                         });
                 })
-                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: `${config.server_url}/dashboard/?/activation/${activation_code}`}) : ({}))
-                .then(sent=>sent ? ({}) : ({activation_code:`${config.server_url}/dashboard/?/activation/${activation_code}`}));
+                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: `${server_url}/dashboard/?/activation/${activation_code}`}) : ({}))
+                .then(sent=>sent ? ({}) : ({activation_code:`${server_url}/dashboard/?/activation/${activation_code}`}));
         });
     });
 
@@ -250,7 +250,7 @@ function set_user_by_activation_code(code, pass, pass_confirm)
     });
 }
 
-function reset_password_request(user_name)
+function reset_password_request(user_name, server_url)
 {
     if(user_name.length<3)
         return Promise.reject({status:400, message: 'ERROR: user name / email must be at least 8 characters in length!'});
@@ -260,7 +260,7 @@ function reset_password_request(user_name)
         return users.findOneAndUpdate({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
             .then(function(user_data)
             {
-                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: config.server_url+'/dashboard/?/reset_password/'+reset_code});
+                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: server_url+'/dashboard/?/reset_password/'+reset_code});
                 return ({});
             });
     });

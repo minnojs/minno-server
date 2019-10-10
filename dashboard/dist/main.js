@@ -12674,7 +12674,7 @@
         },
         duplicateFile: function duplicateFile(ref){
             var study = ref.study;
-            var path = ref.path;
+            var id = ref.id;
             var new_path = ref.new_path;
             var isDir = ref.isDir;
 
@@ -12687,12 +12687,11 @@
 
             // validateion (make sure direcotry exists)
             var basePath = (new_path.substring(0, new_path.lastIndexOf('/'))).replace(/^\//, '');
-            var dirExists = basePath === '' || this.files().some(function (file) { return isDir && file.path === basePath; });
+            var dirExists = basePath === '' || this.files().filter(function (file) { return isDir && file.path === basePath; });
             if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
-            return fetchJson(this.apiURL(("/file/" + path + "/duplicate")), {method:'post', body: {new_path: new_path}})
+            return fetchJson(this.apiURL(("/file/" + id + "/duplicate")), {method:'post', body: {new_path: new_path}})
                 .then(study.mergeFiles.bind(study))
                 .then(this.sort.bind(this));
-
         },
 
         sort: function sort(response){
@@ -12729,7 +12728,7 @@
                 method:'put',
                 body: {path:newpath, url:file.url}
             })
-                .then(study.mergeFiles.bind(study));
+            .then(study.mergeFiles.bind(study));
         },
 
         uploadFiles: function uploadFiles(ref){
@@ -13313,11 +13312,10 @@
 
 
     var  duplicateAction = function (study, file, new_path) {
-        study.duplicateFile({study: study, new_path:new_path(), path:file.path, isDir:file.isDir})
+        study.duplicateFile({study: study, id:file.id, new_path:new_path(), isDir:file.isDir})
             .then(function () {
-
                 if (!file.isDir)
-                    m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(new_path()))));
+                    m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(new_path())))));
                 else
                     m.redraw();
             })

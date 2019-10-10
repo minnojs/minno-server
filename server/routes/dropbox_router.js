@@ -1,6 +1,8 @@
-const dropbox   = require('../dropbox');
-const express    = require('express');
-const dropboxRouter     = express.Router();
+const dropbox       = require('../dropbox');
+const express       = require('express');
+const dropboxRouter = express.Router();
+const config        = require('../../config');
+const url           = require('url');
 
 module.exports   = dropboxRouter;
 
@@ -15,7 +17,8 @@ dropboxRouter
 dropboxRouter.route('')
     .get(
         function(req, res){
-            dropbox.get_auth_link(req.user_id)
+            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            dropbox.get_auth_link(req.user_id, server_url)
                 .then(dbx_data=>res.json(dbx_data));
         })
     .delete(
@@ -27,9 +30,11 @@ dropboxRouter.route('')
 dropboxRouter.route('/set')
     .get(
         function(req, res){
+            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+
             const user_id = req.session.user.id;
             const code = req.query.code;
-            return dropbox.get_access_token(code)
+            return dropbox.get_access_token(code, server_url)
                 .then(body=>dropbox.add_user_folder(user_id, body.access_token))
                 .then(() => res.redirect('/dashboard/'));
         });

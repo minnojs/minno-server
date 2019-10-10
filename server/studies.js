@@ -178,7 +178,7 @@ function update_collaboration(user_id, study_id, body){
 }
 
 
-function add_collaboration(user_id, study_id, collaborator_name, permission, data_permission){
+function add_collaboration(user_id, study_id, collaborator_name, permission, data_permission, server_url){
     return connection.then(function (db) {
         const studies   = db.collection('studies');
         const users   = db.collection('users');
@@ -198,8 +198,8 @@ function add_collaboration(user_id, study_id, collaborator_name, permission, dat
                                     users.updateOne({_id: collaborator_data._id},
                                         {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
                                     sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration.ejs',
-                                        {accept: config.server_url+'/dashboard/?/collaboration/'+accept,
-                                            reject: config.server_url+'/dashboard/?/collaboration/'+reject,
+                                        {accept: server_url+'/dashboard/?/collaboration/'+accept,
+                                            reject: server_url+'/dashboard/?/collaboration/'+reject,
                                             collaborator_name,
                                             permission,
                                             data_permission,

@@ -9,11 +9,11 @@ const path         = require('path');
 const fs           = require('fs-extra');
 const walk         = require('walkdir');
 
-function get_auth_link(user_id){
+function get_auth_link(user_id, server_url){
     return config_db.get_dbx().then(function (dbx_details) {
         if (!dbx_details)
             return Promise.resolve({});
-        const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=' + dbx_details.client_id + '&redirect_uri=' + config.server_url + '/dropbox/set';
+        const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=' + dbx_details.client_id + '&redirect_uri=' + server_url + '/dropbox/set';
         return get_user_token(user_id)
             .then(access_token => access_token ? {auth_link: '', is_synchronized: true} : {
                 auth_link,
@@ -41,13 +41,13 @@ function revoke_user(user_id){
         });
 }
 
-function get_access_token(code){
+function get_access_token(code, server_url){
     const url = 'https://api.dropbox.com/1/oauth2/token';
     return config_db.get_dbx().then(function (dbx_details) {
         const body = {
             code: code,
             grant_type: 'authorization_code',
-            redirect_uri: config.server_url + '/dropbox/set',
+            redirect_uri: server_url + '/dropbox/set',
             client_id: dbx_details.client_id,
             client_secret: dbx_details.client_secret
         };
@@ -75,9 +75,9 @@ function get_user_token(user_id){
             return false;
     })
     .then(()=> users_comp.user_info(user_id)
-                .then(function(info){
-                    return info.dbx_token;
-                })
+            .then(function(info){
+                return info.dbx_token;
+            })
     );
 }
 

@@ -6,11 +6,10 @@ const mailer = require('nodemailer-promise');
 const ejs = require('ejs');
 exports.send_mail = function (to, subject, body, data) {
 
-
-
     return config_db.get_gmail().then(function (gmail_details) {
         if (!gmail_details)
             return false;
+        console.log(gmail_details);
         const sendEmail = mailer.config({
             host: 'smtp.gmail.com',
             auth: {user: gmail_details.email, pass: gmail_details.password}

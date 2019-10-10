@@ -88,7 +88,6 @@ let configComponent = {
 
 
         function show_gmail_password(ctrl){
-            console.log('xx');
             ctrl.gmail.show_password(true);
             return m.redraw();
 

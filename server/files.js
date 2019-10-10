@@ -1,5 +1,7 @@
 const config = require('../config');
 const zipFolder = require('zip-a-folder');
+const request_dep = require('request');
+const progress = require('request-progress');
 
 const fs           = require('fs-extra');
 const formidable   = require('formidable');
@@ -14,17 +16,17 @@ const urljoin       = require('url-join');
 const url = require('url');
 const connection    = Promise.resolve(require('mongoose').connection);
 
-function walk(folder_path, exps, base_path = folder_path){
+function walk(server_url, folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
     const file_path = full_path.slice(path.join(config.user_folder,base_path).length+1);
-    const file_url = urljoin(url.resolve(config.server_url, config.relative_path), 'users', folder_path);
+    const file_url = urljoin(server_url, '//users', folder_path);
     return fs.stat(full_path)
         .then(res => res.isDirectory() ? dir(exps) : file(exps));
 
     function dir(exps){
 
         return fs.readdir(full_path)
-            .then(files => files.map(file=>getFiles(file, exps)))
+            .then(files => files.map(file=>getFiles(server_url, file, exps)))
             .then(Promise.all.bind(Promise))
             .then(files => ({
                 id:urlencode(file_path),
@@ -35,8 +37,8 @@ function walk(folder_path, exps, base_path = folder_path){
             }));
     }
 
-    function getFiles(file, exps){
-        return walk(path.join(folder_path, file), exps, base_path);
+    function getFiles(server_url, file, exps){
+        return walk(server_url, path.join(folder_path, file), exps, base_path);
     }
 
     function file(exps){
@@ -52,10 +54,10 @@ function walk(folder_path, exps, base_path = folder_path){
     }
 }
 
-function get_study_files(user_id, study_id) {
+function get_study_files(user_id, study_id, server_url) {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
-        return walk(study_data.folder_name, study_data.experiments)
+        return walk(server_url, study_data.folder_name, study_data.experiments)
         .then(files => {
             const study_user = study_data.users.find(user=>user.user_id===user_id);
             return {
@@ -71,7 +73,7 @@ function get_study_files(user_id, study_id) {
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
 
                 files: files.files,
-                base_url: urljoin(url.resolve(config.server_url, config.relative_path), 'users', study_data.folder_name)
+                base_url: urljoin(server_url, 'users', study_data.folder_name)
             };
         });
     });
@@ -120,7 +122,7 @@ function get_file_content(user_id, study_id, file_id) {
     });
 }
 
-function delete_files(user_id, study_id, files) {
+function delete_files(user_id, study_id, files, server_url) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
         return files.map(function(file) {
@@ -134,22 +136,39 @@ function delete_files(user_id, study_id, files) {
         });
     })
     // must happen after all delete stuff
-    .then(() => get_study_files(user_id, study_id))
+    .then(() => get_study_files(user_id, study_id, server_url))
     .then(study => study.files);
 }
 
 function download_zip(pth, res) {
     const full_path = path.join(config.base_folder , config.zip_folder, pth);
+
     return fs.pathExists(full_path)
         .then(exist=>
             !exist ?
                 res.status(500).json({message: 'File doesn\'t exist'})
                 :
+                // request_dep('http://localhost:3000/download?path='+pth).pipe(fs.createWriteStream(full_path))
+
+
+                // progress(request_dep('http://localhost:3000/download?path='+pth), {
+                //     throttle:500
+                // })  .on('progress', function (state) {
+                //     process.stdout.write('----'+ (Math.round(state.percent*100))+'%');
+                // })
+                //     .on('error', function (err) {
+                //         console.log('error :( '+err);
+                //     })
+                //     .on('end', function () {
+                //         console.log('----100% \n Download Completed');
+                //     })
+                //     .pipe(fs.createWriteStream(full_path))
+
                 res.download(full_path, pth, function (err) {
                     if (err) {
                         return res.status(err.status || 500).json({message: err.message});
                     } else {
-                        fs.remove(path.join(config.base_folder, config.zip_folder, pth));
+                        // fs.remove(path.join(config.base_folder, config.zip_folder, pth));
                     }
                 })
         );
@@ -203,12 +222,12 @@ function download_files(user_id, study_id, files) {
             });
         }))
         .then(function(){
-            fs.remove(zip_path);
+            // fs.remove(zip_path);
             return ({zip_file: zip_name + '.zip'});
         });
 }
 
-function rename_file(user_id, study_id, file_id, new_path) {
+function rename_file(user_id, study_id, file_id, new_path, server_url) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
         const fid = urlencode.decode(file_id);
@@ -222,7 +241,7 @@ function rename_file(user_id, study_id, file_id, new_path) {
             dropbox.rename_users_file(user_id, study_id, exist_file_path, new_file_path)
         ]);
     })
-    .then(() => get_study_files(user_id, study_id))
+    .then(() => get_study_files(user_id, study_id, server_url))
     .then(study => study.files);
 }
 
@@ -245,14 +264,13 @@ function copy_file(user_id, study_id, file_id, new_study_id) {
 }
 
 
-function duplicate_file(user_id, study_id, file_id, new_file_id) {
+function duplicate_file(user_id, study_id, file_id, new_file_id, server_url) {
     return has_write_permission(user_id, study_id)
         .then(function({study_data:study_data}){
 
             file_id = urlencode.decode(file_id);
             const new_file_path = path.join(config.user_folder,study_data.folder_name,new_file_id);
             const exist_file_path = path.join(config.user_folder,study_data.folder_name,file_id);
-
             return fs.copy(exist_file_path, new_file_path)
                 .then(()=> studies_comp.update_modify(study_id))
                 .then(()=>studies_comp.update_modify(study_id))
@@ -262,7 +280,7 @@ function duplicate_file(user_id, study_id, file_id, new_file_id) {
                             // if(!res.isDirectory())
                             //     return  fs.readFile(new_file_path, 'utf8')
                             //         .then(content=>({content, id: new_file_id, url:new_file_id}));
-                            return     get_study_files(user_id, study_id)
+                            return get_study_files(user_id, study_id, server_url)
                                 .then(study => study.files);
 
 
@@ -277,6 +295,8 @@ function duplicate_file(user_id, study_id, file_id, new_file_id) {
 
 function upload(user_id, study_id, req) {
     const form = new formidable.IncomingForm();
+    const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+
     form.maxFileSize = config.maxFileSize;
     form.multiples = true;
     return new Promise(function(resolve, reject){
@@ -304,7 +324,8 @@ function upload(user_id, study_id, req) {
                 return Promise.all(create_file_promises);
             })
             .then(() => Promise.all([
-                get_study_files(user_id, study_id),
+
+                get_study_files(user_id, study_id, server_url),
                 studies_comp.update_modify(study_id)
             ]))
             .then(function([study_data]){ return study_data.files; })

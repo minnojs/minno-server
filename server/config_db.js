@@ -32,7 +32,7 @@ function get_fingerprint () {
 
 function get_gmail () {
     return get_config ()
-        .then(config=>config.server_data);
+        .then(config=>config.gmail);
 }
 
 function get_server_data () {

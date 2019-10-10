@@ -137,9 +137,10 @@ basePathRouter.route('/download').get(
             res.statusCode = 403;
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
-        files.download_zip(req.query.path, res);
+        return files.download_zip(req.query.path, res);
     }
 );
+
 
 basePathRouter.route('/download_data')
     .get(function(req, res){
