@@ -275,7 +275,9 @@ function duplicate_study(user_id, study_id, new_study_name) {
         const study_obj = {
             name: new_study_name,
             folder_name: path.join(user_data.user_name, new_study_name),
-            type: original_study.type
+            type: original_study.type,
+            description: original_study.description
+
         };
 
         return insert_obj(user_id, study_obj)

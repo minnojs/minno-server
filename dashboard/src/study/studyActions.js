@@ -213,7 +213,7 @@ export let do_duplicate= (study, callback) => e => {
     let ask = () => messages.confirm({
         header:'New Name',
         content: m('div', [
-            m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it, onchange: m.withAttr('value', study_name)}),
+            m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it,value: study_name(), onchange: m.withAttr('value', study_name)}),
             !error() ? '' : m('p.alert.alert-danger', error())
         ])
     }).then(response => response && duplicate());
