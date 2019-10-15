@@ -67,8 +67,8 @@ function get_study_files(user_id, study_id, server_url) {
                 type: study_data.type,
                 is_public: study_data.is_public,
                 is_readonly: !can_write,
-
                 versions: study_data.versions,
+                description: study_data.description,
                 permission: study_user ? study_user.permission :'read only',
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
 

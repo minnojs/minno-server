@@ -12552,6 +12552,8 @@
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
                     this$1.has_data_permission = study.has_data_permission;
+                    this$1.description = study.description;
+
                     this$1.name = study.study_name;
                     this$1.type = study.type || 'minno02';
                     this$1.base_url = study.base_url;
@@ -18688,7 +18690,6 @@
 
 
             function show_gmail_password(ctrl){
-                console.log('xx');
                 ctrl.gmail.show_password(true);
                 return m.redraw();
 
