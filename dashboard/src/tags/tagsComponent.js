@@ -50,21 +50,21 @@ let tagsComponent = {
                     header:'Edit tag',
                     content: editTag(ctrl)
                 })
-                    .then(response => {
-                        if (response)
-                            edit_tag(tag_id, ctrl.tag_text, ctrl.tag_color)
-                                .then(()=>{
-                                    ctrl.error('');
-                                    ctrl.tag_text('');
-                                    ctrl.tag_color('');
-                                    load();
-                                })
-                                .catch(error => {
-                                    ctrl.error(error.message);
-                                    edit_tag(tag_id, ctrl.tag_text, ctrl.tag_color);
-                                })
-                                .then(m.redraw);
-                    });
+                .then(response => {
+                    if (response)
+                        return edit_tag(tag_id, ctrl.tag_text, ctrl.tag_color)
+                            .then(()=>{
+                                ctrl.error('');
+                                ctrl.tag_text('');
+                                ctrl.tag_color('');
+                                load();
+                            })
+                            .catch(error => {
+                                ctrl.error(error.message);
+                                edit(tag_id, ctrl.tag_text(), ctrl.tag_color)();
+                            })
+                            .then(m.redraw);
+                });
             };
         }
 
@@ -75,20 +75,20 @@ let tagsComponent = {
                 header:'Add a new tag',
                 content: editTag(ctrl)
             })
-                .then(response => {
-                    if (response) add_tag(ctrl.tag_text, ctrl.tag_color)
-                        .then(()=>{
-                            ctrl.error('');
-                            ctrl.tag_text('');
-                            ctrl.tag_color('');
-                            load();
-                        })
-                        .catch(error => {
-                            ctrl.error(error.message);
-                            add(); // retry
-                        })
-                        .then(m.redraw);
-                });
+            .then(response => {
+                if (response) add_tag(ctrl.tag_text, ctrl.tag_color)
+                    .then(()=>{
+                        ctrl.error('');
+                        ctrl.tag_text('');
+                        ctrl.tag_color('');
+                        load();
+                    })
+                    .catch(error => {
+                        ctrl.error(error.message);
+                        add(); // retry
+                    })
+                    .then(m.redraw);
+            });
         }
 
         load();

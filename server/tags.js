@@ -47,16 +47,35 @@ function update_study_tags(user_id, study_id, tags) {
 }
 
 function insert_new_tag(user_id, tag_text, tag_color) {
+    if(!tag_text)
+        return Promise.reject({status:400, message: 'ERROR: Missing text'});
     return connection.then(function (db) {
         const users   = db.collection('users');
-        return users.updateOne({_id: user_id}, {$push: {tags:{id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}}})
-            .then(function(user_result){
-                if (!user_result)
-                    return Promise.reject({status:500, message: 'ERROR: internal error'});
 
+        return users.findOne({_id: user_id}).then(function(user) {
+            return user.tags.filter(function (exist_tag) {
+                return exist_tag.text === tag_text && exist_tag.color === tag_color;
+            });
+        })
+        .then(duplications => {
+            if (duplications.length > 0) {
+                return Promise.reject({status: 400, message: 'ERROR: Tag already exist!'});
+            }
+            return users.updateOne({_id: user_id}, {
+                $push: {
+                    tags: {
+                        id: utils.sha1(tag_text + tag_color),
+                        text: tag_text,
+                        color: tag_color
+                    }
+                }
             })
-            .then(()=>({id:utils.sha1(tag_text+tag_color), text:tag_text, color:tag_color}));
-
+            .then(function (user_result) {
+                if (!user_result)
+                    return Promise.reject({status: 500, message: 'ERROR: internal error'});
+            })
+            .then(() => ({id: utils.sha1(tag_text + tag_color), text: tag_text, color: tag_color}));
+        });
     });
 }
 
@@ -80,14 +99,28 @@ function delete_tag(user_id, tag_id) {
 
 function update_tag(user_id, tag) {
     return connection.then(function (db) {
+        if(!tag.text)
+            return Promise.reject({status:400, message: 'ERROR: Missing text'});
+
         const users = db.collection('users');
-        return users.updateOne({_id: user_id, tags: { $elemMatch: {id:tag.id}}},
-            {$set: {'tags.$.text': tag.text, 'tags.$.color': tag.color}}
-        )
-        .then(function(tag_result){
-            if (!tag_result)
-                return Promise.reject({status:500, message: 'ERROR: internal error'});
+        return users.findOne({_id: user_id}).then(function(user) {
+            return user.tags.filter(function (exist_tag) {
+                return exist_tag.text === tag.text && exist_tag.color === tag.color;
+            });
+        }).then(duplications => {
+            if(duplications.length>0){
+                return Promise.reject({status:400, message: 'ERROR: Tag already exist!'});
+            }
+            return users.updateOne({_id: user_id, tags: { $elemMatch: {id:tag.id}}},
+                {$set: {'tags.$.text': tag.text, 'tags.$.color': tag.color}}
+            )
+            .then(function(tag_result){
+                if (!tag_result)
+                    return Promise.reject({status:500, message: 'ERROR: internal error'});
+            });
+
         });
+
     });
 }
 
