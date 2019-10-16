@@ -55,7 +55,7 @@ let configComponent = {
 
         function set_values(response){
             ctrl.given_conf(response.config);
-            ctrl.fingerprint.enable(response.config.fingerprint && response.config.fingerprint.use_fingerprint);
+            ctrl.fingerprint.enable(!!(response.config.fingerprint && response.config.fingerprint.use_fingerprint));
             if(response.config.gmail)
                 ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
             if(response.config.dbx)
@@ -73,7 +73,6 @@ let configComponent = {
                     ctrl.server_data.type('greenlock');
                     ctrl.server_data.greenlock.owner_email(response.config.server_data.greenlock.owner_email);
                     ctrl.server_data.greenlock.domains(response.config.server_data.greenlock.domains);
-                    // ctrl.given_domains(response.config.server_data.greenlock.domains);
                 }
             }
             return m.redraw();
@@ -81,9 +80,14 @@ let configComponent = {
         }
 
         function toggle_visibility(varable, state){
+            if(ctrl[varable].enable() === state)
+                return;
+            console.log(ctrl[varable].enable());
+
             ctrl[varable].error('');
             ctrl[varable].enable(state);
             ctrl[varable].updated(true);
+
         }
 
 
@@ -115,6 +119,7 @@ let configComponent = {
                 ((ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
                 (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password));
             ctrl.gmail.updated(updated);
+
             return m.redraw();
         }
 
@@ -304,7 +309,7 @@ let configComponent = {
                             ]),
 
                             m('.col-sm-5', [
-                                ctrl.gmail.enable() && !ctrl.gmail.show_password() && ctrl.gmail.password()?
+                                !ctrl.gmail.show_password() && ctrl.gmail.password()?
 
                                     m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.show_gmail_password(ctrl)},'Show password')  :
 
