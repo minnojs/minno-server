@@ -192,6 +192,9 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
 
 
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
+    if (!descriptive_id)
+        return Promise.reject({status:402, message: 'ERROR: descriptive id is missing!'});
+
     return has_write_permission(user_id, study_id)
         .then(function() {
             return connection.then(function (db) {

@@ -3,6 +3,7 @@ import downloadUrl from 'utils/downloadUrl';
 import moveFileComponent from './moveFileComponent';
 import copyFileComponent from './copyFileComponent';
 import {baseUrl} from 'modelUrls';
+import {duplicate_study} from "../../studyModel";
 
 export const uploadFiles = (path,study) => (fd, files) => {
     // validation (make sure files do not already exist)
@@ -86,31 +87,46 @@ export let renameFile = (file, study, notifications) => () => {
 
 };
 
-export let make_experiment = (file, study, notifications) => () => {
-    let descriptive_id = m.prop(file.path);
-    let error = m.prop('');
-    return messages.confirm({
-        header:'New Name',
-        content: m('div', [
-            m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
-            !error() ? '' : m('p.alert.alert-danger', error())
-        ])}).then(response => response && study.make_experiment(file, descriptive_id())
-        .then(()=>notifications.show_success(`'${file.name}' is successfully created with descriptive id: '${descriptive_id()}'`))
-        .then(()=>m.redraw()));
-};
 
-export let update_experiment = (file, study, notifications) => () => {
-    let descriptive_id = m.prop(file.exp_data.descriptive_id);
+export let update_experiment = (file, study, notifications, update) => () => {
+    let descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
     let error = m.prop('');
-    return messages.confirm({
+
+    const ask = () => messages.confirm({
         header:'New Name',
-        content: m('div', [
-            m('input.form-control',  {placeholder: 'Enter new descriptive id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
-            !error() ? '' : m('p.alert.alert-danger', error())
-        ])})
-        .then(response => response && study.update_experiment(file, descriptive_id())
-            .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully renamed to '${descriptive_id()}'`))
-            .then(()=>{file.exp_data.descriptive_id=descriptive_id(); m.redraw();}));
+        content: {
+            view(){
+                return m('div', [
+                    m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
+                    !error() ? '' : m('p.alert.alert-danger', error())
+                ]);
+            }
+        }
+    }).then(response => response && update_exp());
+
+    let update_exp = () => {
+        if (!descriptive_id()) {
+            error('Error: missing descriptive id');
+            return ask();
+        }
+        if(update)
+            return study.update_experiment(file, descriptive_id())
+                .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully renamed to '${descriptive_id()}'`))
+                .then(()=>{file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
+                .catch(e => {
+                    error(e.message);
+                    return ask();
+                });
+        return study.make_experiment(file, descriptive_id())
+            .then(()=>notifications.show_success(`'${file.name}' is successfully created with descriptive id: '${descriptive_id()}'`))
+            .then(()=>m.redraw())
+            .catch(e => {
+                error(e.message);
+                ask();
+            });
+
+    };
+    ask();
 };
 
 export let delete_experiment = (file, study, notifications) => () => {
@@ -343,3 +359,6 @@ export const downloadFile = (study, file) => () => {
 };
 
 export let resetFile = file => () => file.content(file.sourceContent());
+
+const focus_it = (element, isInitialized) => {
+    if (!isInitialized) setTimeout(() => element.focus());};

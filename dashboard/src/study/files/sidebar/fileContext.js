@@ -45,9 +45,9 @@ const fileContext = (file, study, notifications) => {
             {icon:'fa-download', text:'Download', action: downloadFile(study, file)},
             {icon:'fa-link', text: 'Copy URL', action: copyUrl(file.url)},
 
-            !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: make_experiment(file,study, notifications), disabled: isReadonly }
+            !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: update_experiment(file, study, notifications, false), disabled: isReadonly }
                 :  {icon:'fa-desktop', text:'Experiment options', menu: [
-                    {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications), disabled: isReadonly },
+                    {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications, true), disabled: isReadonly },
                     {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study, notifications), disabled: isReadonly },
                     { icon:'fa-play', href:`${launchUrl}/${file.exp_data.id}/${version_id}`, text:'Play this task'},
                     {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl(`${launchUrl}/${file.exp_data.id}/${version_id}`, true)}

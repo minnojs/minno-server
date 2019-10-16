@@ -13187,31 +13187,46 @@
 
     }; };
 
-    var make_experiment = function (file, study, notifications) { return function () {
-        var descriptive_id = m.prop(file.path);
-        var error = m.prop('');
-        return messages.confirm({
-            header:'New Name',
-            content: m('div', [
-                m('input.form-control',  {placeholder: 'Enter Descriptive Id', onchange: m.withAttr('value', descriptive_id)}),
-                !error() ? '' : m('p.alert.alert-danger', error())
-            ])}).then(function (response) { return response && study.make_experiment(file, descriptive_id())
-            .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
-            .then(function (){ return m.redraw(); }); });
-    }; };
 
-    var update_experiment = function (file, study, notifications) { return function () {
-        var descriptive_id = m.prop(file.exp_data.descriptive_id);
+    var update_experiment = function (file, study, notifications, update) { return function () {
+        var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
         var error = m.prop('');
-        return messages.confirm({
+
+        var ask = function () { return messages.confirm({
             header:'New Name',
-            content: m('div', [
-                m('input.form-control',  {placeholder: 'Enter new descriptive id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
-                !error() ? '' : m('p.alert.alert-danger', error())
-            ])})
-            .then(function (response) { return response && study.update_experiment(file, descriptive_id())
-                .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
-                .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();}); });
+            content: {
+                view: function view(){
+                    return m('div', [
+                        m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
+                        !error() ? '' : m('p.alert.alert-danger', error())
+                    ]);
+                }
+            }
+        }).then(function (response) { return response && update_exp(); }); };
+
+        var update_exp = function () {
+            if (!descriptive_id()) {
+                error('Error: missing descriptive id');
+                return ask();
+            }
+            if(update)
+                return study.update_experiment(file, descriptive_id())
+                    .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
+                    .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
+                    .catch(function (e) {
+                        error(e.message);
+                        return ask();
+                    });
+            return study.make_experiment(file, descriptive_id())
+                .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
+                .then(function (){ return m.redraw(); })
+                .catch(function (e) {
+                    error(e.message);
+                    ask();
+                });
+
+        };
+        ask();
     }; };
 
     var delete_experiment = function (file, study, notifications) { return function () {
@@ -15122,9 +15137,9 @@
                 {icon:'fa-download', text:'Download', action: downloadFile$2(study, file)},
                 {icon:'fa-link', text: 'Copy URL', action: copyUrl(file.url)},
 
-                !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: make_experiment(file,study, notifications), disabled: isReadonly }
+                !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: update_experiment(file, study, notifications, false), disabled: isReadonly }
                     :  {icon:'fa-desktop', text:'Experiment options', menu: [
-                        {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications), disabled: isReadonly },
+                        {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications, true), disabled: isReadonly },
                         {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study, notifications), disabled: isReadonly },
                         { icon:'fa-play', href:(launchUrl + "/" + (file.exp_data.id) + "/" + version_id), text:'Play this task'},
                         {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl((launchUrl + "/" + (file.exp_data.id) + "/" + version_id), true)}
@@ -15704,7 +15719,7 @@
                     placeholder: 'Filter Tags',
                     value: tagName(),
                     oninput: m.withAttr('value', tagName),
-                    config: focus_it
+                    config: focus_it$1
                 }),
                 m('span.input-group-btn', [
                     m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -15748,7 +15763,7 @@
     }
 
 
-    var focus_it = function (element, isInitialized) {
+    var focus_it$1 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function data_dialog (args) { return m.component(data_dialog$1, args); }
@@ -16516,7 +16531,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$1})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$2})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -16636,7 +16651,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$1, onchange: m.withAttr('value', study_description)}),
+                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$2, onchange: m.withAttr('value', study_description)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -16664,7 +16679,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('input.form-control',  {config: focus_it$1, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control',  {config: focus_it$2, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -16698,7 +16713,7 @@
         var ask = function () { return messages.confirm({
             header:'New Name',
             content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$1,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$2,value: study_name(), onchange: m.withAttr('value', study_name)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])
         }).then(function (response) { return response && duplicate(); }); };
@@ -16792,7 +16807,7 @@
         ask();
     }; };
 
-    var focus_it$1 = function (element, isInitialized) {
+    var focus_it$2 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var do_copy_url = function (study) { return copyUrl(study.base_url); };
@@ -17548,7 +17563,7 @@
                                 ])
                             ]),
                             m('.col-sm-4', [
-                                m('input.form-control', {placeholder: 'Search...', config: focus_it$2, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                                m('input.form-control', {placeholder: 'Search...', config: focus_it$3, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
 
@@ -17653,7 +17668,7 @@
         }
     }
 
-    var focus_it$2 = function (element, isInitialized) {
+    var focus_it$3 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var deploy_url = baseUrl + "/deploy_list";
@@ -18386,7 +18401,7 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
-                                        config: focus_it$3,
+                                        config: focus_it$4,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
@@ -18442,7 +18457,7 @@
         };
     }
 
-    var focus_it$3 = function (element, isInitialized) {
+    var focus_it$4 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function users_url()
@@ -19919,7 +19934,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$4, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$5, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -20070,7 +20085,7 @@
         }
     };
 
-    var focus_it$4 = function (element, isInitialized) {
+    var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     // it makes sense to use this for cotnrast:
@@ -20090,7 +20105,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$5, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -20153,7 +20168,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$5 = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
