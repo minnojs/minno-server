@@ -9,7 +9,6 @@ const dataFolder = path.join(config.base_folder,config.dataFolder);
     {param: 'admin_default_pass', message:`The default password for te admin. For example 'admin123'`},
     {param: 'zip_folder', message: `The folder for saving temporary files. Relative to your "base_url". For example 'tmp'`},
     {param: 'dataFolder', message: `The folder for saving data files. Relative to your "base_url". For example 'data_files'`},
-    {param: 'server_url', message: `The path on your domain on which you load the server. For example: '/' It must begin with a '/'.`},
     {param: 'minnojsUrl', message: `The url for loading MinnoJS. For example: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/'`},
 ]
     .forEach(function({param, message}){
