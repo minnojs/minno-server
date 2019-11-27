@@ -361,9 +361,7 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 }
 	
 	await closeFiles(files);
-	console.log(dataCount);
 	if(dataCount==0  && useDataArray==true) {
-		console.log("test2");
 		throw {status:500, message: 'ERROR: No data!'};
 	}
 	return zipFiles(fileConfig);
