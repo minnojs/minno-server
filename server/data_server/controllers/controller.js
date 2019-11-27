@@ -84,7 +84,7 @@ if (typeof studyId == 'undefined' || !studyId)
 	var rowSplitString = '\t';
 	var fileSuffix = '.txt';
 	var fileConfig = {};
-	var datacount=0;
+	var dataCount=0;
 	var sortB=true;
 	findObject.studyId = studyId;
 	if(Array.isArray(studyId))
@@ -192,7 +192,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	var rowSplitString = '\t';
 	var fileSuffix = '.txt';
 	var fileConfig = {};
-	var datacount=0;
+	var dataCount=0;
 	var useDataArray=true;
 	findObject.studyId = studyId;
 	if(Array.isArray(studyId))
@@ -247,12 +247,12 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
 		var newMaps = getInitialVarMap(dataEntry);
 		if(useDataArray){
-		newMapArray[datacount]=newMaps;
-		datacount++;}
-		if(datacount>=maxRowsInMemory) //query is too large to store in memory
+		newMapArray[dataCount]=newMaps;
+		dataCount++;}
+		if(dataCount>=maxRowsInMemory) //query is too large to store in memory
 		{
 			useDataArray=false;
-			datacount=0;
+			dataCount=0;
 			newMapArray=[]; 
 		}
 		newMaps.forEach(function(newMap) {
@@ -271,12 +271,12 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
 		var newMaps = getInitialVarMap(dataEntry);
 		if(useDataArray){
-		newMapArray[datacount]=newMaps;
-		datacount++;}
-		if(datacount>=maxRowsInMemory) //query is too large to store in memory
+		newMapArray[dataCount]=newMaps;
+		dataCount++;}
+		if(dataCount>=maxRowsInMemory) //query is too large to store in memory
 		{
 			useDataArray=false;
-			datacount=0;
+			dataCount=0;
 			newMapArray=[]; 
 		}
 		newMaps.forEach(function(newMap) {
@@ -291,7 +291,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 	await fileSetup(fileConfig);
 if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 {
-	for(var x=0;x<datacount;x++){
+	for(var x=0;x<dataCount;x++){
 		var newMaps=newMapArray[x];
 		for await (var newMap of newMaps)
 		{
@@ -313,7 +313,7 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 	cursor = cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
 	var dataCount=0;
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		datacount++;
+		dataCount++;
 		if(typeof fileFormat !== 'undefined' && fileFormat=='json')
 		{
 			 writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
@@ -336,7 +336,7 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 	}
 	cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
 	for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-		datacount++;
+		dataCount++;
 		if(typeof fileFormat !== 'undefined' && fileFormat=='json')
 		{
 			 writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
@@ -361,7 +361,9 @@ if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
 }
 	
 	await closeFiles(files);
+	console.log(dataCount);
 	if(dataCount==0  && useDataArray==true) {
+		console.log("test2");
 		throw {status:500, message: 'ERROR: No data!'};
 	}
 	return zipFiles(fileConfig);
