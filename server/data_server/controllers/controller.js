@@ -23,9 +23,11 @@ const dataFileLocation = config.base_folder;
 const dataFolder = config.dataFolder;
 const maxRowsInMemory=100000;
 
+
 exports.insertData = function(req, res) {
-	var newData = new Data(req.body);
 	var reqBody = req.body;
+	reqBody=sanitizeMongoJson(reqBody);
+	var newData = new Data(reqBody);
 	if(newData.sessionId<0)
 	{
 		res.json('{message:"data not saved due to negative sessionID"}');
@@ -703,6 +705,29 @@ var arrayToCsvString = function(theArray, separator) {
 	newString += '\n';
 	return newString;
 }
+var sanitizeMongoJson = function(mongoJson) {
+	if(Array.isArray(mongoJson)){
+	mongoJson.forEach(element => sanitizeMongoJson(element));}
+	else
+	{
+		if (mongoJson instanceof Object){
+			mongoJson=sanitizeMongo(mongoJson);
+		for (var key in mongoJson) {
+			mongoJson[key]=sanitizeMongoJson(mongoJson[key]);
+		}}
+	}
+	return mongoJson;
+}
+var sanitizeMongo = function(v) {
+  if (v instanceof Object) {
+    for (var key in v) {
+      if (/^\$/.test(key)) {
+        delete v[key];
+      }
+    }
+  }
+  return v;
+};
 String.prototype.hashCode = function() {
   var hash = 0, i, chr;
   if (this.length === 0) return hash;
