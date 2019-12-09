@@ -1,5 +1,6 @@
 import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
 import messages from 'utils/messagesComponent';
+import {copyUrl} from 'utils/copyUrl';
 
 export default collaborationComponent;
 
@@ -223,6 +224,7 @@ let collaborationComponent = {
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+
 function getAbsoluteUrl(url) {
     const a = document.createElement('a');
     a.href=url;

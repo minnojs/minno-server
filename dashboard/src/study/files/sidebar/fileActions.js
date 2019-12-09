@@ -182,7 +182,6 @@ export const play = (file,study) => () => {
     const isSaved = study.files().every(file => !file.hasChanged());
     const isOpenServer = true;
     const open = isOpenServer ? openNew : openOld;
-    console.log({file,study});
     if (isSaved) open();
     else messages.confirm({
         header: 'Play task',

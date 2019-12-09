@@ -13283,7 +13283,6 @@
     var play$2 = function (file,study) { return function () {
         var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
         var open = openNew;
-        console.log({file: file,study: study});
         if (isSaved) open();
         else messages.confirm({
             header: 'Play task',
@@ -20115,6 +20114,7 @@
 
     var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
+
     function getAbsoluteUrl$1(url) {
         var a = document.createElement('a');
         a.href=url;
