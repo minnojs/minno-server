@@ -1,5 +1,7 @@
 const express     = require('express');
 const studies     = require('../studies');
+const config      = require('../../config');
+const url         = require('url');
 
 const sharingRouter = express.Router();
 
@@ -24,7 +26,8 @@ sharingRouter.route('/:study_id/public')
 sharingRouter.route('/:study_id/link')
     .post(
         function(req, res){
-            return studies.make_link(req.user_id, parseInt(req.params.study_id))
+            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            return studies.make_link(req.user_id, parseInt(req.params.study_id), server_url)
                 .then(link=>res.json({link}));
 
         })

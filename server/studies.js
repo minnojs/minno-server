@@ -535,11 +535,12 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-function make_link(user_id, study_id) {
+function make_link(user_id, study_id, server_url) {
     return has_write_permission(user_id, study_id)
         .then(()=> connection.then(function (db) {
+
             const studies = db.collection('studies');
-            const link = 'dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
+            const link = server_url+'dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
 
             return studies.updateOne({_id: study_id}, {$set: {link}})
                 .then(()=>link);

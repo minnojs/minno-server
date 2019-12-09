@@ -12,7 +12,7 @@ module.exports = viewRouter;
 viewRouter.route('/:link_id').get(
     function(req, res){
         const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-        return studies.get_id_with_link('/dashboard/?/view/'+req.params.link_id)
+        return studies.get_id_with_link(server_url+'dashboard/?/view/'+req.params.link_id)
             .then(function(study){
                 if(!study)
                     return res.status(400).json("Error: code doesn't exist");
@@ -36,12 +36,14 @@ viewRouter.route('/:link_id').get(
 viewRouter.route('/:link_id/file/:file_id')
     .get(
         function(req, res) {
-            return studies.get_id_with_link('/dashboard/?/view/' + req.params.link_id)
+            const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+            return studies.get_id_with_link(server_url+'dashboard/?/view/'+req.params.link_id)
                 .then(function (study) {
+                    if(!study)
+                        return res.status(400).json("Error: code doesn't exist");
                     const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
-
                     return files.get_file_content(owner_id, study._id, req.params.file_id)
                         .then(tags_data => res.json(tags_data))
                         .catch(err => res.status(err.status || 500).json({message: err.message}));
-                })
-        })
+                });
+        });
