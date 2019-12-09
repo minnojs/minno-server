@@ -182,7 +182,7 @@ export const play = (file,study) => () => {
     const isSaved = study.files().every(file => !file.hasChanged());
     const isOpenServer = true;
     const open = isOpenServer ? openNew : openOld;
-
+    console.log({file,study});
     if (isSaved) open();
     else messages.confirm({
         header: 'Play task',
@@ -191,8 +191,9 @@ export const play = (file,study) => () => {
 
     function openNew(){
         if (playground && !playground.closed) playground.close();
+        const url = !file.viewStudy ? `${baseUrl}/play/${study.id}/${file.id}` : `${baseUrl}/view_play/${study.code}/${file.id}`;
 
-        playground = window.open(`${baseUrl}/play/${study.id}/${file.id}`, 'Playground');
+        playground = window.open(url, 'Playground');
         playground.onload = function(){
             playground.addEventListener('unload', function() {
                 window.focus();

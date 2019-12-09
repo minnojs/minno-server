@@ -71,7 +71,6 @@ function get_study_files(user_id, study_id, server_url) {
                 description: study_data.description,
                 permission: study_user ? study_user.permission :'read only',
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
-
                 files: files.files,
                 base_url: urljoin(server_url, 'users', study_data.folder_name)
             };

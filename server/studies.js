@@ -129,9 +129,20 @@ function get_collaborations(user_id, study_id){
             const users = data.study_data.users.filter(user=>user.user_id!==user_id && user.permission!=='owner');
             const study_name = data.study_data.name;
             const is_public = data.study_data.is_public;
-            return {users, study_name, is_public};
+            const link = data.study_data.link;
+            return {users, study_name, is_public, link};
         });
 }
+
+
+function get_id_with_link(link){
+    return connection.then(function (db) {
+        const studies = db.collection('studies');
+        return studies.findOne({link});
+    });
+}
+
+
 
 function get_owner(user_id, study_id){
     return has_read_permission(user_id, study_id)
@@ -524,4 +535,25 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-module.exports = {update_study, make_public, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission};
+function make_link(user_id, study_id) {
+    return has_write_permission(user_id, study_id)
+        .then(()=> connection.then(function (db) {
+            const studies = db.collection('studies');
+            const link = '/dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
+
+            return studies.updateOne({_id: study_id}, {$set: {link}})
+                .then(()=>link);
+        }));
+}
+
+function delete_link(user_id, study_id) {
+    return has_write_permission(user_id, study_id)
+        .then(()=> connection.then(function (db) {
+            const studies = db.collection('studies');
+            return studies.updateOne({_id: study_id}, {$unset: {link:{}}})
+                .then({});
+        }));
+}
+
+
+module.exports = {update_study, make_public, make_link, delete_link, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission, get_id_with_link};

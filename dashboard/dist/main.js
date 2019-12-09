@@ -12373,6 +12373,8 @@
 
     var filePrototype = {
         apiUrl: function apiUrl(){
+            if(this.viewStudy)
+                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
             return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
         },
 
@@ -13281,7 +13283,7 @@
     var play$2 = function (file,study) { return function () {
         var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
         var open = openNew;
-
+        console.log({file: file,study: study});
         if (isSaved) open();
         else messages.confirm({
             header: 'Play task',
@@ -13290,8 +13292,9 @@
 
         function openNew(){
             if (playground && !playground.closed) playground.close();
+            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
 
-            playground = window.open((baseUrl + "/play/" + (study.id) + "/" + (file.id)), 'Playground');
+            playground = window.open(url, 'Playground');
             playground.onload = function(){
                 playground.addEventListener('unload', function() {
                     window.focus();
@@ -16815,6 +16818,8 @@
     var can_edit = function (study) { return !study.isReadonly && study.permission !== 'read only'; };
     var can_see_data = function (study) { return study.has_data_permission; };
 
+    var is_view = function (study) { return study.view; };
+
     var is_locked = function (study) { return study.is_locked; };
     var is_published = function (study) { return study.is_published; };
     var is_public = function (study) { return study.is_public; };
@@ -16890,6 +16895,8 @@
             }},
         duplicate: {text: 'Duplicate study',
             config: {
+                display: [not(is_view)],
+
                 onmousedown: do_duplicate,
                 class: 'fa-clone'
             }},
@@ -17205,20 +17212,27 @@
 
             return fetchFullJson(this.apiURL())
                 .then(function (study) {
-                    this$1.loaded = true;
-                    this$1.id = study.id;
-                    this$1.isReadonly = study.is_readonly;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked;
-                    this$1.name = study.study_name;
-                    this$1.baseUrl = study.base_url;
+                    // const files = this.parseFiles(study.files);
                     var files = flattenFiles(study.files)
                         .map(assignStudyId(this$1.id))
                         .map(assignViewStudy())
                         .map(fileFactory);
+                    this$1.loaded = true;
+                    this$1.isReadonly = study.is_readonly;
+                    this$1.istemplate = study.is_template;
+                    this$1.is_locked = study.is_locked;
+                    this$1.is_published = study.is_published;
+                    this$1.is_public = study.is_public;
+                    this$1.has_data_permission = study.has_data_permission;
+                    this$1.description = study.description;
 
+                    this$1.name = study.study_name;
+                    this$1.type = study.type || 'minno02';
+                    this$1.base_url = study.base_url;
+                    this$1.versions = study.versions ? study.versions : [];
                     this$1.files(files);
                     this$1.sort();
+
                 })
                 .catch(function (reason) {
                     this$1.error = true;
@@ -17283,7 +17297,25 @@
                 parent.files.push(file);
             }
         },
+        parseFiles: function parseFiles(files){
+            var study = this;
 
+            return ensureArray(files)
+                .map(fileFactory)
+                .map(spreadFile)
+                .reduce(flattenDeep, [])
+                .map(assignStudyId);
+
+            function ensureArray(arr){ return arr || []; }
+            function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
+            function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
+
+            // create an array including file and all its children
+            function spreadFile(file){
+                var children = ensureArray(file.files).map(spreadFile);
+                return [file].concat(children);
+            }
+        },
         createFile: function createFile(ref){
             var this$1 = this;
             var name = ref.name;
@@ -17358,7 +17390,7 @@
         var study = Object.create(studyPrototype$1);
         Object.assign(study, {
             code    : code,
-            id      : '',
+            id      : study.id,
             view    : true,
             files   : m.prop([]),
             loaded  : false,
@@ -17391,9 +17423,9 @@
         controller: function (){
 
             var code = m.route.param('code');
-
             if (!study$1 || (study$1.code !== code)){
                 study$1 = studyFactory$1(code);
+
                 study$1
                     .get()
                     .catch(function (reason) {
@@ -18699,7 +18731,6 @@
             function toggle_visibility(varable, state){
                 if(ctrl[varable].enable() === state)
                     return;
-                console.log(ctrl[varable].enable());
 
                 ctrl[varable].error('');
                 ctrl[varable].enable(state);
@@ -19868,12 +19899,7 @@
                 users:m.prop(),
                 is_public:m.prop(),
 
-                link_data:m.prop(),
                 link:m.prop(''),
-                link_type:m.prop(''),
-                link_list:m.prop([]),
-                link_add_list:m.prop([]),
-                link_remove_list:m.prop([]),
                 study_name:m.prop(),
                 user_name:m.prop(''),
                 permission:m.prop('can edit'),
@@ -19895,10 +19921,7 @@
                     .then(function (response) {ctrl.users(response.users);
                         ctrl.is_public(response.is_public);
                         ctrl.study_name(response.study_name);
-                        ctrl.link(response.link_data.link);
-                        ctrl.link_type(response.link_data.link_type);
-                        ctrl.link_list(response.link_data.link_list);
-
+                        ctrl.link(response.link);
                         ctrl.loaded = true;})
                     .catch(function (error) {
                         ctrl.col_error(error.message);
@@ -20057,7 +20080,7 @@
                                             m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
                                                 m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
                                                 m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                                m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'No access')
+                                                m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
                                             ])),
                                         m('.col-xs-4',
                                             m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
@@ -20070,7 +20093,7 @@
                             ]); })
 
                         ]),
-                        /*  m('.row.space',
+                          m('.row.space',
                             m('.col-sm-12', [
                                 m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
                                     [m('i.fa.fa-plus'), '  Create / Re-create public link']
@@ -20079,11 +20102,11 @@
                                     [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
                                 ),
                                 m('label.input-group.space',[
-                                    m('.input-group-addon', {onclick: function() {copy(ctrl.link());}}, m('i.fa.fa-fw.fa-copy')),
-                                    m('input.form-control', { value: ctrl.link(), onchange: m.withAttr('value', ctrl.link)})
+                                    m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
                                 ])
                             ])
-                        )*/
+                        )
 
                     ])
                 ]);
@@ -20092,6 +20115,28 @@
 
     var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
+    function getAbsoluteUrl$1(url) {
+        var a = document.createElement('a');
+        a.href=url;
+        return a.href;
+    }
+
+    function copy$1(text){
+        return new Promise(function (resolve, reject) {
+            var input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+
+            try {
+                document.execCommand('copy');
+            } catch(err){
+                reject(err);
+            }
+
+            input.parentNode.removeChild(input);
+        });
+    }
 
     // it makes sense to use this for cotnrast:
     // https://24ways.org/2010/calculating-color-contrast/

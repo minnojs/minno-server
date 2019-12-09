@@ -20,3 +20,17 @@ sharingRouter.route('/:study_id/public')
                 .then(res.json({}));
 
         });
+
+sharingRouter.route('/:study_id/link')
+    .post(
+        function(req, res){
+            return studies.make_link(req.user_id, parseInt(req.params.study_id))
+                .then(link=>res.json({link}));
+
+        })
+    .delete(
+        function(req, res){
+            return studies.delete_link(req.user_id, parseInt(req.params.study_id))
+                .then(link=>res.json({link}));
+
+        });

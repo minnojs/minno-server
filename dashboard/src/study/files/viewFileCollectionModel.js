@@ -11,20 +11,27 @@ let studyPrototype = {
     get(){
         return fetchFullJson(this.apiURL())
             .then(study => {
-                this.loaded = true;
-                this.id = study.id;
-                this.isReadonly = study.is_readonly;
-                this.istemplate = study.is_template;
-                this.is_locked = study.is_locked;
-                this.name = study.study_name;
-                this.baseUrl = study.base_url;
+                // const files = this.parseFiles(study.files);
                 let files = flattenFiles(study.files)
                     .map(assignStudyId(this.id))
                     .map(assignViewStudy())
                     .map(fileFactory);
+                this.loaded = true;
+                this.isReadonly = study.is_readonly;
+                this.istemplate = study.is_template;
+                this.is_locked = study.is_locked;
+                this.is_published = study.is_published;
+                this.is_public = study.is_public;
+                this.has_data_permission = study.has_data_permission;
+                this.description = study.description;
 
+                this.name = study.study_name;
+                this.type = study.type || 'minno02';
+                this.base_url = study.base_url;
+                this.versions = study.versions ? study.versions : [];
                 this.files(files);
                 this.sort();
+
             })
             .catch(reason => {
                 this.error = true;
@@ -89,7 +96,25 @@ let studyPrototype = {
             parent.files.push(file);
         }
     },
+    parseFiles(files){
+        const study = this;
 
+        return ensureArray(files)
+            .map(fileFactory)
+            .map(spreadFile)
+            .reduce(flattenDeep, [])
+            .map(assignStudyId);
+
+        function ensureArray(arr){ return arr || []; }
+        function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
+        function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
+
+        // create an array including file and all its children
+        function spreadFile(file){
+            const children = ensureArray(file.files).map(spreadFile);
+            return [file].concat(children);
+        }
+    },
     createFile({name, content='',isDir}){
         // validation (make sure there are no invalid characters)
         // eslint-disable-next-line no-useless-escape
@@ -159,7 +184,7 @@ let studyFactory =  code =>{
     let study = Object.create(studyPrototype);
     Object.assign(study, {
         code    : code,
-        id      : '',
+        id      : study.id,
         view    : true,
         files   : m.prop([]),
         loaded  : false,

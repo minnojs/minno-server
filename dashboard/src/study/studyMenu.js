@@ -3,6 +3,8 @@ import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, d
 const can_edit = study => !study.isReadonly && study.permission !== 'read only';
 const can_see_data = study => study.has_data_permission;
 
+const is_view = study => study.view;
+
 const is_locked = study => study.is_locked;
 const is_published = study => study.is_published;
 const is_public = study => study.is_public;
@@ -78,6 +80,8 @@ const settings_hash = {
         }},
     duplicate: {text: 'Duplicate study',
         config: {
+            display: [not(is_view)],
+
             onmousedown: do_duplicate,
             class: 'fa-clone'
         }},

@@ -12,6 +12,7 @@ const connections_router    = require('./routes/connections_router');
 const lock_router           = require('./routes/lock_router');
 const publish_router        = require('./routes/publish_router');
 const studies_router        = require('./routes/studies_router');
+const view_router           = require('./routes/view_router');
 const tags_router           = require('./routes/tags_router');
 const files_router          = require('./routes/files_router');
 const sharing_router        = require('./routes/sharing_router');
@@ -104,6 +105,7 @@ basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
 basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
 basePathRouter.use('/static', express.static(config.static_path));
 
+basePathRouter.use('/view_files' ,view_router);
 
 
 basePathRouter.use('/users', express.static(config.user_folder));

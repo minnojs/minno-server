@@ -9,12 +9,7 @@ let collaborationComponent = {
             users:m.prop(),
             is_public:m.prop(),
 
-            link_data:m.prop(),
             link:m.prop(''),
-            link_type:m.prop(''),
-            link_list:m.prop([]),
-            link_add_list:m.prop([]),
-            link_remove_list:m.prop([]),
             study_name:m.prop(),
             user_name:m.prop(''),
             permission:m.prop('can edit'),
@@ -36,10 +31,8 @@ let collaborationComponent = {
                 .then(response =>{ctrl.users(response.users);
                     ctrl.is_public(response.is_public);
                     ctrl.study_name(response.study_name);
-                    ctrl.link(response.link_data.link);
-                    ctrl.link_type(response.link_data.link_type);
-                    ctrl.link_list(response.link_data.link_list);
-
+                    ctrl.link(response.link);
+;
                     ctrl.loaded = true;})
                 .catch(error => {
                     ctrl.col_error(error.message);
@@ -195,7 +188,7 @@ let collaborationComponent = {
                                         m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
                                             m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
                                             m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                            m('option',{value:'invisibale', selected: user.permission === 'invisible'}, 'No access')
+                                            m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
                                         ])),
                                     m('.col-xs-4',
                                         m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
@@ -208,7 +201,7 @@ let collaborationComponent = {
                         ]))
 
                     ]),
-                    /*  m('.row.space',
+                      m('.row.space',
                         m('.col-sm-12', [
                             m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
                                 [m('i.fa.fa-plus'), '  Create / Re-create public link']
@@ -217,11 +210,11 @@ let collaborationComponent = {
                                 [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
                             ),
                             m('label.input-group.space',[
-                                m('.input-group-addon', {onclick: function() {copy(ctrl.link());}}, m('i.fa.fa-fw.fa-copy')),
-                                m('input.form-control', { value: ctrl.link(), onchange: m.withAttr('value', ctrl.link)})
+                                m('.input-group-addon', {onclick: function() {copy(getAbsoluteUrl(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
                             ])
                         ])
-                    )*/
+                    )
 
                 ])
             ]);
@@ -230,3 +223,25 @@ let collaborationComponent = {
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+function getAbsoluteUrl(url) {
+    const a = document.createElement('a');
+    a.href=url;
+    return a.href;
+}
+
+function copy(text){
+    return new Promise((resolve, reject) => {
+        let input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+
+        try {
+            document.execCommand('copy');
+        } catch(err){
+            reject(err);
+        }
+
+        input.parentNode.removeChild(input);
+    });
+}

@@ -1,0 +1,12 @@
+sudo yum install -y gcc-c++ make
+sudo curl -sL https://rpm.nodesource.com/setup_13.x | sudo -E bash -
+sudo yum install nodejs
+
+sudo cp ./mongodb-org-4.2.repo /etc/yum.repos.d/mongodb-org-4.2.repo
+sudo yum install -y mongodb-org
+sudo service mongod start
+sudo chkconfig mongod on
+sudo npm install
+
+sudo npm run setup
+sudo npm run start

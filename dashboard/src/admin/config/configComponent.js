@@ -82,7 +82,6 @@ let configComponent = {
         function toggle_visibility(varable, state){
             if(ctrl[varable].enable() === state)
                 return;
-            console.log(ctrl[varable].enable());
 
             ctrl[varable].error('');
             ctrl[varable].enable(state);

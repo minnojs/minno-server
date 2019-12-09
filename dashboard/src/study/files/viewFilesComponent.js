@@ -12,9 +12,9 @@ let editorLayoutComponent = {
     controller: ()=>{
 
         let code = m.route.param('code');
-
         if (!study || (study.code !== code)){
             study = studyFactory(code);
+
             study
                 .get()
                 .catch(reason => {

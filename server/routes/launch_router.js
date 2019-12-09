@@ -5,6 +5,8 @@ const fs            = require('fs-extra');
 const urljoin       = require('url-join');
 const config_db     = require('../config_db');
 const data_server   = require('../data_server/controllers/controller');
+const studies       = require('../studies');
+
 
 const router        = express.Router();
 const readFile = promisify(fs.readFile);
@@ -16,6 +18,21 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
         .then(displayExperiment(req.query, res,req.fingerprint))
         .catch(displayErrorPage(res));
 });
+
+
+
+router.get('/view_play/:link_id/:file_id',function(req, res){
+    return studies.get_id_with_link('/dashboard/?/view/'+req.params.link_id)
+        .then(function(study) {
+            const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
+
+            return experiments
+                .get_play_url(owner_id, study._id, req.params.file_id)
+                .then(displayExperiment(req.query, res, req.fingerprint))
+                .catch(displayErrorPage(res));
+        });
+});
+
 
 router.get('/play/:study_id/:file_id',function(req, res){
     const sess = req.session;
