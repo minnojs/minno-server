@@ -6,6 +6,7 @@ const utils         = require('./utils');
 const sender        = require('./sender');
 const sanitize      = require('sanitize-filename');
 const connection    = Promise.resolve(require('mongoose').connection);
+const url         = require('url');
 
 
 const {user_info, user_info_by_name}   = require('./users');
@@ -540,10 +541,11 @@ function make_link(user_id, study_id, server_url) {
         .then(()=> connection.then(function (db) {
 
             const studies = db.collection('studies');
-            const link = server_url+'dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
+            const link = server_url + '/dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
+            const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
 
-            return studies.updateOne({_id: study_id}, {$set: {link}})
-                .then(()=>link);
+            return studies.updateOne({_id: study_id}, {$set: {link:clean_url}})
+                .then(()=>clean_url);
         }));
 }
 

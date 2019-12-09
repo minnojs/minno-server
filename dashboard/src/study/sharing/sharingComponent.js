@@ -228,6 +228,7 @@ const focus_it = (element, isInitialized) => {
 function getAbsoluteUrl(url) {
     const a = document.createElement('a');
     a.href=url;
+    console.log(a.href);
     return a.href;
 }
 

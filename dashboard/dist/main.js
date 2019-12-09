@@ -20118,6 +20118,7 @@
     function getAbsoluteUrl$1(url) {
         var a = document.createElement('a');
         a.href=url;
+        console.log(a.href);
         return a.href;
     }
 

@@ -12,7 +12,10 @@ module.exports = viewRouter;
 viewRouter.route('/:link_id').get(
     function(req, res){
         const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-        return studies.get_id_with_link(server_url+'dashboard/?/view/'+req.params.link_id)
+
+        const link = server_url + '/dashboard/?/view/'+req.params.link_id;
+        const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
+        return studies.get_id_with_link(clean_url)
             .then(function(study){
                 if(!study)
                     return res.status(400).json("Error: code doesn't exist");
@@ -37,7 +40,9 @@ viewRouter.route('/:link_id/file/:file_id')
     .get(
         function(req, res) {
             const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-            return studies.get_id_with_link(server_url+'dashboard/?/view/'+req.params.link_id)
+            const link = server_url + '/dashboard/?/view/'+req.params.link_id;
+            const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
+            return studies.get_id_with_link(clean_url)
                 .then(function (study) {
                     if(!study)
                         return res.status(400).json("Error: code doesn't exist");
