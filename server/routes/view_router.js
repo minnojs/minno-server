@@ -1,10 +1,9 @@
 const express     = require('express');
 const files       = require('../files');
-const studies       = require('../studies');
-const experiments = require('../experiments');
+const studies     = require('../studies');
 const config      = require('../../config');
-const url         = require('url');
-const viewRouter = express.Router();
+const viewRouter  = express.Router();
+const utils       = require('../utils');
 
 module.exports = viewRouter;
 
@@ -13,9 +12,9 @@ viewRouter.route('/:link_id').get(
     function(req, res){
         const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
-        const link = server_url + '/dashboard/?/view/'+req.params.link_id;
-        const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
-        return studies.get_id_with_link(clean_url)
+        const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+
+        return studies.get_id_with_link(link)
             .then(function(study){
                 if(!study)
                     return res.status(400).json("Error: code doesn't exist");
@@ -40,9 +39,8 @@ viewRouter.route('/:link_id/file/:file_id')
     .get(
         function(req, res) {
             const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-            const link = server_url + '/dashboard/?/view/'+req.params.link_id;
-            const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
-            return studies.get_id_with_link(clean_url)
+            const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+            return studies.get_id_with_link(link)
                 .then(function (study) {
                     if(!study)
                         return res.status(400).json("Error: code doesn't exist");

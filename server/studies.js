@@ -210,8 +210,8 @@ function add_collaboration(user_id, study_id, collaborator_name, permission, dat
                                     users.updateOne({_id: collaborator_data._id},
                                         {$push: {pending_studies: {id:study_id, accept, reject, permission, data_permission, study_name:full_data.study_data.name, owner_name}}}),
                                     sender.send_mail(collaborator_data.email, 'Message from the Researcher Dashboard‏', 'collaboration.ejs',
-                                        {accept: server_url+'/dashboard/?/collaboration/'+accept,
-                                            reject: server_url+'/dashboard/?/collaboration/'+reject,
+                                        {accept: utils.clean_url(server_url+'/dashboard/?/collaboration/'+accept),
+                                            reject: utils.clean_url(server_url+'/dashboard/?/collaboration/'+reject),
                                             collaborator_name,
                                             permission,
                                             data_permission,
@@ -541,11 +541,12 @@ function make_link(user_id, study_id, server_url) {
         .then(()=> connection.then(function (db) {
 
             const studies = db.collection('studies');
-            const link = server_url + '/dashboard/?/view/'+utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
-            const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
 
-            return studies.updateOne({_id: study_id}, {$set: {link:clean_url}})
-                .then(()=>clean_url);
+            const link = utils.clean_url(server_url + '/dashboard/?/view/' + utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000)));
+
+
+            return studies.updateOne({_id: study_id}, {$set: {link}})
+                .then(()=>link);
         }));
 }
 

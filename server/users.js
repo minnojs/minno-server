@@ -211,8 +211,8 @@ function insert_new_user({username, first_name, last_name, email, role, password
 
                         });
                 })
-                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: `${server_url}/dashboard/?/activation/${activation_code}`}) : ({}))
-                .then(sent=>sent ? ({}) : ({activation_code:`${server_url}/dashboard/?/activation/${activation_code}`}));
+                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}) : ({}))
+                .then(sent=>sent ? ({}) : ({activation_code:utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}));
         });
     });
 

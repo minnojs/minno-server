@@ -8,4 +8,9 @@ function sha1(data) {
     return generator.digest('hex');
 }
 
-module.exports = {sha1};
+function clean_url(url) {
+    return url.replace(/([^:])(\/\/+)/g, '$1/');
+}
+
+
+module.exports = {sha1, clean_url};

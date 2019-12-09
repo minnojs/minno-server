@@ -6,6 +6,7 @@ const urljoin       = require('url-join');
 const config_db     = require('../config_db');
 const data_server   = require('../data_server/controllers/controller');
 const studies       = require('../studies');
+const utils         = require('../utils');
 
 
 const router        = express.Router();
@@ -24,10 +25,9 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
 router.get('/view_play/:link_id/:file_id',function(req, res){
     const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
-    const link = server_url + '/dashboard/?/view/'+req.params.link_id;
-    const clean_url = link.replace(/([^:])(\/\/+)/g, '$1/');
+    const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
 
-    return studies.get_id_with_link(clean_url)
+    return studies.get_id_with_link(link)
         .then(function(study) {
             const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
 
