@@ -8,32 +8,32 @@ const utils       = require('../utils');
 module.exports = viewRouter;
 
 
-viewRouter.route('/:link_id').get(
-    function(req, res){
-        const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+viewRouter.route('/:link_id')
+    .get(
+        function(req, res){
+            const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
-        const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+            const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
 
-        return studies.get_id_with_link(link)
-            .then(function(study){
-                if(!study)
-                    return res.status(400).json("Error: code doesn't exist");
+            return studies.get_id_with_link(link)
+                .then(function(study){
+                    if(!study)
+                        return res.status(400).json("Error: code doesn't exist");
 
-                const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
-                return files.get_study_files(owner_id, parseInt(study._id), server_url)
-                        .then(function(response){
-                            response.is_readonly = true;
-                            response.permission  = 'read only';
-                            response.has_data_permission =  false;
-                            return res.json(response);
-                        })
-                        .catch(function(err){
-                            res.status(err.status || 500).json({message:err.message});
-                        });
-            });
+                    const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
+                    return files.get_study_files(owner_id, parseInt(study._id), server_url)
+                            .then(function(response){
+                                response.is_readonly = true;
+                                response.permission  = 'read only';
+                                response.has_data_permission =  false;
+                                return res.json(response);
+                            })
+                            .catch(function(err){
+                                res.status(err.status || 500).json({message:err.message});
+                            });
+                });
 
-    });
-
+        });
 
 viewRouter.route('/:link_id/file/:file_id')
     .get(

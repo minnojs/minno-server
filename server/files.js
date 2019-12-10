@@ -201,7 +201,6 @@ function download_data(user_id, pth, res) {
     });
 }
 
-
 function download_files(user_id, study_id, files) {
     const zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
     const zip_path = config.base_folder + config.zip_folder + zip_name;

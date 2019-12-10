@@ -135,10 +135,12 @@ let sess;
 basePathRouter.route('/download').get(
     function(req, res){
         sess = req.session;
-        if(!sess.user){
+        if(!sess.user && !req.params.code){
             res.statusCode = 403;
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
+        if(req.params.code)
+
         return files.download_zip(req.query.path, res);
     }
 );

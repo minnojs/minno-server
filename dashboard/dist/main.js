@@ -16996,7 +16996,6 @@
         var study = ref.study;
 
         var readonly = study.isReadonly;
-
         return m('.sidebar-buttons.btn-toolbar', [
 
             m('.btn-group.btn-group-sm', [
@@ -17011,7 +17010,7 @@
                 m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
                     m('i.fa.fa-close')
                 ]),
-                m('a.btn.btn-secondary.btn-sm', {onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
+                m('a.btn.btn-secondary.btn-sm', {class: study.view ? 'disabled' : '',onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
                     m('i.fa.fa-download')
                 ]),
                 m('label.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', title: 'Drag files over the file list in order to upload easily'}, [
@@ -20118,7 +20117,6 @@
     function getAbsoluteUrl$1(url) {
         var a = document.createElement('a');
         a.href=url;
-        console.log(a.href);
         return a.href;
     }
 
