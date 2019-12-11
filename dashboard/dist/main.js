@@ -13431,7 +13431,12 @@
         }
 
         study.downloadFiles(chosenFiles)
-            .then(function (url) { return downloadLink(url, study.name); })
+            .then(function (url) {
+
+                var a = document.createElement('a');
+                a.href=url;
+
+                console.log(a.href); return downloadLink(url, study.name);})
             .catch(function (err) { return messages.alert({
                 header: 'Failed to download files:',
                 content: err.message
@@ -17010,7 +17015,7 @@
                 m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
                     m('i.fa.fa-close')
                 ]),
-                m('a.btn.btn-secondary.btn-sm', {class: study.view ? 'disabled' : '',onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
+                m('a.btn.btn-secondary.btn-sm', {onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
                     m('i.fa.fa-download')
                 ]),
                 m('label.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', title: 'Drag files over the file list in order to upload easily'}, [
@@ -20126,7 +20131,6 @@
             input.value = text;
             document.body.appendChild(input);
             input.select();
-
             try {
                 document.execCommand('copy');
             } catch(err){

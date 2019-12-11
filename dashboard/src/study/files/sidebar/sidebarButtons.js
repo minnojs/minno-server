@@ -23,7 +23,7 @@ const sidebarButtons = ({study}, notifications) => {
             m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
                 m('i.fa.fa-close')
             ]),
-            m('a.btn.btn-secondary.btn-sm', {class: study.view ? 'disabled' : '',onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
+            m('a.btn.btn-secondary.btn-sm', {onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
                 m('i.fa.fa-download')
             ]),
             m('label.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', title: 'Drag files over the file list in order to upload easily'}, [

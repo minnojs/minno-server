@@ -340,7 +340,12 @@ export const downloadChosenFiles = (study) => () => {
     }
 
     study.downloadFiles(chosenFiles)
-        .then(url => downloadUrl(url, study.name))
+        .then(url => {
+
+            const a = document.createElement('a');
+            a.href=url;
+
+            console.log(a.href); return downloadUrl(url, study.name);})
         .catch(err => messages.alert({
             header: 'Failed to download files:',
             content: err.message

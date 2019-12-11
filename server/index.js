@@ -105,6 +105,21 @@ basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
 basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
 basePathRouter.use('/static', express.static(config.static_path));
 
+
+basePathRouter.route('/download').get(
+    function(req, res){
+        console.log('z');
+        // sess = req.session;
+        // if(!sess.user && !req.params.code){
+        //     res.statusCode = 403;
+        //     return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
+        // }
+        // if(req.params.code)
+
+        return files.download_zip(req.query.path, res);
+    }
+);
+
 basePathRouter.use('/view_files' ,view_router);
 
 
@@ -132,18 +147,7 @@ let sess;
 
 /********************************************/
 
-basePathRouter.route('/download').get(
-    function(req, res){
-        sess = req.session;
-        if(!sess.user && !req.params.code){
-            res.statusCode = 403;
-            return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
-        }
-        if(req.params.code)
 
-        return files.download_zip(req.query.path, res);
-    }
-);
 
 
 basePathRouter.route('/download_data')

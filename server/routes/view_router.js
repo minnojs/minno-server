@@ -33,6 +33,23 @@ viewRouter.route('/:link_id')
                             });
                 });
 
+        })
+    .post(
+        function(req, res){
+            const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+            const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+            return studies.get_id_with_link(link)
+                .then(function (study) {
+                    if(!study)
+                        return res.status(400).json("Error: code doesn't exist");
+                    const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
+                    return files.download_files(owner_id, study._id, req.body.files)
+                        .then(response=>res.json(response))
+                        .catch(function(err){
+                            res.status(err.status || 500).json({message:err.message});
+                        });
+                });
+
         });
 
 viewRouter.route('/:link_id/file/:file_id')
