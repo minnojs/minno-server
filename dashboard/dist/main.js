@@ -18660,6 +18660,7 @@
         controller: function controller(){
             var ctrl = {
                 loaded:m.prop(false),
+                donot_update:m.prop(false),
                 notifications: createNotifications(),
                 given_conf:m.prop(''),
                 gmail: {
@@ -18855,27 +18856,26 @@
             }
 
             function show_fail_notification(res) {
-
-                if(res.gmail)
-                    ctrl.notifications.show_danger(res.gmail);
-                if(res.gmail)
-                    ctrl.notifications.show_danger(res.gmail);
-
+                ctrl.notifications.show_danger(res);
             }
 
             function do_update_config(){
+                ctrl.donot_update(true);
+                m.redraw();
                 update_config(ctrl.fingerprint, ctrl.gmail, ctrl.dbx, ctrl.server_data)
                     .then(function (res){
+                        ctrl.donot_update(false);
+
                         show_success_notification(res);
                         ctrl.fingerprint.updated(false);
                         ctrl.gmail.updated(false);
                         ctrl.dbx.updated(false);
                         ctrl.server_data.updated(false);
+
                         return get_config()
                             .then(function (response) { return set_values(response); });
                     })
-                    .catch(function (error) { return show_fail_notification(error.message); })
-
+                    .catch(function (error) {ctrl.donot_update(false); return show_fail_notification(error.message);})
                     .then(m.redraw);
             }
             load();
@@ -19130,7 +19130,7 @@
                     ]),
 
                     m('.row.central_panel', [
-                        m('.col-sm-2', m('button.btn.btn-primary', {disabled: !ctrl.fingerprint.updated() && !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated(), onclick: ctrl.do_update_config},'Save'))
+                        m('.col-sm-2', m('button.btn.btn-primary', {disabled: ctrl.donot_update() || (!ctrl.fingerprint.updated() && !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated()), onclick: ctrl.do_update_config},'Save'))
                     ]),
                     m('div', ctrl.notifications.view()),
 

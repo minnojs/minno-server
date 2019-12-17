@@ -1,7 +1,9 @@
 const connection    = Promise.resolve(require('mongoose').connection);
 const Validator = require('node-input-validator');
 const Server				= require('./server.js');
-//const app					= require('./index').app;
+const url = require('url');
+const config = require('../config');
+const sslCertificate = require('get-ssl-certificate')
 
 function get_config () {
     return connection.then(function (db) {
@@ -64,25 +66,43 @@ function update_dbx (dbx) {
     return set_dbx(dbx.app_key, dbx.app_secret);
 }
 
-async function update_server(server_data, app) {
+async function update_server(server_data, host, app) {
     if(!server_data.updated)
         return;
     let server_data_obj = {http:{}};
 	if (server_data.type==='http'){
 		await Server.startupHttp(app);
 	}
+	let is_crashed = false;
     if (server_data.type==='https'){
         server_data_obj = {https: server_data.https};
 		try{
-			await Server.startupHttps(app, server_data_obj);
+            const server_url =  url.resolve(host, config.relative_path);
+            await Server.startupHttps(app, server_data_obj);
+
+            await sslCertificate.get(server_url).then(function (certificate) {
+                const subjectaltname = certificate.subjectaltname;
+                let valid_certification = false;
+                certificate.subjectaltname.split(",").map(a=> {
+                    if(a.includes(server_url))
+                        valid_certification = true;});
+                is_crashed = !valid_certification;
+            })
+                .catch(()=> {
+                    is_crashed = true;
+            });
 		}
 		catch(e)
 		{
-			console.log(e);
-			await server.startupHttp(app);
-			return Promise.reject({status: 400, message: e});
+			await Server.startupHttp(app);
+			return Promise.reject({server:{status: 400, message: e}});
 		}
 	}
+    if(is_crashed)
+    {
+        await Server.startupHttp(app);
+        return Promise.reject({server:{status: 400, message: 'Error: wrong certifications'}});
+    }
     if (server_data.type==='greenlock') {
         const email = server_data.greenlock.owner_email;
         let validator = new Validator({email},
@@ -90,14 +110,14 @@ async function update_server(server_data, app) {
         return validator.check()
             .then(function (){
                 if (Object.keys(validator.errors).length !== 0)
-                    return Promise.reject({status: 400, message: validator.errors.email.message});
+                    return Promise.reject({server:{status: 400, message: validator.errors.email.message}});
                 return Promise.all(
                     server_data.greenlock.domains.map(function (domain) {
                         let url_validator = new Validator({domain}, {domain: 'required|url'});
                         return url_validator.check()
                             .then(function () {
                                 if (Object.keys(url_validator.errors).length !== 0)
-                                    return Promise.reject({status: 400, message: url_validator.errors.domain.message});
+                                    return Promise.reject({server:{status: 400, message: url_validator.errors.domain.message}});
                             });
                         })
                     )
@@ -113,16 +133,15 @@ async function update_server(server_data, app) {
 								console.log(err);
 								await Server.shutdownHttps(app);
 								await Server.startupHttp(app);
-								return Promise.reject({status: 400, message: "Error updating to Greenlock: "+err})
+								return Promise.reject({server:{status: 400, message: "Error updating to Greenlock: "+err}})
 							}
 					}
 					catch(e)
 					{
 						console.log(e);
 						await server.startupHttp(app);
-						return Promise.reject({status: 400, message: e});
+						return Promise.reject({server:{status: 400, message: e}});
 					}
-						
                         return update_config_db(server_data_obj);
                     })
             });
@@ -143,13 +162,13 @@ function update_config_db(server_data_obj){
 
 function set_gmail (email, password) {
     if(!password)
-        return Promise.reject({status:400, message: 'ERROR: Missing Gmail password'});
+        return Promise.reject({gmail:{status:400, message: 'ERROR: Missing Gmail password'}});
     let validator = new Validator({email},
         {email: 'required|email'});
     return validator.check()
         .then(function () {
             if (Object.keys(validator.errors).length !== 0)
-                return Promise.reject({status: 400, message: 'ERROR: Invalid Gmail email address'});
+                return Promise.reject({gmail:{status: 400, message: 'ERROR: Invalid Gmail email address'}});
 
             return connection.then(function (db) {
                 const config_data = db.collection('config');

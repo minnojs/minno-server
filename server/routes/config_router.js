@@ -41,15 +41,23 @@ configRouter.route('')
 configRouter.route('/params')
     .put(
         function(req, res){
+
             return Promise.all([
                 config_db.update_fingerprint(req.body.fingerprint),
                 config_db.update_gmail(req.body.gmail),
                 config_db.update_dbx(req.body.dbx),
-                config_db.update_server(req.body.server_data, req.app)
+                config_db.update_server(req.body.server_data, req.headers.host, req.app)
             ])
             .then((output)=>res.json(output))
-            .catch((gmail_err, dbx_err)=>
-                res.status(gmail_err.status || dbx_err.status || 500).json({message:{gmail:gmail_err ? gmail_err.message : '', dbx: dbx_err ? dbx_err.message : ''}}));
+            .catch((err)=> {
+                const err_name = Object.keys(err)[0];
+
+                // console.log({fingerprint_err, gmail_err, dbx_err, server_err})
+                return res.status(err[err_name].status  || 500).json({
+                    message:
+                        err[err_name].message
+                });
+            });
         })
     .delete(
         function(req, res){
