@@ -262,7 +262,6 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 		});
 			
 	};
-
 	if (Object.keys(dataMaps).length == 0) {
 
         throw {status:500, message: 'ERROR: No data!'};
@@ -402,7 +401,6 @@ exports.newStudyInstance = function(req, res) {
 var getInitialVarMap = function(data) {
 	var varMap = {};
 	var varMaps = [];
-
 	Object.keys(data).forEach(function(key) {
 
 		if (key[0] == '_') {
@@ -444,6 +442,10 @@ var getInitialVarMap = function(data) {
 	return varMaps;
 }
 var getVarMap = function(data, prefix, map) {
+	if(data==null)
+	{
+		return map;
+	}
 	if (Array.isArray(data)) {
 		var x = 1;
 		data.forEach(function(row) {
@@ -476,7 +478,7 @@ var getVarMap = function(data, prefix, map) {
 			if (typeof item == 'object') {
 				Object.keys(item).forEach(function(key2) {
 					var item2 = item[key2];
-					if (typeof item2 == 'object') {
+					if (item2!==null && typeof item2 == 'object') {
 						map = getVarMap(item[key2], prefix + key + varSplit + key2 + varSplit, map);
 					} else {
 						if (typeof(map[prefix + key + varSplit + key2])=='undefined' || map[prefix + key + varSplit + key2] === null) {
