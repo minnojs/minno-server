@@ -21,7 +21,11 @@ const defaultValueName = 'data'; // name used for non json items in data arrays
 const dataPrefix = ''; //prefix for items in the data array
 const dataFileLocation = config.base_folder;
 const dataFolder = config.dataFolder;
-const maxRowsInMemory=100000;
+var maxRowsInMemory=config.data_rows;
+if(typeof maxRowsInMemory == "undefined")
+{
+	maxRowsInMemory=100000;
+}
 
 
 exports.insertData = function(req, res) {
