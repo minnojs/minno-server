@@ -16,6 +16,10 @@ const urljoin       = require('url-join');
 const url = require('url');
 const connection    = Promise.resolve(require('mongoose').connection);
 
+
+const ejs = require('ejs');
+
+
 function walk(server_url, folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
     const file_path = full_path.slice(path.join(config.user_folder,base_path).length+1);

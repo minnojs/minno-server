@@ -98,6 +98,7 @@ function add_data_request(user_id, study_id, exp_id, file_format, file_split, st
         }));
         })
         .then(() => data_requests.deleteMany({creation_date: {$lt: Date.now()-week_ms}}))
+        .then(() => data_requests.deleteMany({status:'No data'}))
         .then(() => data_requests.insertOne({
             user_id,
             study_id,
@@ -144,6 +145,7 @@ function cancel_data_request(request_id) {
 function get_data_requests(user_id, study_id) {
     return connection.then(function (db) {
         const two_days_ms = 1000*60*60*24*2;
+
         const data_requests = db.collection('data_requests');
         return data_requests.find({user_id, study_id, creation_date: {$gt: Date.now()-two_days_ms}})
             .toArray();

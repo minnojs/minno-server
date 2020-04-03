@@ -29,6 +29,7 @@ import settingsComponent from './settings/settingsComponent';
 import messagesComponent from './messages/messagesComponent';
 import massMailComponent from './massMail/massMailComponent';
 
+import generatorComponent from 'study/generator/generatorComponent';
 
 import activationComponent from './activation/activationComponent';
 import collaborationComponent from './collaboration/collaborationComponent';
@@ -81,6 +82,9 @@ let routes = {
     '/pool/history': historyComponent,
     '/downloads': downloadsComponent,
     '/downloadsAccess': downloadsAccessComponent,
-    '/sharing/:studyId': sharingComponent
+    '/sharing/:studyId': sharingComponent,
+
+    '/generator': generatorComponent
+
 };
 

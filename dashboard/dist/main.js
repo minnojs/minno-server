@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2019)
+ * @license Apache-2.0 (2020)
  */
 
 (function () {
@@ -15887,8 +15887,8 @@
 
             ctrl.downloaded() ? '' : m('.loader'),
             m('.text-xs-right.btn-toolbar',[
-                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
-                m('a.btn.btn-primary.btn-sm', {onclick:function (){ask_get_data(ctrl); }}, 'Download')
+                m('button.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
+                m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length, onclick:function (){ask_get_data(ctrl);}}, 'Download')
             ])
         ]);
     }
@@ -16039,7 +16039,7 @@
                                         ])
                                     ]),
 
-                                    m('.row-xs-10.list-group-item2', [
+                                    m('.row-xs-12.list-group-item2', [
                                         m('.col-xs-3',[
                                             m('strong', 'Creation Date: ')
                                         ]),
@@ -16052,7 +16052,7 @@
                                         m('.col-xs-3',
                                             m('strong', 'Start Date: ')
                                         ),
-                                        m('.col-xs-2',
+                                        m('.col-xs-3',
                                             formatDate(new Date(download.start_date))
                                         ),
                                         m('.col-xs-3',
@@ -16066,7 +16066,7 @@
                                         m('.col-xs-3',
                                             m('strong', 'File Format: ')
                                         ),
-                                        m('.col-xs-2',
+                                        m('.col-xs-3',
                                             download.file_format
                                         ),
                                         m('.col-xs-3',
@@ -16080,14 +16080,16 @@
                                         m('.col-xs-3',
                                             m('strong', 'Experimant Id: ')
                                         ),
-                                        m('.col-xs-2',
-                                            download.exp_id.length>1 ? 'All' : download.exp_id[0]
+                                        m('.col-xs-3',
+                                            ctrl.exps().map(function (exp){ return console.log(exp.ids==download.exp_id[0]); }),
+                                            download.exp_id.length>1 ? 'All' : ctrl.exps().filter(function (exp){ return exp.ids==download.exp_id[0]; })[0].descriptive_id
                                         ),
                                         m('.col-xs-3',
                                             m('strong', 'Version Id: ')
                                         ),
                                         m('.col-xs-2',
-                                            download.version_id.length>1 ? 'All' : download.version_id[0]                                    )
+                                            console.log(ctrl.versions),
+                                            download.version_id.length>1 ? 'All' : ctrl.versions.filter(function (version){ return version.id==download.version_id[0]; })[0].version                                     )
                                     ])
                                 ])
                             ])
@@ -18735,11 +18737,9 @@
             function toggle_visibility(varable, state){
                 if(ctrl[varable].enable() === state)
                     return;
-
                 ctrl[varable].error('');
                 ctrl[varable].enable(state);
                 ctrl[varable].updated(true);
-
             }
 
 
@@ -19686,6 +19686,266 @@
         };
     }
 
+    var generatorComponent = {
+        controller: function controller(){
+            var ctrl = {
+
+                stimuli:m.prop([]),
+                possible_responses:m.prop([{key:''}]),
+                conditions: m.prop([]),
+                update_possible_response: update_possible_response,
+                delete_possible_response: delete_possible_response,
+
+                do_add_stimulus: do_add_stimulus,
+                toggle_response: toggle_response,
+                update_stimulus_field: update_stimulus_field,
+                delete_stimulus: delete_stimulus,
+
+                do_add_condition: do_add_condition,
+                update_condition_name: update_condition_name,
+
+                add_stimuli_set: add_stimuli_set,
+                update_stimulus_media: update_stimulus_media,
+                toggle_stimulus_response: toggle_stimulus_response
+            };
+
+            function load() {
+                ctrl.loaded = true;
+            }
+
+
+            function update_possible_response(id, value) {
+                if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1)
+                    value = '';
+
+                if (value.length>1)
+                    value = value[value.length - 1];
+
+                ctrl.possible_responses()[id].key = value;
+                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
+                if(empty_keys.length===0)
+                    ctrl.possible_responses().push({key:''});
+            }
+
+            function delete_possible_response(id){
+                ctrl.possible_responses().splice(id, 1);
+                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
+                if(empty_keys.length===0)
+                    ctrl.possible_responses().push({key:''});
+            }
+
+            function do_add_stimulus() {
+                ctrl.stimuli().push({stimulus_name:'', response:false, css:''});
+            }
+
+
+
+            function toggle_response(id, varable, state){
+                if(ctrl.stimuli()[id][varable].enable === state)
+                    return;
+                ctrl.stimuli()[id][varable] = state;
+            }
+
+
+            function update_stimulus_field(id, field, name){
+                ctrl.stimuli()[id][field] = name;
+                // console.log(ctrl.stimuli());
+            }
+
+
+
+            function delete_stimulus(id){
+                ctrl.stimuli().splice(id, 1);
+            }
+
+
+            function do_add_condition() {
+                ctrl.conditions().push({condition_name:'', stimuli_sets:[]});
+            }
+
+            function update_condition_name(id, name){
+                ctrl.conditions()[id].condition_name = name;
+                // console.log(ctrl.stimuli());
+            }
+            function add_stimuli_set(id){
+                var stimuli_object = [];
+                ctrl.stimuli().forEach(function(stimulus){
+                    stimuli_object.push({stimulus_name:stimulus.stimulus_name, media:'', response:!!stimulus.response, response_key:'', css:stimulus.css});
+                });
+                ctrl.conditions()[id].stimuli_sets.push(stimuli_object);
+            }
+
+            function toggle_stimulus_response(condition_id, set_id, stimulus_id, response_key){
+                ctrl.conditions()[condition_id].stimuli_sets[set_id][stimulus_id].response_key = response_key;
+            }
+
+            function update_stimulus_media(condition_id, set_id, stimulus_id, media){
+                ctrl.conditions()[condition_id].stimuli_sets[set_id][stimulus_id].media = media;
+                // console.log(ctrl.stimuli());
+            }
+
+
+            load();
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return  !ctrl.loaded
+                ?
+                m('.loader')
+                :
+                m('.container.sharing-page', [
+                    m('h4', 'Possible responses'),
+                    m('.row',[
+                        ctrl.possible_responses().map(function(response, id) {
+                            return m('row',[
+                                m('.col-sm-2',
+                                    m('label.input-group.space', [
+                                        m('input.form-control.col-sm-1', {value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                        id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
+                                    ])
+                                )
+                            ])
+
+                        })
+                    ]),
+
+
+                    m('h4.space', 'Trial properties'),
+                    m('.row',[
+                        m('.col-sm-3',
+                            m('strong', 'Stimulus name')
+                        ),
+                        m('.col-sm-3',
+                            m('strong', 'Response')
+                        ),
+                        m('.col-sm-5',
+                            m('strong', 'Visual properties')
+                        )
+                    ]),
+
+
+                    ctrl.stimuli().map(function(stimulus, id) {
+                        return m('row.col-sm-12',
+                            [m('.col-sm-3',
+                                m('label.input-group.space', [
+                                    m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                            ])),
+                            m('.col-sm-3',
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.toggle_response(id, 'response', true); },
+                                            checked: stimulus.response,
+                                        }), m('span.c-indicator'), ' With response'
+                                    ])),
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.toggle_response(id, 'response', false); },
+                                            checked: !stimulus.response,
+                                        }), m('span.c-indicator'), ' Without response'
+                                    ]))
+                                ),
+                                m('.col-sm-5',
+                                    m('label.input-group.space', [
+                                        m('input.form-control', {value: stimulus.css, placeholder: 'css', onchange:function(){ctrl.update_stimulus_field(id, 'css', this.value);}})
+                                ])),
+                                m('.col-sm-1',
+                                    m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimulus(id);}}, [
+                                    m('i.fa.fa-close'), ' '
+                                ]))),
+                            ])
+                    }),
+
+                    m('.row.space',
+                        m('.col-sm-12', [
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
+                                [m('i.fa.fa-plus'), '  add stimulus']
+                            )
+                        ])
+                    ),
+
+                    m('h4.space', 'Conditions'),
+
+
+                    ctrl.conditions().map(function(condition, condition_id) {
+                        return  [m('row.col-sm-12',
+                                    m('.col-sm-3',
+                                        m('label.input-group.space', [
+                                            m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                                        ]))
+                                    ),
+                                    m('row.col-sm-12', [
+                                        m('.row',[
+                                            m('.col-sm-2',
+                                                m('strong', 'Stimulus name')
+                                            ),
+                                            m('.col-sm-3',
+                                                m('strong', 'Media')
+                                            ),
+                                            m('.col-sm-3',
+                                                m('strong', 'Visual properties')
+                                            ),
+                                            m('.col-sm-3',
+                                                m('strong', 'Response')
+                                            )
+                                        ]),
+                                        condition.stimuli_sets.map(function(stimuli_set, set_id){
+                                            return stimuli_set.map(function(stimulus, stimulus_id) {
+                                                return m('row.col-sm-12',[
+                                                    m('.col-sm-2', stimulus.stimulus_name),
+                                                    m('.col-sm-3',
+                                                        m('label.input-group.space', [
+                                                            m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(condition_id, set_id, stimulus_id, this.value);}}),
+                                                        ])
+                                                    ),
+                                                    m('.col-sm-3',
+                                                        m('label.input-group.space', [
+                                                            m('input.form-control', {value: 'css', placeholder: 'media', onchange:function(){}}),
+                                                        ])
+
+                                                    ),
+                                                    (!stimulus.response ? '' : ctrl.possible_responses().map(function(response, id) {
+                                                            return m('row',[
+                                                                m('.col-sm-1',
+                                                                    response.key.length !==1 ? '' :
+                                                                    m('div', m('label.c-input.c-radio', [
+                                                                        m('input[type=radio]', {
+                                                                            onclick: function (){ return ctrl.toggle_stimulus_response(condition_id, set_id, stimulus_id, response.key); },
+                                                                            checked: stimulus.response_key === response.key,
+                                                                        }), m('span.c-indicator'), response.key
+                                                                    ]))                                                            )
+                                                            ])})
+                                                        // m('label.input-group.space', [
+                                                        //     m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){}}),
+                                                        // ])
+
+                                                    )
+                                                ])
+                                        })
+
+                                    }),
+                                    m('.row.space',
+                                        m('.col-sm-12', [
+                                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set(condition_id);}},
+                                                [m('i.fa.fa-plus'), '  add stimuli set']
+                                            )
+                                        ])
+                                    )
+                                ])]
+
+                    }),
+                    m('.row.space',
+                        m('.col-sm-12', [
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
+                                [m('i.fa.fa-plus'), '  add condition']
+                            )
+                        ])
+                    ),
+
+
+                ]);
+        }
+    };
+
     function apiURL$2(code)
     {   
         return (activationUrl + "/" + (encodeURIComponent(code)));
@@ -19965,7 +20225,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$5, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$6, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -20105,8 +20365,8 @@
                                     [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
                                 ),
                                 m('label.input-group.space',[
-                                    m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
-                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                                    m('.input-group-addon', {onclick: function() {copy$2(getAbsoluteUrl$2(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$2(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
                                 ])
                             ])
                         )
@@ -20116,16 +20376,16 @@
         }
     };
 
-    var focus_it$5 = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function getAbsoluteUrl$1(url) {
+    function getAbsoluteUrl$2(url) {
         var a = document.createElement('a');
         a.href=url;
         return a.href;
     }
 
-    function copy$1(text){
+    function copy$2(text){
         return new Promise(function (resolve, reject) {
             var input = document.createElement('input');
             input.value = text;
@@ -20158,7 +20418,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$7, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -20221,7 +20481,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$6 = function (element, isInitialized) {
+    var focus_it$7 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
@@ -20632,7 +20892,10 @@
         '/pool/history': poolComponent$1,
         '/downloads': downloadsComponent,
         '/downloadsAccess': downloadsAccessComponent,
-        '/sharing/:studyId': collaborationComponent$1
+        '/sharing/:studyId': collaborationComponent$1,
+
+        '/generator': generatorComponent
+
     };
 
     var timer = 0;

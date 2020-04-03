@@ -101,14 +101,18 @@ basePathRouter.route('/data')
 
 // setup client side
 basePathRouter.get('/',(req,res) => res.redirect(urljoin(config.relative_path, 'dashboard/')));
+
 basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
-basePathRouter.use('/dashboard', (req,res) => res.render('dashboard', config));
+basePathRouter.use('/dashboard', (req,res) => {
+    if(req._parsedUrl.pathname!=='/dashboard/')
+        return res.redirect(urljoin(config.relative_path, 'dashboard/'));
+    return res.render('dashboard', config)});
+
 basePathRouter.use('/static', express.static(config.static_path));
 
 
 basePathRouter.route('/download').get(
     function(req, res){
-        console.log('z');
         // sess = req.session;
         // if(!sess.user && !req.params.code){
         //     res.statusCode = 403;

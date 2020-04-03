@@ -109,8 +109,8 @@ let data_dialog = {
 
         ctrl.downloaded() ? '' : m('.loader'),
         m('.text-xs-right.btn-toolbar',[
-            m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close'),
-            m('a.btn.btn-primary.btn-sm', {onclick:()=>{ask_get_data(ctrl); }}, 'Download')
+            m('button.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close'),
+            m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ask_get_data(ctrl)}}, 'Download')
         ])
     ])
 };
@@ -255,7 +255,7 @@ function show_requests(ctrl){
                                     ])
                                 ]),
 
-                                m('.row-xs-10.list-group-item2', [
+                                m('.row-xs-12.list-group-item2', [
                                     m('.col-xs-3',[
                                         m('strong', 'Creation Date: ')
                                     ]),
@@ -268,7 +268,7 @@ function show_requests(ctrl){
                                     m('.col-xs-3',
                                         m('strong', 'Start Date: ')
                                     ),
-                                    m('.col-xs-2',
+                                    m('.col-xs-3',
                                         formatDate(new Date(download.start_date))
                                     ),
                                     m('.col-xs-3',
@@ -282,7 +282,7 @@ function show_requests(ctrl){
                                     m('.col-xs-3',
                                         m('strong', 'File Format: ')
                                     ),
-                                    m('.col-xs-2',
+                                    m('.col-xs-3',
                                         download.file_format
                                     ),
                                     m('.col-xs-3',
@@ -296,14 +296,16 @@ function show_requests(ctrl){
                                     m('.col-xs-3',
                                         m('strong', 'Experimant Id: ')
                                     ),
-                                    m('.col-xs-2',
-                                        download.exp_id.length>1 ? 'All' : download.exp_id[0]
+                                    m('.col-xs-3',
+                                        ctrl.exps().map(exp=> console.log(exp.ids==download.exp_id[0])),
+                                        download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
                                     ),
                                     m('.col-xs-3',
                                         m('strong', 'Version Id: ')
                                     ),
                                     m('.col-xs-2',
-                                        download.version_id.length>1 ? 'All' : download.version_id[0]                                    )
+                                        console.log(ctrl.versions),
+                                        download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version                                     )
                                 ])
                             ])
                         ])
