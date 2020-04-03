@@ -1,61 +1,111 @@
 let httpServer = null;
 let httpsServer = null;
-const Greenlock = require('greenlock-express');
+//const Greenlock = require('greenlock-express');
+const glx=require("greenlock-express");
+let   glxServers=null;
 const config = require('../config');
-const configDb = require('./config_db');
+//const configDb = require('./config_db');
 const sslChecker 			= require('ssl-checker');
 
 exports.startupGreenlock = async function(app, greenlock_data) {
-    //await exports.startupHttp(app);
-   await exports.shutdownHttp();
-   await exports.shutdownHttps();	
+	await exports.shutdownHttps();	
+	await exports.shutdownHttp();
+	await exports.shutdownGreenlock();
 	if(greenlock_data==null)
-	{
-		greenlock_data={owner_email: config.owner_email, domains:config.domains}
-	}
-	var glx = Greenlock.create({
-	    server: "https://acme-v02.api.letsencrypt.org/directory",
-	    // Note: If at first you don't succeed, stop and switch to staging:
-	    // https://acme-staging-v02.api.letsencrypt.org/directory
-	    version: "draft-11", // Let's Encrypt v2 (ACME v2)
-        email: greenlock_data.owner_email,
-        // You MUST NOT build clients that accept the ToS without asking the user
-        agreeTos: true,
-	    // If you wish to replace the default account and domain key storage plugin
-	    store: require("le-store-certbot").create({
-	        configDir: '~/.config/acme/',
-	        webrootPath: "'~/.config/acmeweb/'"
-	    }),
- 
-	    // Contribute telemetry data to the project
-	    telemetry: false,
- 
-	    // the default servername to use when the client doesn't specify
-	    // (because some IoT devices don't support servername indication)
-	    servername: greenlock_data.domains[0],
- 
-	    approveDomains: greenlock_data.domains
-	});	
-httpServer=await require("http")
-    .createServer(glx.middleware(require("redirect-https")()));
-    httpServer.listen(config.port, function() {
-        console.log("Listening for ACME http-01 challenges on", this.address());
-    });
+		{
+			greenlock_data={owner_email: config.owner_email, domains:config.domains}
+		}
+   await glx.init(() => {
+       const pkg = require('../data/greenlock/package.json');
+       const greenlock = require('@root/greenlock').create({
+         // name & version for ACME client user agent
+         packageAgent: pkg.name + '/' + pkg.version,
+		  configDir: "../data/greenlock/config/greenlock.d",
 
-    ////////////////////////
-    // http2 via SPDY h2  //
-    ////////////////////////
-httpsServer=await require("https")
-    .createServer(glx.httpsOptions, app);
-	httpsServer.listen(config.sslport, function() {
-        console.log("Listening for ACME tls-sni-01 challenges and serve app on", this.address());
-    });
+         // contact for security and critical bug notices
+         maintainerEmail: greenlock_data.owner_email,
 
-   
+         // where to find .greenlockrc and set default paths
+         packageRoot: './data/greenlock'
+       });
+       greenlock.manager.defaults({
+         subscriberEmail: greenlock_data.owner_email,
+         agreeToTerms: true
+       });
+       greenlock.sites.add({
+         subject: greenlock_data.domains[0],
+		   altnames: greenlock_data.domains
+       });
+       return {
+         greenlock,
+		   configDir: "../data/greenlock/config/greenlock.d",
+         // whether or not to run at cloudscale
+         cluster: false
+       };
+     }).ready(async function(glExpress) {
+  
+		 await glExpress.serveApp(app);
+		 glxServers=glExpress;
+		
+    })  //.ready(glx => glx.serveApp(app));
+/*   
+    glx.init(function getConfig() {
+        // Greenlock Config
+  return {greenlock: require("../data/greenlock/greenlock.js"),
+
+            // whether or not to run at cloudscale
+		cluster: false}
+        /* return {
+			packageRoot: "./data/greenlock",
+            package: { name: "minno-server", version: "0.1",packageRoot: "../data/greenlock",sites: [
+    {
+      subject: "implicit.cf",
+      altnames: [
+        "www.implicit.cf"
+      ],
+      renewAt: 1
+    }
+  ] },
+            maintainerEmail: "andy.dzik@gmail.com",
+            cluster: false,
+  sites: [
+      {
+        subject: "implicit.cf",
+        altnames: [
+          "www.implicit.cf"
+        ],
+        renewAt: 1
+      }
+    ]
+        };
+    }) .ready(function(glExpress) {
+  
+        glExpress.serveApp(app);
+    })  */
+	
+
 };
-
+exports.shutdownGreenlock = async function()
+{
+	if(glxServers!=null){
+		console.log(glxServers);
+	let greenlockHttp=glxServers.httpServer();
+    if (greenlockHttp != null) {
+		console.log('Closing Greenlock HTTP Server');
+        await greenlockHttp.close();
+	}
+	let greenlockHttps=glxServers.httpsServer();
+    if (greenlockHttps != null) {
+		console.log('Closing Greenlock HTTPS Server');
+        await greenlockHttps.close();
+	}
+}
+	glxServers=null;
+	
+}
 exports.startupHttp = async function(app) {
     await exports.shutdownHttps();
+	await exports.shutdownGreenlock();
     await exports.shutdownHttp();
     httpServer = await app.listen(config.port, function() {
         console.log('Minno-server Started on PORT ' + config.port);
@@ -66,12 +116,14 @@ exports.shutdownHttp = async function() {
     if (httpServer != null) {
         await httpServer.close();
         httpServer = null;
+		console.log('shutdown http server');
     }
 };
 
 exports.startupHttps = async function(app, server_data) {
 	await exports.shutdownHttps();	
 	await exports.shutdownHttp();
+	await exports.shutdownGreenlock();
    //await exports.startupHttp(app);	
 httpServer=await require("http")
     .createServer(function (req, res) {
@@ -121,5 +173,63 @@ exports.testSSL= async function(domain){
 	  }
 	});
 	return true;
-	
 }
+exports.startServer = async function(app,serverConfig)
+	{
+		let serverType=null;
+		//const serverConfig=await configDb.get_config();
+		const server_data=serverConfig.server_data;
+		try{
+		if( typeof server_data !== 'undefined' && server_data )
+		{
+	    if(server_data.https)
+			{await exports.startupHttps(app, server_data.https);}
+	    if(server_data.greenlock)
+			{
+
+				await exports.startupGreenlock(app, server_data.greenlock);
+				try{
+					await exports.testSSL(server_data.greenlock.domains[0])}
+					catch(err)
+					{
+						console.log(err);
+						await exports.shutdownHttps(app);
+						await exports.startupHttp(app);
+					}
+			}
+		if(!server_data.https && !server_data.greenlock)
+		{
+			await exports.startupHttp(app);
+		}
+		}
+		else{
+	
+	    if(config.server_type==='greenlock')
+			{
+
+				await exports.startupGreenlock(app, server_data.greenlock);
+				try{
+					await exports.testSSL(server_data.greenlock.domains[0])}
+					catch(err)
+					{
+						console.log(err);
+						await exports.shutdownHttps(app);
+						await exports.startupHttp(app);
+					}
+			}
+		else
+		{
+	    if(config.server_type==='https'){
+	        exports.startupHttps(app);}
+		else{
+	        exports.startupHttp(app);}
+	}
+	    }
+	}
+	catch(e)
+	{
+		await exports.startupHttp(app);
+		console.log(e);
+	}
+	}	
+	

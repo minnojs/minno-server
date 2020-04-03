@@ -72,6 +72,7 @@ async function update_server(server_data, host, app) {
     let server_data_obj = {http:{}};
 	if (server_data.type==='http'){
 		await Server.startupHttp(app);
+		return update_config_db(server_data_obj);
 	}
 	let is_crashed = false;
     if (server_data.type==='https'){
@@ -91,11 +92,13 @@ async function update_server(server_data, host, app) {
                 .catch(()=> {
                     is_crashed = true;
             });
+			
 		}
 		catch(e)
 		{
-			await Server.startupHttp(app);
-			return Promise.reject({server:{status: 400, message: e}});
+			curConfig=await get_config();
+			await Server.startServer(app,curConfig);
+			return Promise.reject({status: 400, message: e});
 		}
 	}
     if(is_crashed)
@@ -103,6 +106,10 @@ async function update_server(server_data, host, app) {
         await Server.startupHttp(app);
         return Promise.reject({server:{status: 400, message: 'Error: wrong certifications'}});
     }
+	else
+	{
+		return update_config_db(server_data_obj);
+	}
     if (server_data.type==='greenlock') {
         const email = server_data.greenlock.owner_email;
         let validator = new Validator({email},
@@ -127,26 +134,34 @@ async function update_server(server_data, host, app) {
                         server_data_obj = {greenlock: server_data.greenlock};
 					    await Server.startupGreenlock(app,server_data.greenlock);
 						try{
-							await Server.testSSL(server_data.greenlock.domains[0])}
+							await Server.testSSL(server_data.greenlock.domains[0]);
+							return update_config_db(server_data_obj);
+						
+						}
 							catch(err)
 							{
 								console.log(err);
+								await Server.shutdownGreenlock();
 								await Server.shutdownHttps(app);
-								await Server.startupHttp(app);
-								return Promise.reject({server:{status: 400, message: "Error updating to Greenlock: "+err}})
+								curConfig=await get_config();
+								await Server.startServer(app,curConfig);
+								return Promise.reject({status: 400, message: "Error updating to Greenlock: "+err})
 							}
 					}
 					catch(e)
 					{
 						console.log(e);
-						await server.startupHttp(app);
-						return Promise.reject({server:{status: 400, message: e}});
+						await Server.shutdownGreenlock();
+						await Server.shutdownHttps(app);
+						//await server.startupHttp(app);
+						curConfig=await get_config();
+						await Server.startServer(app,curConfig);
+						return Promise.reject({status: 400, message: e});
 					}
-                        return update_config_db(server_data_obj);
                     })
             });
     }
-    return update_config_db(server_data_obj);
+    //return update_config_db(server_data_obj);
 }
 
 
