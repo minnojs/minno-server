@@ -190,10 +190,11 @@ function download_data(user_id, pth, res) {
                                 !exist ?
                                     res.status(500).json({message: 'File doesn\'t exist'})
                                     :
-                                    res.download(full_path, pth, function (err) {
+									fs.createReadStream(full_path).pipe(res)
+                                    /*res.download(full_path, pth, function (err) {
                                         if (err)
                                             return res.status(err.status || 500).json({message: err.message});
-                                    })
+                                    })*/
                             )
                     );
             })
