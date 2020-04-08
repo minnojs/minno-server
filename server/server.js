@@ -6,6 +6,11 @@ let   glxServers=null;
 const config = require('../config');
 //const configDb = require('./config_db');
 const sslChecker 			= require('ssl-checker');
+var keepAliveTimeout=config.keepAliveTimeout;
+if(typeof keepAliveTimeout == "undefined")
+{
+	keepAliveTimeout=1800000;
+}
 
 exports.startupGreenlock = async function(app, greenlock_data) {
 	await exports.shutdownHttps();	
@@ -46,6 +51,15 @@ exports.startupGreenlock = async function(app, greenlock_data) {
   
 		 await glExpress.serveApp(app);
 		 glxServers=glExpress;
+	 	let greenlockHttp=glxServers.httpServer();
+	     if (greenlockHttp != null) {
+	          greenlockHttp.keepAliveTimeout=keepAliveTimeout;
+	 	}
+	 	let greenlockHttps=glxServers.httpsServer();
+	     if (greenlockHttps != null) {
+	         greenlockHttps.keepAliveTimeout=keepAliveTimeout;
+	 	}
+		 
 		
     })  //.ready(glx => glx.serveApp(app));
 /*   
@@ -88,7 +102,6 @@ exports.startupGreenlock = async function(app, greenlock_data) {
 exports.shutdownGreenlock = async function()
 {
 	if(glxServers!=null){
-		console.log(glxServers);
 	let greenlockHttp=glxServers.httpServer();
     if (greenlockHttp != null) {
 		console.log('Closing Greenlock HTTP Server');
@@ -110,6 +123,7 @@ exports.startupHttp = async function(app) {
     httpServer = await app.listen(config.port, function() {
         console.log('Minno-server Started on PORT ' + config.port);
     });
+	httpServer.keepAliveTimeout=keepAliveTimeout;
 };
 
 exports.shutdownHttp = async function() {
@@ -128,6 +142,7 @@ exports.startupHttps = async function(app, server_data) {
 httpServer=await require("http")
     .createServer(function (req, res) {
 });
+httpServer.keepAliveTimeout=keepAliveTimeout;
 httpServer.listen(config.port);
  console.log('Minno-server HTTPS redirect Started on PORT ' + config.port);
 
@@ -148,7 +163,7 @@ httpServer.listen(config.port);
     try{
         httpsServer = await https.createServer(credentials, app);
         httpsServer.listen(config.sslport);
-        console.log(server_data);
+		httpsServer.keepAliveTimeout=keepAliveTimeout;
         console.log('Minno-server Started on PORT ' + config.sslport);
     }
     catch(e){
