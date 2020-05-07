@@ -44,6 +44,7 @@
     "greenlock": "^2.8.1",
     "greenlock-express": "^3.1.1",
     "greenlock-store-fs": "^3.0.2",
+    "marked": "^1.0.0",
     "mongoose": "^5.4.21",
     "mongoose_schema-json": "^1.0.3",
     "multer": "^1.1.0",

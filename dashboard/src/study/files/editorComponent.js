@@ -1,6 +1,7 @@
 import fullHeight from 'utils/fullHeight';
 import imgEditor from './editors/imgEditor';
 import pdfEditor from './editors/pdfEditor';
+import mdEditor from './editors/mdEditor';
 import unknowEditor from './editors/unknownEditor';
 import textEditor from './editors/textEditor';
 
@@ -30,7 +31,9 @@ let editors = {
     png: imgEditor,
     gif: imgEditor,
 
-    pdf: pdfEditor
+    pdf: pdfEditor,
+
+    md: mdEditor
 };
 
 let fileEditorComponent = {

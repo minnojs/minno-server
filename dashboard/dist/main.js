@@ -12858,6 +12858,2314 @@
     ]);
     };
 
+    var defaults = createCommonjsModule(function (module) {
+    function getDefaults() {
+      return {
+        baseUrl: null,
+        breaks: false,
+        gfm: true,
+        headerIds: true,
+        headerPrefix: '',
+        highlight: null,
+        langPrefix: 'language-',
+        mangle: true,
+        pedantic: false,
+        renderer: null,
+        sanitize: false,
+        sanitizer: null,
+        silent: false,
+        smartLists: false,
+        smartypants: false,
+        tokenizer: null,
+        xhtml: false
+      };
+    }
+
+    function changeDefaults(newDefaults) {
+      module.exports.defaults = newDefaults;
+    }
+
+    module.exports = {
+      defaults: getDefaults(),
+      getDefaults: getDefaults,
+      changeDefaults: changeDefaults
+    };
+    });
+    var defaults_1 = defaults.defaults;
+    var defaults_2 = defaults.getDefaults;
+    var defaults_3 = defaults.changeDefaults;
+
+    /**
+     * Helpers
+     */
+    var escapeTest = /[&<>"']/;
+    var escapeReplace = /[&<>"']/g;
+    var escapeTestNoEncode = /[<>"']|&(?!#?\w+;)/;
+    var escapeReplaceNoEncode = /[<>"']|&(?!#?\w+;)/g;
+    var escapeReplacements = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    var getEscapeReplacement = function (ch) { return escapeReplacements[ch]; };
+    function escape(html, encode) {
+      if (encode) {
+        if (escapeTest.test(html)) {
+          return html.replace(escapeReplace, getEscapeReplacement);
+        }
+      } else {
+        if (escapeTestNoEncode.test(html)) {
+          return html.replace(escapeReplaceNoEncode, getEscapeReplacement);
+        }
+      }
+
+      return html;
+    }
+
+    var unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig;
+
+    function unescape(html) {
+      // explicitly match decimal, hex, and named HTML entities
+      return html.replace(unescapeTest, function (_, n) {
+        n = n.toLowerCase();
+        if (n === 'colon') return ':';
+        if (n.charAt(0) === '#') {
+          return n.charAt(1) === 'x'
+            ? String.fromCharCode(parseInt(n.substring(2), 16))
+            : String.fromCharCode(+n.substring(1));
+        }
+        return '';
+      });
+    }
+
+    var caret = /(^|[^\[])\^/g;
+    function edit$1(regex, opt) {
+      regex = regex.source || regex;
+      opt = opt || '';
+      var obj = {
+        replace: function (name, val) {
+          val = val.source || val;
+          val = val.replace(caret, '$1');
+          regex = regex.replace(name, val);
+          return obj;
+        },
+        getRegex: function () {
+          return new RegExp(regex, opt);
+        }
+      };
+      return obj;
+    }
+
+    var nonWordAndColonTest = /[^\w:]/g;
+    var originIndependentUrl = /^$|^[a-z][a-z0-9+.-]*:|^[?#]/i;
+    function cleanUrl(sanitize, base, href) {
+      if (sanitize) {
+        var prot;
+        try {
+          prot = decodeURIComponent(unescape(href))
+            .replace(nonWordAndColonTest, '')
+            .toLowerCase();
+        } catch (e) {
+          return null;
+        }
+        if (prot.indexOf('javascript:') === 0 || prot.indexOf('vbscript:') === 0 || prot.indexOf('data:') === 0) {
+          return null;
+        }
+      }
+      if (base && !originIndependentUrl.test(href)) {
+        href = resolveUrl(base, href);
+      }
+      try {
+        href = encodeURI(href).replace(/%25/g, '%');
+      } catch (e) {
+        return null;
+      }
+      return href;
+    }
+
+    var baseUrls = {};
+    var justDomain = /^[^:]+:\/*[^/]*$/;
+    var protocol = /^([^:]+:)[\s\S]*$/;
+    var domain = /^([^:]+:\/*[^/]*)[\s\S]*$/;
+
+    function resolveUrl(base, href) {
+      if (!baseUrls[' ' + base]) {
+        // we can ignore everything in base after the last slash of its path component,
+        // but we might need to add _that_
+        // https://tools.ietf.org/html/rfc3986#section-3
+        if (justDomain.test(base)) {
+          baseUrls[' ' + base] = base + '/';
+        } else {
+          baseUrls[' ' + base] = rtrim(base, '/', true);
+        }
+      }
+      base = baseUrls[' ' + base];
+      var relativeBase = base.indexOf(':') === -1;
+
+      if (href.substring(0, 2) === '//') {
+        if (relativeBase) {
+          return href;
+        }
+        return base.replace(protocol, '$1') + href;
+      } else if (href.charAt(0) === '/') {
+        if (relativeBase) {
+          return href;
+        }
+        return base.replace(domain, '$1') + href;
+      } else {
+        return base + href;
+      }
+    }
+
+    var noopTest = { exec: function noopTest() {} };
+
+    function merge(obj) {
+      var arguments$1 = arguments;
+
+      var i = 1,
+        target,
+        key;
+
+      for (; i < arguments.length; i++) {
+        target = arguments$1[i];
+        for (key in target) {
+          if (Object.prototype.hasOwnProperty.call(target, key)) {
+            obj[key] = target[key];
+          }
+        }
+      }
+
+      return obj;
+    }
+
+    function splitCells(tableRow, count) {
+      // ensure that every cell-delimiting pipe has a space
+      // before it to distinguish it from an escaped pipe
+      var row = tableRow.replace(/\|/g, function (match, offset, str) {
+          var escaped = false,
+            curr = offset;
+          while (--curr >= 0 && str[curr] === '\\') escaped = !escaped;
+          if (escaped) {
+            // odd number of slashes means | is escaped
+            // so we leave it alone
+            return '|';
+          } else {
+            // add space before unescaped |
+            return ' |';
+          }
+        }),
+        cells = row.split(/ \|/);
+      var i = 0;
+
+      if (cells.length > count) {
+        cells.splice(count);
+      } else {
+        while (cells.length < count) cells.push('');
+      }
+
+      for (; i < cells.length; i++) {
+        // leading or trailing whitespace is ignored per the gfm spec
+        cells[i] = cells[i].trim().replace(/\\\|/g, '|');
+      }
+      return cells;
+    }
+
+    // Remove trailing 'c's. Equivalent to str.replace(/c*$/, '').
+    // /c*$/ is vulnerable to REDOS.
+    // invert: Remove suffix of non-c chars instead. Default falsey.
+    function rtrim(str, c, invert) {
+      var l = str.length;
+      if (l === 0) {
+        return '';
+      }
+
+      // Length of suffix matching the invert condition.
+      var suffLen = 0;
+
+      // Step left until we fail to match the invert condition.
+      while (suffLen < l) {
+        var currChar = str.charAt(l - suffLen - 1);
+        if (currChar === c && !invert) {
+          suffLen++;
+        } else if (currChar !== c && invert) {
+          suffLen++;
+        } else {
+          break;
+        }
+      }
+
+      return str.substr(0, l - suffLen);
+    }
+
+    function findClosingBracket(str, b) {
+      if (str.indexOf(b[1]) === -1) {
+        return -1;
+      }
+      var l = str.length;
+      var level = 0,
+        i = 0;
+      for (; i < l; i++) {
+        if (str[i] === '\\') {
+          i++;
+        } else if (str[i] === b[0]) {
+          level++;
+        } else if (str[i] === b[1]) {
+          level--;
+          if (level < 0) {
+            return i;
+          }
+        }
+      }
+      return -1;
+    }
+
+    function checkSanitizeDeprecation(opt) {
+      if (opt && opt.sanitize && !opt.silent) {
+        console.warn('marked(): sanitize and sanitizer parameters are deprecated since version 0.7.0, should not be used and will be removed in the future. Read more here: https://marked.js.org/#/USING_ADVANCED.md#options');
+      }
+    }
+
+    var helpers = {
+      escape: escape,
+      unescape: unescape,
+      edit: edit$1,
+      cleanUrl: cleanUrl,
+      resolveUrl: resolveUrl,
+      noopTest: noopTest,
+      merge: merge,
+      splitCells: splitCells,
+      rtrim: rtrim,
+      findClosingBracket: findClosingBracket,
+      checkSanitizeDeprecation: checkSanitizeDeprecation
+    };
+
+    var defaults$1 = defaults.defaults;
+    var rtrim$1 = helpers.rtrim;
+    var splitCells$1 = helpers.splitCells;
+    var escape$1 = helpers.escape;
+    var findClosingBracket$1 = helpers.findClosingBracket;
+
+    function outputLink(cap, link, raw) {
+      var href = link.href;
+      var title = link.title ? escape$1(link.title) : null;
+
+      if (cap[0].charAt(0) !== '!') {
+        return {
+          type: 'link',
+          raw: raw,
+          href: href,
+          title: title,
+          text: cap[1]
+        };
+      } else {
+        return {
+          type: 'image',
+          raw: raw,
+          text: escape$1(cap[1]),
+          href: href,
+          title: title
+        };
+      }
+    }
+
+    /**
+     * Tokenizer
+     */
+    var Tokenizer_1 = (function () {
+      function Tokenizer(options) {
+        this.options = options || defaults$1;
+      }
+
+      Tokenizer.prototype.space = function space (src) {
+        var cap = this.rules.block.newline.exec(src);
+        if (cap) {
+          if (cap[0].length > 1) {
+            return {
+              type: 'space',
+              raw: cap[0]
+            };
+          }
+          return { raw: '\n' };
+        }
+      };
+
+      Tokenizer.prototype.code = function code (src, tokens) {
+        var cap = this.rules.block.code.exec(src);
+        if (cap) {
+          var lastToken = tokens[tokens.length - 1];
+          // An indented code block cannot interrupt a paragraph.
+          if (lastToken && lastToken.type === 'paragraph') {
+            tokens.pop();
+            lastToken.text += '\n' + cap[0].trimRight();
+            lastToken.raw += '\n' + cap[0];
+            return lastToken;
+          } else {
+            var text = cap[0].replace(/^ {4}/gm, '');
+            return {
+              type: 'code',
+              raw: cap[0],
+              codeBlockStyle: 'indented',
+              text: !this.options.pedantic
+                ? rtrim$1(text, '\n')
+                : text
+            };
+          }
+        }
+      };
+
+      Tokenizer.prototype.fences = function fences (src) {
+        var cap = this.rules.block.fences.exec(src);
+        if (cap) {
+          return {
+            type: 'code',
+            raw: cap[0],
+            lang: cap[2] ? cap[2].trim() : cap[2],
+            text: cap[3] || ''
+          };
+        }
+      };
+
+      Tokenizer.prototype.heading = function heading (src) {
+        var cap = this.rules.block.heading.exec(src);
+        if (cap) {
+          return {
+            type: 'heading',
+            raw: cap[0],
+            depth: cap[1].length,
+            text: cap[2]
+          };
+        }
+      };
+
+      Tokenizer.prototype.nptable = function nptable (src) {
+        var cap = this.rules.block.nptable.exec(src);
+        if (cap) {
+          var item = {
+            type: 'table',
+            header: splitCells$1(cap[1].replace(/^ *| *\| *$/g, '')),
+            align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
+            cells: cap[3] ? cap[3].replace(/\n$/, '').split('\n') : [],
+            raw: cap[0]
+          };
+
+          if (item.header.length === item.align.length) {
+            var l = item.align.length;
+            var i;
+            for (i = 0; i < l; i++) {
+              if (/^ *-+: *$/.test(item.align[i])) {
+                item.align[i] = 'right';
+              } else if (/^ *:-+: *$/.test(item.align[i])) {
+                item.align[i] = 'center';
+              } else if (/^ *:-+ *$/.test(item.align[i])) {
+                item.align[i] = 'left';
+              } else {
+                item.align[i] = null;
+              }
+            }
+
+            l = item.cells.length;
+            for (i = 0; i < l; i++) {
+              item.cells[i] = splitCells$1(item.cells[i], item.header.length);
+            }
+
+            return item;
+          }
+        }
+      };
+
+      Tokenizer.prototype.hr = function hr (src) {
+        var cap = this.rules.block.hr.exec(src);
+        if (cap) {
+          return {
+            type: 'hr',
+            raw: cap[0]
+          };
+        }
+      };
+
+      Tokenizer.prototype.blockquote = function blockquote (src) {
+        var cap = this.rules.block.blockquote.exec(src);
+        if (cap) {
+          var text = cap[0].replace(/^ *> ?/gm, '');
+
+          return {
+            type: 'blockquote',
+            raw: cap[0],
+            text: text
+          };
+        }
+      };
+
+      Tokenizer.prototype.list = function list (src) {
+        var this$1 = this;
+
+        var cap = this.rules.block.list.exec(src);
+        if (cap) {
+          var raw = cap[0];
+          var bull = cap[2];
+          var isordered = bull.length > 1;
+
+          var list = {
+            type: 'list',
+            raw: raw,
+            ordered: isordered,
+            start: isordered ? +bull : '',
+            loose: false,
+            items: []
+          };
+
+          // Get each top-level item.
+          var itemMatch = cap[0].match(this.rules.block.item);
+
+          var next = false,
+            item,
+            space,
+            b,
+            addBack,
+            loose,
+            istask,
+            ischecked;
+
+          var l = itemMatch.length;
+          for (var i = 0; i < l; i++) {
+            item = itemMatch[i];
+            raw = item;
+
+            // Remove the list item's bullet
+            // so it is seen as the next token.
+            space = item.length;
+            item = item.replace(/^ *([*+-]|\d+\.) */, '');
+
+            // Outdent whatever the
+            // list item contains. Hacky.
+            if (~item.indexOf('\n ')) {
+              space -= item.length;
+              item = !this$1.options.pedantic
+                ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
+                : item.replace(/^ {1,4}/gm, '');
+            }
+
+            // Determine whether the next list item belongs here.
+            // Backpedal if it does not belong in this list.
+            if (i !== l - 1) {
+              b = this$1.rules.block.bullet.exec(itemMatch[i + 1])[0];
+              if (bull.length > 1 ? b.length === 1
+                : (b.length > 1 || (this$1.options.smartLists && b !== bull))) {
+                addBack = itemMatch.slice(i + 1).join('\n');
+                list.raw = list.raw.substring(0, list.raw.length - addBack.length);
+                i = l - 1;
+              }
+            }
+
+            // Determine whether item is loose or not.
+            // Use: /(^|\n)(?! )[^\n]+\n\n(?!\s*$)/
+            // for discount behavior.
+            loose = next || /\n\n(?!\s*$)/.test(item);
+            if (i !== l - 1) {
+              next = item.charAt(item.length - 1) === '\n';
+              if (!loose) loose = next;
+            }
+
+            if (loose) {
+              list.loose = true;
+            }
+
+            // Check for task list items
+            istask = /^\[[ xX]\] /.test(item);
+            ischecked = undefined;
+            if (istask) {
+              ischecked = item[1] !== ' ';
+              item = item.replace(/^\[[ xX]\] +/, '');
+            }
+
+            list.items.push({
+              raw: raw,
+              task: istask,
+              checked: ischecked,
+              loose: loose,
+              text: item
+            });
+          }
+
+          return list;
+        }
+      };
+
+      Tokenizer.prototype.html = function html (src) {
+        var cap = this.rules.block.html.exec(src);
+        if (cap) {
+          return {
+            type: this.options.sanitize
+              ? 'paragraph'
+              : 'html',
+            raw: cap[0],
+            pre: !this.options.sanitizer
+              && (cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style'),
+            text: this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$1(cap[0])) : cap[0]
+          };
+        }
+      };
+
+      Tokenizer.prototype.def = function def (src) {
+        var cap = this.rules.block.def.exec(src);
+        if (cap) {
+          if (cap[3]) cap[3] = cap[3].substring(1, cap[3].length - 1);
+          var tag = cap[1].toLowerCase().replace(/\s+/g, ' ');
+          return {
+            tag: tag,
+            raw: cap[0],
+            href: cap[2],
+            title: cap[3]
+          };
+        }
+      };
+
+      Tokenizer.prototype.table = function table (src) {
+        var cap = this.rules.block.table.exec(src);
+        if (cap) {
+          var item = {
+            type: 'table',
+            header: splitCells$1(cap[1].replace(/^ *| *\| *$/g, '')),
+            align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
+            cells: cap[3] ? cap[3].replace(/\n$/, '').split('\n') : []
+          };
+
+          if (item.header.length === item.align.length) {
+            item.raw = cap[0];
+
+            var l = item.align.length;
+            var i;
+            for (i = 0; i < l; i++) {
+              if (/^ *-+: *$/.test(item.align[i])) {
+                item.align[i] = 'right';
+              } else if (/^ *:-+: *$/.test(item.align[i])) {
+                item.align[i] = 'center';
+              } else if (/^ *:-+ *$/.test(item.align[i])) {
+                item.align[i] = 'left';
+              } else {
+                item.align[i] = null;
+              }
+            }
+
+            l = item.cells.length;
+            for (i = 0; i < l; i++) {
+              item.cells[i] = splitCells$1(
+                item.cells[i].replace(/^ *\| *| *\| *$/g, ''),
+                item.header.length);
+            }
+
+            return item;
+          }
+        }
+      };
+
+      Tokenizer.prototype.lheading = function lheading (src) {
+        var cap = this.rules.block.lheading.exec(src);
+        if (cap) {
+          return {
+            type: 'heading',
+            raw: cap[0],
+            depth: cap[2].charAt(0) === '=' ? 1 : 2,
+            text: cap[1]
+          };
+        }
+      };
+
+      Tokenizer.prototype.paragraph = function paragraph (src) {
+        var cap = this.rules.block.paragraph.exec(src);
+        if (cap) {
+          return {
+            type: 'paragraph',
+            raw: cap[0],
+            text: cap[1].charAt(cap[1].length - 1) === '\n'
+              ? cap[1].slice(0, -1)
+              : cap[1]
+          };
+        }
+      };
+
+      Tokenizer.prototype.text = function text (src) {
+        var cap = this.rules.block.text.exec(src);
+        if (cap) {
+          return {
+            type: 'text',
+            raw: cap[0],
+            text: cap[0]
+          };
+        }
+      };
+
+      Tokenizer.prototype.escape = function escape$1 (src) {
+        var cap = this.rules.inline.escape.exec(src);
+        if (cap) {
+          return {
+            type: 'escape',
+            raw: cap[0],
+            text: escape$1(cap[1])
+          };
+        }
+      };
+
+      Tokenizer.prototype.tag = function tag (src, inLink, inRawBlock) {
+        var cap = this.rules.inline.tag.exec(src);
+        if (cap) {
+          if (!inLink && /^<a /i.test(cap[0])) {
+            inLink = true;
+          } else if (inLink && /^<\/a>/i.test(cap[0])) {
+            inLink = false;
+          }
+          if (!inRawBlock && /^<(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
+            inRawBlock = true;
+          } else if (inRawBlock && /^<\/(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
+            inRawBlock = false;
+          }
+
+          return {
+            type: this.options.sanitize
+              ? 'text'
+              : 'html',
+            raw: cap[0],
+            inLink: inLink,
+            inRawBlock: inRawBlock,
+            text: this.options.sanitize
+              ? (this.options.sanitizer
+                ? this.options.sanitizer(cap[0])
+                : escape$1(cap[0]))
+              : cap[0]
+          };
+        }
+      };
+
+      Tokenizer.prototype.link = function link (src) {
+        var cap = this.rules.inline.link.exec(src);
+        if (cap) {
+          var lastParenIndex = findClosingBracket$1(cap[2], '()');
+          if (lastParenIndex > -1) {
+            var start = cap[0].indexOf('!') === 0 ? 5 : 4;
+            var linkLen = start + cap[1].length + lastParenIndex;
+            cap[2] = cap[2].substring(0, lastParenIndex);
+            cap[0] = cap[0].substring(0, linkLen).trim();
+            cap[3] = '';
+          }
+          var href = cap[2];
+          var title = '';
+          if (this.options.pedantic) {
+            var link = /^([^'"]*[^\s])\s+(['"])(.*)\2/.exec(href);
+
+            if (link) {
+              href = link[1];
+              title = link[3];
+            } else {
+              title = '';
+            }
+          } else {
+            title = cap[3] ? cap[3].slice(1, -1) : '';
+          }
+          href = href.trim().replace(/^<([\s\S]*)>$/, '$1');
+          var token = outputLink(cap, {
+            href: href ? href.replace(this.rules.inline._escapes, '$1') : href,
+            title: title ? title.replace(this.rules.inline._escapes, '$1') : title
+          }, cap[0]);
+          return token;
+        }
+      };
+
+      Tokenizer.prototype.reflink = function reflink (src, links) {
+        var cap;
+        if ((cap = this.rules.inline.reflink.exec(src))
+            || (cap = this.rules.inline.nolink.exec(src))) {
+          var link = (cap[2] || cap[1]).replace(/\s+/g, ' ');
+          link = links[link.toLowerCase()];
+          if (!link || !link.href) {
+            var text = cap[0].charAt(0);
+            return {
+              type: 'text',
+              raw: text,
+              text: text
+            };
+          }
+          var token = outputLink(cap, link, cap[0]);
+          return token;
+        }
+      };
+
+      Tokenizer.prototype.strong = function strong (src) {
+        var cap = this.rules.inline.strong.exec(src);
+        if (cap) {
+          return {
+            type: 'strong',
+            raw: cap[0],
+            text: cap[4] || cap[3] || cap[2] || cap[1]
+          };
+        }
+      };
+
+      Tokenizer.prototype.em = function em (src) {
+        var cap = this.rules.inline.em.exec(src);
+        if (cap) {
+          return {
+            type: 'em',
+            raw: cap[0],
+            text: cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1]
+          };
+        }
+      };
+
+      Tokenizer.prototype.codespan = function codespan (src) {
+        var cap = this.rules.inline.code.exec(src);
+        if (cap) {
+          return {
+            type: 'codespan',
+            raw: cap[0],
+            text: escape$1(cap[2].trim(), true)
+          };
+        }
+      };
+
+      Tokenizer.prototype.br = function br (src) {
+        var cap = this.rules.inline.br.exec(src);
+        if (cap) {
+          return {
+            type: 'br',
+            raw: cap[0]
+          };
+        }
+      };
+
+      Tokenizer.prototype.del = function del (src) {
+        var cap = this.rules.inline.del.exec(src);
+        if (cap) {
+          return {
+            type: 'del',
+            raw: cap[0],
+            text: cap[1]
+          };
+        }
+      };
+
+      Tokenizer.prototype.autolink = function autolink (src, mangle) {
+        var cap = this.rules.inline.autolink.exec(src);
+        if (cap) {
+          var text, href;
+          if (cap[2] === '@') {
+            text = escape$1(this.options.mangle ? mangle(cap[1]) : cap[1]);
+            href = 'mailto:' + text;
+          } else {
+            text = escape$1(cap[1]);
+            href = text;
+          }
+
+          return {
+            type: 'link',
+            raw: cap[0],
+            text: text,
+            href: href,
+            tokens: [
+              {
+                type: 'text',
+                raw: text,
+                text: text
+              }
+            ]
+          };
+        }
+      };
+
+      Tokenizer.prototype.url = function url (src, mangle) {
+        var this$1 = this;
+
+        var cap;
+        if (cap = this.rules.inline.url.exec(src)) {
+          var text, href;
+          if (cap[2] === '@') {
+            text = escape$1(this.options.mangle ? mangle(cap[0]) : cap[0]);
+            href = 'mailto:' + text;
+          } else {
+            // do extended autolink path validation
+            var prevCapZero;
+            do {
+              prevCapZero = cap[0];
+              cap[0] = this$1.rules.inline._backpedal.exec(cap[0])[0];
+            } while (prevCapZero !== cap[0]);
+            text = escape$1(cap[0]);
+            if (cap[1] === 'www.') {
+              href = 'http://' + text;
+            } else {
+              href = text;
+            }
+          }
+          return {
+            type: 'link',
+            raw: cap[0],
+            text: text,
+            href: href,
+            tokens: [
+              {
+                type: 'text',
+                raw: text,
+                text: text
+              }
+            ]
+          };
+        }
+      };
+
+      Tokenizer.prototype.inlineText = function inlineText (src, inRawBlock, smartypants) {
+        var cap = this.rules.inline.text.exec(src);
+        if (cap) {
+          var text;
+          if (inRawBlock) {
+            text = this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$1(cap[0])) : cap[0];
+          } else {
+            text = escape$1(this.options.smartypants ? smartypants(cap[0]) : cap[0]);
+          }
+          return {
+            type: 'text',
+            raw: cap[0],
+            text: text
+          };
+        }
+      };
+
+      return Tokenizer;
+    }());
+
+    var noopTest$1 = helpers.noopTest;
+    var edit$2 = helpers.edit;
+    var merge$1 = helpers.merge;
+
+    /**
+     * Block-Level Grammar
+     */
+    var block = {
+      newline: /^\n+/,
+      code: /^( {4}[^\n]+\n*)+/,
+      fences: /^ {0,3}(`{3,}(?=[^`\n]*\n)|~{3,})([^\n]*)\n(?:|([\s\S]*?)\n)(?: {0,3}\1[~`]* *(?:\n+|$)|$)/,
+      hr: /^ {0,3}((?:- *){3,}|(?:_ *){3,}|(?:\* *){3,})(?:\n+|$)/,
+      heading: /^ {0,3}(#{1,6}) +([^\n]*?)(?: +#+)? *(?:\n+|$)/,
+      blockquote: /^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/,
+      list: /^( {0,3})(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
+      html: '^ {0,3}(?:' // optional indentation
+        + '<(script|pre|style)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)' // (1)
+        + '|comment[^\\n]*(\\n+|$)' // (2)
+        + '|<\\?[\\s\\S]*?\\?>\\n*' // (3)
+        + '|<![A-Z][\\s\\S]*?>\\n*' // (4)
+        + '|<!\\[CDATA\\[[\\s\\S]*?\\]\\]>\\n*' // (5)
+        + '|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:\\n{2,}|$)' // (6)
+        + '|<(?!script|pre|style)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:\\n{2,}|$)' // (7) open tag
+        + '|</(?!script|pre|style)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:\\n{2,}|$)' // (7) closing tag
+        + ')',
+      def: /^ {0,3}\[(label)\]: *\n? *<?([^\s>]+)>?(?:(?: +\n? *| *\n *)(title))? *(?:\n+|$)/,
+      nptable: noopTest$1,
+      table: noopTest$1,
+      lheading: /^([^\n]+)\n {0,3}(=+|-+) *(?:\n+|$)/,
+      // regex template, placeholders will be replaced according to different paragraph
+      // interruption rules of commonmark and the original markdown spec:
+      _paragraph: /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html)[^\n]+)*)/,
+      text: /^[^\n]+/
+    };
+
+    block._label = /(?!\s*\])(?:\\[\[\]]|[^\[\]])+/;
+    block._title = /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/;
+    block.def = edit$2(block.def)
+      .replace('label', block._label)
+      .replace('title', block._title)
+      .getRegex();
+
+    block.bullet = /(?:[*+-]|\d{1,9}\.)/;
+    block.item = /^( *)(bull) ?[^\n]*(?:\n(?!\1bull ?)[^\n]*)*/;
+    block.item = edit$2(block.item, 'gm')
+      .replace(/bull/g, block.bullet)
+      .getRegex();
+
+    block.list = edit$2(block.list)
+      .replace(/bull/g, block.bullet)
+      .replace('hr', '\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))')
+      .replace('def', '\\n+(?=' + block.def.source + ')')
+      .getRegex();
+
+    block._tag = 'address|article|aside|base|basefont|blockquote|body|caption'
+      + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption'
+      + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe'
+      + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option'
+      + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr'
+      + '|track|ul';
+    block._comment = /<!--(?!-?>)[\s\S]*?-->/;
+    block.html = edit$2(block.html, 'i')
+      .replace('comment', block._comment)
+      .replace('tag', block._tag)
+      .replace('attribute', / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/)
+      .getRegex();
+
+    block.paragraph = edit$2(block._paragraph)
+      .replace('hr', block.hr)
+      .replace('heading', ' {0,3}#{1,6} ')
+      .replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
+      .replace('blockquote', ' {0,3}>')
+      .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
+      .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+      .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
+      .replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
+      .getRegex();
+
+    block.blockquote = edit$2(block.blockquote)
+      .replace('paragraph', block.paragraph)
+      .getRegex();
+
+    /**
+     * Normal Block Grammar
+     */
+
+    block.normal = merge$1({}, block);
+
+    /**
+     * GFM Block Grammar
+     */
+
+    block.gfm = merge$1({}, block.normal, {
+      nptable: '^ *([^|\\n ].*\\|.*)\\n' // Header
+        + ' *([-:]+ *\\|[-| :]*)' // Align
+        + '(?:\\n((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)', // Cells
+      table: '^ *\\|(.+)\\n' // Header
+        + ' *\\|?( *[-:]+[-| :]*)' // Align
+        + '(?:\\n *((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)' // Cells
+    });
+
+    block.gfm.nptable = edit$2(block.gfm.nptable)
+      .replace('hr', block.hr)
+      .replace('heading', ' {0,3}#{1,6} ')
+      .replace('blockquote', ' {0,3}>')
+      .replace('code', ' {4}[^\\n]')
+      .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
+      .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+      .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
+      .replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+      .getRegex();
+
+    block.gfm.table = edit$2(block.gfm.table)
+      .replace('hr', block.hr)
+      .replace('heading', ' {0,3}#{1,6} ')
+      .replace('blockquote', ' {0,3}>')
+      .replace('code', ' {4}[^\\n]')
+      .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
+      .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
+      .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
+      .replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+      .getRegex();
+
+    /**
+     * Pedantic grammar (original John Gruber's loose markdown specification)
+     */
+
+    block.pedantic = merge$1({}, block.normal, {
+      html: edit$2(
+        '^ *(?:comment *(?:\\n|\\s*$)'
+        + '|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)' // closed tag
+        + '|<tag(?:"[^"]*"|\'[^\']*\'|\\s[^\'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))')
+        .replace('comment', block._comment)
+        .replace(/tag/g, '(?!(?:'
+          + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub'
+          + '|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)'
+          + '\\b)\\w+(?!:|[^\\w\\s@]*@)\\b')
+        .getRegex(),
+      def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,
+      heading: /^ *(#{1,6}) *([^\n]+?) *(?:#+ *)?(?:\n+|$)/,
+      fences: noopTest$1, // fences not supported
+      paragraph: edit$2(block.normal._paragraph)
+        .replace('hr', block.hr)
+        .replace('heading', ' *#{1,6} *[^\n]')
+        .replace('lheading', block.lheading)
+        .replace('blockquote', ' {0,3}>')
+        .replace('|fences', '')
+        .replace('|list', '')
+        .replace('|html', '')
+        .getRegex()
+    });
+
+    /**
+     * Inline-Level Grammar
+     */
+    var inline = {
+      escape: /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/,
+      autolink: /^<(scheme:[^\s\x00-\x1f<>]*|email)>/,
+      url: noopTest$1,
+      tag: '^comment'
+        + '|^</[a-zA-Z][\\w:-]*\\s*>' // self-closing tag
+        + '|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>' // open tag
+        + '|^<\\?[\\s\\S]*?\\?>' // processing instruction, e.g. <?php ?>
+        + '|^<![a-zA-Z]+\\s[\\s\\S]*?>' // declaration, e.g. <!DOCTYPE html>
+        + '|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>', // CDATA section
+      link: /^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/,
+      reflink: /^!?\[(label)\]\[(?!\s*\])((?:\\[\[\]]?|[^\[\]\\])+)\]/,
+      nolink: /^!?\[(?!\s*\])((?:\[[^\[\]]*\]|\\[\[\]]|[^\[\]])*)\](?:\[\])?/,
+      strong: /^__([^\s_])__(?!_)|^\*\*([^\s*])\*\*(?!\*)|^__([^\s][\s\S]*?[^\s])__(?!_)|^\*\*([^\s][\s\S]*?[^\s])\*\*(?!\*)/,
+      em: /^_([^\s_])_(?!_)|^_([^\s_<][\s\S]*?[^\s_])_(?!_|[^\spunctuation])|^_([^\s_<][\s\S]*?[^\s])_(?!_|[^\spunctuation])|^\*([^\s*<\[])\*(?!\*)|^\*([^\s<"][\s\S]*?[^\s\[\*])\*(?![\]`punctuation])|^\*([^\s*"<\[][\s\S]*[^\s])\*(?!\*)/,
+      code: /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/,
+      br: /^( {2,}|\\)\n(?!\s*$)/,
+      del: noopTest$1,
+      text: /^(`+|[^`])(?:[\s\S]*?(?:(?=[\\<!\[`*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/
+    };
+
+    // list of punctuation marks from common mark spec
+    // without ` and ] to workaround Rule 17 (inline code blocks/links)
+    inline._punctuation = '!"#$%&\'()*+\\-./:;<=>?@\\[^_{|}~';
+    inline.em = edit$2(inline.em).replace(/punctuation/g, inline._punctuation).getRegex();
+
+    inline._escapes = /\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g;
+
+    inline._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/;
+    inline._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/;
+    inline.autolink = edit$2(inline.autolink)
+      .replace('scheme', inline._scheme)
+      .replace('email', inline._email)
+      .getRegex();
+
+    inline._attribute = /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/;
+
+    inline.tag = edit$2(inline.tag)
+      .replace('comment', block._comment)
+      .replace('attribute', inline._attribute)
+      .getRegex();
+
+    inline._label = /(?:\[[^\[\]]*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
+    inline._href = /<(?:\\[<>]?|[^\s<>\\])*>|[^\s\x00-\x1f]*/;
+    inline._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/;
+
+    inline.link = edit$2(inline.link)
+      .replace('label', inline._label)
+      .replace('href', inline._href)
+      .replace('title', inline._title)
+      .getRegex();
+
+    inline.reflink = edit$2(inline.reflink)
+      .replace('label', inline._label)
+      .getRegex();
+
+    /**
+     * Normal Inline Grammar
+     */
+
+    inline.normal = merge$1({}, inline);
+
+    /**
+     * Pedantic Inline Grammar
+     */
+
+    inline.pedantic = merge$1({}, inline.normal, {
+      strong: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
+      em: /^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/,
+      link: edit$2(/^!?\[(label)\]\((.*?)\)/)
+        .replace('label', inline._label)
+        .getRegex(),
+      reflink: edit$2(/^!?\[(label)\]\s*\[([^\]]*)\]/)
+        .replace('label', inline._label)
+        .getRegex()
+    });
+
+    /**
+     * GFM Inline Grammar
+     */
+
+    inline.gfm = merge$1({}, inline.normal, {
+      escape: edit$2(inline.escape).replace('])', '~|])').getRegex(),
+      _extended_email: /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/,
+      url: /^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/,
+      _backpedal: /(?:[^?!.,:;*_~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_~)]+(?!$))+/,
+      del: /^~+(?=\S)([\s\S]*?\S)~+/,
+      text: /^(`+|[^`])(?:[\s\S]*?(?:(?=[\\<!\[`*~]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))|(?= {2,}\n|[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))/
+    });
+
+    inline.gfm.url = edit$2(inline.gfm.url, 'i')
+      .replace('email', inline.gfm._extended_email)
+      .getRegex();
+    /**
+     * GFM + Line Breaks Inline Grammar
+     */
+
+    inline.breaks = merge$1({}, inline.gfm, {
+      br: edit$2(inline.br).replace('{2,}', '*').getRegex(),
+      text: edit$2(inline.gfm.text)
+        .replace('\\b_', '\\b_| {2,}\\n')
+        .replace(/\{2,\}/g, '*')
+        .getRegex()
+    });
+
+    var rules = {
+      block: block,
+      inline: inline
+    };
+
+    var defaults$2 = defaults.defaults;
+    var block$1 = rules.block;
+    var inline$1 = rules.inline;
+
+    /**
+     * smartypants text replacement
+     */
+    function smartypants(text) {
+      return text
+        // em-dashes
+        .replace(/---/g, '\u2014')
+        // en-dashes
+        .replace(/--/g, '\u2013')
+        // opening singles
+        .replace(/(^|[-\u2014/(\[{"\s])'/g, '$1\u2018')
+        // closing singles & apostrophes
+        .replace(/'/g, '\u2019')
+        // opening doubles
+        .replace(/(^|[-\u2014/(\[{\u2018\s])"/g, '$1\u201c')
+        // closing doubles
+        .replace(/"/g, '\u201d')
+        // ellipses
+        .replace(/\.{3}/g, '\u2026');
+    }
+
+    /**
+     * mangle email addresses
+     */
+    function mangle(text) {
+      var out = '',
+        i,
+        ch;
+
+      var l = text.length;
+      for (i = 0; i < l; i++) {
+        ch = text.charCodeAt(i);
+        if (Math.random() > 0.5) {
+          ch = 'x' + ch.toString(16);
+        }
+        out += '&#' + ch + ';';
+      }
+
+      return out;
+    }
+
+    /**
+     * Block Lexer
+     */
+    var Lexer_1 = (function () {
+      function Lexer(options) {
+        this.tokens = [];
+        this.tokens.links = Object.create(null);
+        this.options = options || defaults$2;
+        this.options.tokenizer = this.options.tokenizer || new Tokenizer_1();
+        this.tokenizer = this.options.tokenizer;
+        this.tokenizer.options = this.options;
+
+        var rules$$1 = {
+          block: block$1.normal,
+          inline: inline$1.normal
+        };
+
+        if (this.options.pedantic) {
+          rules$$1.block = block$1.pedantic;
+          rules$$1.inline = inline$1.pedantic;
+        } else if (this.options.gfm) {
+          rules$$1.block = block$1.gfm;
+          if (this.options.breaks) {
+            rules$$1.inline = inline$1.breaks;
+          } else {
+            rules$$1.inline = inline$1.gfm;
+          }
+        }
+        this.tokenizer.rules = rules$$1;
+      }
+
+      var staticAccessors = { rules: {} };
+
+      /**
+       * Expose Rules
+       */
+      staticAccessors.rules.get = function () {
+        return {
+          block: block$1,
+          inline: inline$1
+        };
+      };
+
+      /**
+       * Static Lex Method
+       */
+      Lexer.lex = function lex (src, options) {
+        var lexer = new Lexer(options);
+        return lexer.lex(src);
+      };
+
+      /**
+       * Preprocessing
+       */
+      Lexer.prototype.lex = function lex (src) {
+        src = src
+          .replace(/\r\n|\r/g, '\n')
+          .replace(/\t/g, '    ');
+
+        this.blockTokens(src, this.tokens, true);
+
+        this.inline(this.tokens);
+
+        return this.tokens;
+      };
+
+      /**
+       * Lexing
+       */
+      Lexer.prototype.blockTokens = function blockTokens (src, tokens, top) {
+        var this$1 = this;
+        if ( tokens === void 0 ) tokens = [];
+        if ( top === void 0 ) top = true;
+
+        src = src.replace(/^ +$/gm, '');
+        var token, i, l;
+
+        while (src) {
+          // newline
+          if (token = this$1.tokenizer.space(src)) {
+            src = src.substring(token.raw.length);
+            if (token.type) {
+              tokens.push(token);
+            }
+            continue;
+          }
+
+          // code
+          if (token = this$1.tokenizer.code(src, tokens)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // fences
+          if (token = this$1.tokenizer.fences(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // heading
+          if (token = this$1.tokenizer.heading(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // table no leading pipe (gfm)
+          if (token = this$1.tokenizer.nptable(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // hr
+          if (token = this$1.tokenizer.hr(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // blockquote
+          if (token = this$1.tokenizer.blockquote(src)) {
+            src = src.substring(token.raw.length);
+            token.tokens = this$1.blockTokens(token.text, [], top);
+            tokens.push(token);
+            continue;
+          }
+
+          // list
+          if (token = this$1.tokenizer.list(src)) {
+            src = src.substring(token.raw.length);
+            l = token.items.length;
+            for (i = 0; i < l; i++) {
+              token.items[i].tokens = this$1.blockTokens(token.items[i].text, [], false);
+            }
+            tokens.push(token);
+            continue;
+          }
+
+          // html
+          if (token = this$1.tokenizer.html(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // def
+          if (top && (token = this$1.tokenizer.def(src))) {
+            src = src.substring(token.raw.length);
+            if (!this$1.tokens.links[token.tag]) {
+              this$1.tokens.links[token.tag] = {
+                href: token.href,
+                title: token.title
+              };
+            }
+            continue;
+          }
+
+          // table (gfm)
+          if (token = this$1.tokenizer.table(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // lheading
+          if (token = this$1.tokenizer.lheading(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // top-level paragraph
+          if (top && (token = this$1.tokenizer.paragraph(src))) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // text
+          if (token = this$1.tokenizer.text(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          if (src) {
+            var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
+            if (this$1.options.silent) {
+              console.error(errMsg);
+              break;
+            } else {
+              throw new Error(errMsg);
+            }
+          }
+        }
+
+        return tokens;
+      };
+
+      Lexer.prototype.inline = function inline$1 (tokens) {
+        var this$1 = this;
+
+        var i,
+          j,
+          k,
+          l2,
+          row,
+          token;
+
+        var l = tokens.length;
+        for (i = 0; i < l; i++) {
+          token = tokens[i];
+          switch (token.type) {
+            case 'paragraph':
+            case 'text':
+            case 'heading': {
+              token.tokens = [];
+              this$1.inlineTokens(token.text, token.tokens);
+              break;
+            }
+            case 'table': {
+              token.tokens = {
+                header: [],
+                cells: []
+              };
+
+              // header
+              l2 = token.header.length;
+              for (j = 0; j < l2; j++) {
+                token.tokens.header[j] = [];
+                this$1.inlineTokens(token.header[j], token.tokens.header[j]);
+              }
+
+              // cells
+              l2 = token.cells.length;
+              for (j = 0; j < l2; j++) {
+                row = token.cells[j];
+                token.tokens.cells[j] = [];
+                for (k = 0; k < row.length; k++) {
+                  token.tokens.cells[j][k] = [];
+                  this$1.inlineTokens(row[k], token.tokens.cells[j][k]);
+                }
+              }
+
+              break;
+            }
+            case 'blockquote': {
+              this$1.inline(token.tokens);
+              break;
+            }
+            case 'list': {
+              l2 = token.items.length;
+              for (j = 0; j < l2; j++) {
+                this$1.inline(token.items[j].tokens);
+              }
+              break;
+            }
+            default:
+          }
+        }
+
+        return tokens;
+      };
+
+      /**
+       * Lexing/Compiling
+       */
+      Lexer.prototype.inlineTokens = function inlineTokens (src, tokens, inLink, inRawBlock) {
+        var this$1 = this;
+        if ( tokens === void 0 ) tokens = [];
+        if ( inLink === void 0 ) inLink = false;
+        if ( inRawBlock === void 0 ) inRawBlock = false;
+
+        var token;
+
+        while (src) {
+          // escape
+          if (token = this$1.tokenizer.escape(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // tag
+          if (token = this$1.tokenizer.tag(src, inLink, inRawBlock)) {
+            src = src.substring(token.raw.length);
+            inLink = token.inLink;
+            inRawBlock = token.inRawBlock;
+            tokens.push(token);
+            continue;
+          }
+
+          // link
+          if (token = this$1.tokenizer.link(src)) {
+            src = src.substring(token.raw.length);
+            if (token.type === 'link') {
+              token.tokens = this$1.inlineTokens(token.text, [], true, inRawBlock);
+            }
+            tokens.push(token);
+            continue;
+          }
+
+          // reflink, nolink
+          if (token = this$1.tokenizer.reflink(src, this$1.tokens.links)) {
+            src = src.substring(token.raw.length);
+            if (token.type === 'link') {
+              token.tokens = this$1.inlineTokens(token.text, [], true, inRawBlock);
+            }
+            tokens.push(token);
+            continue;
+          }
+
+          // strong
+          if (token = this$1.tokenizer.strong(src)) {
+            src = src.substring(token.raw.length);
+            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            tokens.push(token);
+            continue;
+          }
+
+          // em
+          if (token = this$1.tokenizer.em(src)) {
+            src = src.substring(token.raw.length);
+            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            tokens.push(token);
+            continue;
+          }
+
+          // code
+          if (token = this$1.tokenizer.codespan(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // br
+          if (token = this$1.tokenizer.br(src)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // del (gfm)
+          if (token = this$1.tokenizer.del(src)) {
+            src = src.substring(token.raw.length);
+            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            tokens.push(token);
+            continue;
+          }
+
+          // autolink
+          if (token = this$1.tokenizer.autolink(src, mangle)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // url (gfm)
+          if (!inLink && (token = this$1.tokenizer.url(src, mangle))) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          // text
+          if (token = this$1.tokenizer.inlineText(src, inRawBlock, smartypants)) {
+            src = src.substring(token.raw.length);
+            tokens.push(token);
+            continue;
+          }
+
+          if (src) {
+            var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
+            if (this$1.options.silent) {
+              console.error(errMsg);
+              break;
+            } else {
+              throw new Error(errMsg);
+            }
+          }
+        }
+
+        return tokens;
+      };
+
+      Object.defineProperties( Lexer, staticAccessors );
+
+      return Lexer;
+    }());
+
+    var defaults$3 = defaults.defaults;
+    var cleanUrl$1 = helpers.cleanUrl;
+    var escape$2 = helpers.escape;
+
+    /**
+     * Renderer
+     */
+    var Renderer_1 = (function () {
+      function Renderer(options) {
+        this.options = options || defaults$3;
+      }
+
+      Renderer.prototype.code = function code (code, infostring, escaped) {
+        var lang = (infostring || '').match(/\S*/)[0];
+        if (this.options.highlight) {
+          var out = this.options.highlight(code, lang);
+          if (out != null && out !== code) {
+            escaped = true;
+            code = out;
+          }
+        }
+
+        if (!lang) {
+          return '<pre><code>'
+            + (escaped ? code : escape$2(code, true))
+            + '</code></pre>';
+        }
+
+        return '<pre><code class="'
+          + this.options.langPrefix
+          + escape$2(lang, true)
+          + '">'
+          + (escaped ? code : escape$2(code, true))
+          + '</code></pre>\n';
+      };
+
+      Renderer.prototype.blockquote = function blockquote (quote) {
+        return '<blockquote>\n' + quote + '</blockquote>\n';
+      };
+
+      Renderer.prototype.html = function html (html) {
+        return html;
+      };
+
+      Renderer.prototype.heading = function heading (text, level, raw, slugger) {
+        if (this.options.headerIds) {
+          return '<h'
+            + level
+            + ' id="'
+            + this.options.headerPrefix
+            + slugger.slug(raw)
+            + '">'
+            + text
+            + '</h'
+            + level
+            + '>\n';
+        }
+        // ignore IDs
+        return '<h' + level + '>' + text + '</h' + level + '>\n';
+      };
+
+      Renderer.prototype.hr = function hr () {
+        return this.options.xhtml ? '<hr/>\n' : '<hr>\n';
+      };
+
+      Renderer.prototype.list = function list (body, ordered, start) {
+        var type = ordered ? 'ol' : 'ul',
+          startatt = (ordered && start !== 1) ? (' start="' + start + '"') : '';
+        return '<' + type + startatt + '>\n' + body + '</' + type + '>\n';
+      };
+
+      Renderer.prototype.listitem = function listitem (text) {
+        return '<li>' + text + '</li>\n';
+      };
+
+      Renderer.prototype.checkbox = function checkbox (checked) {
+        return '<input '
+          + (checked ? 'checked="" ' : '')
+          + 'disabled="" type="checkbox"'
+          + (this.options.xhtml ? ' /' : '')
+          + '> ';
+      };
+
+      Renderer.prototype.paragraph = function paragraph (text) {
+        return '<p>' + text + '</p>\n';
+      };
+
+      Renderer.prototype.table = function table (header, body) {
+        if (body) body = '<tbody>' + body + '</tbody>';
+
+        return '<table>\n'
+          + '<thead>\n'
+          + header
+          + '</thead>\n'
+          + body
+          + '</table>\n';
+      };
+
+      Renderer.prototype.tablerow = function tablerow (content) {
+        return '<tr>\n' + content + '</tr>\n';
+      };
+
+      Renderer.prototype.tablecell = function tablecell (content, flags) {
+        var type = flags.header ? 'th' : 'td';
+        var tag = flags.align
+          ? '<' + type + ' align="' + flags.align + '">'
+          : '<' + type + '>';
+        return tag + content + '</' + type + '>\n';
+      };
+
+      // span level renderer
+      Renderer.prototype.strong = function strong (text) {
+        return '<strong>' + text + '</strong>';
+      };
+
+      Renderer.prototype.em = function em (text) {
+        return '<em>' + text + '</em>';
+      };
+
+      Renderer.prototype.codespan = function codespan (text) {
+        return '<code>' + text + '</code>';
+      };
+
+      Renderer.prototype.br = function br () {
+        return this.options.xhtml ? '<br/>' : '<br>';
+      };
+
+      Renderer.prototype.del = function del (text) {
+        return '<del>' + text + '</del>';
+      };
+
+      Renderer.prototype.link = function link (href, title, text) {
+        href = cleanUrl$1(this.options.sanitize, this.options.baseUrl, href);
+        if (href === null) {
+          return text;
+        }
+        var out = '<a href="' + escape$2(href) + '"';
+        if (title) {
+          out += ' title="' + title + '"';
+        }
+        out += '>' + text + '</a>';
+        return out;
+      };
+
+      Renderer.prototype.image = function image (href, title, text) {
+        href = cleanUrl$1(this.options.sanitize, this.options.baseUrl, href);
+        if (href === null) {
+          return text;
+        }
+
+        var out = '<img src="' + href + '" alt="' + text + '"';
+        if (title) {
+          out += ' title="' + title + '"';
+        }
+        out += this.options.xhtml ? '/>' : '>';
+        return out;
+      };
+
+      Renderer.prototype.text = function text (text) {
+        return text;
+      };
+
+      return Renderer;
+    }());
+
+    /**
+     * TextRenderer
+     * returns only the textual part of the token
+     */
+    var TextRenderer_1 = (function () {
+      function TextRenderer () {}
+
+      TextRenderer.prototype.strong = function strong (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.em = function em (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.codespan = function codespan (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.del = function del (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.html = function html (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.text = function text (text) {
+        return text;
+      };
+
+      TextRenderer.prototype.link = function link (href, title, text) {
+        return '' + text;
+      };
+
+      TextRenderer.prototype.image = function image (href, title, text) {
+        return '' + text;
+      };
+
+      TextRenderer.prototype.br = function br () {
+        return '';
+      };
+
+      return TextRenderer;
+    }());
+
+    /**
+     * Slugger generates header id
+     */
+    var Slugger_1 = (function () {
+      function Slugger() {
+        this.seen = {};
+      }
+
+      /**
+       * Convert string to unique id
+       */
+      Slugger.prototype.slug = function slug (value) {
+        var this$1 = this;
+
+        var slug = value
+          .toLowerCase()
+          .trim()
+          // remove html tags
+          .replace(/<[!\/a-z].*?>/ig, '')
+          // remove unwanted chars
+          .replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '')
+          .replace(/\s/g, '-');
+
+        if (this.seen.hasOwnProperty(slug)) {
+          var originalSlug = slug;
+          do {
+            this$1.seen[originalSlug]++;
+            slug = originalSlug + '-' + this$1.seen[originalSlug];
+          } while (this.seen.hasOwnProperty(slug));
+        }
+        this.seen[slug] = 0;
+
+        return slug;
+      };
+
+      return Slugger;
+    }());
+
+    var defaults$4 = defaults.defaults;
+    var unescape$1 = helpers.unescape;
+
+    /**
+     * Parsing & Compiling
+     */
+    var Parser_1 = (function () {
+      function Parser(options) {
+        this.options = options || defaults$4;
+        this.options.renderer = this.options.renderer || new Renderer_1();
+        this.renderer = this.options.renderer;
+        this.renderer.options = this.options;
+        this.textRenderer = new TextRenderer_1();
+        this.slugger = new Slugger_1();
+      }
+
+      /**
+       * Static Parse Method
+       */
+      Parser.parse = function parse (tokens, options) {
+        var parser = new Parser(options);
+        return parser.parse(tokens);
+      };
+
+      /**
+       * Parse Loop
+       */
+      Parser.prototype.parse = function parse (tokens, top) {
+        var this$1 = this;
+        if ( top === void 0 ) top = true;
+
+        var out = '',
+          i,
+          j,
+          k,
+          l2,
+          l3,
+          row,
+          cell,
+          header,
+          body,
+          token,
+          ordered,
+          start,
+          loose,
+          itemBody,
+          item,
+          checked,
+          task,
+          checkbox;
+
+        var l = tokens.length;
+        for (i = 0; i < l; i++) {
+          token = tokens[i];
+          switch (token.type) {
+            case 'space': {
+              continue;
+            }
+            case 'hr': {
+              out += this$1.renderer.hr();
+              continue;
+            }
+            case 'heading': {
+              out += this$1.renderer.heading(
+                this$1.parseInline(token.tokens),
+                token.depth,
+                unescape$1(this$1.parseInline(token.tokens, this$1.textRenderer)),
+                this$1.slugger);
+              continue;
+            }
+            case 'code': {
+              out += this$1.renderer.code(token.text,
+                token.lang,
+                token.escaped);
+              continue;
+            }
+            case 'table': {
+              header = '';
+
+              // header
+              cell = '';
+              l2 = token.header.length;
+              for (j = 0; j < l2; j++) {
+                cell += this$1.renderer.tablecell(
+                  this$1.parseInline(token.tokens.header[j]),
+                  { header: true, align: token.align[j] }
+                );
+              }
+              header += this$1.renderer.tablerow(cell);
+
+              body = '';
+              l2 = token.cells.length;
+              for (j = 0; j < l2; j++) {
+                row = token.tokens.cells[j];
+
+                cell = '';
+                l3 = row.length;
+                for (k = 0; k < l3; k++) {
+                  cell += this$1.renderer.tablecell(
+                    this$1.parseInline(row[k]),
+                    { header: false, align: token.align[k] }
+                  );
+                }
+
+                body += this$1.renderer.tablerow(cell);
+              }
+              out += this$1.renderer.table(header, body);
+              continue;
+            }
+            case 'blockquote': {
+              body = this$1.parse(token.tokens);
+              out += this$1.renderer.blockquote(body);
+              continue;
+            }
+            case 'list': {
+              ordered = token.ordered;
+              start = token.start;
+              loose = token.loose;
+              l2 = token.items.length;
+
+              body = '';
+              for (j = 0; j < l2; j++) {
+                item = token.items[j];
+                checked = item.checked;
+                task = item.task;
+
+                itemBody = '';
+                if (item.task) {
+                  checkbox = this$1.renderer.checkbox(checked);
+                  if (loose) {
+                    if (item.tokens[0].type === 'text') {
+                      item.tokens[0].text = checkbox + ' ' + item.tokens[0].text;
+                      if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === 'text') {
+                        item.tokens[0].tokens[0].text = checkbox + ' ' + item.tokens[0].tokens[0].text;
+                      }
+                    } else {
+                      item.tokens.unshift({
+                        type: 'text',
+                        text: checkbox
+                      });
+                    }
+                  } else {
+                    itemBody += checkbox;
+                  }
+                }
+
+                itemBody += this$1.parse(item.tokens, loose);
+                body += this$1.renderer.listitem(itemBody, task, checked);
+              }
+
+              out += this$1.renderer.list(body, ordered, start);
+              continue;
+            }
+            case 'html': {
+              // TODO parse inline content if parameter markdown=1
+              out += this$1.renderer.html(token.text);
+              continue;
+            }
+            case 'paragraph': {
+              out += this$1.renderer.paragraph(this$1.parseInline(token.tokens));
+              continue;
+            }
+            case 'text': {
+              body = token.tokens ? this$1.parseInline(token.tokens) : token.text;
+              while (i + 1 < l && tokens[i + 1].type === 'text') {
+                token = tokens[++i];
+                body += '\n' + (token.tokens ? this$1.parseInline(token.tokens) : token.text);
+              }
+              out += top ? this$1.renderer.paragraph(body) : body;
+              continue;
+            }
+            default: {
+              var errMsg = 'Token with "' + token.type + '" type was not found.';
+              if (this$1.options.silent) {
+                console.error(errMsg);
+                return;
+              } else {
+                throw new Error(errMsg);
+              }
+            }
+          }
+        }
+
+        return out;
+      };
+
+      /**
+       * Parse Inline Tokens
+       */
+      Parser.prototype.parseInline = function parseInline (tokens, renderer) {
+        var this$1 = this;
+
+        renderer = renderer || this.renderer;
+        var out = '',
+          i,
+          token;
+
+        var l = tokens.length;
+        for (i = 0; i < l; i++) {
+          token = tokens[i];
+          switch (token.type) {
+            case 'escape': {
+              out += renderer.text(token.text);
+              break;
+            }
+            case 'html': {
+              out += renderer.html(token.text);
+              break;
+            }
+            case 'link': {
+              out += renderer.link(token.href, token.title, this$1.parseInline(token.tokens, renderer));
+              break;
+            }
+            case 'image': {
+              out += renderer.image(token.href, token.title, token.text);
+              break;
+            }
+            case 'strong': {
+              out += renderer.strong(this$1.parseInline(token.tokens, renderer));
+              break;
+            }
+            case 'em': {
+              out += renderer.em(this$1.parseInline(token.tokens, renderer));
+              break;
+            }
+            case 'codespan': {
+              out += renderer.codespan(token.text);
+              break;
+            }
+            case 'br': {
+              out += renderer.br();
+              break;
+            }
+            case 'del': {
+              out += renderer.del(this$1.parseInline(token.tokens, renderer));
+              break;
+            }
+            case 'text': {
+              out += renderer.text(token.text);
+              break;
+            }
+            default: {
+              var errMsg = 'Token with "' + token.type + '" type was not found.';
+              if (this$1.options.silent) {
+                console.error(errMsg);
+                return;
+              } else {
+                throw new Error(errMsg);
+              }
+            }
+          }
+        }
+        return out;
+      };
+
+      return Parser;
+    }());
+
+    var merge$2 = helpers.merge;
+    var checkSanitizeDeprecation$1 = helpers.checkSanitizeDeprecation;
+    var escape$3 = helpers.escape;
+    var getDefaults = defaults.getDefaults;
+    var changeDefaults = defaults.changeDefaults;
+    var defaults$5 = defaults.defaults;
+
+    /**
+     * Marked
+     */
+    function marked(src, opt, callback) {
+      // throw error in case of non string input
+      if (typeof src === 'undefined' || src === null) {
+        throw new Error('marked(): input parameter is undefined or null');
+      }
+      if (typeof src !== 'string') {
+        throw new Error('marked(): input parameter is of type '
+          + Object.prototype.toString.call(src) + ', string expected');
+      }
+
+      if (callback || typeof opt === 'function') {
+        if (!callback) {
+          callback = opt;
+          opt = null;
+        }
+
+        opt = merge$2({}, marked.defaults, opt || {});
+        checkSanitizeDeprecation$1(opt);
+        var highlight = opt.highlight;
+        var tokens,
+          pending,
+          i = 0;
+
+        try {
+          tokens = Lexer_1.lex(src, opt);
+        } catch (e) {
+          return callback(e);
+        }
+
+        pending = tokens.length;
+
+        var done = function(err) {
+          if (err) {
+            opt.highlight = highlight;
+            return callback(err);
+          }
+
+          var out;
+
+          try {
+            out = Parser_1.parse(tokens, opt);
+          } catch (e) {
+            err = e;
+          }
+
+          opt.highlight = highlight;
+
+          return err
+            ? callback(err)
+            : callback(null, out);
+        };
+
+        if (!highlight || highlight.length < 3) {
+          return done();
+        }
+
+        delete opt.highlight;
+
+        if (!pending) return done();
+
+        for (; i < tokens.length; i++) {
+          (function(token) {
+            if (token.type !== 'code') {
+              return --pending || done();
+            }
+            return highlight(token.text, token.lang, function(err, code) {
+              if (err) return done(err);
+              if (code == null || code === token.text) {
+                return --pending || done();
+              }
+              token.text = code;
+              token.escaped = true;
+              --pending || done();
+            });
+          })(tokens[i]);
+        }
+
+        return;
+      }
+      try {
+        opt = merge$2({}, marked.defaults, opt || {});
+        checkSanitizeDeprecation$1(opt);
+        return Parser_1.parse(Lexer_1.lex(src, opt), opt);
+      } catch (e) {
+        e.message += '\nPlease report this to https://github.com/markedjs/marked.';
+        if ((opt || marked.defaults).silent) {
+          return '<p>An error occurred:</p><pre>'
+            + escape$3(e.message + '', true)
+            + '</pre>';
+        }
+        throw e;
+      }
+    }
+
+    /**
+     * Options
+     */
+
+    marked.options =
+    marked.setOptions = function(opt) {
+      merge$2(marked.defaults, opt);
+      changeDefaults(marked.defaults);
+      return marked;
+    };
+
+    marked.getDefaults = getDefaults;
+
+    marked.defaults = defaults$5;
+
+    /**
+     * Use Extension
+     */
+
+    marked.use = function(extension) {
+      var opts = merge$2({}, extension);
+      if (extension.renderer) {
+        var renderer = marked.defaults.renderer || new Renderer_1();
+        var loop = function ( prop ) {
+          var prevRenderer = renderer[prop];
+          renderer[prop] = function () {
+            var args = [], len = arguments.length;
+            while ( len-- ) args[ len ] = arguments[ len ];
+
+            var ret = extension.renderer[prop].apply(renderer, args);
+            if (ret === false) {
+              ret = prevRenderer.apply(renderer, args);
+            }
+            return ret;
+          };
+        };
+
+        for (var prop in extension.renderer) loop( prop );
+        opts.renderer = renderer;
+      }
+      if (extension.tokenizer) {
+        var tokenizer = marked.defaults.tokenizer || new Tokenizer_1();
+        var loop$1 = function ( prop ) {
+          var prevTokenizer = tokenizer[prop$1];
+          tokenizer[prop$1] = function () {
+            var args = [], len = arguments.length;
+            while ( len-- ) args[ len ] = arguments[ len ];
+
+            var ret = extension.tokenizer[prop$1].apply(tokenizer, args);
+            if (ret === false) {
+              ret = prevTokenizer.apply(tokenizer, args);
+            }
+            return ret;
+          };
+        };
+
+        for (var prop$1 in extension.tokenizer) loop$1( prop );
+        opts.tokenizer = tokenizer;
+      }
+      marked.setOptions(opts);
+    };
+
+    /**
+     * Expose
+     */
+
+    marked.Parser = Parser_1;
+    marked.parser = Parser_1.parse;
+
+    marked.Renderer = Renderer_1;
+    marked.TextRenderer = TextRenderer_1;
+
+    marked.Lexer = Lexer_1;
+    marked.lexer = Lexer_1.lex;
+
+    marked.Tokenizer = Tokenizer_1;
+
+    marked.Slugger = Slugger_1;
+
+    marked.parse = marked;
+
+    var marked_1 = marked;
+
+    var mdEditor = function (args) { return m.component(textEditorComponent, args); };
+
+    var textEditorComponent = {
+        controller: function(ref){
+            var file = ref.file;
+
+            var err = m.prop();
+            file.loaded || file.get()
+                .catch(err)
+                .then(m.redraw);
+
+            var ctrl = {mode:m.prop('edit'), err: err};
+
+            return ctrl;
+        },
+
+        view: function(ctrl, ref){
+            var file = ref.file;
+            var study = ref.study;
+
+            var observer = ctrl.observer;
+            var err = ctrl.err;
+            var mode = ctrl.mode;
+
+            if (!file.loaded) return m('.loader');
+
+            if (file.error) return m('div', {class:'alert alert-danger'}, [
+                m('strong',{class:'glyphicon glyphicon-exclamation-sign'}),
+                ("The file \"" + (file.path) + "\" was not found (" + (err() ? err().message : 'please try to refresh the page') + ").")
+            ]);
+
+            return m('div.blockquote.md', [
+                m.trust(marked_1(file.content()))
+            ]);
+        }
+    };
+
     var unknownComponent = function () { return m('.centrify', [
         m('i.fa.fa-file.fa-5x'),
         m('h5', 'Unknow file type')
@@ -14755,9 +17063,9 @@
         ]);
     };
 
-    var textEditor = function (args) { return m.component(textEditorComponent, args); };
+    var textEditor = function (args) { return m.component(textEditorComponent$1, args); };
 
-    var textEditorComponent = {
+    var textEditorComponent$1 = {
         controller: function(ref){
             var file = ref.file;
 
@@ -14860,7 +17168,9 @@
         png: imgEditor,
         gif: imgEditor,
 
-        pdf: pdfEditor
+        pdf: pdfEditor,
+
+        md: mdEditor
     };
 
     var fileEditorComponent = {
@@ -19686,45 +21996,47 @@
         };
     }
 
-    var generatorComponent = {
-        controller: function controller(){
+    function url(study_id)
+    {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator");
+    }
+
+    var save$1 = function (study_id, responses, stimuli, conditions) { return fetchJson(url(49), {
+        method: 'put',
+        body: {responses: responses, stimuli: stimuli, conditions: conditions}
+    }); };
+
+    var responses_view = function (args) { return m.component(responsesGeneratorComponent, args); };
+
+
+    var responsesGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_responses = ref.possible_responses;
+
             var ctrl = {
-
-                stimuli:m.prop([]),
-                possible_responses:m.prop([{key:''}]),
-                conditions: m.prop([]),
-                update_possible_response: update_possible_response,
-                delete_possible_response: delete_possible_response,
-
-                do_add_stimulus: do_add_stimulus,
-                toggle_response: toggle_response,
-                update_stimulus_field: update_stimulus_field,
-                delete_stimulus: delete_stimulus,
-
-                do_add_condition: do_add_condition,
-                update_condition_name: update_condition_name,
-
-                add_stimuli_set: add_stimuli_set,
-                update_stimulus_media: update_stimulus_media,
-                toggle_stimulus_response: toggle_stimulus_response
+                possible_responses: possible_responses,
+                update_possible_response:update_possible_response,
+                delete_possible_response:delete_possible_response,
+                focus_it: focus_it
             };
+            possible_responses().push({key:''});
 
-            function load() {
-                ctrl.loaded = true;
+            function focus_it(element) {
+                 // setTimeout(() => element.focus());
             }
-
-
             function update_possible_response(id, value) {
-                if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1)
+                if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1){
                     value = '';
-
+                }
                 if (value.length>1)
                     value = value[value.length - 1];
 
                 ctrl.possible_responses()[id].key = value;
+
                 var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
-                if(empty_keys.length===0)
+                if(empty_keys.length===0 && value){
                     ctrl.possible_responses().push({key:''});
+                }
             }
 
             function delete_possible_response(id){
@@ -19733,214 +22045,486 @@
                 if(empty_keys.length===0)
                     ctrl.possible_responses().push({key:''});
             }
-
-            function do_add_stimulus() {
-                ctrl.stimuli().push({stimulus_name:'', response:false, css:''});
-            }
-
-
-
-            function toggle_response(id, varable, state){
-                if(ctrl.stimuli()[id][varable].enable === state)
-                    return;
-                ctrl.stimuli()[id][varable] = state;
-            }
-
-
-            function update_stimulus_field(id, field, name){
-                ctrl.stimuli()[id][field] = name;
-                // console.log(ctrl.stimuli());
-            }
-
-
-
-            function delete_stimulus(id){
-                ctrl.stimuli().splice(id, 1);
-            }
-
-
-            function do_add_condition() {
-                ctrl.conditions().push({condition_name:'', stimuli_sets:[]});
-            }
-
-            function update_condition_name(id, name){
-                ctrl.conditions()[id].condition_name = name;
-                // console.log(ctrl.stimuli());
-            }
-            function add_stimuli_set(id){
-                var stimuli_object = [];
-                ctrl.stimuli().forEach(function(stimulus){
-                    stimuli_object.push({stimulus_name:stimulus.stimulus_name, media:'', response:!!stimulus.response, response_key:'', css:stimulus.css});
-                });
-                ctrl.conditions()[id].stimuli_sets.push(stimuli_object);
-            }
-
-            function toggle_stimulus_response(condition_id, set_id, stimulus_id, response_key){
-                ctrl.conditions()[condition_id].stimuli_sets[set_id][stimulus_id].response_key = response_key;
-            }
-
-            function update_stimulus_media(condition_id, set_id, stimulus_id, media){
-                ctrl.conditions()[condition_id].stimuli_sets[set_id][stimulus_id].media = media;
-                // console.log(ctrl.stimuli());
-            }
-
-
-            load();
             return ctrl;
         },
         view: function view(ctrl){
-            return  !ctrl.loaded
+            return m('.row', [
+                m('h4', 'Possible responses'),
+                m('.row',[
+                    ctrl.possible_responses().map(function(response, id) {
+                        return m('row',[
+                            m('.col-sm-2',
+                                m('label.input-group.space', [
+                                    m('input.form-control.col-sm-1', {value: response.key, config: !response.key ? ctrl.focus_it : '', placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                    id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
+                                ])
+                            )
+                        ])
+
+                    })
+                ])
+            ]);
+
+
+        }
+    };
+
+    var stimuli_view = function (args) { return m.component(stimuliGeneratorComponent, args); };
+
+
+    var stimuliGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_conditions = ref.possible_conditions;
+
+            var ctrl = {
+                default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
+                num_of_stimuli:0,
+                possible_stimuli: possible_stimuli,
+                possible_conditions: possible_conditions,
+                do_add_stimulus: do_add_stimulus,
+                update_stimulus_field: update_stimulus_field,
+                update_stimulus_css_field: update_stimulus_css_field,
+                delete_stimulus: delete_stimulus,
+                add_stimulus_to_sets: add_stimulus_to_sets,
+                update_stimulus_field_4_sets: update_stimulus_field_4_sets,
+                update_stimulus_css_4_sets: update_stimulus_css_4_sets,
+                delete_stimulus_from_sets: delete_stimulus_from_sets
+            };
+
+            if(possible_stimuli.length===0)
+                ctrl.do_add_stimulus();
+
+            function add_stimulus_to_sets(stimulus){
+                var new_stimulus = {stimulus_name:stimulus.stimulus_name,
+                    media:'',
+                    default_times: stimulus.default_times,
+                    onset: stimulus.onset,
+                    offset: stimulus.offset,
+                    response:!!stimulus.response,
+                    response_key:'',
+                    css_data:{},
+                    css2use:[]};
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){ return set.push(new_stimulus); });
+                });
+            }
+
+            function update_stimulus_field_4_sets(stimulus_name, field, old_field, new_field){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.forEach(function (stimulus){
+                            stimulus[field] = stimulus.stimulus_name === stimulus_name ? new_field : stimulus[field];
+
+                        });
+                    });
+                });
+            }
+
+            function update_stimulus_css_4_sets(stimulus_obj, css, add){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.forEach(function (stimulus){
+                            if(stimulus.stimulus_name === stimulus_obj.stimulus_name){
+                                if(add)
+                                    stimulus.css2use.push(css);
+                                else
+                                    stimulus.css2use.splice(stimulus.css2use.findIndex(function (obj){ return obj===css; }), 1);
+                            }
+                        });
+                    });
+                });
+            }
+
+            function do_add_stimulus() {
+                var possible_csss = {};
+                ctrl.default_css.map(function (css){ return possible_csss[css]= false; });
+                var new_stimulus = {stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
+                                      response:false,
+                                      media_type:'text',
+                                      css:possible_csss,
+                                      default_times:true,
+                                      onset:'0',
+                                      offset:'0'};
+                ctrl.possible_stimuli().push(new_stimulus);
+                ctrl.add_stimulus_to_sets(new_stimulus);
+            }
+
+            function update_stimulus_field(id, field, value){
+                if(ctrl.possible_stimuli()[id][field] === value)
+                    return;
+                ctrl.update_stimulus_field_4_sets(ctrl.possible_stimuli()[id].stimulus_name, field, ctrl.possible_stimuli()[id][field], value);
+                ctrl.possible_stimuli()[id][field] = value;
+            }
+
+            function update_stimulus_css_field(id, field){
+                ctrl.possible_stimuli()[id].css[field] = !ctrl.possible_stimuli()[id].css[field];
+                ctrl.update_stimulus_css_4_sets(ctrl.possible_stimuli()[id], field, ctrl.possible_stimuli()[id].css[field]);
+            }
+
+            function delete_stimulus_from_sets(stimulus_obj){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.splice(set.findIndex(function (stimulus){ return stimulus.stimulus_name === stimulus_obj.stimulus_name; }), 1);
+                    });
+                });
+            }
+
+
+            function delete_stimulus(id){
+                ctrl.delete_stimulus_from_sets(ctrl.possible_stimuli()[id]);
+                ctrl.possible_stimuli().splice(id, 1);
+            }
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                m('h4.space', 'Trial properties'),
+                m('.row',[
+                    m('.col-sm-2',
+                        m('strong', 'Stimulus name')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Response')
+                    ),
+                    m('.col-sm-3',
+                        m('strong', 'Visual properties')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Media type')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Times')
+                    )
+                ]),
+
+                ctrl.possible_stimuli().map(function(stimulus, id) {
+                    return m('row.col-sm-12',
+                        [m('hr'), m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                            ])),
+                            m('.col-sm-2',
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', true); },
+                                        checked: stimulus.response,
+                                    }), m('span.c-indicator'), ' With response'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', false); },
+                                        checked: !stimulus.response,
+                                    }), m('span.c-indicator'), ' Without response'
+                                ]))
+                            ),
+                            m('.col-sm-3',
+                                m('row',[
+                                    ctrl.default_css.map(function (css){ return m('.col-sm-3',
+                                                m('label.c-input.checkbox',  [ m('input[type=checkbox]',{
+                                                        onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
+                                                        checked: stimulus.css[css],
+                                                    }), m('span', css)
+                                                ])
+                                        ); }
+                                    )
+                                ])),
+                            m('.col-sm-2',
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'images'); },
+                                        checked: stimulus.media_type==='images',
+                                    }), m('span.c-indicator'), ' Images'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
+                                        checked: stimulus.media_type==='text',
+                                    }), m('span.c-indicator'), ' Text'
+                                ]))
+                            ),
+                            m('.col-sm-2',[
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
+                                            checked: !stimulus.default_times,
+                                        }), m('span.c-indicator'), ' Variable'
+                                    ])),
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
+                                            checked: stimulus.default_times,
+                                        }), m('span.c-indicator'), ' Fixed'
+                                    ]))
+                                ,
+                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                        m('label.input-group', [
+                                        'Onset',
+                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
+                                ])),
+                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                    m('label.input-group', [
+                                        'Offset',
+                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                    ])
+                                )
+                            ]),
+                            m('.col-sm-1',
+                                ctrl.possible_stimuli().length===1 ? '' :
+                                m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', { onclick:function(){ctrl.delete_stimulus(id);}}, [
+                                    m('i.fa.fa-close'), ' '
+                                ]))
+                            )
+                        ])
+                }),
+                m('.row.space',
+                    m('.col-sm-12', [
+                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
+                            [m('i.fa.fa-plus'), '  add stimulus']
+                        )
+                    ])
+                )
+            ])
+
+
+        }
+    };
+
+    var stimuli_sets_view = function (args) { return m.component(stimuliSetsGeneratorComponent, args); };
+
+    var stimuliSetsGeneratorComponent = {
+        controller: function controller(ref){
+            var condition = ref.condition;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            var ctrl = {
+                condition: condition,
+                possible_stimuli: possible_stimuli,
+                possible_responses: possible_responses,
+                delete_stimuli_set: delete_stimuli_set,
+                add_stimuli_set: add_stimuli_set,
+                update_stimulus_media: update_stimulus_media,
+                toggle_stimulus_response: toggle_stimulus_response,
+                update_stimulus_css: update_stimulus_css
+            };
+            if(condition.stimuli_sets.length===0)
+                ctrl.add_stimuli_set();
+
+            function add_stimuli_set(){
+                var stimuli_object = [];
+                ctrl.possible_stimuli().forEach(function(stimulus){
+                    var css2use = Object.keys(stimulus.css).filter((function (key){ return stimulus.css[key]; }));
+                    var css_data = {};
+                    css2use.forEach(function (css){css_data[css]= '';});
+
+                    stimuli_object.push({stimulus_name:stimulus.stimulus_name,
+                                         media:'',
+                                         default_times: stimulus.default_times,
+                                         onset: stimulus.onset,
+                                         offset: stimulus.offset,
+                                         response:!!stimulus.response,
+                                         response_key:'',
+                                         css2use: css2use,
+                                         css_data: css_data});
+                });
+                condition.stimuli_sets.push(stimuli_object);
+            }
+
+            function toggle_stimulus_response(set_id, stimulus_id, response_key){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].response_key = response_key;
+            }
+
+            function delete_stimuli_set(set_id){
+                ctrl.condition.stimuli_sets.splice(set_id, 1);
+            }
+            function update_stimulus_media(set_id, stimulus_id, media){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].media = media;
+            }
+            function update_stimulus_css(set_id, stimulus_id, field, value){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].css_data[field] = value;
+            }
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                        m('row.col-sm-12', [
+                            m('.row',[
+                                m('.col-sm-2',
+                                    m('strong', 'Stimulus name')
+                                ),
+                                m('.col-sm-3',
+                                    m('strong', 'Media')
+                                ),
+                                m('.col-sm-2',
+                                    m('strong', 'Times')
+                                ),
+
+                                m('.col-sm-2',
+                                    m('strong', 'Visual properties')
+                                ),
+                                m('.col-sm-2',
+                                    m('strong', 'Response')
+                                )
+                            ]),
+                            ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
+                                return stimuli_set.map(function(stimulus, stimulus_id) {
+                                    return m('row.col-sm-12',[
+
+                                        stimulus_id>0 ?  '' : m('hr'),
+                                        m('.col-sm-2', stimulus.stimulus_name),
+                                        m('.col-sm-3',
+                                            m('label.input-group.space', [
+                                                m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
+                                            ])
+                                        ),
+                                        m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
+                                            m('row', [
+                                                'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
+                                            ]),
+                                            m('row', [
+                                                'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
+                                            ])
+                                        ]),
+                                        m('.col-sm-2',
+
+                                            stimulus.css2use.length===0 ? '-' :
+                                                stimulus.css2use.map(function (css2use){ return m('row', [
+                                                    css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
+                                                ]); })
+                                        ),
+                                        m('.col-sm-2', !stimulus.response ? '-' :
+                                                ctrl.possible_responses().map(function (response, key_id){ return m('row',[
+                                                        m('.col-sm-2', response.key.length !==1 ? '' :
+                                                            m('div', m('label.c-input.c-radio', [
+                                                                m('input[type=radio]', {
+                                                                    onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
+                                                                    checked: stimulus.response_key === key_id,
+                                                                }), m('span.c-indicator'), (" " + (response.key))
+                                                            ]))
+                                                        )]
+                                                ); })
+                                        ),
+                                        m('.col-sm-1',
+                                            stimulus_id > 0 ? '' :
+                                            m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
+                                                m('i.fa.fa-close'), ' '
+                                            ]))
+                                        )
+
+                                    ])
+                                })
+
+                            }),
+                            m('.row.space',
+                                m('.col-sm-12', [
+                                    m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
+                                        [m('i.fa.fa-plus'), '  add stimuli set']
+                                    )
+                                ])
+                            )
+                        ])
+            ]);
+        }
+    };
+
+    var conditions_view = function (args) { return m.component(conditionsGeneratorComponent, args); };
+
+    var conditionsGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_conditions = ref.possible_conditions;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            var ctrl = {
+                num_of_conditions:0,
+                do_add_condition: do_add_condition,
+                update_condition_name: update_condition_name,
+            };
+
+            function do_add_condition() {
+                possible_conditions().push({condition_name:("condition_" + (++ctrl.num_of_conditions)), stimuli_sets:[]});
+            }
+
+            function update_condition_name(id, name){
+                possible_conditions()[id].condition_name = name;
+            }
+            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses};
+        },
+        view: function view(ref){
+            var ctrl = ref.ctrl;
+            var possible_conditions = ref.possible_conditions;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            return m('.row', [
+                m('h4.space', 'Conditions'),
+                possible_conditions().map(function(condition, condition_id) {
+                    return  [m('row.col-sm-13',
+                        m('.col-sm-3',
+                            m('label.input-group.space', [
+                                m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                            ]))
+                    ),
+                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses})
+                ]}),
+
+
+                m('.row.space',
+                    m('.col-sm-13', [
+                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
+                            [m('i.fa.fa-plus'), '  add condition']
+                        )
+                    ])
+                ),
+
+            ]);
+
+
+        }
+    };
+
+    var generatorComponent = {
+        controller: function controller(){
+            var possible_responses = m.prop([]);
+            var possible_stimuli = m.prop([]);
+            var possible_conditions = m.prop([]);
+            var loaded = false;
+            function load() {
+                 loaded = true;
+            }
+            function do_save(){
+                save$1(m.route.param('studyId'), possible_responses, possible_stimuli, possible_conditions);
+            }
+            load();
+            return {do_save: do_save, loaded: loaded, possible_responses: possible_responses, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions};
+        },
+        view: function view(ref){
+            var do_save = ref.do_save;
+            var loaded = ref.loaded;
+            var possible_responses = ref.possible_responses;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_conditions = ref.possible_conditions;
+
+            return  !loaded
                 ?
                 m('.loader')
                 :
                 m('.container.sharing-page', [
-                    m('h4', 'Possible responses'),
-                    m('.row',[
-                        ctrl.possible_responses().map(function(response, id) {
-                            return m('row',[
-                                m('.col-sm-2',
-                                    m('label.input-group.space', [
-                                        m('input.form-control.col-sm-1', {value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
-                                        id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
-                                    ])
-                                )
-                            ])
-
-                        })
-                    ]),
-
-
-                    m('h4.space', 'Trial properties'),
-                    m('.row',[
-                        m('.col-sm-3',
-                            m('strong', 'Stimulus name')
-                        ),
-                        m('.col-sm-3',
-                            m('strong', 'Response')
-                        ),
-                        m('.col-sm-5',
-                            m('strong', 'Visual properties')
-                        )
-                    ]),
-
-
-                    ctrl.stimuli().map(function(stimulus, id) {
-                        return m('row.col-sm-12',
-                            [m('.col-sm-3',
-                                m('label.input-group.space', [
-                                    m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
-                            ])),
-                            m('.col-sm-3',
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.toggle_response(id, 'response', true); },
-                                            checked: stimulus.response,
-                                        }), m('span.c-indicator'), ' With response'
-                                    ])),
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.toggle_response(id, 'response', false); },
-                                            checked: !stimulus.response,
-                                        }), m('span.c-indicator'), ' Without response'
-                                    ]))
-                                ),
-                                m('.col-sm-5',
-                                    m('label.input-group.space', [
-                                        m('input.form-control', {value: stimulus.css, placeholder: 'css', onchange:function(){ctrl.update_stimulus_field(id, 'css', this.value);}})
-                                ])),
-                                m('.col-sm-1',
-                                    m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimulus(id);}}, [
-                                    m('i.fa.fa-close'), ' '
-                                ]))),
-                            ])
-                    }),
-
-                    m('.row.space',
-                        m('.col-sm-12', [
-                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
-                                [m('i.fa.fa-plus'), '  add stimulus']
+                    responses_view({possible_responses: possible_responses}),
+                    m('hr'),
+                    stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
+                    m('hr'),
+                    conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses}),
+                    m('.row.space.central_panel',
+                        m('.col-sm-12.', [
+                            m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return do_save(); }},
+                                [m('i.fa.fa-save'), '  Save']
                             )
                         ])
-                    ),
-
-                    m('h4.space', 'Conditions'),
-
-
-                    ctrl.conditions().map(function(condition, condition_id) {
-                        return  [m('row.col-sm-12',
-                                    m('.col-sm-3',
-                                        m('label.input-group.space', [
-                                            m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
-                                        ]))
-                                    ),
-                                    m('row.col-sm-12', [
-                                        m('.row',[
-                                            m('.col-sm-2',
-                                                m('strong', 'Stimulus name')
-                                            ),
-                                            m('.col-sm-3',
-                                                m('strong', 'Media')
-                                            ),
-                                            m('.col-sm-3',
-                                                m('strong', 'Visual properties')
-                                            ),
-                                            m('.col-sm-3',
-                                                m('strong', 'Response')
-                                            )
-                                        ]),
-                                        condition.stimuli_sets.map(function(stimuli_set, set_id){
-                                            return stimuli_set.map(function(stimulus, stimulus_id) {
-                                                return m('row.col-sm-12',[
-                                                    m('.col-sm-2', stimulus.stimulus_name),
-                                                    m('.col-sm-3',
-                                                        m('label.input-group.space', [
-                                                            m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(condition_id, set_id, stimulus_id, this.value);}}),
-                                                        ])
-                                                    ),
-                                                    m('.col-sm-3',
-                                                        m('label.input-group.space', [
-                                                            m('input.form-control', {value: 'css', placeholder: 'media', onchange:function(){}}),
-                                                        ])
-
-                                                    ),
-                                                    (!stimulus.response ? '' : ctrl.possible_responses().map(function(response, id) {
-                                                            return m('row',[
-                                                                m('.col-sm-1',
-                                                                    response.key.length !==1 ? '' :
-                                                                    m('div', m('label.c-input.c-radio', [
-                                                                        m('input[type=radio]', {
-                                                                            onclick: function (){ return ctrl.toggle_stimulus_response(condition_id, set_id, stimulus_id, response.key); },
-                                                                            checked: stimulus.response_key === response.key,
-                                                                        }), m('span.c-indicator'), response.key
-                                                                    ]))                                                            )
-                                                            ])})
-                                                        // m('label.input-group.space', [
-                                                        //     m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){}}),
-                                                        // ])
-
-                                                    )
-                                                ])
-                                        })
-
-                                    }),
-                                    m('.row.space',
-                                        m('.col-sm-12', [
-                                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set(condition_id);}},
-                                                [m('i.fa.fa-plus'), '  add stimuli set']
-                                            )
-                                        ])
-                                    )
-                                ])]
-
-                    }),
-                    m('.row.space',
-                        m('.col-sm-12', [
-                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
-                                [m('i.fa.fa-plus'), '  add condition']
-                            )
-                        ])
-                    ),
-
+                    )
 
                 ]);
         }
@@ -20225,7 +22809,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$6, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$5, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -20365,8 +22949,8 @@
                                     [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
                                 ),
                                 m('label.input-group.space',[
-                                    m('.input-group-addon', {onclick: function() {copy$2(getAbsoluteUrl$2(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
-                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$2(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                                    m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
                                 ])
                             ])
                         )
@@ -20376,16 +22960,16 @@
         }
     };
 
-    var focus_it$6 = function (element, isInitialized) {
+    var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function getAbsoluteUrl$2(url) {
+    function getAbsoluteUrl$1(url) {
         var a = document.createElement('a');
         a.href=url;
         return a.href;
     }
 
-    function copy$2(text){
+    function copy$1(text){
         return new Promise(function (resolve, reject) {
             var input = document.createElement('input');
             input.value = text;
@@ -20418,7 +23002,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$7, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -20481,7 +23065,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$7 = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {

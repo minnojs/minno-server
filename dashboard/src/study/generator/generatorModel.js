@@ -2,56 +2,12 @@ import {fetchJson} from 'utils/modelHelpers';
 import {studyUrl} from 'modelUrls';
 
 
-function collaboration_url(study_id)
+function url(study_id)
 {
-    return `${studyUrl}/${encodeURIComponent(study_id)}/collaboration`;
+    return `${studyUrl}/${encodeURIComponent(study_id)}/generator`;
 }
 
-function link_url(study_id)
-{
-    return `${studyUrl}/${encodeURIComponent(study_id)}/link`;
-}
-
-
-
-function public_url(study_id)
-{
-    return `${studyUrl}/${encodeURIComponent(study_id)}/public`;
-}
-
-export let get_collaborations = (study_id) => fetchJson(collaboration_url(study_id), {
-    method: 'get'
-});
-
-export let remove_collaboration = (study_id, user_id) => fetchJson(collaboration_url(study_id), {
-    method: 'delete',
-    body: {user_id: user_id}
-});
-
-
-export let add_collaboration = (study_id, user_name, permission, data_permission) => fetchJson(collaboration_url(study_id), {
-    method: 'post',
-    body: {user_name, permission, data_permission}
-});
-
-
-export let update_permission = (study_id, collaborator_id, permissions) => fetchJson(collaboration_url(study_id), {
+export let save = (study_id, responses, stimuli, conditions) => fetchJson(url(49), {
     method: 'put',
-    body: {collaborator_id, permissions}
-});
-
-
-export let add_link = (study_id) => fetchJson(link_url(study_id), {
-    method: 'post'
-});
-
-export let revoke_link = (study_id) => fetchJson(link_url(study_id), {
-    method: 'delete'
-});
-
-
-
-export let make_pulic = (study_id, is_public) => fetchJson(public_url(study_id), {
-    method: 'post',
-    body: {is_public}
+    body: {responses, stimuli, conditions}
 });

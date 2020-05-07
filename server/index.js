@@ -15,6 +15,7 @@ const studies_router        = require('./routes/studies_router');
 const view_router           = require('./routes/view_router');
 const tags_router           = require('./routes/tags_router');
 const files_router          = require('./routes/files_router');
+const generator_router      = require('./routes/generator_router');
 const sharing_router        = require('./routes/sharing_router');
 const settings_router       = require('./routes/settings_router');
 const messages_router       = require('./routes/messages_router');
@@ -134,13 +135,14 @@ basePathRouter.use(launch_router);
 basePathRouter.use(connections_router);
 basePathRouter.use(messages_router);
 basePathRouter.use(settings_router);
-basePathRouter.use('/files' ,files_router);
-basePathRouter.use('/tags' ,tags_router);
+basePathRouter.use('/files', files_router);
+basePathRouter.use('/tags', tags_router);
 
 basePathRouter.use('/studies' ,studies_router);
 basePathRouter.use('/studies', publish_router);
 basePathRouter.use('/studies', lock_router);
 basePathRouter.use('/studies', sharing_router);
+basePathRouter.use('/studies', generator_router);
 basePathRouter.use('/collaboration', collaboration_router);
 
 basePathRouter.use('/users', users_router);

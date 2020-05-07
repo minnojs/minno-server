@@ -120,8 +120,9 @@ function get_file_content(user_id, study_id, file_id) {
     return has_read_permission(user_id, study_id)
     .then(function({study_data}){
         file_id = urlencode.decode(file_id);
+
         return fs.readFile(path.join(config.user_folder,study_data.folder_name,file_id), 'utf8')
-        .then((content)=>({id: file_id, content: content}));
+        .then((content)=>({id: file_id, content}));
     });
 }
 
