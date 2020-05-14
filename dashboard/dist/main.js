@@ -12858,6 +12858,757 @@
     ]);
     };
 
+    var unknownComponent = function () { return m('.centrify', [
+        m('i.fa.fa-file.fa-5x'),
+        m('h5', 'Unknow file type')
+    ]); };
+
+    // download support according to modernizer
+    var downloadSupport = !window.externalHost && 'download' in document.createElement('a');
+
+    var downloadLink = function (url, name) {
+        if (downloadSupport){
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = name;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            var win = window.open(url, '_blank');
+            win.focus();
+        }
+    };
+
+    var moveFileComponent = function (args) { return m.component(component, args); };
+
+
+    var component = {
+        controller: function controller(ref){
+            var file = ref.file;
+            var study = ref.study;
+
+            var dirs = study
+                .files()
+                .filter(function (f) { return f.isDir; })
+                .filter(function (f) { return f !== file; })
+                .map(function (ref) {
+                    var name = ref.name;
+                    var basePath = ref.basePath;
+                    var path = ref.path;
+                    var id = ref.id;
+
+                    return ({name: name, basePath: basePath, path: path, id: id, isOpen: m.prop(study.vm(id).isOpen())});
+            })
+                .reduce(function (hash, dir){
+                    var path = dir.basePath;
+                    if (!hash[path]) hash[path] = [];
+                    hash[path].push(dir);
+                    return hash;
+                }, {'/': []});
+
+
+            var root = {isOpen: m.prop(true), name:'/', path: '/'};
+            return {root: root, dirs: dirs};
+        },
+        view: function view(ref, ref$1){
+            var dirs = ref.dirs;
+            var root = ref.root;
+            var newPath = ref$1.newPath;
+
+            return m('.card-block', [
+                m('p.card-text', [
+                    m('strong', 'Moving to: '),
+                    dirName(newPath())
+                ]),
+                m('.folders-well', [
+                    m('ul.list-unstyled', dirNode(root, dirs, newPath) )
+                ])
+            ]);
+        }
+    };
+
+
+    function dirNode(dir, dirs, newPath){
+        var children = dirs[dir.path.replace(/\/?$/, '/')]; // optionally add a backslash at the end
+        return m('li', [
+            m('i.fa.fa-fw', {
+                onclick: function () { return dir.isOpen(!dir.isOpen()); },
+                class: classNames({
+                    'fa-caret-right' : children && !dir.isOpen(),
+                    'fa-caret-down': children && dir.isOpen()
+                })
+            }),
+            m('span', {onclick: function () { return newPath(dir.path); }}, [
+                m('i.fa.fa-folder-o.m-r-1'),
+                dirName(dir.name)
+            ]),
+            !children || !dir.isOpen() ? '' : m('ul.bulletless', children.map(function (d) { return dirNode(d, dirs, newPath); }))
+        ]);
+    }
+
+    function dirName(name){
+        return name === '/' ? m('span.text-muted', 'Root Directory') : name;
+    }
+
+    function get_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)));
+    }
+
+    function get_duplicate_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/copy");
+    }
+
+
+    function get_exps_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
+    }
+
+    function get_stat_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
+    }
+
+    function get_restore_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/restore");
+    }
+
+
+    function get_requests_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
+    }
+
+    function get_lock_url(study_id , lock) {
+
+        if (lock)
+            return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/lock");
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/unlock");
+    }
+
+    function get_publish_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
+    }
+
+    /*CRUD*/
+    var load_studies = function () { return fetchJson(studyUrl); };
+
+    var load_templates = function () { return fetchJson(templatesUrl); };
+
+    var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
+
+    var get_exps = function (study_id) { return fetchJson(get_exps_url(study_id)); };
+
+
+    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
+
+
+    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
+        method: 'delete',
+        body: {request_id: request_id}
+
+    }); };
+
+    var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
+        method: 'post',
+        body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
+    }); };
+
+    var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
+        method: 'post',
+        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
+    }); };
+
+    var restore2version = function (study_id, version_id) { return fetchJson(get_restore_url(study_id), {
+        method: 'post',
+        body: {version_id: version_id}
+    }); };
+
+    var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
+        method: 'put',
+        body: body
+    }); };
+
+    var rename_study = function (study_id, study_name) { return fetchJson(((get_url(study_id)) + "/rename"), {
+        method: 'put',
+        body: {study_name: study_name}
+    }); };
+
+    var duplicate_study = function (study_id, study_name) { return fetchJson(get_duplicate_url(study_id), {
+        method: 'put',
+        body: {study_name: study_name}
+    }); };
+
+    var lock_study = function (study_id, lock) { return fetchJson(get_lock_url(study_id, lock), {
+        method: 'post'
+    }); };
+
+    var publish_study = function (study_id, publish, update_url) { return fetchJson(get_publish_url(study_id), {
+        method: 'post',
+        body: {publish: publish, update_url: update_url}
+    }); };
+
+    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
+
+    function copyFileComponent (args) { return m.component(copyFileComponent$1, args); }
+    var copyFileComponent$1 = {
+        controller: function controller(ref){
+            var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
+            var study_id = ref.study_id;
+
+            var studies = m.prop([]);
+            var loaded = m.prop(false);
+            var error = m.prop(null);
+            load_studies()
+                .then(function (response) { return studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())); })
+                .catch(error)
+                .then(loaded.bind(null, true))
+                .then(m.redraw);
+            return {studies: studies, study_id: study_id, new_study_id: new_study_id, new_study_name: new_study_name, loaded: loaded, error: error};
+        },
+        view: function (ref) {
+            var studies = ref.studies;
+            var study_id = ref.study_id;
+            var new_study_id = ref.new_study_id;
+            var new_study_name = ref.new_study_name;
+            var loaded = ref.loaded;
+            var error = ref.error;
+
+            return m('div', [
+            loaded() ? '' : m('.loader'),
+            error() ? m('.alert.alert-warning', error().message): '',
+
+            loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
+
+            m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
+                m('option',{value:'', disabled: true}, 'Select Study'),
+                studies()
+                    .filter(function (study) { return !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
+                    .map(function (study) { return m('option',{value:study.id, selected: new_study_id() === study.id}, study.name); })
+            ])
+        ]);
+    }
+    };
+
+    function update_study_details(event, new_study_id, new_study_name){
+        new_study_id(event.target.value);
+        new_study_name(event.target[event.target.selectedIndex].text);
+    }
+
+
+    function sort_studies_by_name2(study1, study2){
+        return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
+    }
+
+    var template_filter = function () { return function (study) {
+        return study.study_type === 'regular' && !study.is_template;
+    }; };
+
+    var uploadFiles = function (path,study) { return function (fd, files) {
+        // validation (make sure files do not already exist)
+        var filePaths = files.map(function (file) { return path === '/' ? file : path + '/' + file; });
+        var exist = study.files().filter(function (file) { return filePaths.includes(file.path); }).map(function (f) { return f.path; });
+
+        if (!exist.length) return upload({force:false});
+        else return messages.confirm({
+            header: 'Upload Files', 
+            content: ("The file" + (exist.length > 1 ? 's' : '') + " \"" + (exist.join(', ')) + "\" already exists, do you want to overwrite " + (exist.length > 1 ? 'them' : 'it') + "?"),
+            okText: 'Overwrite'
+        })
+            .then(function (response) { return response && upload({force:true}); });
+
+        function upload(ref) {
+            if ( ref === void 0 ) ref = {force:false};
+            var force = ref.force;
+
+            return study.uploadFiles({path: path, fd: fd, force: force})
+                .catch(function (response) { return messages.alert({
+                    header: 'Upload File',
+                    content: m('p.alert.alert-danger', response.message)
+                }); })
+                .then(m.redraw);
+        }
+    }; };
+
+    var moveFile = function (file, study, notifications) { return function () {
+        var newPath = m.prop(file.basePath);
+        messages.confirm({
+            header: 'Move File',
+            content: moveFileComponent({newPath: newPath, file: file, study: study})
+        })
+        .then(function (response) {
+            var targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
+
+            if (response && newPath() !== file.basePath)
+                return moveAction(targetPath, file, study)
+                .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully moved to '" + (newPath()) + "'")); });
+        });
+    }; };
+
+    var duplicateFile = function (file, study) { return function () {
+        var newPath = m.prop(file.path);
+        return messages.prompt({
+            header: 'Duplicate File',
+            postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
+            prop: newPath
+        })
+            .then(function (response) {
+                if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
+            });
+    }; };
+
+    var copyFile = function (file, study, notifications) { return function () {
+        var filePath = m.prop(file.basePath);
+        var study_id = m.prop(study.id);
+        var new_study_id = m.prop('');
+        var new_study_name = m.prop('');
+
+        messages.confirm({
+            header: 'Copy File',
+            content: copyFileComponent({new_study_id: new_study_id, new_study_name: new_study_name, study_id: study_id})
+        })
+            .then(function (response) {
+                if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
+            })
+            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
+    }; };
+
+    var renameFile = function (file, study, notifications) { return function () {
+        var newPath = m.prop(file.path);
+        return messages.prompt({
+            header: 'Rename File',
+            postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
+            prop: newPath
+        })
+        .then(function (response) {
+            if (response && newPath() !== file.name)
+                return moveAction(newPath(), file, study)
+                    .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully renamed to '" + (newPath()) + "'")); })
+                    .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(newPath()))))): ''; });
+        })
+
+    }; };
+
+
+    var update_experiment = function (file, study, notifications, update) { return function () {
+        var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
+        var error = m.prop('');
+
+        var ask = function () { return messages.confirm({
+            header:'New Name',
+            content: {
+                view: function view(){
+                    return m('div', [
+                        m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
+                        !error() ? '' : m('p.alert.alert-danger', error())
+                    ]);
+                }
+            }
+        }).then(function (response) { return response && update_exp(); }); };
+
+        var update_exp = function () {
+            if (!descriptive_id()) {
+                error('Error: missing descriptive id');
+                return ask();
+            }
+            if(update)
+                return study.update_experiment(file, descriptive_id())
+                    .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
+                    .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
+                    .catch(function (e) {
+                        error(e.message);
+                        return ask();
+                    });
+            return study.make_experiment(file, descriptive_id())
+                .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
+                .then(function (){ return m.redraw(); })
+                .catch(function (e) {
+                    error(e.message);
+                    ask();
+                });
+
+        };
+        ask();
+    }; };
+
+    var delete_experiment = function (file, study, notifications) { return function () {
+        messages.confirm({
+            header: 'Remove Experiment',
+            content: 'Are you sure you want to remove this experiment? This is a permanent change.'
+        })
+            .then(function (response) {
+                if (response) study.delete_experiment(file);})
+            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully deleted")); })
+
+            .then(function (){delete file.exp_data; m.redraw();});
+
+    }; };
+
+    function moveAction(newPath, file, study){
+        var isFocused = file.id === m.route.param('fileId');
+
+        var def = study
+            .move(newPath, file) // the actual movement
+            .then(redirect)
+            .catch(function (response) { return messages.alert({
+                header: 'Move/Rename File',
+                content: m('p.alert.alert-danger', response.message)
+            }); })
+            .then(m.redraw); // redraw after server response
+
+        m.redraw();
+        return def;
+
+        function redirect(response){
+            // redirect only if the file is chosen, otherwise we can stay right here...
+            if (isFocused) m.route(("/editor/" + (study.id) + "/file/" + (encodeURI(file.id))));
+            return response;
+        }
+    }
+
+    function copyAction(path, file, study_id, new_study_id){
+        var def = file
+            .copy(path, study_id, new_study_id) // the actual movement
+            .catch(function (response) { return messages.alert({
+
+                header: 'Copy File',
+                content: m('p.alert.alert-danger', response.message)
+            }); })
+            .then(m.redraw); // redraw after server response
+
+        return def;
+    }
+
+    var playground;
+    var play$2 = function (file,study) { return function () {
+        var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
+        var open = openNew;
+        if (isSaved) open();
+        else messages.confirm({
+            header: 'Play task',
+            content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?'
+        }).then(function (response) { return response && open(); });
+
+        function openNew(){
+            if (playground && !playground.closed) playground.close();
+            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
+
+            playground = window.open(url, 'Playground');
+            playground.onload = function(){
+                playground.addEventListener('unload', function() {
+                    window.focus();
+                });
+                playground.focus();
+            };
+        }
+    }; };
+
+    var save = function (file) { return function () {
+        file.save()
+            .then(m.redraw)
+            .catch(function (err) { return messages.alert({
+                header: 'Error Saving:',
+                content: err.message
+            }); });
+    }; };
+
+
+    // add trailing slash if needed, and then remove proceeding slash
+    // return prop
+    var pathProp = function (path) { return m.prop(path.replace(/\/?$/, '/').replace(/^\//, '')); };
+
+    var  createFile = function (study, name, content) {
+        study.createFile({name:name(), content:content()})
+            .then(function (response) {
+                m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(response.id))));
+                return response;
+            })
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to create file:',
+                content: err.message
+            }); });
+    };
+
+
+    var  duplicateAction = function (study, file, new_path) {
+        study.duplicateFile({study: study, id:file.id, new_path:new_path(), isDir:file.isDir})
+            .then(function () {
+                if (!file.isDir)
+                    m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(new_path())))));
+                else
+                    m.redraw();
+            })
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to create file:',
+                content: err.message
+            }); });
+    };
+
+    var createDir = function (study, path) {
+        if ( path === void 0 ) path='';
+
+        return function () {
+        var name = pathProp(path);
+
+        messages.prompt({
+            header: 'Create Directory',
+            content: 'Please insert directory name',
+            prop: name
+        })
+            .then(function (response) {
+                if (response) return study.createFile({name:name(), isDir:true});
+            })
+            .then(m.redraw)
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to create directory:',
+                content: err.message
+            }); });
+    };
+    };
+
+    var createEmpty = function (study, path) {
+        if ( path === void 0 ) path = '';
+
+        return function () {
+        var name = pathProp(path);
+        var content = function (){ return ''; };
+
+        messages.prompt({
+            header: 'Create file',
+            content: 'Please insert the file name:',
+            prop: name
+        }).then(function (response) {
+            if (response) return createFile(study, name,content);
+        });
+    };
+    };
+
+    var deleteFiles = function (study) { return function () {
+        var chosenFiles = study.getChosenFiles();
+        var isFocused = chosenFiles.some(function (file) { return file.id === m.route.param('fileId'); });
+
+        if (!chosenFiles.length) {
+            messages.alert({
+                header:'Remove Files',
+                content: 'There are no files selected'
+            });
+            return;
+        }
+
+        messages.confirm({
+            header: 'Remove Files',
+            content: 'Are you sure you want to remove all checked files? This is a permanent change.'
+        })
+            .then(function (response) {
+                if (response) doDelete();
+            });
+
+        function doDelete(){
+            study.delFiles(chosenFiles)
+                .then(redirect)
+                .catch(function (err) { return messages.alert({
+                    header: 'Failed to delete files:',
+                    content: err.message
+                }); })
+                .then(m.redraw);
+        }
+
+        function redirect(response){
+            // redirect only if the file is chosen, otherwise we can stay right here...
+            if (isFocused) m.route(("/editor/" + (study.id))); 
+            return response;
+        }
+    }; };
+
+    var downloadChosenFiles = function (study) { return function () {
+        var chosenFiles = study.getChosenFiles().map(function (f){ return f.path; });
+        if (!chosenFiles.length) {
+            messages.alert({
+                header:'Download Files',
+                content: 'There are no files selected'
+            });
+            return;
+        }
+
+        study.downloadFiles(chosenFiles)
+            .then(function (url) {
+
+                var a = document.createElement('a');
+                a.href=url;
+
+                console.log(a.href); return downloadLink(url, study.name);})
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to download files:',
+                content: err.message
+            }); });
+    }; };
+
+    var downloadFile$2 = function (study, file) { return function () {
+        if (!file.isDir) return downloadLink(file.url, file.name);
+
+        study.downloadFiles([file.path])
+            .then(function (url) { return downloadLink(url, study.name); })
+            .catch(function (err) { return messages.alert({
+                header: 'Failed to download files:',
+                content: err.message
+            }); });
+    }; };
+
+    var resetFile = function (file) { return function () { return file.content(file.sourceContent()); }; };
+
+    var ace = function (args) { return m.component(aceComponent, args); };
+
+    var noop$2 = function(){};
+
+    var aceComponent = {
+        controller: function(){
+            var editorCache = m.prop();
+            return {editorCache: editorCache, onunload: onunload};
+
+            function onunload(){
+                if (editorCache()){
+                    editorCache().destroy();
+                }
+            }
+        },
+        view: function editorView(ctrl, args){
+            return m('.editor', {id:'text-editor', config: aceComponent.config(ctrl, args)});
+        },
+
+        config: function(ref,ref$1){
+            var editorCache = ref.editorCache;
+            var content = ref$1.content;
+            var observer = ref$1.observer;
+            var settings = ref$1.settings; if ( settings === void 0 ) settings = {};
+
+            return function(element, isInitialized, ctx){
+                var editor = editorCache();
+                var mode = settings.mode || 'javascript';
+                if (editor) editor.setReadOnly(!!settings.isReadonly);
+
+                // paster with padding
+                var paste = function (text) {
+                    if (!editor) return false;
+                    var pos = editor.getSelectionRange().start; 
+                    var line = editor.getSession().getLine(pos.row);
+                    var padding = line.match(/^\s*/);
+                    // replace all new lines with padding
+                    if (padding) text = text.replace(/(?:\r\n|\r|\n)/g, '\n' + padding[0]);
+                    
+                    editor.insert(text);
+                    editor.focus();
+                };
+
+                if (!isInitialized){
+                    fullHeight(element, isInitialized, ctx);
+
+                    require(['ace/ace'], function(ace){
+                        var undoManager = settings.undoManager || (function (u) { return u; });
+                        var position = settings.position || (function (u) { return u; });
+                        ace.config.set('packaged', true);
+                        ace.config.set('basePath', require.toUrl('ace'));
+
+                        editor = ace.edit(element);
+                        editorCache(editor);
+
+                        var session = editor.getSession();
+                        var commands = editor.commands;
+
+                        editor.setReadOnly(!!settings.isReadonly);
+                        editor.setTheme('ace/theme/cobalt');
+                        session.setMode('ace/mode/' + mode);
+                        if (mode !== 'javascript') session.setUseWorker(false);
+                        editor.setHighlightActiveLine(true);
+                        editor.setShowPrintMargin(false);
+                        editor.setFontSize('18px');
+                        editor.$blockScrolling = Infinity; // scroll to top
+
+                        // set jshintOptions
+                        session.on('changeMode', function(e, session){
+                            if (session.getMode().$id === 'ace/mode/javascript' && !!session.$worker && settings.jshintOptions) {
+                                session.$worker.send('setOptions', [settings.jshintOptions]);
+                            }
+                        });
+
+                        session.on('change', function(){
+                            content(editor.getValue());
+                            m.redraw();
+                        });
+
+                        commands.addCommand({
+                            name: 'save',
+                            bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
+                            exec: settings.onSave || noop$2
+                        });
+                        
+                        if(observer) observer.on('paste',paste );
+                        if(observer) observer.on('settings',function () { return editor.execCommand('showSettingsMenu'); });
+                        
+                        setContent();
+
+                        // return to the last position when reinitializing an editor
+                        if (position()) {
+                            var ref = position();
+                            var scroll = ref.scroll;
+                            var row = ref.row;
+                            var column = ref.column;
+                            editor.session.setScrollTop(scroll);
+                            editor.moveCursorTo(row, column);
+                            editor.clearSelection();
+                        }
+
+                        // reset undo manager so that ctrl+z doesn't erase file
+                        // save it so that it doesn't get lost when users navigate away
+                        session.setUndoManager(undoManager() || undoManager(new ace.UndoManager())); 
+                        editor.focus();
+                        editor.on('destroy', function () {
+                            position(Object.assign({scroll: editor.session.getScrollTop()},editor.getCursorPosition()));
+                            if(observer) observer.off(paste );
+                        });
+                    });
+                }
+                
+                // each redraw set content from model (the function makes sure that this is not done when not needed...)
+                setContent();
+
+                function setContent(){
+                    var editor = editorCache();
+                    if (!editor) return;
+                    
+                    // this should trigger only drastic changes such as the first time the editor is set
+                    if (editor.getValue() !== content()){
+                        editor.setValue(content());
+                        editor.moveCursorTo(0,0);
+                        editor.focus();
+                    }
+                }
+            };
+        }
+    };
+
+    function observer(){
+        var channels = {};
+        return {
+            on: function on(channel,cb){
+                channels[channel] || (channels[channel] = []);
+                channels[channel].push(cb);
+            },
+            off: function off(cb){
+                for (var channel in channels) {
+                    var index = channels[channel].indexOf(cb);
+                    if (index > -1) channels[channel].splice(index, 1);
+                }
+            },
+            trigger: function trigger(channel){
+                var args = [], len = arguments.length - 1;
+                while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
+
+                if (!channels[channel]) return;
+                channels[channel].forEach(function (cb) { return cb.apply(null, args); });
+            }
+        };
+    }
+
     var defaults = createCommonjsModule(function (module) {
     function getDefaults() {
       return {
@@ -15129,794 +15880,6 @@
 
     var marked_1 = marked;
 
-    var mdEditor = function (args) { return m.component(textEditorComponent, args); };
-
-    var textEditorComponent = {
-        controller: function(ref){
-            var file = ref.file;
-
-            var err = m.prop();
-            file.loaded || file.get()
-                .catch(err)
-                .then(m.redraw);
-
-            var ctrl = {mode:m.prop('edit'), err: err};
-
-            return ctrl;
-        },
-
-        view: function(ctrl, ref){
-            var file = ref.file;
-            var study = ref.study;
-
-            var observer = ctrl.observer;
-            var err = ctrl.err;
-            var mode = ctrl.mode;
-
-            if (!file.loaded) return m('.loader');
-
-            if (file.error) return m('div', {class:'alert alert-danger'}, [
-                m('strong',{class:'glyphicon glyphicon-exclamation-sign'}),
-                ("The file \"" + (file.path) + "\" was not found (" + (err() ? err().message : 'please try to refresh the page') + ").")
-            ]);
-
-            return m('div.blockquote.md', [
-                m.trust(marked_1(file.content()))
-            ]);
-        }
-    };
-
-    var unknownComponent = function () { return m('.centrify', [
-        m('i.fa.fa-file.fa-5x'),
-        m('h5', 'Unknow file type')
-    ]); };
-
-    // download support according to modernizer
-    var downloadSupport = !window.externalHost && 'download' in document.createElement('a');
-
-    var downloadLink = function (url, name) {
-        if (downloadSupport){
-            var link = document.createElement('a');
-            link.href = url;
-            link.download = name;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            var win = window.open(url, '_blank');
-            win.focus();
-        }
-    };
-
-    var moveFileComponent = function (args) { return m.component(component, args); };
-
-
-    var component = {
-        controller: function controller(ref){
-            var file = ref.file;
-            var study = ref.study;
-
-            var dirs = study
-                .files()
-                .filter(function (f) { return f.isDir; })
-                .filter(function (f) { return f !== file; })
-                .map(function (ref) {
-                    var name = ref.name;
-                    var basePath = ref.basePath;
-                    var path = ref.path;
-                    var id = ref.id;
-
-                    return ({name: name, basePath: basePath, path: path, id: id, isOpen: m.prop(study.vm(id).isOpen())});
-            })
-                .reduce(function (hash, dir){
-                    var path = dir.basePath;
-                    if (!hash[path]) hash[path] = [];
-                    hash[path].push(dir);
-                    return hash;
-                }, {'/': []});
-
-
-            var root = {isOpen: m.prop(true), name:'/', path: '/'};
-            return {root: root, dirs: dirs};
-        },
-        view: function view(ref, ref$1){
-            var dirs = ref.dirs;
-            var root = ref.root;
-            var newPath = ref$1.newPath;
-
-            return m('.card-block', [
-                m('p.card-text', [
-                    m('strong', 'Moving to: '),
-                    dirName(newPath())
-                ]),
-                m('.folders-well', [
-                    m('ul.list-unstyled', dirNode(root, dirs, newPath) )
-                ])
-            ]);
-        }
-    };
-
-
-    function dirNode(dir, dirs, newPath){
-        var children = dirs[dir.path.replace(/\/?$/, '/')]; // optionally add a backslash at the end
-        return m('li', [
-            m('i.fa.fa-fw', {
-                onclick: function () { return dir.isOpen(!dir.isOpen()); },
-                class: classNames({
-                    'fa-caret-right' : children && !dir.isOpen(),
-                    'fa-caret-down': children && dir.isOpen()
-                })
-            }),
-            m('span', {onclick: function () { return newPath(dir.path); }}, [
-                m('i.fa.fa-folder-o.m-r-1'),
-                dirName(dir.name)
-            ]),
-            !children || !dir.isOpen() ? '' : m('ul.bulletless', children.map(function (d) { return dirNode(d, dirs, newPath); }))
-        ]);
-    }
-
-    function dirName(name){
-        return name === '/' ? m('span.text-muted', 'Root Directory') : name;
-    }
-
-    function get_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)));
-    }
-
-    function get_duplicate_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/copy");
-    }
-
-
-    function get_exps_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
-    }
-
-    function get_stat_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
-    }
-
-    function get_restore_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/restore");
-    }
-
-
-    function get_requests_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
-    }
-
-    function get_lock_url(study_id , lock) {
-
-        if (lock)
-            return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/lock");
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/unlock");
-    }
-
-    function get_publish_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
-    }
-
-    /*CRUD*/
-    var load_studies = function () { return fetchJson(studyUrl); };
-
-    var load_templates = function () { return fetchJson(templatesUrl); };
-
-    var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
-
-    var get_exps = function (study_id) { return fetchJson(get_exps_url(study_id)); };
-
-
-    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
-
-
-    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
-        method: 'delete',
-        body: {request_id: request_id}
-
-    }); };
-
-    var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
-        method: 'post',
-        body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
-    }); };
-
-    var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
-        method: 'post',
-        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
-    }); };
-
-    var restore2version = function (study_id, version_id) { return fetchJson(get_restore_url(study_id), {
-        method: 'post',
-        body: {version_id: version_id}
-    }); };
-
-    var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
-        method: 'put',
-        body: body
-    }); };
-
-    var rename_study = function (study_id, study_name) { return fetchJson(((get_url(study_id)) + "/rename"), {
-        method: 'put',
-        body: {study_name: study_name}
-    }); };
-
-    var duplicate_study = function (study_id, study_name) { return fetchJson(get_duplicate_url(study_id), {
-        method: 'put',
-        body: {study_name: study_name}
-    }); };
-
-    var lock_study = function (study_id, lock) { return fetchJson(get_lock_url(study_id, lock), {
-        method: 'post'
-    }); };
-
-    var publish_study = function (study_id, publish, update_url) { return fetchJson(get_publish_url(study_id), {
-        method: 'post',
-        body: {publish: publish, update_url: update_url}
-    }); };
-
-    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
-
-    function copyFileComponent (args) { return m.component(copyFileComponent$1, args); }
-    var copyFileComponent$1 = {
-        controller: function controller(ref){
-            var new_study_id = ref.new_study_id;
-            var new_study_name = ref.new_study_name;
-            var study_id = ref.study_id;
-
-            var studies = m.prop([]);
-            var loaded = m.prop(false);
-            var error = m.prop(null);
-            load_studies()
-                .then(function (response) { return studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())); })
-                .catch(error)
-                .then(loaded.bind(null, true))
-                .then(m.redraw);
-            return {studies: studies, study_id: study_id, new_study_id: new_study_id, new_study_name: new_study_name, loaded: loaded, error: error};
-        },
-        view: function (ref) {
-            var studies = ref.studies;
-            var study_id = ref.study_id;
-            var new_study_id = ref.new_study_id;
-            var new_study_name = ref.new_study_name;
-            var loaded = ref.loaded;
-            var error = ref.error;
-
-            return m('div', [
-            loaded() ? '' : m('.loader'),
-            error() ? m('.alert.alert-warning', error().message): '',
-
-            loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
-
-            m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
-                m('option',{value:'', disabled: true}, 'Select Study'),
-                studies()
-                    .filter(function (study) { return !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
-                    .map(function (study) { return m('option',{value:study.id, selected: new_study_id() === study.id}, study.name); })
-            ])
-        ]);
-    }
-    };
-
-    function update_study_details(event, new_study_id, new_study_name){
-        new_study_id(event.target.value);
-        new_study_name(event.target[event.target.selectedIndex].text);
-    }
-
-
-    function sort_studies_by_name2(study1, study2){
-        return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
-    }
-
-    var template_filter = function () { return function (study) {
-        return study.study_type === 'regular' && !study.is_template;
-    }; };
-
-    var uploadFiles = function (path,study) { return function (fd, files) {
-        // validation (make sure files do not already exist)
-        var filePaths = files.map(function (file) { return path === '/' ? file : path + '/' + file; });
-        var exist = study.files().filter(function (file) { return filePaths.includes(file.path); }).map(function (f) { return f.path; });
-
-        if (!exist.length) return upload({force:false});
-        else return messages.confirm({
-            header: 'Upload Files', 
-            content: ("The file" + (exist.length > 1 ? 's' : '') + " \"" + (exist.join(', ')) + "\" already exists, do you want to overwrite " + (exist.length > 1 ? 'them' : 'it') + "?"),
-            okText: 'Overwrite'
-        })
-            .then(function (response) { return response && upload({force:true}); });
-
-        function upload(ref) {
-            if ( ref === void 0 ) ref = {force:false};
-            var force = ref.force;
-
-            return study.uploadFiles({path: path, fd: fd, force: force})
-                .catch(function (response) { return messages.alert({
-                    header: 'Upload File',
-                    content: m('p.alert.alert-danger', response.message)
-                }); })
-                .then(m.redraw);
-        }
-    }; };
-
-    var moveFile = function (file, study, notifications) { return function () {
-        var newPath = m.prop(file.basePath);
-        messages.confirm({
-            header: 'Move File',
-            content: moveFileComponent({newPath: newPath, file: file, study: study})
-        })
-        .then(function (response) {
-            var targetPath = newPath().replace(/\/$/, '') + '/' + file.name;
-
-            if (response && newPath() !== file.basePath)
-                return moveAction(targetPath, file, study)
-                .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully moved to '" + (newPath()) + "'")); });
-        });
-    }; };
-
-    var duplicateFile = function (file, study) { return function () {
-        var newPath = m.prop(file.path);
-        return messages.prompt({
-            header: 'Duplicate File',
-            postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
-            prop: newPath
-        })
-            .then(function (response) {
-                if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
-            });
-    }; };
-
-    var copyFile = function (file, study, notifications) { return function () {
-        var filePath = m.prop(file.basePath);
-        var study_id = m.prop(study.id);
-        var new_study_id = m.prop('');
-        var new_study_name = m.prop('');
-
-        messages.confirm({
-            header: 'Copy File',
-            content: copyFileComponent({new_study_id: new_study_id, new_study_name: new_study_name, study_id: study_id})
-        })
-            .then(function (response) {
-                if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
-            })
-            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
-    }; };
-
-    var renameFile = function (file, study, notifications) { return function () {
-        var newPath = m.prop(file.path);
-        return messages.prompt({
-            header: 'Rename File',
-            postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
-            prop: newPath
-        })
-        .then(function (response) {
-            if (response && newPath() !== file.name)
-                return moveAction(newPath(), file, study)
-                    .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully renamed to '" + (newPath()) + "'")); })
-                    .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(newPath()))))): ''; });
-        })
-
-    }; };
-
-
-    var update_experiment = function (file, study, notifications, update) { return function () {
-        var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
-        var error = m.prop('');
-
-        var ask = function () { return messages.confirm({
-            header:'New Name',
-            content: {
-                view: function view(){
-                    return m('div', [
-                        m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
-                        !error() ? '' : m('p.alert.alert-danger', error())
-                    ]);
-                }
-            }
-        }).then(function (response) { return response && update_exp(); }); };
-
-        var update_exp = function () {
-            if (!descriptive_id()) {
-                error('Error: missing descriptive id');
-                return ask();
-            }
-            if(update)
-                return study.update_experiment(file, descriptive_id())
-                    .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
-                    .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
-                    .catch(function (e) {
-                        error(e.message);
-                        return ask();
-                    });
-            return study.make_experiment(file, descriptive_id())
-                .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
-                .then(function (){ return m.redraw(); })
-                .catch(function (e) {
-                    error(e.message);
-                    ask();
-                });
-
-        };
-        ask();
-    }; };
-
-    var delete_experiment = function (file, study, notifications) { return function () {
-        messages.confirm({
-            header: 'Remove Experiment',
-            content: 'Are you sure you want to remove this experiment? This is a permanent change.'
-        })
-            .then(function (response) {
-                if (response) study.delete_experiment(file);})
-            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully deleted")); })
-
-            .then(function (){delete file.exp_data; m.redraw();});
-
-    }; };
-
-    function moveAction(newPath, file, study){
-        var isFocused = file.id === m.route.param('fileId');
-
-        var def = study
-            .move(newPath, file) // the actual movement
-            .then(redirect)
-            .catch(function (response) { return messages.alert({
-                header: 'Move/Rename File',
-                content: m('p.alert.alert-danger', response.message)
-            }); })
-            .then(m.redraw); // redraw after server response
-
-        m.redraw();
-        return def;
-
-        function redirect(response){
-            // redirect only if the file is chosen, otherwise we can stay right here...
-            if (isFocused) m.route(("/editor/" + (study.id) + "/file/" + (encodeURI(file.id))));
-            return response;
-        }
-    }
-
-    function copyAction(path, file, study_id, new_study_id){
-        var def = file
-            .copy(path, study_id, new_study_id) // the actual movement
-            .catch(function (response) { return messages.alert({
-
-                header: 'Copy File',
-                content: m('p.alert.alert-danger', response.message)
-            }); })
-            .then(m.redraw); // redraw after server response
-
-        return def;
-    }
-
-    var playground;
-    var play$2 = function (file,study) { return function () {
-        var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
-        var open = openNew;
-        if (isSaved) open();
-        else messages.confirm({
-            header: 'Play task',
-            content: 'You have unsaved files, the player will use the saved version, are you sure you want to proceed?'
-        }).then(function (response) { return response && open(); });
-
-        function openNew(){
-            if (playground && !playground.closed) playground.close();
-            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
-
-            playground = window.open(url, 'Playground');
-            playground.onload = function(){
-                playground.addEventListener('unload', function() {
-                    window.focus();
-                });
-                playground.focus();
-            };
-        }
-    }; };
-
-    var save = function (file) { return function () {
-        file.save()
-            .then(m.redraw)
-            .catch(function (err) { return messages.alert({
-                header: 'Error Saving:',
-                content: err.message
-            }); });
-    }; };
-
-
-    // add trailing slash if needed, and then remove proceeding slash
-    // return prop
-    var pathProp = function (path) { return m.prop(path.replace(/\/?$/, '/').replace(/^\//, '')); };
-
-    var  createFile = function (study, name, content) {
-        study.createFile({name:name(), content:content()})
-            .then(function (response) {
-                m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(response.id))));
-                return response;
-            })
-            .catch(function (err) { return messages.alert({
-                header: 'Failed to create file:',
-                content: err.message
-            }); });
-    };
-
-
-    var  duplicateAction = function (study, file, new_path) {
-        study.duplicateFile({study: study, id:file.id, new_path:new_path(), isDir:file.isDir})
-            .then(function () {
-                if (!file.isDir)
-                    m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(new_path())))));
-                else
-                    m.redraw();
-            })
-            .catch(function (err) { return messages.alert({
-                header: 'Failed to create file:',
-                content: err.message
-            }); });
-    };
-
-    var createDir = function (study, path) {
-        if ( path === void 0 ) path='';
-
-        return function () {
-        var name = pathProp(path);
-
-        messages.prompt({
-            header: 'Create Directory',
-            content: 'Please insert directory name',
-            prop: name
-        })
-            .then(function (response) {
-                if (response) return study.createFile({name:name(), isDir:true});
-            })
-            .then(m.redraw)
-            .catch(function (err) { return messages.alert({
-                header: 'Failed to create directory:',
-                content: err.message
-            }); });
-    };
-    };
-
-    var createEmpty = function (study, path) {
-        if ( path === void 0 ) path = '';
-
-        return function () {
-        var name = pathProp(path);
-        var content = function (){ return ''; };
-
-        messages.prompt({
-            header: 'Create file',
-            content: 'Please insert the file name:',
-            prop: name
-        }).then(function (response) {
-            if (response) return createFile(study, name,content);
-        });
-    };
-    };
-
-    var deleteFiles = function (study) { return function () {
-        var chosenFiles = study.getChosenFiles();
-        var isFocused = chosenFiles.some(function (file) { return file.id === m.route.param('fileId'); });
-
-        if (!chosenFiles.length) {
-            messages.alert({
-                header:'Remove Files',
-                content: 'There are no files selected'
-            });
-            return;
-        }
-
-        messages.confirm({
-            header: 'Remove Files',
-            content: 'Are you sure you want to remove all checked files? This is a permanent change.'
-        })
-            .then(function (response) {
-                if (response) doDelete();
-            });
-
-        function doDelete(){
-            study.delFiles(chosenFiles)
-                .then(redirect)
-                .catch(function (err) { return messages.alert({
-                    header: 'Failed to delete files:',
-                    content: err.message
-                }); })
-                .then(m.redraw);
-        }
-
-        function redirect(response){
-            // redirect only if the file is chosen, otherwise we can stay right here...
-            if (isFocused) m.route(("/editor/" + (study.id))); 
-            return response;
-        }
-    }; };
-
-    var downloadChosenFiles = function (study) { return function () {
-        var chosenFiles = study.getChosenFiles().map(function (f){ return f.path; });
-        if (!chosenFiles.length) {
-            messages.alert({
-                header:'Download Files',
-                content: 'There are no files selected'
-            });
-            return;
-        }
-
-        study.downloadFiles(chosenFiles)
-            .then(function (url) {
-
-                var a = document.createElement('a');
-                a.href=url;
-
-                console.log(a.href); return downloadLink(url, study.name);})
-            .catch(function (err) { return messages.alert({
-                header: 'Failed to download files:',
-                content: err.message
-            }); });
-    }; };
-
-    var downloadFile$2 = function (study, file) { return function () {
-        if (!file.isDir) return downloadLink(file.url, file.name);
-
-        study.downloadFiles([file.path])
-            .then(function (url) { return downloadLink(url, study.name); })
-            .catch(function (err) { return messages.alert({
-                header: 'Failed to download files:',
-                content: err.message
-            }); });
-    }; };
-
-    var resetFile = function (file) { return function () { return file.content(file.sourceContent()); }; };
-
-    var ace = function (args) { return m.component(aceComponent, args); };
-
-    var noop$2 = function(){};
-
-    var aceComponent = {
-        controller: function(){
-            var editorCache = m.prop();
-            return {editorCache: editorCache, onunload: onunload};
-
-            function onunload(){
-                if (editorCache()){
-                    editorCache().destroy();
-                }
-            }
-        },
-        view: function editorView(ctrl, args){
-            return m('.editor', {id:'text-editor', config: aceComponent.config(ctrl, args)});
-        },
-
-        config: function(ref,ref$1){
-            var editorCache = ref.editorCache;
-            var content = ref$1.content;
-            var observer = ref$1.observer;
-            var settings = ref$1.settings; if ( settings === void 0 ) settings = {};
-
-            return function(element, isInitialized, ctx){
-                var editor = editorCache();
-                var mode = settings.mode || 'javascript';
-                if (editor) editor.setReadOnly(!!settings.isReadonly);
-
-                // paster with padding
-                var paste = function (text) {
-                    if (!editor) return false;
-                    var pos = editor.getSelectionRange().start; 
-                    var line = editor.getSession().getLine(pos.row);
-                    var padding = line.match(/^\s*/);
-                    // replace all new lines with padding
-                    if (padding) text = text.replace(/(?:\r\n|\r|\n)/g, '\n' + padding[0]);
-                    
-                    editor.insert(text);
-                    editor.focus();
-                };
-
-                if (!isInitialized){
-                    fullHeight(element, isInitialized, ctx);
-
-                    require(['ace/ace'], function(ace){
-                        var undoManager = settings.undoManager || (function (u) { return u; });
-                        var position = settings.position || (function (u) { return u; });
-                        ace.config.set('packaged', true);
-                        ace.config.set('basePath', require.toUrl('ace'));
-
-                        editor = ace.edit(element);
-                        editorCache(editor);
-
-                        var session = editor.getSession();
-                        var commands = editor.commands;
-
-                        editor.setReadOnly(!!settings.isReadonly);
-                        editor.setTheme('ace/theme/cobalt');
-                        session.setMode('ace/mode/' + mode);
-                        if (mode !== 'javascript') session.setUseWorker(false);
-                        editor.setHighlightActiveLine(true);
-                        editor.setShowPrintMargin(false);
-                        editor.setFontSize('18px');
-                        editor.$blockScrolling = Infinity; // scroll to top
-
-                        // set jshintOptions
-                        session.on('changeMode', function(e, session){
-                            if (session.getMode().$id === 'ace/mode/javascript' && !!session.$worker && settings.jshintOptions) {
-                                session.$worker.send('setOptions', [settings.jshintOptions]);
-                            }
-                        });
-
-                        session.on('change', function(){
-                            content(editor.getValue());
-                            m.redraw();
-                        });
-
-                        commands.addCommand({
-                            name: 'save',
-                            bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
-                            exec: settings.onSave || noop$2
-                        });
-                        
-                        if(observer) observer.on('paste',paste );
-                        if(observer) observer.on('settings',function () { return editor.execCommand('showSettingsMenu'); });
-                        
-                        setContent();
-
-                        // return to the last position when reinitializing an editor
-                        if (position()) {
-                            var ref = position();
-                            var scroll = ref.scroll;
-                            var row = ref.row;
-                            var column = ref.column;
-                            editor.session.setScrollTop(scroll);
-                            editor.moveCursorTo(row, column);
-                            editor.clearSelection();
-                        }
-
-                        // reset undo manager so that ctrl+z doesn't erase file
-                        // save it so that it doesn't get lost when users navigate away
-                        session.setUndoManager(undoManager() || undoManager(new ace.UndoManager())); 
-                        editor.focus();
-                        editor.on('destroy', function () {
-                            position(Object.assign({scroll: editor.session.getScrollTop()},editor.getCursorPosition()));
-                            if(observer) observer.off(paste );
-                        });
-                    });
-                }
-                
-                // each redraw set content from model (the function makes sure that this is not done when not needed...)
-                setContent();
-
-                function setContent(){
-                    var editor = editorCache();
-                    if (!editor) return;
-                    
-                    // this should trigger only drastic changes such as the first time the editor is set
-                    if (editor.getValue() !== content()){
-                        editor.setValue(content());
-                        editor.moveCursorTo(0,0);
-                        editor.focus();
-                    }
-                }
-            };
-        }
-    };
-
-    function observer(){
-        var channels = {};
-        return {
-            on: function on(channel,cb){
-                channels[channel] || (channels[channel] = []);
-                channels[channel].push(cb);
-            },
-            off: function off(cb){
-                for (var channel in channels) {
-                    var index = channels[channel].indexOf(cb);
-                    if (index > -1) channels[channel].splice(index, 1);
-                }
-            },
-            trigger: function trigger(channel){
-                var args = [], len = arguments.length - 1;
-                while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
-
-                if (!channels[channel]) return;
-                channels[channel].forEach(function (cb) { return cb.apply(null, args); });
-            }
-        };
-    }
-
     var syntax = function (args) { return m.component(syntaxComponent, args); };
 
     /**
@@ -16945,6 +16908,7 @@
         var setMode = function (value) { return function () { return mode(value); }; };
         var modeClass = function (value) { return mode() === value ? 'active' : ''; };
         var isJs = file.type === 'js';
+        var isMd = file.type === 'md';
         var hasChanged = file.hasChanged();
         var isExpt = /\.expt\.xml$/.test(file.path);
         var isHtml = ['html', 'htm', 'jst', 'ejs'].includes(file.type);
@@ -16989,6 +16953,16 @@
                             : m('span.label.label-danger', file.syntaxData.errors.length)
                     )
                 ])
+            ]),
+            !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+                m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
+                    m('strong', study.isReadonly ? 'View' : 'Edit')
+                ]),
+            ]),
+            !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+                m('a.btn.btn-secondary', {onclick: setMode('view'), class: modeClass('view')},[
+                    m('strong', 'View' )
+                ]),
             ]),
 
             /**
@@ -17063,9 +17037,9 @@
         ]);
     };
 
-    var textEditor = function (args) { return m.component(textEditorComponent$1, args); };
+    var textEditor = function (args) { return m.component(textEditorComponent, args); };
 
-    var textEditorComponent$1 = {
+    var textEditorComponent = {
         controller: function(ref){
             var file = ref.file;
 
@@ -17073,8 +17047,8 @@
             file.loaded || file.get()
                 .catch(err)
                 .then(m.redraw);
-
-            var ctrl = {mode:m.prop('edit'), observer: observer(), err: err};
+            var isMd = file.type === 'md';
+            var ctrl = {mode:m.prop(isMd ? 'view' :'edit'), observer: observer(), err: err};
 
             return ctrl;
         },
@@ -17121,6 +17095,10 @@
                 }
             });
             case 'validator': return validate$1({file: file});
+            case 'view': return m('div.blockquote.md', [
+                m.trust(marked_1(file.content()))
+            ]);
+
             case 'syntax': return syntax({file: file});
         }
     };
@@ -17141,7 +17119,8 @@
         cs: 'cs',
         h: 'txt',
         py: 'py',
-        xml: 'xml'
+        xml: 'xml',
+        md: 'md'
     };
 
     var editors = {
@@ -17161,6 +17140,7 @@
         h: textEditor,
         py: textEditor,
         xml: textEditor,
+        md: textEditor,
 
         jpg: imgEditor,
         jpeg: imgEditor,
@@ -17168,9 +17148,8 @@
         png: imgEditor,
         gif: imgEditor,
 
-        pdf: pdfEditor,
+        pdf: pdfEditor
 
-        md: mdEditor
     };
 
     var fileEditorComponent = {

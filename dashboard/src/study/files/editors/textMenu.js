@@ -11,6 +11,7 @@ const textMenuView = ({mode, file, study, observer}) => {
     const setMode = value => () => mode(value);
     const modeClass = value => mode() === value ? 'active' : '';
     const isJs = file.type === 'js';
+    const isMd = file.type === 'md';
     const hasChanged = file.hasChanged();
     const isExpt = /\.expt\.xml$/.test(file.path);
     const isHtml = ['html', 'htm', 'jst', 'ejs'].includes(file.type);
@@ -55,6 +56,16 @@ const textMenuView = ({mode, file, study, observer}) => {
                         : m('span.label.label-danger', file.syntaxData.errors.length)
                 )
             ])
+        ]),
+        !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+            m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
+                m('strong', study.isReadonly ? 'View' : 'Edit')
+            ]),
+        ]),
+        !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+            m('a.btn.btn-secondary', {onclick: setMode('view'), class: modeClass('view')},[
+                m('strong', 'View' )
+            ]),
         ]),
 
         /**

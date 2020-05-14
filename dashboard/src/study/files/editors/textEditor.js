@@ -1,6 +1,7 @@
 import {save} from '../sidebar/fileActions';
 import ace from './ace/aceComponent';
 import observerFactory from 'utils/observer';
+import marked from 'marked';
 
 import jshintOptions from './jshintOptions';
 import syntaxComponent from './ace/syntaxComponent';
@@ -18,8 +19,8 @@ const textEditorComponent = {
         file.loaded || file.get()
             .catch(err)
             .then(m.redraw);
-
-        const ctrl = {mode:m.prop('edit'), observer: observerFactory(), err};
+        const isMd = file.type === 'md';
+        const ctrl = {mode:m.prop(isMd ? 'view' :'edit'), observer: observerFactory(), err};
 
         return ctrl;
     },
@@ -57,6 +58,10 @@ const textContent = (ctrl, {file, study, observer}) => {
             }
         });
         case 'validator': return validatorComponent({file});
+        case 'view': return m('div.blockquote.md', [
+            m.trust(marked(file.content()))
+        ]);
+
         case 'syntax': return syntaxComponent({file});
     }
 };
@@ -77,5 +82,6 @@ let modeMap = {
     cs: 'cs',
     h: 'txt',
     py: 'py',
-    xml: 'xml'
+    xml: 'xml',
+    md: 'md'
 };
