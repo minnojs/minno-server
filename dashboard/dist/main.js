@@ -18128,8 +18128,8 @@
                     m('.col-sm-5', [
                         m('.input-group', [m('strong', 'Version id'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
-                                ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                                ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
+                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ]),
