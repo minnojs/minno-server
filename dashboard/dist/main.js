@@ -18282,7 +18282,8 @@
             })
             .then(function (){
                 ctrl.all_versions(ctrl.versions.map(function (version){ return version.id; }));
-                ctrl.version_id(ctrl.all_versions());
+
+                ctrl.version_id(ctrl.all_versions().slice(-1)[0]);
             })
             .catch(ctrl.error)
             .then(m.redraw);

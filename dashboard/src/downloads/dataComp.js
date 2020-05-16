@@ -209,7 +209,8 @@ function load_exps(ctrl){
         })
         .then(()=> {
             ctrl.all_versions(ctrl.versions.map(version=>version.id));
-            ctrl.version_id(ctrl.all_versions());
+
+            ctrl.version_id(ctrl.all_versions().slice(-1)[0]);
         })
         .catch(ctrl.error)
         .then(m.redraw);
