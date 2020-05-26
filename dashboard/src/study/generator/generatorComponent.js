@@ -26,7 +26,7 @@ let generatorComponent = {
             ?
             m('.loader')
             :
-            m('.container.sharing-page', [
+            m('.generetor', [
                 responses_view({possible_responses}),
                 m('hr'),
                 stimuli_view({possible_stimuli, possible_conditions}),

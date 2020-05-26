@@ -29,7 +29,8 @@ let stimuliSetsGeneratorComponent = {
                                      default_times: stimulus.default_times,
                                      onset: stimulus.onset,
                                      offset: stimulus.offset,
-                                     response:!!stimulus.response,
+                                     relative_to: stimulus.relative_to,
+                                     response:stimulus.response,
                                      response_key:'',
                                      css2use,
                                      css_data});
@@ -100,7 +101,7 @@ let stimuliSetsGeneratorComponent = {
                                                 css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
                                             ]))
                                     ),
-                                    m('.col-sm-2', !stimulus.response ? '-' :
+                                    m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
                                             ctrl.possible_responses().map((response, key_id)=>
                                                 m('row',[
                                                     m('.col-sm-2', response.key.length !==1 ? '' :

@@ -112,7 +112,8 @@ const mainComponent = {
                             m('option', {value:'owner'}, 'Show only studies I created'),
                             m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                             m('option', {value:'public'}, 'Show public studies'),
-                            m('option', {value:'bank'}, 'Show study bank studies')
+                            m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
+                            m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
                         ])
                     ])
                 ])
@@ -206,9 +207,11 @@ const permissionFilter = permission => study => {
     if(permission === 'public') return study.is_public && !study.is_bank;
     if(permission === 'collaboration') return study.permission !== 'owner' && !study.is_public;
     if(permission === 'template') return study.is_template;
-    if(permission === 'bank') return study.is_bank;
+    if(permission === 'bank-iat') return study.is_bank && study.bank_type==='iat';
+    if(permission === 'bank-cognitive') return study.is_bank && study.bank_type==='cognitive';
+
     return study.permission === permission;
-};
+}; 
 
 let tagFilter = tags => study => {
     if (tags.length==0)

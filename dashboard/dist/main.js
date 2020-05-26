@@ -18193,8 +18193,7 @@
 
         if(!Array.isArray(ctrl.version_id()))
             ctrl.version_id(ctrl.version_id().split(','));
-
-
+        
         ctrl.downloaded(false);
 
 
@@ -19868,7 +19867,8 @@
                                 m('option', {value:'owner'}, 'Show only studies I created'),
                                 m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                                 m('option', {value:'public'}, 'Show public studies'),
-                                m('option', {value:'bank'}, 'Show study bank studies')
+                                m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
+                                m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
                             ])
                         ])
                     ])
@@ -19962,9 +19962,11 @@
         if(permission === 'public') return study.is_public && !study.is_bank;
         if(permission === 'collaboration') return study.permission !== 'owner' && !study.is_public;
         if(permission === 'template') return study.is_template;
-        if(permission === 'bank') return study.is_bank;
+        if(permission === 'bank-iat') return study.is_bank && study.bank_type==='iat';
+        if(permission === 'bank-cognitive') return study.is_bank && study.bank_type==='cognitive';
+
         return study.permission === permission;
-    }; };
+    }; }; 
 
     var tagFilter = function (tags) { return function (study) {
         if (tags.length==0)
@@ -22081,9 +22083,10 @@
                     default_times: stimulus.default_times,
                     onset: stimulus.onset,
                     offset: stimulus.offset,
-                    response:!!stimulus.response,
+                    response:stimulus.response,
                     response_key:'',
                     css_data:{},
+                    relative_to: 'trial_onset',
                     css2use:[]};
                 ctrl.possible_conditions().forEach(function (condition){
                     condition.stimuli_sets.forEach(function (set){ return set.push(new_stimulus); });
@@ -22120,9 +22123,10 @@
                 var possible_csss = {};
                 ctrl.default_css.map(function (css){ return possible_csss[css]= false; });
                 var new_stimulus = {stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
-                                      response:false,
+                                      response:'without_response',
                                       media_type:'text',
                                       css:possible_csss,
+                                      relative_to : 'trial_onset',
                                       default_times:true,
                                       onset:'0',
                                       offset:'0'};
@@ -22161,47 +22165,56 @@
         view: function view(ctrl){
             return m('.row', [
                 m('h4.space', 'Trial properties'),
-                m('.row',[
-                    m('.col-sm-2',
+                m('.row.col-sm-12',[
+                    m('.col-sm-1',
                         m('strong', 'Stimulus name')
                     ),
                     m('.col-sm-2',
                         m('strong', 'Response')
                     ),
-                    m('.col-sm-3',
+                    m('.col-sm-1',
                         m('strong', 'Visual properties')
                     ),
-                    m('.col-sm-2',
+                    m('.col-sm-1',
                         m('strong', 'Media type')
                     ),
-                    m('.col-sm-2',
+                    m('.col-sm-1',
                         m('strong', 'Times')
+                    ),
+                    m('.col-sm-1',
+                        m('strong', 'Relative to')
                     )
                 ]),
 
                 ctrl.possible_stimuli().map(function(stimulus, id) {
                     return m('row.col-sm-12',
-                        [m('hr'), m('.col-sm-2',
+                        [m('.col-sm-1',
                             m('label.input-group.space', [
                                 m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
                             ])),
                             m('.col-sm-2',
                                 m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', true); },
-                                        checked: stimulus.response,
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
+                                        checked: stimulus.response === 'without_response',
+                                    }), m('span.c-indicator'), ' Without response'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
+                                        checked: stimulus.response === 'with_response',
                                     }), m('span.c-indicator'), ' With response'
                                 ])),
                                 m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', false); },
-                                        checked: !stimulus.response,
-                                    }), m('span.c-indicator'), ' Without response'
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
+                                        checked: stimulus.response === 'with_stop_response',
+                                    }), m('span.c-indicator'), ' With stop response'
                                 ]))
                             ),
-                            m('.col-sm-3',
-                                m('row',[
-                                    ctrl.default_css.map(function (css){ return m('.col-sm-3',
+                            m('.col-sm-1',
+                                m('.row',[
+                                    ctrl.default_css.map(function (css){ return m('.col',
                                                 m('label.c-input.checkbox',  [ m('input[type=checkbox]',{
                                                         onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
                                                         checked: stimulus.css[css],
@@ -22210,7 +22223,7 @@
                                         ); }
                                     )
                                 ])),
-                            m('.col-sm-2',
+                            m('.col-sm-1',
                                 m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
                                         onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'images'); },
@@ -22224,7 +22237,7 @@
                                     }), m('span.c-indicator'), ' Text'
                                 ]))
                             ),
-                            m('.col-sm-2',[
+                            m('.col-sm-1',[
                                     m('div', m('label.c-input.c-radio', [
                                         m('input[type=radio]', {
                                             onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
@@ -22246,10 +22259,25 @@
                                 m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
                                     m('label.input-group', [
                                         'Offset',
-                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
                                     ])
                                 )
                             ]),
+                            m('.col-sm-2',
+                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
+                                        checked: stimulus.relative_to === 'trial_onset',
+                                    }), m('span.c-indicator'), " Trial onset"
+                                ])),
+                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
+                                        checked: stimulus.relative_to === 'last_offset',
+                                    }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
+                                ]))
+                            ),
+
                             m('.col-sm-1',
                                 ctrl.possible_stimuli().length===1 ? '' :
                                 m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', { onclick:function(){ctrl.delete_stimulus(id);}}, [
@@ -22304,7 +22332,8 @@
                                          default_times: stimulus.default_times,
                                          onset: stimulus.onset,
                                          offset: stimulus.offset,
-                                         response:!!stimulus.response,
+                                         relative_to: stimulus.relative_to,
+                                         response:stimulus.response,
                                          response_key:'',
                                          css2use: css2use,
                                          css_data: css_data});
@@ -22375,7 +22404,7 @@
                                                     css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
                                                 ]); })
                                         ),
-                                        m('.col-sm-2', !stimulus.response ? '-' :
+                                        m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
                                                 ctrl.possible_responses().map(function (response, key_id){ return m('row',[
                                                         m('.col-sm-2', response.key.length !==1 ? '' :
                                                             m('div', m('label.c-input.c-radio', [
@@ -22422,15 +22451,24 @@
                 num_of_conditions:0,
                 do_add_condition: do_add_condition,
                 update_condition_name: update_condition_name,
+                update_repetitions: update_repetitions
             };
 
             function do_add_condition() {
-                possible_conditions().push({condition_name:("condition_" + (++ctrl.num_of_conditions)), stimuli_sets:[]});
+                possible_conditions().push({repetitions:['0', '0'], condition_name:("condition_" + (++ctrl.num_of_conditions)), stimuli_sets:[]});
+            }
+
+            function update_repetitions(id, block, value){
+                possible_conditions()[id].repetitions[block] = value;
             }
 
             function update_condition_name(id, name){
                 possible_conditions()[id].condition_name = name;
             }
+
+            if(possible_conditions.length===0)
+                ctrl.do_add_condition();
+
             return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses};
         },
         view: function view(ref){
@@ -22441,12 +22479,34 @@
 
             return m('.row', [
                 m('h4.space', 'Conditions'),
+                m('.row.col-sm-12',[
+                    m('.col-sm-2',
+                        m('strong', 'Condition name')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Trials in practice')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Trials in experiment')
+                    ),
+                ]),
                 possible_conditions().map(function(condition, condition_id) {
-                    return  [m('row.col-sm-13',
-                        m('.col-sm-3',
+                    return  [m('row.col-sm-12',
+                        m('.col-sm-2',
                             m('label.input-group.space', [
                                 m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
-                            ]))
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
+                            ])
+                        )
                     ),
                         stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses})
                 ]}),
@@ -22492,7 +22552,7 @@
                 ?
                 m('.loader')
                 :
-                m('.container.sharing-page', [
+                m('.generetor', [
                     responses_view({possible_responses: possible_responses}),
                     m('hr'),
                     stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),

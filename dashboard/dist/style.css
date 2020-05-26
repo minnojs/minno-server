@@ -7,8 +7,11 @@ h1 small, h2 small, h3 small, h4 small, h5 small {
   color: #818a91;
   font-size: 70%; }
 
-.deploy, .sharing, .downloadAccess, .StudyChangeRequest, .StudyRemoval, .downloads, .statistics, .pool, .tags-page, .translate-page, .sharing-page {
+.deploy, .sharing, .generetor, .downloadAccess, .StudyChangeRequest, .StudyRemoval, .downloads, .statistics, .pool, .tags-page, .translate-page, .sharing-page {
   padding-top: 1em; }
+
+.generetor {
+  padding-left: 1em; }
 
 .translate-page {
   overflow: auto;

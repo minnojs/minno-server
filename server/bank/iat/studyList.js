@@ -1,6 +1,6 @@
 /* eslint-env node */
 module.exports =  [
-    {name:'race.demo', description: 'In a randomized order, participants complete a demographics questionnaire, a Race IAT (Black/White, Good/Bad) and a measure of explicit racial attitudes. Participants not on touch screen also complete the Modern Racism and Right-Wing Authoritarianism scales.', study_type: 'minno02'},
+    {name:'irace.demo', description: 'In a randomized order, participants complete a demographics questionnaire, a Race IAT (Black/White, Good/Bad) and a measure of explicit racial attitudes. Participants not on touch screen also complete the Modern Racism and Right-Wing Authoritarianism scales.', study_type: 'minno02'},
     {name:'sexuality.demo', description: 'In a randomized order, participants complete a Sexuality IAT (Gay people / Straight people, Good/Bad) and a measure of explicit sexuality attitudes', study_type: 'minno02'},
     {name:'age.demo', description: ' a randomized order, participants complete a Age IAT (Old people / Young people, Good/Bad) and a measure of explicit age attitudes', study_type: 'minno02'},
     {name:'weight.demo', description: 'In a randomized order, participants complete a Weight IAT (Fat people / Thin people, Good/Bad) and a measure of explicit weight attitudes', study_type: 'minno02'},

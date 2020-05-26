@@ -79,8 +79,10 @@ function get_studies(user_id) {
                 return studies
                 .find({ _id: { $in: study_ids } })
                 .toArray()
+                .then(studies => studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).deleted))
                 .then(studies => studies.map(study => composeStudy(study, {
                     is_bank: true,
+                    bank_type: study.bank_type,
                     permission: PERMISSION_READ_ONLY,
                     study_type:'regular',
                     base_url:study.folder_name,
@@ -256,7 +258,7 @@ function make_collaboration(user_id, code){
 
 function create_new_study({user_id, study_name, study_type = 'minnoj0.2', description = '', is_public = false}, additional_params) {
     const sanitize_study_name = sanitize(study_name);
-    if(study_name!==sanitize_study_name || study_name[0]=='.')
+    if(study_name!==sanitize_study_name || study_name[0]==='.')
         return Promise.reject({status:400, message: 'ERROR: illegal characters in study name.  Also, study name cannot start with a period.'});
     return ensure_study_not_exist(user_id, study_name)
         .then(() => user_info(user_id))
@@ -405,9 +407,12 @@ function ensure_study_not_exist(user_id, study_name) {
 }
 
 function insert_obj(user_id, study_props) {
-    if (!study_props.name) return Promise.reject({status:500, message: 'Error: creating a new study requires the study name'});
-    if (['minno02', 'html'].indexOf(study_props.type) === -1) return Promise.reject({status:500, message: `Error: unknown study type ${study_props.type}`});
-    if (!study_props.folder_name) return Promise.reject({status:500, message: 'Error: creating a new study requires the study folder_name'});
+    if (!study_props.name)
+        return Promise.reject({status:500, message: 'Error: creating a new study requires the study name'});
+    if (['minno02', 'html'].indexOf(study_props.type) === -1)
+        return Promise.reject({status:500, message: `Error: unknown study type ${study_props.type}`});
+    if (!study_props.folder_name)
+        return Promise.reject({status:500, message: 'Error: creating a new study requires the study folder_name'});
 
     const dflt_study_props = {
         users: [{user_id: user_id, permission:PERMISSION_OWNER}],
@@ -431,7 +436,6 @@ function insert_obj(user_id, study_props) {
             study_obj._id = study_id;
             study_obj.folder_name = `${study_obj.folder_name}-${study_id}`;
             study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
-
             return studies.insertOne(study_obj);
         })
         .then(function(){
@@ -441,6 +445,7 @@ function insert_obj(user_id, study_props) {
             );
         })
         .then(function(){
+            console.log('bang!');
             const dir = path.join(config.user_folder, study_obj.folder_name);
             const study_id = study_obj._id;
             return {study_id, dir};

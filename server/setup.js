@@ -5,7 +5,7 @@ const fs            = require('fs-extra');
 const {insert_new_user, update_role} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
-const study_list = require('./bank/studyList');
+// const study_list = require('./bank/studyList');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url, {useNewUrlParser:true});
@@ -94,7 +94,6 @@ function create_users(){
 
 function create_bank_studies(){
     return connection.then(function(db){
-
         console.log('Updating bank studies:');
         return getBankStudies()
             .then(createBankStudies)
@@ -108,29 +107,62 @@ function create_bank_studies(){
             return users.findOne({user_name:'bank'})
             .then(user_result => {
                 const study_ids = user_result.studies.map(study => study.id);
+                console.log(study_ids[study_ids.length-1]);
                 return studies
                 .find({ _id: { $in: study_ids } })
                 .toArray()
-                .then(studies => [user_result, studies]);
+                .then(studies => [user_result, studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).deleted)]);
             });
         }
 
-        function createBankStudies([user_result, bank_studies]){
-            const study_list_names = study_list.map(study => study.name);
-            const bank_names = bank_studies.map(study => study.name);
-            const new_studies = study_list.filter(study => !bank_names.includes(study.name));
-            const del_studies = bank_studies.filter(study => !study_list_names.includes(study.name));
+        function createBankStudies4type(user_id, type, js_file, bank_studies){
+            const study_list = require(`./bank/${type}/${js_file}`);
 
-            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true}).catch(err=>console.log(err.message)));
-            const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
-            return Promise.all([].concat(new_promises, del_promises));
+            const study_list_names = study_list.map(study => study.name);
+            const bank_studies_of_type = bank_studies.filter(study=>study.bank_type ===type);
+            const bank_names = bank_studies_of_type.map(study => study.name);
+            const new_studies = study_list.filter(study => !bank_names.includes(study.name));
+            const del_studies = bank_studies_of_type.filter(study => !study_list_names.includes(study.name));
+
+            const new_promises = new_studies.map(log_name('Creating')).map(inject_id).map(study => create_new_study(study, {is_bank:true, is_public:true, bank_type:type}).catch(err=>console.log(err.message)));
+            const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_id, study._id));
+
+            return Promise.all([].concat(del_promises, new_promises));
 
             function inject_id(study){
                 study.study_name = study.name;
-                study.user_id = user_result._id;
-
+                study.user_id    = user_id;
                 return study;
             }
+        }
+
+        function log_name(str){
+            return function(study) {
+                console.log(`-- ${str}: "${study.name}"`);
+                return study;
+            };
+        }
+        function createBankStudies([user_result, bank_studies]){
+            return fs.readdir('server/bank')
+                .then(bank_types=>{
+                    const all_types = bank_studies.map(study=>study.bank_type);
+                    const types2remove =  all_types.filter(function(item, pos) {
+                        return all_types.indexOf(item) === pos;
+                    }).filter(type=>!bank_types.includes(type));
+
+                    const del_studies = bank_studies.filter(study => types2remove.includes(study.bank_type));
+                    const del_promises = del_studies.map(log_name('Deleting')).map(study => delete_study(user_result._id, study._id));
+                    return Promise.all(del_promises)
+                    .then(()=>{
+                        const p = bank_types.map(bank_type=> fs.readdir(`server/bank/${bank_type}`)
+                            .then(files => {
+                                const k = files.filter(el => /\.js$/.test(el)).map(js=>createBankStudies4type(user_result._id, bank_type, js, bank_studies));
+                                return Promise.all(k);
+                            })
+                        );
+                        return Promise.all(p);
+                    });
+                });
 
             function log_name(str){
                 return function(study) {
@@ -140,10 +172,10 @@ function create_bank_studies(){
             }
         }
 
-        function updateBankStudies([user_result, study_list]){
-            const promises = study_list.map(study => {
-                console.log(`-- copying "${path.join('./server/bank/',study.name)}" into "${path.join(config.user_folder, study.folder_name)}"`);
-                return fs.copy(path.join('./server/bank/',study.name), path.join(config.user_folder, study.folder_name));
+        function updateBankStudies([user_result, bank_studies]){
+            const promises = bank_studies.map(study => {
+                console.log(`-- copying "${path.join(`./server/bank/${study.bank_type}`,study.name)}" into "${path.join(config.user_folder, study.folder_name)}"`);
+                return fs.copy(path.join(`./server/bank/${study.bank_type}`, study.name), path.join(config.user_folder, study.folder_name));
             });
             return Promise.all(promises);
         }

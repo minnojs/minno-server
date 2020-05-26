@@ -125,8 +125,7 @@ function ask_get_data(ctrl){
 
     if(!Array.isArray(ctrl.version_id()))
         ctrl.version_id(ctrl.version_id().split(','));
-
-
+    
     ctrl.downloaded(false);
 
 
