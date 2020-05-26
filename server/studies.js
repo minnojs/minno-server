@@ -445,7 +445,6 @@ function insert_obj(user_id, study_props) {
             );
         })
         .then(function(){
-            console.log('bang!');
             const dir = path.join(config.user_folder, study_obj.folder_name);
             const study_id = study_obj._id;
             return {study_id, dir};

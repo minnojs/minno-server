@@ -107,7 +107,6 @@ function create_bank_studies(){
             return users.findOne({user_name:'bank'})
             .then(user_result => {
                 const study_ids = user_result.studies.map(study => study.id);
-                console.log(study_ids[study_ids.length-1]);
                 return studies
                 .find({ _id: { $in: study_ids } })
                 .toArray()
