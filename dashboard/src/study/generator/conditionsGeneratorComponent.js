@@ -16,17 +16,20 @@ let conditionsGeneratorComponent = {
 
         function do_add_condition() {
             possible_conditions().push({repetitions:['0', '0'], condition_name:`condition_${++ctrl.num_of_conditions}`, stimuli_sets:[]});
+            possible_conditions(possible_conditions());
         }
 
         function update_repetitions(id, block, value){
             possible_conditions()[id].repetitions[block] = value;
+            possible_conditions(possible_conditions());
         }
 
         function update_condition_name(id, name){
             possible_conditions()[id].condition_name = name;
+            possible_conditions(possible_conditions());
         }
 
-        if(possible_conditions.length===0)
+        if(possible_conditions().length===0)
             ctrl.do_add_condition();
 
         return {ctrl, possible_conditions, possible_stimuli, possible_responses};

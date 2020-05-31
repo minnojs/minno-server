@@ -17,58 +17,18 @@ const {has_read_permission, has_write_permission, has_read_data_permission} = st
 const urljoin       = require('url-join');
 const url = require('url');
 const connection    = Promise.resolve(require('mongoose').connection);
+const {get_file_content}   = require('./files');
 
 
 const ejs = require('ejs');
 
 
+function get_properties(user_id, study_id) {
+    return get_file_content(user_id, study_id, 'properties.js');
+}
+
 
 function save_file(user_id, study_id, responses, stimuli, conditions_data) {
-    // const conditions2 = [
-    //     {'cong' : [
-    //             {'stimulus1': { media: '1', css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+', css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '2', correct:1, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '2', css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+', css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '4', correct:1, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '4', css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+', css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '8', correct:1, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //
-    //             {'stimulus1': { media: '1',  css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+', css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '2', correct:0, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '2', css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+', css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '4', correct:0, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '4', css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '8', correct:0, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //         ]},
-    //     {'incong' : [
-    //             {'stimulus1': { media: '2', css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '1', correct:0, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '4',  css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '2', correct:0, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '8',  css:{left: '100px', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '4', correct:0, css:{left: '', right:'100px', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //
-    //             {'stimulus1': { media: '2',  css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '1', correct:1, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '4',  css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '2', correct:1, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //             {'stimulus1': { media: '8',  css:{left: '', right:'100px', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus0': { media: '+',  css:{left: '', right:'', fontSize:'50px'}, times:{duration: 500, onset: 0}},
-    //                 'stimulus2': { media: '4', correct:1, css:{left: '100px', right:'', fontSize:'200px'}, times:{duration: 500, onset: 100}}},
-    //         ]},
-    // ];
-
     let conditions = [];
     conditions_data.forEach(condition=>{
         let stimuli_sets = [];
@@ -138,7 +98,7 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
 
     let sequence = [];
     let inputs = [];
-    responses.forEach((key, value)=>!value ? '' : inputs.push(`{type:'setInput', input:{handle:current.answers[${value}], on: 'keypressed', key: current.answers[${value}]}}`));
+    responses.forEach((key, value)=>!key ? '' : inputs.push(`{type:'setInput', input:{handle:current.answers[${value}], on: 'keypressed', key: current.answers[${value}]}}`));
     const inputs_str = inputs.join(', \n\t\t\t\t\t');
 
 
@@ -162,7 +122,7 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
                     {type:'showStim', handle: '${stimulus['stimulus_name']}'},
                     ${stimulus.response === 'without_response' ? '' :  "{type:'resetTimer'},"}
                     {type:'trigger',handle:'hide_${stimulus['stimulus_name']}', duration: '<%= trialData.times_${stimulus['stimulus_name']}.duration %>'}
-                    
+                   
                 ]
             },
             {
@@ -221,6 +181,9 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
                 contents = contents.replace('/*#*sequencer_practice*#*/', sequencer[0].join(', \n\t\t'));
                 contents = contents.replace('/*#*sequencer_exp*#*/', sequencer[1].join(', \n\t\t'));
 
+                const properties = {responses, stimuli, conditions_data};
+                fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.prop'), JSON.stringify(properties), 'utf8');
+
                 return fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.js'), contents, 'utf8')
                     .then(function(){
                         const file_url = path.join('..',config.user_folder,study_data.folder_name, 'exp.js');
@@ -233,4 +196,4 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
         });
 }
 
-module.exports = {save_file};
+module.exports = {get_properties, save_file};

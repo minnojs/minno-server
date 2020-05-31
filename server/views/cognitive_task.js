@@ -15,12 +15,10 @@ define(['pipAPI'], function(APIconstructor) {
         inst_start   : 'images/inst_start_'+version_id+'.jpg',
         inst_bye     : 'images/inst_bye.jpg',
 
-        fixation_duration : 1000,
-        stimulus_duration : 500,
-        response_duration : 1000,
-        feedback_duration : 500,
-        iti_duration      : 1500,
-
+        durations: {
+            feedback_duration: 500,
+            iti_duration: 1500
+        },
         score             : 0,
         minScore4exp      : 0
     });
@@ -140,30 +138,20 @@ define(['pipAPI'], function(APIconstructor) {
             {
                 conditions: [{type:'begin'}],
                 actions: [
-                    {type:'showStim', handle:'fixation'},
-                    {type:'custom', fn: function(a, b, trial){trial.data.stimuli_counter = 0;}},
-                    {type:'trigger', handle:'showTarget', duration:current.fixation_duration}
+                    {type:'trigger', handle:'show_stimuli'},
+                    {type:'custom', fn: function(a, b, trial){trial.data.stimuli_counter = 0;}}
                 ]
             },
-            {
-                conditions:[{type:'inputEquals',value:'showTarget'}],
-                actions: [
-                    {type:'hideStim', handle:'fixation'},
-                    {type:'resetTimer'},
-                    {type:'setInput', input:{handle:current.answers[0], on: 'keypressed', key: current.answers[0]}},
-                    {type:'setInput', input:{handle:current.answers[1],on: 'keypressed', key: current.answers[1]}},
-                    {type:'showStim', handle: 'target'},
-                    {type:'trigger',handle:'targetOut', duration:current.stimulus_duration}
-                ]
-            },
+
             /*#*sequence*#*/,
             {
                 conditions: [{type:'inputEquals', value:'targetOut'}],
                 actions: [
                     {type:'hideStim', handle:'target'},
-                    {type:'trigger', handle:'timeout', duration:current.response_duration}
+                    {type:'trigger', handle:'timeout'}
                 ]
             },
+
             {
                 conditions: [{type:'inputEqualsStim', property:'correct'}],
                 actions: [
@@ -171,36 +159,24 @@ define(['pipAPI'], function(APIconstructor) {
                     {type:'setTrialAttr', setter:{score:1}},
                     {type:'log'},
                     {type:'custom',fn: function(){global.current.score++;}},
+                    {type:'custom', fn: function(a, b, trial){trial.data.feedback = 'correct';}},
                     {type:'hideStim', handle:['All']},
                     {type:'trigger', handle:'ITI'}
                 ]
             },
+
             {
-                conditions: [{type:'inputEqualsStim', property:'correct'},
-                    {type:'currentEquals',property:'is_practice', value:true}],
-                actions: [
-                    {type:'showStim', handle:'correct'},
-                    {type:'trigger', handle:'clean',duration:current.feedback_duration}
-                ]
-            },
-            {
-                conditions: [{type:'inputEquals', value:current.answers},
-                    {type:'inputEqualsStim', property:'correct', negate:true}],
+                conditions: [
+                    {type:'inputEquals', value:current.answers},
+                    {type:'inputEqualsStim', property:'correct', negate:true}
+                ],
                 actions: [
                     {type:'removeInput', handle:['All']},
                     {type:'setTrialAttr', setter:{score:0}},
                     {type:'log'},
+                    {type:'custom', fn: function(a, b, trial){trial.data.feedback = 'error';}},
                     {type:'hideStim', handle:['All']},
                     {type:'trigger', handle:'ITI'}
-                ]
-            },
-            {
-                conditions: [{type:'inputEquals', value:current.answers},
-                    {type:'inputEqualsStim', property:'correct', negate:true},
-                    {type:'currentEquals',property:'is_practice', value:true}],
-                actions: [
-                    {type:'showStim', handle:'error'},
-                    {type:'trigger', handle:'clean',duration:current.feedback_duration}
                 ]
             },
             {
@@ -210,37 +186,67 @@ define(['pipAPI'], function(APIconstructor) {
                     {type:'removeInput', handle:['All']},
                     {type:'setTrialAttr', setter:{score:-1}},
                     {type:'log'},
-                    {type:'hideStim', handle:['All']},
+                    {type:'custom', fn: function(a, b, trial){trial.data.feedback = 'timeoutmessage';}},
                     {type:'trigger', handle:'ITI'}
                 ]
             },
             {
-                conditions: [{type:'inputEquals',value:'timeout'},
-                    {type:'currentEquals', property:'is_practice', value:true}],
-                actions: [
+                conditions: [
+                    {type:'inputEquals', value:'ITI'},
+                    {type:'trialEquals', property:'block', value:'practice'},
+                    {type:'trialEquals', property:'feedback', value:'correct'}
+                ],
+                actions:[
+                    {type:'showStim', handle:'correct'},
+                    {type:'trigger', handle:'end_practice',duration: '<%= current.durations.feedback_duration %>'}
+                ]
+            },
+            {
+                conditions: [
+                    {type:'inputEquals', value:'ITI'},
+                    {type:'trialEquals', property:'block', value:'practice'},
+                    {type:'trialEquals', property:'feedback', value:'error'}
+                ],
+                actions:[
+                    {type:'showStim', handle:'error'},
+                    {type:'trigger', handle:'end_practice',duration: '<%= current.durations.feedback_duration %>'}
+                ]
+            },
+            {
+                conditions: [
+                    {type:'inputEquals', value:'ITI'},
+                    {type:'trialEquals', property:'block', value:'practice'},
+                    {type:'trialEquals', property:'feedback', value:'timeoutmessage'}
+                ],
+                actions:[
                     {type:'showStim', handle:'timeoutmessage'},
-                    {type:'trigger', handle:'clean',duration:current.feedback_duration}
+                    {type:'trigger', handle:'end_practice',duration: '<%= current.durations.feedback_duration %>'}
                 ]
             },
             {
-                conditions: [{type:'inputEquals', value:'clean'}],
+                conditions: [
+                    {type:'inputEquals', value:'end_practice'}
+                ],
                 actions:[
-                    {type:'hideStim', handle:['All']}
+                    {type:'hideStim', handle:['All']},
+                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti_duration%>'}
                 ]
             },
-
             {
-                conditions: [{type:'inputEquals', value:'ITI'}],
+                conditions: [
+                    {type:'inputEquals', value:'ITI'},
+                    {type:'trialEquals', property:'block', value:'practice', negate:true}
+                ],
                 actions:[
-                    {type:'custom',fn: function(){global.current.trial_count++;}},
                     {type:'removeInput', handle:['All']},
-                    {type:'trigger', handle:'end',duration:'<%= current.is_practice ? current.feedback_duration+current.iti_duration : current.iti_duration %>'}
+                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti_duration%>'}
                 ]
             },
             {
-                conditions: [ {type:'inputEquals', value:'end'} ],
-                actions: [ {type:'endTrial' }]
+                conditions: [{type:'inputEquals', value:'end'}],
+                actions: [{type:'endTrial'}]
             }
+
         ],
         stimuli : [
             {inherit:'error'},

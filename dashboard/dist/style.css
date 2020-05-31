@@ -11,7 +11,9 @@ h1 small, h2 small, h3 small, h4 small, h5 small {
   padding-top: 1em; }
 
 .generetor {
-  padding-left: 1em; }
+  padding-left: 2em;
+  overflow: scroll;
+  max-height: 110%; }
 
 .translate-page {
   overflow: auto;

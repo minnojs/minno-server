@@ -11,7 +11,9 @@ let responsesGeneratorComponent = {
             delete_possible_response:delete_possible_response,
             focus_it
         };
-        possible_responses().push({key:''});
+        if(possible_responses().length===0 || possible_responses().filter(response=>!response.key).length===0) {
+            possible_responses().push({key: ''});
+        }
 
         function focus_it(element) {
              // setTimeout(() => element.focus());

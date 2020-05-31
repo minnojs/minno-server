@@ -3,6 +3,7 @@ import imgEditor from './editors/imgEditor';
 import pdfEditor from './editors/pdfEditor';
 import unknowEditor from './editors/unknownEditor';
 import textEditor from './editors/textEditor';
+import propEditor from './editors/propEditor';
 
 export default fileEditorComponent;
 
@@ -31,7 +32,9 @@ let editors = {
     png: imgEditor,
     gif: imgEditor,
 
-    pdf: pdfEditor
+    pdf: pdfEditor,
+
+    prop: propEditor
 
 };
 

@@ -20,7 +20,7 @@ let stimuliGeneratorComponent = {
             delete_stimulus_from_sets
         };
 
-        if(possible_stimuli.length===0)
+        if(possible_stimuli().length===0)
             ctrl.do_add_stimulus();
 
         function add_stimulus_to_sets(stimulus){
@@ -55,8 +55,11 @@ let stimuliGeneratorComponent = {
                 condition.stimuli_sets.forEach(set=>{
                     set.forEach(stimulus=>{
                         if(stimulus.stimulus_name === stimulus_obj.stimulus_name){
-                            if(add)
+                            if(add){
                                 stimulus.css2use.push(css);
+                                stimulus.css_data[css] = '';
+                                // console.log()
+                            }   
                             else
                                 stimulus.css2use.splice(stimulus.css2use.findIndex(obj=>obj===css), 1);
                         }

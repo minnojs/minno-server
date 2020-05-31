@@ -1,44 +1,46 @@
-import {save, get_properties} from './generatorModel';
-import responses_view from './responsesGeneratorComponent';
-import stimuli_view from './stimuliGeneratorComponent';
-import conditions_view from "./conditionsGeneratorComponent";
-import {get_collaborations} from "../sharing/sharingModel";
+import observerFactory from 'utils/observer';
+import {save} from "../../generator/generatorModel";
+import responses_view from "../../generator/responsesGeneratorComponent";
+import stimuli_view from "../../generator/stimuliGeneratorComponent";
+import conditions_view from "../../generator/conditionsGeneratorComponent";
 
-export default generatorComponent;
+export default propEditor;
 
+const propEditor = args => m.component(propEditorComponent, args);
 
-let generatorComponent = {
-    controller(){
+const propEditorComponent = {
+    controller: function({file}){
+        const err = m.prop();
         let possible_responses = m.prop([]);
         let possible_stimuli = m.prop([]);
         let possible_conditions = m.prop([]);
-        let loaded = m.prop(false);;
-        let erros = m.prop([]);
+        let loaded = m.prop(false);
+
+
         function load() {
-            get_properties(49)
-                .then((properties)=>
-                {
-                    const content = JSON.parse(properties.content);
+            file.loaded || file.get()
+                .catch(err)
+                .then(() => {
+                    const content = JSON.parse(file.content());
                     possible_responses(content.responses);
                     possible_stimuli(content.stimuli);
                     possible_conditions(content.conditions_data);
+                    loaded(true);
+                    console.log(possible_responses());
 
-                    loaded(true);})
-                .catch(error => {
-                    erros(error.message);
-                    console.log({error:erros()})
-                }).then(m.redraw);
+        })
+                .then(m.redraw);
 
         }
-        // loaded = true;
         function do_save(){
             console.log(possible_responses());
             save(m.route.param('studyId'), possible_responses().filter(response=>!!response.key), possible_stimuli, possible_conditions);
         }
-        load();
 
+        load();
         return {do_save, loaded, possible_responses, possible_stimuli, possible_conditions};
     },
+
     view({do_save, loaded, possible_responses, possible_stimuli, possible_conditions}){
         return  !loaded()
             ?

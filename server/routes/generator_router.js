@@ -16,15 +16,15 @@ generetorRouter
 
 
 generetorRouter.route('/:study_id/generator')
-    // .get(
-    //     function(req, res){
-    //         return generator.get_file_content(req.user_id, parseInt(req.params.study_id), req.params.file_id)
-    //             .then(tags_data=>res.json(tags_data))
-    //             .catch(err=>res.status(err.status || 500).json({message:err.message}));
-    //     })
+    .get(
+        function(req, res){
+            return generator.get_properties(req.user_id, parseInt(req.params.study_id))
+                .then(properties=>res.json(properties))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
     .put(
         function(req, res){
             return generator.save_file(req.user_id, parseInt(req.params.study_id), req.body.responses, req.body.stimuli, req.body.conditions)
-                .then(tags_data=>res.json(tags_data))
+                .then(properties=>res.json({}))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });

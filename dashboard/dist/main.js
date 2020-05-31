@@ -17123,6 +17123,631 @@
         md: 'md'
     };
 
+    function url(study_id)
+    {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator");
+    }
+    var get_properties = function (study_id){ return fetchJson(url(49), {
+        method: 'get'
+    }); };
+
+    var save$1 = function (study_id, responses, stimuli, conditions) { return fetchJson(url(study_id), {
+        method: 'put',
+        body: {responses: responses, stimuli: stimuli, conditions: conditions}
+    }); };
+
+    var responses_view = function (args) { return m.component(responsesGeneratorComponent, args); };
+
+
+    var responsesGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_responses = ref.possible_responses;
+
+            var ctrl = {
+                possible_responses: possible_responses,
+                update_possible_response:update_possible_response,
+                delete_possible_response:delete_possible_response,
+                focus_it: focus_it
+            };
+            if(possible_responses().length===0 || possible_responses().filter(function (response){ return !response.key; }).length===0) {
+                possible_responses().push({key: ''});
+            }
+
+            function focus_it(element) {
+                 // setTimeout(() => element.focus());
+            }
+            function update_possible_response(id, value) {
+                if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1){
+                    value = '';
+                }
+                if (value.length>1)
+                    value = value[value.length - 1];
+
+                ctrl.possible_responses()[id].key = value;
+
+                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
+                if(empty_keys.length===0 && value){
+                    ctrl.possible_responses().push({key:''});
+                }
+            }
+
+            function delete_possible_response(id){
+                ctrl.possible_responses().splice(id, 1);
+                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
+                if(empty_keys.length===0)
+                    ctrl.possible_responses().push({key:''});
+            }
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                m('h4', 'Possible responses'),
+                m('.row',[
+                    ctrl.possible_responses().map(function(response, id) {
+                        return m('row',[
+                            m('.col-sm-2',
+                                m('label.input-group.space', [
+                                    m('input.form-control.col-sm-1', {value: response.key, config: !response.key ? ctrl.focus_it : '', placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                    id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
+                                ])
+                            )
+                        ])
+
+                    })
+                ])
+            ]);
+
+
+        }
+    };
+
+    var stimuli_view = function (args) { return m.component(stimuliGeneratorComponent, args); };
+
+
+    var stimuliGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_conditions = ref.possible_conditions;
+
+            var ctrl = {
+                default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
+                num_of_stimuli:0,
+                possible_stimuli: possible_stimuli,
+                possible_conditions: possible_conditions,
+                do_add_stimulus: do_add_stimulus,
+                update_stimulus_field: update_stimulus_field,
+                update_stimulus_css_field: update_stimulus_css_field,
+                delete_stimulus: delete_stimulus,
+                add_stimulus_to_sets: add_stimulus_to_sets,
+                update_stimulus_field_4_sets: update_stimulus_field_4_sets,
+                update_stimulus_css_4_sets: update_stimulus_css_4_sets,
+                delete_stimulus_from_sets: delete_stimulus_from_sets
+            };
+
+            if(possible_stimuli().length===0)
+                ctrl.do_add_stimulus();
+
+            function add_stimulus_to_sets(stimulus){
+                var new_stimulus = {stimulus_name:stimulus.stimulus_name,
+                    media:'',
+                    default_times: stimulus.default_times,
+                    onset: stimulus.onset,
+                    offset: stimulus.offset,
+                    response:stimulus.response,
+                    response_key:'',
+                    css_data:{},
+                    relative_to: 'trial_onset',
+                    css2use:[]};
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){ return set.push(new_stimulus); });
+                });
+            }
+
+            function update_stimulus_field_4_sets(stimulus_name, field, old_field, new_field){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.forEach(function (stimulus){
+                            stimulus[field] = stimulus.stimulus_name === stimulus_name ? new_field : stimulus[field];
+
+                        });
+                    });
+                });
+            }
+
+            function update_stimulus_css_4_sets(stimulus_obj, css, add){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.forEach(function (stimulus){
+                            if(stimulus.stimulus_name === stimulus_obj.stimulus_name){
+                                if(add){
+                                    stimulus.css2use.push(css);
+                                    stimulus.css_data[css] = '';
+                                    // console.log()
+                                }   
+                                else
+                                    stimulus.css2use.splice(stimulus.css2use.findIndex(function (obj){ return obj===css; }), 1);
+                            }
+                        });
+                    });
+                });
+            }
+
+            function do_add_stimulus() {
+                var possible_csss = {};
+                ctrl.default_css.map(function (css){ return possible_csss[css]= false; });
+                var new_stimulus = {stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
+                                      response:'without_response',
+                                      media_type:'text',
+                                      css:possible_csss,
+                                      relative_to : 'trial_onset',
+                                      default_times:true,
+                                      onset:'0',
+                                      offset:'0'};
+                ctrl.possible_stimuli().push(new_stimulus);
+                ctrl.add_stimulus_to_sets(new_stimulus);
+            }
+
+            function update_stimulus_field(id, field, value){
+                if(ctrl.possible_stimuli()[id][field] === value)
+                    return;
+                ctrl.update_stimulus_field_4_sets(ctrl.possible_stimuli()[id].stimulus_name, field, ctrl.possible_stimuli()[id][field], value);
+                ctrl.possible_stimuli()[id][field] = value;
+            }
+
+            function update_stimulus_css_field(id, field){
+                ctrl.possible_stimuli()[id].css[field] = !ctrl.possible_stimuli()[id].css[field];
+                ctrl.update_stimulus_css_4_sets(ctrl.possible_stimuli()[id], field, ctrl.possible_stimuli()[id].css[field]);
+            }
+
+            function delete_stimulus_from_sets(stimulus_obj){
+                ctrl.possible_conditions().forEach(function (condition){
+                    condition.stimuli_sets.forEach(function (set){
+                        set.splice(set.findIndex(function (stimulus){ return stimulus.stimulus_name === stimulus_obj.stimulus_name; }), 1);
+                    });
+                });
+            }
+
+
+            function delete_stimulus(id){
+                ctrl.delete_stimulus_from_sets(ctrl.possible_stimuli()[id]);
+                ctrl.possible_stimuli().splice(id, 1);
+            }
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                m('h4.space', 'Trial properties'),
+                m('.row.col-sm-12',[
+                    m('.col-sm-1',
+                        m('strong', 'Stimulus name')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Response')
+                    ),
+                    m('.col-sm-1',
+                        m('strong', 'Visual properties')
+                    ),
+                    m('.col-sm-1',
+                        m('strong', 'Media type')
+                    ),
+                    m('.col-sm-1',
+                        m('strong', 'Times')
+                    ),
+                    m('.col-sm-1',
+                        m('strong', 'Relative to')
+                    )
+                ]),
+
+                ctrl.possible_stimuli().map(function(stimulus, id) {
+                    return m('row.col-sm-12',
+                        [m('.col-sm-1',
+                            m('label.input-group.space', [
+                                m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                            ])),
+                            m('.col-sm-2',
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
+                                        checked: stimulus.response === 'without_response',
+                                    }), m('span.c-indicator'), ' Without response'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
+                                        checked: stimulus.response === 'with_response',
+                                    }), m('span.c-indicator'), ' With response'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
+                                        checked: stimulus.response === 'with_stop_response',
+                                    }), m('span.c-indicator'), ' With stop response'
+                                ]))
+                            ),
+                            m('.col-sm-1',
+                                m('.row',[
+                                    ctrl.default_css.map(function (css){ return m('.col',
+                                                m('label.c-input.checkbox',  [ m('input[type=checkbox]',{
+                                                        onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
+                                                        checked: stimulus.css[css],
+                                                    }), m('span', css)
+                                                ])
+                                        ); }
+                                    )
+                                ])),
+                            m('.col-sm-1',
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'images'); },
+                                        checked: stimulus.media_type==='images',
+                                    }), m('span.c-indicator'), ' Images'
+                                ])),
+                                m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
+                                        checked: stimulus.media_type==='text',
+                                    }), m('span.c-indicator'), ' Text'
+                                ]))
+                            ),
+                            m('.col-sm-1',[
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
+                                            checked: !stimulus.default_times,
+                                        }), m('span.c-indicator'), ' Variable'
+                                    ])),
+                                    m('div', m('label.c-input.c-radio', [
+                                        m('input[type=radio]', {
+                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
+                                            checked: stimulus.default_times,
+                                        }), m('span.c-indicator'), ' Fixed'
+                                    ]))
+                                ,
+                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                        m('label.input-group', [
+                                        'Onset',
+                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
+                                ])),
+                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                    m('label.input-group', [
+                                        'Offset',
+                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                    ])
+                                )
+                            ]),
+                            m('.col-sm-2',
+                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
+                                        checked: stimulus.relative_to === 'trial_onset',
+                                    }), m('span.c-indicator'), " Trial onset"
+                                ])),
+                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                    m('input[type=radio]', {
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
+                                        checked: stimulus.relative_to === 'last_offset',
+                                    }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
+                                ]))
+                            ),
+
+                            m('.col-sm-1',
+                                ctrl.possible_stimuli().length===1 ? '' :
+                                m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', { onclick:function(){ctrl.delete_stimulus(id);}}, [
+                                    m('i.fa.fa-close'), ' '
+                                ]))
+                            )
+                        ])
+                }),
+                m('.row.space',
+                    m('.col-sm-12', [
+                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
+                            [m('i.fa.fa-plus'), '  add stimulus']
+                        )
+                    ])
+                )
+            ])
+
+
+        }
+    };
+
+    var stimuli_sets_view = function (args) { return m.component(stimuliSetsGeneratorComponent, args); };
+
+    var stimuliSetsGeneratorComponent = {
+        controller: function controller(ref){
+            var condition = ref.condition;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            var ctrl = {
+                condition: condition,
+                possible_stimuli: possible_stimuli,
+                possible_responses: possible_responses,
+                delete_stimuli_set: delete_stimuli_set,
+                add_stimuli_set: add_stimuli_set,
+                update_stimulus_media: update_stimulus_media,
+                toggle_stimulus_response: toggle_stimulus_response,
+                update_stimulus_css: update_stimulus_css
+            };
+            if(condition.stimuli_sets.length===0)
+                ctrl.add_stimuli_set();
+
+            function add_stimuli_set(){
+                var stimuli_object = [];
+                ctrl.possible_stimuli().forEach(function(stimulus){
+                    var css2use = Object.keys(stimulus.css).filter((function (key){ return stimulus.css[key]; }));
+                    var css_data = {};
+                    css2use.forEach(function (css){css_data[css]= '';});
+
+                    stimuli_object.push({stimulus_name:stimulus.stimulus_name,
+                                         media:'',
+                                         default_times: stimulus.default_times,
+                                         onset: stimulus.onset,
+                                         offset: stimulus.offset,
+                                         relative_to: stimulus.relative_to,
+                                         response:stimulus.response,
+                                         response_key:'',
+                                         css2use: css2use,
+                                         css_data: css_data});
+                });
+                condition.stimuli_sets.push(stimuli_object);
+            }
+
+            function toggle_stimulus_response(set_id, stimulus_id, response_key){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].response_key = response_key;
+            }
+
+            function delete_stimuli_set(set_id){
+                ctrl.condition.stimuli_sets.splice(set_id, 1);
+            }
+            function update_stimulus_media(set_id, stimulus_id, media){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].media = media;
+            }
+            function update_stimulus_css(set_id, stimulus_id, field, value){
+                ctrl.condition.stimuli_sets[set_id][stimulus_id].css_data[field] = value;
+            }
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                        m('row.col-sm-12', [
+                            m('.row',[
+                                m('.col-sm-2',
+                                    m('strong', 'Stimulus name')
+                                ),
+                                m('.col-sm-3',
+                                    m('strong', 'Media')
+                                ),
+                                m('.col-sm-2',
+                                    m('strong', 'Times')
+                                ),
+
+                                m('.col-sm-2',
+                                    m('strong', 'Visual properties')
+                                ),
+                                m('.col-sm-2',
+                                    m('strong', 'Response')
+                                )
+                            ]),
+                            ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
+                                return stimuli_set.map(function(stimulus, stimulus_id) {
+                                    return m('row.col-sm-12',[
+
+                                        stimulus_id>0 ?  '' : m('hr'),
+                                        m('.col-sm-2', stimulus.stimulus_name),
+                                        m('.col-sm-3',
+                                            m('label.input-group.space', [
+                                                m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
+                                            ])
+                                        ),
+                                        m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
+                                            m('row', [
+                                                'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
+                                            ]),
+                                            m('row', [
+                                                'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
+                                            ])
+                                        ]),
+                                        m('.col-sm-2',
+
+                                            stimulus.css2use.length===0 ? '-' :
+                                                stimulus.css2use.map(function (css2use){ return m('row', [
+                                                    css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
+                                                ]); })
+                                        ),
+                                        m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
+                                                ctrl.possible_responses().map(function (response, key_id){ return m('row',[
+                                                        m('.col-sm-2', response.key.length !==1 ? '' :
+                                                            m('div', m('label.c-input.c-radio', [
+                                                                m('input[type=radio]', {
+                                                                    onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
+                                                                    checked: stimulus.response_key === key_id,
+                                                                }), m('span.c-indicator'), (" " + (response.key))
+                                                            ]))
+                                                        )]
+                                                ); })
+                                        ),
+                                        m('.col-sm-1',
+                                            stimulus_id > 0 ? '' :
+                                            m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
+                                                m('i.fa.fa-close'), ' '
+                                            ]))
+                                        )
+
+                                    ])
+                                })
+
+                            }),
+                            m('.row.space',
+                                m('.col-sm-12', [
+                                    m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
+                                        [m('i.fa.fa-plus'), '  add stimuli set']
+                                    )
+                                ])
+                            )
+                        ])
+            ]);
+        }
+    };
+
+    var conditions_view = function (args) { return m.component(conditionsGeneratorComponent, args); };
+
+    var conditionsGeneratorComponent = {
+        controller: function controller(ref){
+            var possible_conditions = ref.possible_conditions;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            var ctrl = {
+                num_of_conditions:0,
+                do_add_condition: do_add_condition,
+                update_condition_name: update_condition_name,
+                update_repetitions: update_repetitions
+            };
+
+            function do_add_condition() {
+                possible_conditions().push({repetitions:['0', '0'], condition_name:("condition_" + (++ctrl.num_of_conditions)), stimuli_sets:[]});
+                possible_conditions(possible_conditions());
+            }
+
+            function update_repetitions(id, block, value){
+                possible_conditions()[id].repetitions[block] = value;
+                possible_conditions(possible_conditions());
+            }
+
+            function update_condition_name(id, name){
+                possible_conditions()[id].condition_name = name;
+                possible_conditions(possible_conditions());
+            }
+
+            if(possible_conditions().length===0)
+                ctrl.do_add_condition();
+
+            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses};
+        },
+        view: function view(ref){
+            var ctrl = ref.ctrl;
+            var possible_conditions = ref.possible_conditions;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+
+            return m('.row', [
+                m('h4.space', 'Conditions'),
+                m('.row.col-sm-12',[
+                    m('.col-sm-2',
+                        m('strong', 'Condition name')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Trials in practice')
+                    ),
+                    m('.col-sm-2',
+                        m('strong', 'Trials in experiment')
+                    ),
+                ]),
+                possible_conditions().map(function(condition, condition_id) {
+                    return  [m('row.col-sm-12',
+                        m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('label.input-group.space', [
+                                m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
+                            ])
+                        )
+                    ),
+                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses})
+                ]}),
+
+
+                m('.row.space',
+                    m('.col-sm-13', [
+                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
+                            [m('i.fa.fa-plus'), '  add condition']
+                        )
+                    ])
+                ),
+
+            ]);
+
+
+        }
+    };
+
+    var propEditor = function (args) { return m.component(propEditorComponent, args); };
+
+    var propEditorComponent = {
+        controller: function(ref){
+            var file = ref.file;
+
+            var err = m.prop();
+            var possible_responses = m.prop([]);
+            var possible_stimuli = m.prop([]);
+            var possible_conditions = m.prop([]);
+            var loaded = m.prop(false);
+
+
+            function load() {
+                file.loaded || file.get()
+                    .catch(err)
+                    .then(function () {
+                        var content = JSON.parse(file.content());
+                        possible_responses(content.responses);
+                        possible_stimuli(content.stimuli);
+                        possible_conditions(content.conditions_data);
+                        loaded(true);
+                        console.log(possible_responses());
+
+            })
+                    .then(m.redraw);
+
+            }
+            function do_save(){
+                console.log(possible_responses());
+                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions);
+            }
+
+            load();
+            return {do_save: do_save, loaded: loaded, possible_responses: possible_responses, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions};
+        },
+
+        view: function view(ref){
+            var do_save = ref.do_save;
+            var loaded = ref.loaded;
+            var possible_responses = ref.possible_responses;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_conditions = ref.possible_conditions;
+
+            return  !loaded()
+                ?
+                m('.loader')
+                :
+                m('.generetor', [
+                    responses_view({possible_responses: possible_responses}),
+                    m('hr'),
+                    stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
+                    m('hr'),
+                    conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses}),
+                    m('.row.space.central_panel',
+                        m('.col-sm-12.', [
+                            m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return do_save(); }},
+                                [m('i.fa.fa-save'), '  Save']
+                            )
+                        ])
+                    )
+
+                ]);
+        }
+    };
+
     var editors = {
         js: textEditor,
         jsp: textEditor,
@@ -17148,7 +17773,9 @@
         png: imgEditor,
         gif: imgEditor,
 
-        pdf: pdfEditor
+        pdf: pdfEditor,
+
+        prop: propEditor
 
     };
 
@@ -21978,567 +22605,34 @@
         };
     }
 
-    function url(study_id)
-    {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator");
-    }
-
-    var save$1 = function (study_id, responses, stimuli, conditions) { return fetchJson(url(49), {
-        method: 'put',
-        body: {responses: responses, stimuli: stimuli, conditions: conditions}
-    }); };
-
-    var responses_view = function (args) { return m.component(responsesGeneratorComponent, args); };
-
-
-    var responsesGeneratorComponent = {
-        controller: function controller(ref){
-            var possible_responses = ref.possible_responses;
-
-            var ctrl = {
-                possible_responses: possible_responses,
-                update_possible_response:update_possible_response,
-                delete_possible_response:delete_possible_response,
-                focus_it: focus_it
-            };
-            possible_responses().push({key:''});
-
-            function focus_it(element) {
-                 // setTimeout(() => element.focus());
-            }
-            function update_possible_response(id, value) {
-                if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1){
-                    value = '';
-                }
-                if (value.length>1)
-                    value = value[value.length - 1];
-
-                ctrl.possible_responses()[id].key = value;
-
-                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
-                if(empty_keys.length===0 && value){
-                    ctrl.possible_responses().push({key:''});
-                }
-            }
-
-            function delete_possible_response(id){
-                ctrl.possible_responses().splice(id, 1);
-                var empty_keys = ctrl.possible_responses().filter(function (response){ return response.key===''; });
-                if(empty_keys.length===0)
-                    ctrl.possible_responses().push({key:''});
-            }
-            return ctrl;
-        },
-        view: function view(ctrl){
-            return m('.row', [
-                m('h4', 'Possible responses'),
-                m('.row',[
-                    ctrl.possible_responses().map(function(response, id) {
-                        return m('row',[
-                            m('.col-sm-2',
-                                m('label.input-group.space', [
-                                    m('input.form-control.col-sm-1', {value: response.key, config: !response.key ? ctrl.focus_it : '', placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
-                                    id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
-                                ])
-                            )
-                        ])
-
-                    })
-                ])
-            ]);
-
-
-        }
-    };
-
-    var stimuli_view = function (args) { return m.component(stimuliGeneratorComponent, args); };
-
-
-    var stimuliGeneratorComponent = {
-        controller: function controller(ref){
-            var possible_stimuli = ref.possible_stimuli;
-            var possible_conditions = ref.possible_conditions;
-
-            var ctrl = {
-                default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
-                num_of_stimuli:0,
-                possible_stimuli: possible_stimuli,
-                possible_conditions: possible_conditions,
-                do_add_stimulus: do_add_stimulus,
-                update_stimulus_field: update_stimulus_field,
-                update_stimulus_css_field: update_stimulus_css_field,
-                delete_stimulus: delete_stimulus,
-                add_stimulus_to_sets: add_stimulus_to_sets,
-                update_stimulus_field_4_sets: update_stimulus_field_4_sets,
-                update_stimulus_css_4_sets: update_stimulus_css_4_sets,
-                delete_stimulus_from_sets: delete_stimulus_from_sets
-            };
-
-            if(possible_stimuli.length===0)
-                ctrl.do_add_stimulus();
-
-            function add_stimulus_to_sets(stimulus){
-                var new_stimulus = {stimulus_name:stimulus.stimulus_name,
-                    media:'',
-                    default_times: stimulus.default_times,
-                    onset: stimulus.onset,
-                    offset: stimulus.offset,
-                    response:stimulus.response,
-                    response_key:'',
-                    css_data:{},
-                    relative_to: 'trial_onset',
-                    css2use:[]};
-                ctrl.possible_conditions().forEach(function (condition){
-                    condition.stimuli_sets.forEach(function (set){ return set.push(new_stimulus); });
-                });
-            }
-
-            function update_stimulus_field_4_sets(stimulus_name, field, old_field, new_field){
-                ctrl.possible_conditions().forEach(function (condition){
-                    condition.stimuli_sets.forEach(function (set){
-                        set.forEach(function (stimulus){
-                            stimulus[field] = stimulus.stimulus_name === stimulus_name ? new_field : stimulus[field];
-
-                        });
-                    });
-                });
-            }
-
-            function update_stimulus_css_4_sets(stimulus_obj, css, add){
-                ctrl.possible_conditions().forEach(function (condition){
-                    condition.stimuli_sets.forEach(function (set){
-                        set.forEach(function (stimulus){
-                            if(stimulus.stimulus_name === stimulus_obj.stimulus_name){
-                                if(add)
-                                    stimulus.css2use.push(css);
-                                else
-                                    stimulus.css2use.splice(stimulus.css2use.findIndex(function (obj){ return obj===css; }), 1);
-                            }
-                        });
-                    });
-                });
-            }
-
-            function do_add_stimulus() {
-                var possible_csss = {};
-                ctrl.default_css.map(function (css){ return possible_csss[css]= false; });
-                var new_stimulus = {stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
-                                      response:'without_response',
-                                      media_type:'text',
-                                      css:possible_csss,
-                                      relative_to : 'trial_onset',
-                                      default_times:true,
-                                      onset:'0',
-                                      offset:'0'};
-                ctrl.possible_stimuli().push(new_stimulus);
-                ctrl.add_stimulus_to_sets(new_stimulus);
-            }
-
-            function update_stimulus_field(id, field, value){
-                if(ctrl.possible_stimuli()[id][field] === value)
-                    return;
-                ctrl.update_stimulus_field_4_sets(ctrl.possible_stimuli()[id].stimulus_name, field, ctrl.possible_stimuli()[id][field], value);
-                ctrl.possible_stimuli()[id][field] = value;
-            }
-
-            function update_stimulus_css_field(id, field){
-                ctrl.possible_stimuli()[id].css[field] = !ctrl.possible_stimuli()[id].css[field];
-                ctrl.update_stimulus_css_4_sets(ctrl.possible_stimuli()[id], field, ctrl.possible_stimuli()[id].css[field]);
-            }
-
-            function delete_stimulus_from_sets(stimulus_obj){
-                ctrl.possible_conditions().forEach(function (condition){
-                    condition.stimuli_sets.forEach(function (set){
-                        set.splice(set.findIndex(function (stimulus){ return stimulus.stimulus_name === stimulus_obj.stimulus_name; }), 1);
-                    });
-                });
-            }
-
-
-            function delete_stimulus(id){
-                ctrl.delete_stimulus_from_sets(ctrl.possible_stimuli()[id]);
-                ctrl.possible_stimuli().splice(id, 1);
-            }
-
-            return ctrl;
-        },
-        view: function view(ctrl){
-            return m('.row', [
-                m('h4.space', 'Trial properties'),
-                m('.row.col-sm-12',[
-                    m('.col-sm-1',
-                        m('strong', 'Stimulus name')
-                    ),
-                    m('.col-sm-2',
-                        m('strong', 'Response')
-                    ),
-                    m('.col-sm-1',
-                        m('strong', 'Visual properties')
-                    ),
-                    m('.col-sm-1',
-                        m('strong', 'Media type')
-                    ),
-                    m('.col-sm-1',
-                        m('strong', 'Times')
-                    ),
-                    m('.col-sm-1',
-                        m('strong', 'Relative to')
-                    )
-                ]),
-
-                ctrl.possible_stimuli().map(function(stimulus, id) {
-                    return m('row.col-sm-12',
-                        [m('.col-sm-1',
-                            m('label.input-group.space', [
-                                m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
-                            ])),
-                            m('.col-sm-2',
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
-                                        checked: stimulus.response === 'without_response',
-                                    }), m('span.c-indicator'), ' Without response'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
-                                        checked: stimulus.response === 'with_response',
-                                    }), m('span.c-indicator'), ' With response'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
-                                        checked: stimulus.response === 'with_stop_response',
-                                    }), m('span.c-indicator'), ' With stop response'
-                                ]))
-                            ),
-                            m('.col-sm-1',
-                                m('.row',[
-                                    ctrl.default_css.map(function (css){ return m('.col',
-                                                m('label.c-input.checkbox',  [ m('input[type=checkbox]',{
-                                                        onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
-                                                        checked: stimulus.css[css],
-                                                    }), m('span', css)
-                                                ])
-                                        ); }
-                                    )
-                                ])),
-                            m('.col-sm-1',
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'images'); },
-                                        checked: stimulus.media_type==='images',
-                                    }), m('span.c-indicator'), ' Images'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
-                                        checked: stimulus.media_type==='text',
-                                    }), m('span.c-indicator'), ' Text'
-                                ]))
-                            ),
-                            m('.col-sm-1',[
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
-                                            checked: !stimulus.default_times,
-                                        }), m('span.c-indicator'), ' Variable'
-                                    ])),
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
-                                            checked: stimulus.default_times,
-                                        }), m('span.c-indicator'), ' Fixed'
-                                    ]))
-                                ,
-                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
-                                        m('label.input-group', [
-                                        'Onset',
-                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
-                                ])),
-                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
-                                    m('label.input-group', [
-                                        'Offset',
-                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
-                                    ])
-                                )
-                            ]),
-                            m('.col-sm-2',
-                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
-                                        checked: stimulus.relative_to === 'trial_onset',
-                                    }), m('span.c-indicator'), " Trial onset"
-                                ])),
-                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
-                                        checked: stimulus.relative_to === 'last_offset',
-                                    }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
-                                ]))
-                            ),
-
-                            m('.col-sm-1',
-                                ctrl.possible_stimuli().length===1 ? '' :
-                                m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', { onclick:function(){ctrl.delete_stimulus(id);}}, [
-                                    m('i.fa.fa-close'), ' '
-                                ]))
-                            )
-                        ])
-                }),
-                m('.row.space',
-                    m('.col-sm-12', [
-                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
-                            [m('i.fa.fa-plus'), '  add stimulus']
-                        )
-                    ])
-                )
-            ])
-
-
-        }
-    };
-
-    var stimuli_sets_view = function (args) { return m.component(stimuliSetsGeneratorComponent, args); };
-
-    var stimuliSetsGeneratorComponent = {
-        controller: function controller(ref){
-            var condition = ref.condition;
-            var possible_stimuli = ref.possible_stimuli;
-            var possible_responses = ref.possible_responses;
-
-            var ctrl = {
-                condition: condition,
-                possible_stimuli: possible_stimuli,
-                possible_responses: possible_responses,
-                delete_stimuli_set: delete_stimuli_set,
-                add_stimuli_set: add_stimuli_set,
-                update_stimulus_media: update_stimulus_media,
-                toggle_stimulus_response: toggle_stimulus_response,
-                update_stimulus_css: update_stimulus_css
-            };
-            if(condition.stimuli_sets.length===0)
-                ctrl.add_stimuli_set();
-
-            function add_stimuli_set(){
-                var stimuli_object = [];
-                ctrl.possible_stimuli().forEach(function(stimulus){
-                    var css2use = Object.keys(stimulus.css).filter((function (key){ return stimulus.css[key]; }));
-                    var css_data = {};
-                    css2use.forEach(function (css){css_data[css]= '';});
-
-                    stimuli_object.push({stimulus_name:stimulus.stimulus_name,
-                                         media:'',
-                                         default_times: stimulus.default_times,
-                                         onset: stimulus.onset,
-                                         offset: stimulus.offset,
-                                         relative_to: stimulus.relative_to,
-                                         response:stimulus.response,
-                                         response_key:'',
-                                         css2use: css2use,
-                                         css_data: css_data});
-                });
-                condition.stimuli_sets.push(stimuli_object);
-            }
-
-            function toggle_stimulus_response(set_id, stimulus_id, response_key){
-                ctrl.condition.stimuli_sets[set_id][stimulus_id].response_key = response_key;
-            }
-
-            function delete_stimuli_set(set_id){
-                ctrl.condition.stimuli_sets.splice(set_id, 1);
-            }
-            function update_stimulus_media(set_id, stimulus_id, media){
-                ctrl.condition.stimuli_sets[set_id][stimulus_id].media = media;
-            }
-            function update_stimulus_css(set_id, stimulus_id, field, value){
-                ctrl.condition.stimuli_sets[set_id][stimulus_id].css_data[field] = value;
-            }
-
-            return ctrl;
-        },
-        view: function view(ctrl){
-            return m('.row', [
-                        m('row.col-sm-12', [
-                            m('.row',[
-                                m('.col-sm-2',
-                                    m('strong', 'Stimulus name')
-                                ),
-                                m('.col-sm-3',
-                                    m('strong', 'Media')
-                                ),
-                                m('.col-sm-2',
-                                    m('strong', 'Times')
-                                ),
-
-                                m('.col-sm-2',
-                                    m('strong', 'Visual properties')
-                                ),
-                                m('.col-sm-2',
-                                    m('strong', 'Response')
-                                )
-                            ]),
-                            ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
-                                return stimuli_set.map(function(stimulus, stimulus_id) {
-                                    return m('row.col-sm-12',[
-
-                                        stimulus_id>0 ?  '' : m('hr'),
-                                        m('.col-sm-2', stimulus.stimulus_name),
-                                        m('.col-sm-3',
-                                            m('label.input-group.space', [
-                                                m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
-                                            ])
-                                        ),
-                                        m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
-                                            m('row', [
-                                                'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
-                                            ]),
-                                            m('row', [
-                                                'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
-                                            ])
-                                        ]),
-                                        m('.col-sm-2',
-
-                                            stimulus.css2use.length===0 ? '-' :
-                                                stimulus.css2use.map(function (css2use){ return m('row', [
-                                                    css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
-                                                ]); })
-                                        ),
-                                        m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
-                                                ctrl.possible_responses().map(function (response, key_id){ return m('row',[
-                                                        m('.col-sm-2', response.key.length !==1 ? '' :
-                                                            m('div', m('label.c-input.c-radio', [
-                                                                m('input[type=radio]', {
-                                                                    onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
-                                                                    checked: stimulus.response_key === key_id,
-                                                                }), m('span.c-indicator'), (" " + (response.key))
-                                                            ]))
-                                                        )]
-                                                ); })
-                                        ),
-                                        m('.col-sm-1',
-                                            stimulus_id > 0 ? '' :
-                                            m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
-                                                m('i.fa.fa-close'), ' '
-                                            ]))
-                                        )
-
-                                    ])
-                                })
-
-                            }),
-                            m('.row.space',
-                                m('.col-sm-12', [
-                                    m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
-                                        [m('i.fa.fa-plus'), '  add stimuli set']
-                                    )
-                                ])
-                            )
-                        ])
-            ]);
-        }
-    };
-
-    var conditions_view = function (args) { return m.component(conditionsGeneratorComponent, args); };
-
-    var conditionsGeneratorComponent = {
-        controller: function controller(ref){
-            var possible_conditions = ref.possible_conditions;
-            var possible_stimuli = ref.possible_stimuli;
-            var possible_responses = ref.possible_responses;
-
-            var ctrl = {
-                num_of_conditions:0,
-                do_add_condition: do_add_condition,
-                update_condition_name: update_condition_name,
-                update_repetitions: update_repetitions
-            };
-
-            function do_add_condition() {
-                possible_conditions().push({repetitions:['0', '0'], condition_name:("condition_" + (++ctrl.num_of_conditions)), stimuli_sets:[]});
-            }
-
-            function update_repetitions(id, block, value){
-                possible_conditions()[id].repetitions[block] = value;
-            }
-
-            function update_condition_name(id, name){
-                possible_conditions()[id].condition_name = name;
-            }
-
-            if(possible_conditions.length===0)
-                ctrl.do_add_condition();
-
-            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses};
-        },
-        view: function view(ref){
-            var ctrl = ref.ctrl;
-            var possible_conditions = ref.possible_conditions;
-            var possible_stimuli = ref.possible_stimuli;
-            var possible_responses = ref.possible_responses;
-
-            return m('.row', [
-                m('h4.space', 'Conditions'),
-                m('.row.col-sm-12',[
-                    m('.col-sm-2',
-                        m('strong', 'Condition name')
-                    ),
-                    m('.col-sm-2',
-                        m('strong', 'Trials in practice')
-                    ),
-                    m('.col-sm-2',
-                        m('strong', 'Trials in experiment')
-                    ),
-                ]),
-                possible_conditions().map(function(condition, condition_id) {
-                    return  [m('row.col-sm-12',
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
-                            ])
-                        ),
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
-                            ])
-                        ),
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
-                            ])
-                        )
-                    ),
-                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses})
-                ]}),
-
-
-                m('.row.space',
-                    m('.col-sm-13', [
-                        m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
-                            [m('i.fa.fa-plus'), '  add condition']
-                        )
-                    ])
-                ),
-
-            ]);
-
-
-        }
-    };
-
     var generatorComponent = {
         controller: function controller(){
             var possible_responses = m.prop([]);
             var possible_stimuli = m.prop([]);
             var possible_conditions = m.prop([]);
-            var loaded = false;
+            var loaded = m.prop(false);        var erros = m.prop([]);
             function load() {
-                 loaded = true;
+                get_properties(49)
+                    .then(function (properties){
+                        var content = JSON.parse(properties.content);
+                        possible_responses(content.responses);
+                        possible_stimuli(content.stimuli);
+                        possible_conditions(content.conditions_data);
+
+                        loaded(true);})
+                    .catch(function (error) {
+                        erros(error.message);
+                        console.log({error:erros()});
+                    }).then(m.redraw);
+
             }
+            // loaded = true;
             function do_save(){
-                save$1(m.route.param('studyId'), possible_responses, possible_stimuli, possible_conditions);
+                console.log(possible_responses());
+                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions);
             }
             load();
+
             return {do_save: do_save, loaded: loaded, possible_responses: possible_responses, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions};
         },
         view: function view(ref){
@@ -22548,7 +22642,7 @@
             var possible_stimuli = ref.possible_stimuli;
             var possible_conditions = ref.possible_conditions;
 
-            return  !loaded
+            return  !loaded()
                 ?
                 m('.loader')
                 :
