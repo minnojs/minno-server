@@ -1,4 +1,3 @@
-import observerFactory from 'utils/observer';
 import {save} from "../../generator/generatorModel";
 import responses_view from "../../generator/responsesGeneratorComponent";
 import stimuli_view from "../../generator/stimuliGeneratorComponent";
@@ -15,7 +14,6 @@ const propEditorComponent = {
         let possible_stimuli = m.prop([]);
         let possible_conditions = m.prop([]);
         let loaded = m.prop(false);
-
 
         function load() {
             file.loaded || file.get()

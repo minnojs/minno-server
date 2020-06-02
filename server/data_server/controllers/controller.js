@@ -12,7 +12,7 @@ var config = require.main.require('../config'),
 	
 
 var fs = require('fs-extra');
-var convert = require('mongoose_schema-json');
+// var convert = require('mongoose_schema-json');
 var archiver = require('archiver-promise');
 const varSplit = ".";
 const nullDataValue = '';

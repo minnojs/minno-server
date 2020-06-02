@@ -17127,9 +17127,7 @@
     {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator");
     }
-    var get_properties = function (study_id){ return fetchJson(url(49), {
-        method: 'get'
-    }); };
+
 
     var save$1 = function (study_id, responses, stimuli, conditions) { return fetchJson(url(study_id), {
         method: 'put',
@@ -17693,7 +17691,6 @@
             var possible_stimuli = m.prop([]);
             var possible_conditions = m.prop([]);
             var loaded = m.prop(false);
-
 
             function load() {
                 file.loaded || file.get()
@@ -22605,65 +22602,6 @@
         };
     }
 
-    var generatorComponent = {
-        controller: function controller(){
-            var possible_responses = m.prop([]);
-            var possible_stimuli = m.prop([]);
-            var possible_conditions = m.prop([]);
-            var loaded = m.prop(false);        var erros = m.prop([]);
-            function load() {
-                get_properties(49)
-                    .then(function (properties){
-                        var content = JSON.parse(properties.content);
-                        possible_responses(content.responses);
-                        possible_stimuli(content.stimuli);
-                        possible_conditions(content.conditions_data);
-
-                        loaded(true);})
-                    .catch(function (error) {
-                        erros(error.message);
-                        console.log({error:erros()});
-                    }).then(m.redraw);
-
-            }
-            // loaded = true;
-            function do_save(){
-                console.log(possible_responses());
-                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions);
-            }
-            load();
-
-            return {do_save: do_save, loaded: loaded, possible_responses: possible_responses, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions};
-        },
-        view: function view(ref){
-            var do_save = ref.do_save;
-            var loaded = ref.loaded;
-            var possible_responses = ref.possible_responses;
-            var possible_stimuli = ref.possible_stimuli;
-            var possible_conditions = ref.possible_conditions;
-
-            return  !loaded()
-                ?
-                m('.loader')
-                :
-                m('.generetor', [
-                    responses_view({possible_responses: possible_responses}),
-                    m('hr'),
-                    stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
-                    m('hr'),
-                    conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses}),
-                    m('.row.space.central_panel',
-                        m('.col-sm-12.', [
-                            m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return do_save(); }},
-                                [m('i.fa.fa-save'), '  Save']
-                            )
-                        ])
-                    )
-
-                ]);
-        }
-    };
-
     function apiURL$2(code)
     {   
         return (activationUrl + "/" + (encodeURIComponent(code)));
@@ -23610,9 +23548,7 @@
         '/pool/history': poolComponent$1,
         '/downloads': downloadsComponent,
         '/downloadsAccess': downloadsAccessComponent,
-        '/sharing/:studyId': collaborationComponent$1,
-
-        '/generator': generatorComponent
+        '/sharing/:studyId': collaborationComponent$1
 
     };
 
