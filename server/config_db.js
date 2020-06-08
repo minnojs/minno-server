@@ -100,16 +100,17 @@ async function update_server(server_data, host, app) {
 			await Server.startServer(app,curConfig);
 			return Promise.reject({status: 400, message: e});
 		}
+	    if(is_crashed)
+	    {
+	        await Server.startupHttp(app);
+	        return Promise.reject({server:{status: 400, message: 'Error: wrong certifications'}});
+	    }
+		else
+		{
+			return update_config_db(server_data_obj);
+		}
 	}
-    if(is_crashed)
-    {
-        await Server.startupHttp(app);
-        return Promise.reject({server:{status: 400, message: 'Error: wrong certifications'}});
-    }
-	else
-	{
-		return update_config_db(server_data_obj);
-	}
+
     if (server_data.type==='greenlock') {
         const email = server_data.greenlock.owner_email;
         let validator = new Validator({email},
