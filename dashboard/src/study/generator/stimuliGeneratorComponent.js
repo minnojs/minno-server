@@ -25,6 +25,7 @@ let stimuliGeneratorComponent = {
 
         function add_stimulus_to_sets(stimulus){
             const new_stimulus = {stimulus_name:stimulus.stimulus_name,
+                media_type: 'text',
                 media:'',
                 default_times: stimulus.default_times,
                 onset: stimulus.onset,
@@ -176,9 +177,9 @@ let stimuliGeneratorComponent = {
                         m('.col-sm-1',
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
-                                    onclick: ()=>ctrl.update_stimulus_field(id, 'media_type', 'images'),
-                                    checked: stimulus.media_type==='images',
-                                }), m('span.c-indicator'), ' Images'
+                                    onclick: ()=>ctrl.update_stimulus_field(id, 'media_type', 'image'),
+                                    checked: stimulus.media_type==='image',
+                                }), m('span.c-indicator'), ' Image'
                             ])),
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {

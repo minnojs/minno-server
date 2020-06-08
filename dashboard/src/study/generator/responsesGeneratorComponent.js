@@ -44,7 +44,7 @@ let responsesGeneratorComponent = {
     },
     view(ctrl){
         return m('.row', [
-            m('h4', 'Possible responses'),
+            m('h4.space', 'Possible responses'),
             m('.row',[
                 ctrl.possible_responses().map(function(response, id) {
                     return m('row',[

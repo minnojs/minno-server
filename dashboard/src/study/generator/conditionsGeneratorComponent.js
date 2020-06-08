@@ -6,7 +6,7 @@ let conditions_view = args => m.component(conditionsGeneratorComponent, args);
 export default conditions_view;
 
 let conditionsGeneratorComponent = {
-    controller({possible_conditions, possible_stimuli, possible_responses}){
+    controller({possible_conditions, possible_stimuli, possible_responses, imgs}){
         let ctrl = {
             num_of_conditions:0,
             do_add_condition,
@@ -32,9 +32,9 @@ let conditionsGeneratorComponent = {
         if(possible_conditions().length===0)
             ctrl.do_add_condition();
 
-        return {ctrl, possible_conditions, possible_stimuli, possible_responses};
+        return {ctrl, possible_conditions, possible_stimuli, possible_responses, imgs};
     },
-    view({ctrl, possible_conditions, possible_stimuli, possible_responses}){
+    view({ctrl, possible_conditions, possible_stimuli, possible_responses, imgs}){
         return m('.row', [
             m('h4.space', 'Conditions'),
             m('.row.col-sm-12',[
@@ -66,7 +66,7 @@ let conditionsGeneratorComponent = {
                         ])
                     )
                 ),
-                    stimuli_sets_view({condition, possible_stimuli, possible_responses})
+                    stimuli_sets_view({condition, possible_stimuli, possible_responses, imgs})
             ]}),
 
 

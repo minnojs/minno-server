@@ -7,6 +7,8 @@ define(['pipAPI'], function(APIconstructor) {
     var version_id      = Math.random()>0.5 ? 2 : 1;
 
     var answers     = /*#*posible_answers*#*/;
+    var images2preload = /*#*images2preload*#*/;
+    API.addSettings('preloadImages', images2preload);
 
     API.addCurrent({
         version_id   : version_id,
@@ -16,8 +18,9 @@ define(['pipAPI'], function(APIconstructor) {
         inst_bye     : 'images/inst_bye.jpg',
 
         durations: {
-            feedback_duration: 500,
-            iti_duration: 1500
+            fixation: /*#*fixation_duration*#*/,
+            iti: /*#*iti_duration*#*/,
+            feedback_duration: 500
         },
         score             : 0,
         minScore4exp      : 0
@@ -138,10 +141,26 @@ define(['pipAPI'], function(APIconstructor) {
             {
                 conditions: [{type:'begin'}],
                 actions: [
-                    {type:'trigger', handle:'show_stimuli'},
+                    {type:'trigger', handle:'<%= current.durations.fixation ? "showFixation" : "show_stimuli" %>'},
                     {type:'custom', fn: function(a, b, trial){trial.data.stimuli_counter = 0;}}
                 ]
             },
+
+            {
+                conditions:[{type:'inputEquals',value:'showFixation'}],
+                actions: [
+                    {type:'showStim', handle:'fixation'},
+                    {type:'trigger', handle:'show_stimuli', duration: '<%= current.durations.fixation %>'}
+                ]
+            },
+
+            {
+                conditions:[{type:'inputEquals',value:'show_stimuli'}],
+                actions: [
+                    {type:'hideStim', handle:'fixation'}
+                ]
+            },
+
 
             /*#*sequence*#*/,
             {
@@ -229,7 +248,7 @@ define(['pipAPI'], function(APIconstructor) {
                 ],
                 actions:[
                     {type:'hideStim', handle:['All']},
-                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti_duration%>'}
+                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti%>'}
                 ]
             },
             {
@@ -239,7 +258,7 @@ define(['pipAPI'], function(APIconstructor) {
                 ],
                 actions:[
                     {type:'removeInput', handle:['All']},
-                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti_duration%>'}
+                    {type:'trigger', handle:'end', duration:'<%= current.durations.iti%>'}
                 ]
             },
             {

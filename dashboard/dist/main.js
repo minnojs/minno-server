@@ -17129,9 +17129,9 @@
     }
 
 
-    var save$1 = function (study_id, responses, stimuli, conditions) { return fetchJson(url(study_id), {
+    var save$1 = function (study_id, responses, stimuli, conditions, constants) { return fetchJson(url(study_id), {
         method: 'put',
-        body: {responses: responses, stimuli: stimuli, conditions: conditions}
+        body: {responses: responses, stimuli: stimuli, conditions: conditions, constants: constants}
     }); };
 
     var responses_view = function (args) { return m.component(responsesGeneratorComponent, args); };
@@ -17179,7 +17179,7 @@
         },
         view: function view(ctrl){
             return m('.row', [
-                m('h4', 'Possible responses'),
+                m('h4.space', 'Possible responses'),
                 m('.row',[
                     ctrl.possible_responses().map(function(response, id) {
                         return m('row',[
@@ -17194,6 +17194,48 @@
                     })
                 ])
             ]);
+
+
+        }
+    };
+
+    var constants_view = function (args) { return m.component(constantsGeneratorComponent, args); };
+
+
+    var constantsGeneratorComponent = {
+        controller: function controller(ref){
+            var fixation = ref.fixation;
+            var iti = ref.iti;
+
+            var ctrl = {
+                fixation: fixation,
+                iti: iti,
+                update_duration: update_duration
+            };
+
+            function update_duration(duration, new_duration) {
+                ctrl[duration](new_duration);
+            }
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.row', [
+                m('h4.space', 'Durations'),
+                m('.row',[
+                    m('.col-sm-5',[
+                        m('.row', [
+                            m('.col-sm-2', 'Fixation'),
+                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_duration('fixation', this.value);}}))
+                        ]),
+                        m('.row', [
+                            m('.col-sm-2', 'ITI'),
+                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_duration('iti', this.value);}}))
+                        ]),
+                    ]),
+
+                ])
+            ])
 
 
         }
@@ -17227,6 +17269,7 @@
 
             function add_stimulus_to_sets(stimulus){
                 var new_stimulus = {stimulus_name:stimulus.stimulus_name,
+                    media_type: 'text',
                     media:'',
                     default_times: stimulus.default_times,
                     onset: stimulus.onset,
@@ -17377,9 +17420,9 @@
                             m('.col-sm-1',
                                 m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'images'); },
-                                        checked: stimulus.media_type==='images',
-                                    }), m('span.c-indicator'), ' Images'
+                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'image'); },
+                                        checked: stimulus.media_type==='image',
+                                    }), m('span.c-indicator'), ' Image'
                                 ])),
                                 m('div', m('label.c-input.c-radio', [
                                     m('input[type=radio]', {
@@ -17457,8 +17500,10 @@
             var condition = ref.condition;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
+            var imgs = ref.imgs;
 
             var ctrl = {
+                imgs: imgs,
                 condition: condition,
                 possible_stimuli: possible_stimuli,
                 possible_responses: possible_responses,
@@ -17479,6 +17524,7 @@
                     css2use.forEach(function (css){css_data[css]= '';});
 
                     stimuli_object.push({stimulus_name:stimulus.stimulus_name,
+                                         media_type: 'text',
                                          media:'',
                                          default_times: stimulus.default_times,
                                          onset: stimulus.onset,
@@ -17532,14 +17578,23 @@
                             ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
                                 return stimuli_set.map(function(stimulus, stimulus_id) {
                                     return m('row.col-sm-12',[
-
                                         stimulus_id>0 ?  '' : m('hr'),
                                         m('.col-sm-2', stimulus.stimulus_name),
                                         m('.col-sm-3',
                                             m('label.input-group.space', [
+                                                stimulus.media_type === 'image'
+                                                ?
+                                                m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
+                                                    m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
+                                                    ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: stimulus.media === img.path},  img.path); })
+                                                ])
+                                                :
                                                 m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
                                             ])
                                         ),
+
+
+
                                         m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
                                             m('row', [
                                                 'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
@@ -17597,6 +17652,7 @@
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
+            var imgs = ref.imgs;
 
             var ctrl = {
                 num_of_conditions:0,
@@ -17623,13 +17679,14 @@
             if(possible_conditions().length===0)
                 ctrl.do_add_condition();
 
-            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses};
+            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs};
         },
         view: function view(ref){
             var ctrl = ref.ctrl;
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
+            var imgs = ref.imgs;
 
             return m('.row', [
                 m('h4.space', 'Conditions'),
@@ -17662,7 +17719,7 @@
                             ])
                         )
                     ),
-                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses})
+                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs})
                 ]}),
 
 
@@ -17685,57 +17742,96 @@
     var propEditorComponent = {
         controller: function(ref){
             var file = ref.file;
+            var study = ref.study;
 
-            var err = m.prop();
+            var ctrl = {
+                err : m.prop(),
+
+                mode : m.prop('constants'),
+                loaded : m.prop(false),
+
+                modeClass: modeClass,
+                update_mode: update_mode,
+                do_save: do_save
+
+            };
             var possible_responses = m.prop([]);
             var possible_stimuli = m.prop([]);
             var possible_conditions = m.prop([]);
-            var loaded = m.prop(false);
+            var constants = {
+                fixation : m.prop('0'),
+                iti : m.prop('0')
+
+            };
+
+            var imgs   = m.prop([]);
+
+            function modeClass(value) { return ctrl.mode() === value ? 'active' : ''; }
+            function update_mode(value) {return ctrl.mode(value); }
 
             function load() {
-                file.loaded || file.get()
-                    .catch(err)
+                return file.get()
+                    .catch(ctrl.err)
                     .then(function () {
                         var content = JSON.parse(file.content());
                         possible_responses(content.responses);
                         possible_stimuli(content.stimuli);
                         possible_conditions(content.conditions_data);
-                        loaded(true);
-                        console.log(possible_responses());
+                        constants.fixation(content.constants && content.constants.fixation ? content.constants.fixation : '0');
+                        constants.iti(content.constants && content.constants.iti ? content.constants.iti : '0');
 
-            })
-                    .then(m.redraw);
+                        imgs(study.files().filter(function (file){ return !file.isDir && ['png', 'jpg'].includes(file.type); }));
+                        ctrl.loaded(true);
+                })
+                .then(m.redraw);
 
             }
             function do_save(){
-                console.log(possible_responses());
-                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions);
+                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
+                    .then(study.get());
             }
-
             load();
-            return {do_save: do_save, loaded: loaded, possible_responses: possible_responses, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions};
+            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs, constants: constants};
         },
 
         view: function view(ref){
-            var do_save = ref.do_save;
-            var loaded = ref.loaded;
-            var possible_responses = ref.possible_responses;
-            var possible_stimuli = ref.possible_stimuli;
+            var ctrl = ref.ctrl;
             var possible_conditions = ref.possible_conditions;
+            var possible_stimuli = ref.possible_stimuli;
+            var possible_responses = ref.possible_responses;
+            var imgs = ref.imgs;
+            var constants = ref.constants;
 
-            return  !loaded()
+            return  !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('.generetor', [
-                    responses_view({possible_responses: possible_responses}),
-                    m('hr'),
-                    stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
-                    m('hr'),
-                    conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses}),
+                    m('.btn-toolbar.editor-menu', [
+                        m('.btn-group.btn-group-sm.pull-xs-left', [
+                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('constants'); },
+                                class: ctrl.modeClass('constants')},[
+                                m('strong', 'Constants')
+                            ]),
+                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('stimuli'); },
+                                class: ctrl.modeClass('stimuli')},[
+                                m('strong', 'Stimuli')
+                            ]),
+                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('conditions'); },
+                                class: ctrl.modeClass('conditions')},[
+                                m('strong', 'Conditions')
+                            ])
+
+                        ]),
+
+                    ]),
+                    ctrl.mode() !== 'constants' ? '' : responses_view({possible_responses: possible_responses}),
+                    ctrl.mode() !== 'constants' ? '' : constants_view({fixation: constants.fixation, iti: constants.iti}),
+                    ctrl.mode() !== 'stimuli' ? '' : stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
+                    ctrl.mode() !== 'conditions' ? '' : conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
                     m('.row.space.central_panel',
                         m('.col-sm-12.', [
-                            m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return do_save(); }},
+                            m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return ctrl.do_save(); }},
                                 [m('i.fa.fa-save'), '  Save']
                             )
                         ])

@@ -8,7 +8,7 @@ function url(study_id)
 }
 
 
-export let save = (study_id, responses, stimuli, conditions) => fetchJson(url(study_id), {
+export let save = (study_id, responses, stimuli, conditions, constants) => fetchJson(url(study_id), {
     method: 'put',
-    body: {responses, stimuli, conditions}
+    body: {responses, stimuli, conditions, constants}
 });

@@ -3,8 +3,9 @@ let stimuli_sets_view = args => m.component(stimuliSetsGeneratorComponent, args)
 export default stimuli_sets_view;
 
 let stimuliSetsGeneratorComponent = {
-    controller({condition, possible_stimuli, possible_responses}){
+    controller({condition, possible_stimuli, possible_responses, imgs}){
         let ctrl = {
+            imgs,
             condition,
             possible_stimuli,
             possible_responses,
@@ -25,6 +26,7 @@ let stimuliSetsGeneratorComponent = {
                 css2use.forEach(css=>{css_data[css]= ''});
 
                 stimuli_object.push({stimulus_name:stimulus.stimulus_name,
+                                     media_type: 'text',
                                      media:'',
                                      default_times: stimulus.default_times,
                                      onset: stimulus.onset,
@@ -78,14 +80,23 @@ let stimuliSetsGeneratorComponent = {
                         ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
                             return stimuli_set.map(function(stimulus, stimulus_id) {
                                 return m('row.col-sm-12',[
-
                                     stimulus_id>0 ?  '' : m('hr'),
                                     m('.col-sm-2', stimulus.stimulus_name),
                                     m('.col-sm-3',
                                         m('label.input-group.space', [
+                                            stimulus.media_type === 'image'
+                                            ?
+                                            m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
+                                                m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
+                                                ctrl.imgs().map(img=>m('option',{value:img.path, selected: stimulus.media === img.path},  img.path))
+                                            ])
+                                            :
                                             m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
                                         ])
                                     ),
+
+
+
                                     m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
                                         m('row', [
                                             'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})

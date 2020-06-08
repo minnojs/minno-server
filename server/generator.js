@@ -28,7 +28,7 @@ function get_properties(user_id, study_id) {
 }
 
 
-function save_file(user_id, study_id, responses, stimuli, conditions_data) {
+function save_file(user_id, study_id, responses, stimuli, conditions_data, constants) {
     let conditions = [];
     conditions_data.forEach(condition=>{
         let stimuli_sets = [];
@@ -41,6 +41,9 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
         });
         conditions.push({[condition.condition_name]: stimuli_sets});
     });
+
+
+    var images2preload = [];
 
 
 
@@ -59,7 +62,8 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
         css2use.map((css_prop)=>{
             css_props.push(`${css_prop}: '<%= trialData.css_${stimulus_name}.${css_prop} %>'`);
         });
-        media_props.push(`media: '<%= trialData.media_${stimulus_name} %>'`);
+
+        media_props.push(stimulus.media_type=== 'text' ? `media: '<%= trialData.media_${stimulus_name} %>'` : `media: {image :'<%= trialData.media_${stimulus_name}  %>'}`);
         if(stimulus.response)
             stimuli_props.push(`correct: '<%= trialData.correct_${stimulus_name} %>'`);
         stimuli_data.push(`\t\t\t{handle:'${stimulus.stimulus_name}', times:{${times_props.join(', ')}}, css: {${css_props.join(', ')}}, ${media_props.join(', ')}, data:{${stimuli_props.join(', ')}}}`);
@@ -82,10 +86,14 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
 
 
                     props.push(`media_${stimulus_name}: '${data.media}'`);
+
                     props.push(`css_${stimulus_name}: ${JSON.stringify(data.css_data)}`);
                     times.push({[stimulus_name]:{onset: absolute_time ? data.onset-0 : 0, duration: data.offset-data.onset}});
 
                     props.push(`times_${stimulus_name}: ${JSON.stringify({onset: data.onset-0, duration: data.offset-data.onset})}`);
+                    if(data.media_type=== 'image' && !images2preload.includes(data.media))
+                        images2preload.push(data.media);
+
                     if (data.response !=='without_response')
                         props.push(`correct_${stimulus_name}: current.answers[${data.response_key}]`);
                 });
@@ -138,8 +146,9 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
     sequence.push(`
             {
                 conditions:[
-                {type:'custom', fn: function(a, b, trial){return trial.data.stimuli_counter===${stimuli.length}}}],
-                    actions: [
+                    {type:'custom', fn: function(a, b, trial){return trial.data.stimuli_counter===${stimuli.length};}}
+                ],
+                actions: [
                         {type:'custom', fn: function(a, b, trial){trial.data.stimuli_counter = 0;}},
                         {type:'hideStim', handle:'all'}, 
                         {type:'trigger', handle:'timeout'} 
@@ -174,14 +183,20 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data) {
     return has_write_permission(user_id, study_id)
         .then(function({study_data}){
             return fs.readFile(config.base_folder+'/server/views/cognitive_task.js', 'utf8', function(err, contents) {
+
+
+                contents = contents.replace('/*#*fixation_duration*#*/', constants.fixation);
+                contents = contents.replace('/*#*iti_duration*#*/', constants.iti);
+
                 contents = contents.replace('/*#*posible_answers*#*/', posible_answers);
                 contents = contents.replace('/*#*conditions*#*/', conditions_str);
                 contents = contents.replace('/*#*stimuli*#*/', stimuli_str);
                 contents = contents.replace('/*#*sequence*#*/', sequence_str);
                 contents = contents.replace('/*#*sequencer_practice*#*/', sequencer[0].join(', \n\t\t'));
                 contents = contents.replace('/*#*sequencer_exp*#*/', sequencer[1].join(', \n\t\t'));
+                contents = contents.replace('/*#*images2preload*#*/', JSON.stringify(images2preload));
 
-                const properties = {responses, stimuli, conditions_data};
+                const properties = {responses, stimuli, conditions_data, constants};
                 fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.prop'), JSON.stringify(properties), 'utf8');
 
                 return fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.js'), contents, 'utf8')
