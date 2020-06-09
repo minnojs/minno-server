@@ -132,6 +132,7 @@ async function update_server(server_data, host, app) {
                     .then(async ()=>
                     {
 						try{
+							Server.greenlockError=false;
                         server_data_obj = {greenlock: server_data.greenlock};
 					    await Server.startupGreenlock(app,server_data.greenlock);
 						try{
@@ -142,6 +143,7 @@ async function update_server(server_data, host, app) {
 							catch(err)
 							{
 								console.log(err);
+								Server.greenlockError=true;
 								await Server.shutdownGreenlock();
 								await Server.shutdownHttps(app);
 								curConfig=await get_config();
@@ -152,6 +154,7 @@ async function update_server(server_data, host, app) {
 					catch(e)
 					{
 						console.log(e);
+						Server.greenlockError=true;
 						await Server.shutdownGreenlock();
 						await Server.shutdownHttps(app);
 						//await server.startupHttp(app);
