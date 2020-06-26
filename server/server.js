@@ -2,8 +2,11 @@ let httpServer = null;
 let httpsServer = null;
 //const Greenlock = require('greenlock-express');
 const glx=require("greenlock-express");
+const fs = require('fs-extra');
 let   glxServers=null;
 const config = require('../config');
+const Path = require('path');
+exports.greenlockError=false;
 //const configDb = require('./config_db');
 const sslChecker 			= require('ssl-checker');
 var keepAliveTimeout=config.keepAliveTimeout;
@@ -16,16 +19,41 @@ exports.startupGreenlock = async function(app, greenlock_data) {
 	await exports.shutdownHttps();	
 	await exports.shutdownHttp();
 	await exports.shutdownGreenlock();
+	let greenlockLoaded=false;
+	deleteFolderRecursive(config.base_folder+'/data/greenlock/'); //delete settings from previous uses
 	if(greenlock_data==null)
 		{
 			greenlock_data={owner_email: config.owner_email, domains:config.domains}
 		}
+  	   if(!fs.existsSync(config.base_folder+'/data/greenlock/package.json'))
+  	   {
+  		   let greenlockFileData={
+    "name": "minnoserver",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "greenlock-express": "^4.0.3"
+    }
+  }
+	   	fs.outputFileSync(config.base_folder+'/data/greenlock/package.json', JSON.stringify(greenlockFileData), function (err) {
+  if (err) return console.log(err);
+});
+	   	fs.outputFileSync(config.base_folder+'/data/greenlock/.greenlockrc', '{}', function (err) {
+  if (err) return console.log(err);
+});
+	   }
    await glx.init(() => {
-       const pkg = require('../data/greenlock/package.json');
+       const pkg = require(config.base_folder+'/data/greenlock/package.json');
        const greenlock = require('@root/greenlock').create({
          // name & version for ACME client user agent
          packageAgent: pkg.name + '/' + pkg.version,
-		  configDir: "../data/greenlock/config/greenlock.d",
+		  configDir: config.base_folder+"/data/greenlock/greenlock.d",
 
          // contact for security and critical bug notices
          maintainerEmail: greenlock_data.owner_email,
@@ -49,6 +77,10 @@ exports.startupGreenlock = async function(app, greenlock_data) {
        };
      }).ready(async function(glExpress) {
   
+         if(exports.greenlockError)
+		 {
+			 return;
+		 }
 		 await glExpress.serveApp(app);
 		 glxServers=glExpress;
 	 	let greenlockHttp=glxServers.httpServer();
@@ -59,7 +91,10 @@ exports.startupGreenlock = async function(app, greenlock_data) {
 	     if (greenlockHttps != null) {
 	         greenlockHttps.keepAliveTimeout=keepAliveTimeout;
 	 	}
-		 
+		if(exports.greenlockError)
+		{
+			await exports.shutdownGreenlock();
+		}
 		
     })  //.ready(glx => glx.serveApp(app));
 /*   
@@ -247,4 +282,16 @@ exports.startServer = async function(app,serverConfig)
 		console.log(e);
 	}
 	}	
-	
+	const deleteFolderRecursive = function(path) {
+	  if (fs.existsSync(path)) {
+	    fs.readdirSync(path).forEach((file, index) => {
+	      const curPath = Path.join(path, file);
+	      if (fs.lstatSync(curPath).isDirectory()) { // recurse
+	        deleteFolderRecursive(curPath);
+	      } else { // delete file
+	        fs.unlinkSync(curPath);
+	      }
+	    });
+	    fs.rmdirSync(path);
+	  }
+	};	
