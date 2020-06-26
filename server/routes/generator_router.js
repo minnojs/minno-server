@@ -15,16 +15,16 @@ generetorRouter
     });
 
 
-generetorRouter.route('/:study_id/generator')
+generetorRouter.route('/:study_id/generator/:file_id')
     .get(
         function(req, res){
-            return generator.get_properties(req.user_id, parseInt(req.params.study_id))
+            return generator.get_properties(req.user_id, parseInt(req.params.study_id), req.params.file_id)
                 .then(properties=>res.json(properties))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
     .put(
         function(req, res){
-            return generator.save_file(req.user_id, parseInt(req.params.study_id), req.body.responses, req.body.stimuli, req.body.conditions, req.body.constants)
+            return generator.save_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.responses, req.body.stimuli, req.body.conditions, req.body.constants)
                 .then(properties=>res.json({}))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });

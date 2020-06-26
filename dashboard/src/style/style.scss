@@ -23,12 +23,25 @@ h1 small, h2 small, h3 small, h4 small, h5 small {font-weight: 200; color: #818a
   padding-left: 2em;
   overflow-y: scroll;
   overflow-x: hidden;
-
   max-height: 100%;
-
-
-
 }
+
+.markdown{
+
+  padding-left: 2em;
+  overflow-y: scroll;
+  overflow-x: fragments;
+  overflow-wrap: break-word;
+}
+.invalid {
+  background-color: #ffeeee;
+}
+
+.invalid {
+  border: 1px solid #ff0000;
+}
+
+
 .translate-page{
   overflow: auto;
   max-height: 100%;
@@ -229,7 +242,10 @@ blockquote{
 
 .wizard { height:100%; overflow: scroll; }
 
-.md {height:110%; overflow: scroll}
+.md {display:grid;
+  //max-height: 300px;
+  height: 100%;
+   overflow: scroll;}
 
 @import "./navbar";
 @import "./loader";

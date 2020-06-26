@@ -23,12 +23,12 @@ const {get_file_content}   = require('./files');
 const ejs = require('ejs');
 
 
-function get_properties(user_id, study_id) {
-    return get_file_content(user_id, study_id, 'properties.js');
+function get_properties(user_id, study_id, file_id) {
+    return get_file_content(user_id, study_id, file_id);
 }
 
 
-function save_file(user_id, study_id, responses, stimuli, conditions_data, constants) {
+function save_file(user_id, study_id, file_id, responses, stimuli, conditions_data, constants) {
     let conditions = [];
     conditions_data.forEach(condition=>{
         let stimuli_sets = [];
@@ -43,9 +43,7 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data, const
     });
 
 
-    var images2preload = [];
-
-
+    let images2preload = [];
 
     let stimuli_data = [];
 
@@ -66,7 +64,7 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data, const
         media_props.push(stimulus.media_type=== 'text' ? `media: '<%= trialData.media_${stimulus_name} %>'` : `media: {image :'<%= trialData.media_${stimulus_name}  %>'}`);
         if(stimulus.response)
             stimuli_props.push(`correct: '<%= trialData.correct_${stimulus_name} %>'`);
-        stimuli_data.push(`\t\t\t{handle:'${stimulus.stimulus_name}', times:{${times_props.join(', ')}}, css: {${css_props.join(', ')}}, ${media_props.join(', ')}, data:{${stimuli_props.join(', ')}}}`);
+        stimuli_data.push(`{handle:'${stimulus.stimulus_name}', times:{${times_props.join(', ')}}, css: {${css_props.join(', ')}}, ${media_props.join(', ')}, data:{${stimuli_props.join(', ')}}}`);
     });
     const posible_answers = JSON.stringify(responses.filter(response=>!!response.key).map(response=>response.key));
 
@@ -185,8 +183,16 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data, const
             return fs.readFile(config.base_folder+'/server/views/cognitive_task.js', 'utf8', function(err, contents) {
 
 
-                contents = contents.replace('/*#*fixation_duration*#*/', constants.fixation);
-                contents = contents.replace('/*#*iti_duration*#*/', constants.iti);
+                contents = contents.replace('/*#*fixation_duration*#*/', constants.durations.fixation);
+                contents = contents.replace('/*#*iti_duration*#*/', constants.durations.iti);
+                contents = contents.replace('/*#*feedback_correct*#*/', constants.feedback.correct);
+                contents = contents.replace('/*#*feedback_incorrect*#*/', constants.feedback.incorrect);
+                contents = contents.replace('/*#*feedback_noresponse*#*/', constants.feedback.noresponse);
+
+
+                contents = contents.replace('/*#*instruction_welcome*#*/', constants.instructions.welcome);
+                contents = contents.replace('/*#*instruction_start*#*/', constants.instructions.start);
+                contents = contents.replace('/*#*instruction_end*#*/', constants.instructions.end);
 
                 contents = contents.replace('/*#*posible_answers*#*/', posible_answers);
                 contents = contents.replace('/*#*conditions*#*/', conditions_str);
@@ -194,17 +200,21 @@ function save_file(user_id, study_id, responses, stimuli, conditions_data, const
                 contents = contents.replace('/*#*sequence*#*/', sequence_str);
                 contents = contents.replace('/*#*sequencer_practice*#*/', sequencer[0].join(', \n\t\t'));
                 contents = contents.replace('/*#*sequencer_exp*#*/', sequencer[1].join(', \n\t\t'));
-                contents = contents.replace('/*#*images2preload*#*/', JSON.stringify(images2preload));
+                if (images2preload.length>0)
+                    contents = contents.replace('/*#*images2preload*#*/', `API.addSettings('preloadImages', [${JSON.stringify(images2preload)}])`);
+
+
+
 
                 const properties = {responses, stimuli, conditions_data, constants};
-                fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.prop'), JSON.stringify(properties), 'utf8');
-
-                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'exp.js'), contents, 'utf8')
+                fs.writeFile(path.join(config.user_folder, study_data.folder_name, file_id), JSON.stringify(properties), 'utf8');
+                const outpu_file = `${path.parse(file_id).name}.js`;
+                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, outpu_file), contents, 'utf8')
                     .then(function(){
-                        const file_url = path.join('..',config.user_folder,study_data.folder_name, 'exp.js');
+                        const file_url = path.join('..',config.user_folder,study_data.folder_name, outpu_file);
                         return studies_comp.update_modify(study_id)
                             .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name, 'exp.js'))))
-                            .then(()=>({id: 'exp.js', content: conditions, url: file_url}));
+                            .then(()=>({id: outpu_file, content: conditions, url: file_url}));
                     });
             });
 

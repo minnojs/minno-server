@@ -13318,7 +13318,7 @@
     var pathProp = function (path) { return m.prop(path.replace(/\/?$/, '/').replace(/^\//, '')); };
 
     var  createFile = function (study, name, content) {
-        study.createFile({name:name(), content:content()})
+        return study.createFile({name:name(), content:content()})
             .then(function (response) {
                 m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(response.id))));
                 return response;
@@ -13366,6 +13366,29 @@
     };
     };
 
+    var createCognitive = function (study, path) {
+        if ( path === void 0 ) path = '';
+
+        return function () {
+        var name = pathProp(path);
+
+        var content = function (){ return ''; };
+
+        messages.prompt({
+            header: 'Create cognitive experiment',
+            content: 'Please insert the experiment name:',
+            prop: name
+        }).then(function (response) {
+
+            if (response){
+                return createFile(study, m.prop(((name()) + ".js")), content)
+                .then(createFile(study, m.prop(((name()) + ".prop")), content));
+            }
+        });
+    };
+    };
+
+
     var createEmpty = function (study, path) {
         if ( path === void 0 ) path = '';
 
@@ -13382,6 +13405,7 @@
         });
     };
     };
+
 
     var deleteFiles = function (study) { return function () {
         var chosenFiles = study.getChosenFiles();
@@ -17095,7 +17119,9 @@
                 }
             });
             case 'validator': return validate$1({file: file});
-            case 'view': return m('div.blockquote.md', [
+
+
+            case 'view': return m('.markdown.md', {config: fullHeight},[
                 m.trust(marked_1(file.content()))
             ]);
 
@@ -17120,16 +17146,16 @@
         h: 'txt',
         py: 'py',
         xml: 'xml',
-        md: 'md'
+        md: 'markdown'
     };
 
-    function url(study_id)
+    function url(study_id, file_id)
     {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator");
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/generator/" + (encodeURIComponent(file_id)));
     }
 
 
-    var save$1 = function (study_id, responses, stimuli, conditions, constants) { return fetchJson(url(study_id), {
+    var save$1 = function (study_id, file_id, responses, stimuli, conditions, constants) { return fetchJson(url(study_id, file_id), {
         method: 'put',
         body: {responses: responses, stimuli: stimuli, conditions: conditions, constants: constants}
     }); };
@@ -17139,21 +17165,22 @@
 
     var responsesGeneratorComponent = {
         controller: function controller(ref){
+            var mode = ref.mode;
+            var submitted = ref.submitted;
             var possible_responses = ref.possible_responses;
 
             var ctrl = {
+                mode: mode,
+                submitted: submitted,
                 possible_responses: possible_responses,
                 update_possible_response:update_possible_response,
-                delete_possible_response:delete_possible_response,
-                focus_it: focus_it
+                delete_possible_response:delete_possible_response
             };
+
             if(possible_responses().length===0 || possible_responses().filter(function (response){ return !response.key; }).length===0) {
                 possible_responses().push({key: ''});
             }
 
-            function focus_it(element) {
-                 // setTimeout(() => element.focus());
-            }
             function update_possible_response(id, value) {
                 if(value!=='' && ctrl.possible_responses().filter(function (response){ return response.key===value; }).length>1){
                     value = '';
@@ -17178,14 +17205,14 @@
             return ctrl;
         },
         view: function view(ctrl){
-            return m('.row', [
+            return m('.row',  {style:{display: ctrl.mode()==='constants' ? 'block': 'none'}},[
                 m('h4.space', 'Possible responses'),
                 m('.row',[
                     ctrl.possible_responses().map(function(response, id) {
-                        return m('row',[
+                        return m('row', [
                             m('.col-sm-2',
-                                m('label.input-group.space', [
-                                    m('input.form-control.col-sm-1', {value: response.key, config: !response.key ? ctrl.focus_it : '', placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                m('label.input-group.space',  [
+                                    m('input.form-control.col-sm-1', {class: ctrl.submitted() && ctrl.possible_responses().filter(function (response){ return response.key!==''; }).length===0 ? 'invalid' : '', value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
                                     id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
                                 ])
                             )
@@ -17204,37 +17231,92 @@
 
     var constantsGeneratorComponent = {
         controller: function controller(ref){
-            var fixation = ref.fixation;
-            var iti = ref.iti;
+            var mode = ref.mode;
+            var constants = ref.constants;
+            var imgs = ref.imgs;
 
             var ctrl = {
-                fixation: fixation,
-                iti: iti,
-                update_duration: update_duration
+                mode: mode,
+                constants: constants,
+                imgs: imgs,
+                update_constant: update_constant
             };
 
-            function update_duration(duration, new_duration) {
-                ctrl[duration](new_duration);
+            function update_constant(type, param, value) {
+                ctrl.constants[type][param](value);
             }
 
             return ctrl;
         },
         view: function view(ctrl){
-            return m('.row', [
+            return m('.row',  {style:{display: ctrl.mode()==='constants' ? 'block': 'none'}},[
                 m('h4.space', 'Durations'),
                 m('.row',[
                     m('.col-sm-5',[
                         m('.row', [
                             m('.col-sm-2', 'Fixation'),
-                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_duration('fixation', this.value);}}))
+                            m('.col-sm-3', m('input.form-control', { type:'number', min:'0', value: ctrl.constants.durations.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_constant('durations', 'fixation', this.value);}}))
                         ]),
                         m('.row', [
                             m('.col-sm-2', 'ITI'),
-                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_duration('iti', this.value);}}))
+                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value);}}))
                         ]),
                     ]),
 
-                ])
+                ]),
+                m('h4.space', 'Instructions'),
+                m('.row',[
+                    m('.col-sm-9',[
+                        m('.row', [
+                            m('.col-sm-3', 'Beginning of experiment'),
+                            m('.col-sm-5',
+                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'welcome', this.value);}}, [
+                                    m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.welcome() === ''},  'Select image'),
+                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                    ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.welcome() === img.path},  img.path); })
+                                ])
+                            )
+                        ]),
+                        m('.row', [
+                            m('.col-sm-3', 'Ending of practice'),
+                            m('.col-sm-5',
+                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'start', this.value);}}, [
+                                    m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.start() === ''},  'Select image'),
+                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+
+                                    ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.start() === img.path},  img.path); })
+                                ])
+                            )
+                        ]),
+                        m('.row', [
+                            m('.col-sm-3', 'Ending of experiment'),
+                            m('.col-sm-5',
+                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
+                                    m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.end() === ''},  'Select image'),
+                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                    ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.end() === img.path},  img.path); })
+                                ])
+                            )
+                        ]),
+                    ]),
+                ]),
+                m('h4.space', 'Feedback'),
+                m('.row',[
+                    m('.col-sm-7',[
+                        m('.row', [
+                            m('.col-sm-2', 'Correct'),
+                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.correct(), placeholder: 'Correct', onchange:function(){ctrl.update_constant('feedback',  'correct', this.value);}}))
+                        ]),
+                        m('.row', [
+                            m('.col-sm-2', 'Incorrect'),
+                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.incorrect(), placeholder: 'Incorrect', onchange:function(){ctrl.update_constant('feedback', 'incorrect', this.value);}}))
+                        ]),
+                        m('.row', [
+                            m('.col-sm-2', 'No response'),
+                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.noresponse(), placeholder: 'No response', onchange:function(){ctrl.update_constant('feedback', 'noresponse', this.value);}}))
+                        ]),
+                    ]),
+                ]),
             ])
 
 
@@ -17246,10 +17328,12 @@
 
     var stimuliGeneratorComponent = {
         controller: function controller(ref){
+            var mode = ref.mode;
             var possible_stimuli = ref.possible_stimuli;
             var possible_conditions = ref.possible_conditions;
 
             var ctrl = {
+                mode: mode,
                 default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
                 num_of_stimuli:0,
                 possible_stimuli: possible_stimuli,
@@ -17303,8 +17387,7 @@
                                 if(add){
                                     stimulus.css2use.push(css);
                                     stimulus.css_data[css] = '';
-                                    // console.log()
-                                }   
+                                }
                                 else
                                     stimulus.css2use.splice(stimulus.css2use.findIndex(function (obj){ return obj===css; }), 1);
                             }
@@ -17357,10 +17440,10 @@
             return ctrl;
         },
         view: function view(ctrl){
-            return m('.row', [
+            return m('.row',  {style:{display: ctrl.mode()==='stimuli' ? 'block': 'none'}},[
                 m('h4.space', 'Trial properties'),
                 m('.row.col-sm-12',[
-                    m('.col-sm-1',
+                    m('.col-sm-2',
                         m('strong', 'Stimulus name')
                     ),
                     m('.col-sm-2',
@@ -17382,7 +17465,7 @@
 
                 ctrl.possible_stimuli().map(function(stimulus, id) {
                     return m('row.col-sm-12',
-                        [m('.col-sm-1',
+                        [m('.col-sm-2',
                             m('label.input-group.space', [
                                 m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
                             ])),
@@ -17623,7 +17706,7 @@
                                                 ); })
                                         ),
                                         m('.col-sm-1',
-                                            stimulus_id > 0 ? '' :
+                                            ctrl.condition.stimuli_sets.length === 1 ? '' :
                                             m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
                                                 m('i.fa.fa-close'), ' '
                                             ]))
@@ -17649,12 +17732,14 @@
 
     var conditionsGeneratorComponent = {
         controller: function controller(ref){
+            var mode = ref.mode;
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
             var imgs = ref.imgs;
 
             var ctrl = {
+                mode: mode,
                 num_of_conditions:0,
                 do_add_condition: do_add_condition,
                 update_condition_name: update_condition_name,
@@ -17675,7 +17760,6 @@
                 possible_conditions()[id].condition_name = name;
                 possible_conditions(possible_conditions());
             }
-
             if(possible_conditions().length===0)
                 ctrl.do_add_condition();
 
@@ -17688,7 +17772,7 @@
             var possible_responses = ref.possible_responses;
             var imgs = ref.imgs;
 
-            return m('.row', [
+            return m('.row',  {style:{display: ctrl.mode()==='conditions' ? 'block': 'none'}},[
                 m('h4.space', 'Conditions'),
                 m('.row.col-sm-12',[
                     m('.col-sm-2',
@@ -17737,6 +17821,35 @@
         }
     };
 
+    var createNotifications = function(){
+        var state = [];
+        return {show_success: show_success, show_danger: show_danger, view: view};
+
+        function show(value, time){
+            if ( time === void 0 ) time = 6000;
+
+            state.push(value);
+            m.redraw();
+            setTimeout(function (){state.pop(value);  m.redraw();}, time);
+        }
+
+        function show_success(value){
+            return show({value: value, type:'success'});
+        }
+
+        function show_danger(value){
+            return show({value: value, type:'danger'});
+        }
+
+
+        function view(){
+            return state.map(function (notes) { return m('.note.alert.animated.fade', {class: notes.type==='danger' ? 'alert-danger' : 'alert-success'},[
+                notes.value
+            ]); });
+
+        }
+    };
+
     var propEditor = function (args) { return m.component(propEditorComponent, args); };
 
     var propEditorComponent = {
@@ -17744,8 +17857,10 @@
             var file = ref.file;
             var study = ref.study;
 
+
             var ctrl = {
-                err : m.prop(),
+                err : m.prop([]),
+                notifications: createNotifications(),
 
                 mode : m.prop('constants'),
                 loaded : m.prop(false),
@@ -17758,44 +17873,74 @@
             var possible_responses = m.prop([]);
             var possible_stimuli = m.prop([]);
             var possible_conditions = m.prop([]);
+            var submitted = m.prop(false);
             var constants = {
-                fixation : m.prop('0'),
-                iti : m.prop('0')
-
+                durations : {
+                    fixation: m.prop('0'),
+                    iti: m.prop('0')
+                },
+                feedback:{
+                    correct : m.prop(''),
+                    incorrect : m.prop(''),
+                    noresponse : m.prop('')
+                },
+                instructions:{
+                    welcome : m.prop(''),
+                    start : m.prop(''),
+                    end : m.prop('')
+                }
             };
-
             var imgs   = m.prop([]);
 
             function modeClass(value) { return ctrl.mode() === value ? 'active' : ''; }
             function update_mode(value) {return ctrl.mode(value); }
 
             function load() {
+                console.log(file);
+                imgs(study.files().filter(function (file){ return !file.isDir && ['png', 'jpg'].includes(file.type); }));
+
                 return file.get()
                     .catch(ctrl.err)
                     .then(function () {
+
+                        if(file.content()==='')
+                            return ctrl.loaded(true);
                         var content = JSON.parse(file.content());
                         possible_responses(content.responses);
                         possible_stimuli(content.stimuli);
                         possible_conditions(content.conditions_data);
-                        constants.fixation(content.constants && content.constants.fixation ? content.constants.fixation : '0');
-                        constants.iti(content.constants && content.constants.iti ? content.constants.iti : '0');
+                        constants.durations.fixation(content.constants.durations.fixation ? content.constants.durations.fixation : '0');
+                        constants.durations.iti(content.constants.durations.iti ? content.constants.durations.iti : '0');
 
-                        imgs(study.files().filter(function (file){ return !file.isDir && ['png', 'jpg'].includes(file.type); }));
+                        constants.feedback.correct(content.constants.feedback.correct ? content.constants.feedback.correct : '');
+                        constants.feedback.incorrect(content.constants.feedback.incorrect ? content.constants.feedback.incorrect : '');
+                        constants.feedback.noresponse(content.constants.feedback.noresponse ? content.constants.feedback.noresponse : '');
+
+                        constants.instructions.welcome(content.constants.instructions.welcome ? content.constants.instructions.welcome : '');
+                        constants.instructions.start(content.constants.instructions.start ? content.constants.instructions.start : '');
+                        constants.instructions.end(content.constants.instructions.end ? content.constants.instructions.end : '');
+
                         ctrl.loaded(true);
                 })
                 .then(m.redraw);
 
             }
             function do_save(){
-                save$1(m.route.param('studyId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
-                    .then(study.get());
+                ctrl.err([]);
+                submitted(true);
+                save$1(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
+                    .then(study.get())
+                    .then(function (){ return ctrl.notifications.show_success("Experiment successfully saved"); })
+                    .then(m.redraw);
             }
             load();
-            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs, constants: constants};
+
+            return {ctrl: ctrl, submitted: submitted, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs, constants: constants};
         },
 
         view: function view(ref){
             var ctrl = ref.ctrl;
+            var submitted = ref.submitted;
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
@@ -17807,6 +17952,8 @@
                 m('.loader')
                 :
                 m('.generetor', [
+                    m('div', ctrl.notifications.view()),
+
                     m('.btn-toolbar.editor-menu', [
                         m('.btn-group.btn-group-sm.pull-xs-left', [
                             m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('constants'); },
@@ -17825,18 +17972,20 @@
                         ]),
 
                     ]),
-                    ctrl.mode() !== 'constants' ? '' : responses_view({possible_responses: possible_responses}),
-                    ctrl.mode() !== 'constants' ? '' : constants_view({fixation: constants.fixation, iti: constants.iti}),
-                    ctrl.mode() !== 'stimuli' ? '' : stimuli_view({possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
-                    ctrl.mode() !== 'conditions' ? '' : conditions_view({possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
+                    responses_view({mode: ctrl.mode, submitted: submitted, possible_responses: possible_responses}),
+                    constants_view({mode: ctrl.mode, constants: constants, imgs: imgs}),
+                    stimuli_view({mode: ctrl.mode, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
+                    conditions_view({mode: ctrl.mode, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
+
+                    ctrl.err().length === 0 ? '' : m('.row.space.alert.alert-danger', ctrl.err()),
+
                     m('.row.space.central_panel',
                         m('.col-sm-12.', [
                             m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:function (){ return ctrl.do_save(); }},
                                 [m('i.fa.fa-save'), '  Save']
-                            )
-                        ])
-                    )
+                            ),
 
+                        ])),
                 ]);
         }
     };
@@ -18133,6 +18282,8 @@
                 // @TODO: we've decided to change the exports to be dynamic: to pull the wizard hash from somewhere external
                 // this requires some sort of external configuration
                 // {icon:'fa-file-text', text:'New from template', menu: mapWizardHash(wizardHash)},
+                {icon:'fa-clock-o', text:'New cognitive experiment', action: createCognitive(study, path)},
+
                 {icon:'fa-magic', text:'New from wizard', menu: [
                     {text: 'Rating wizard', action: activateWizard("rating")}
                 ]}
@@ -20035,35 +20186,6 @@
                 ])
             ])
         ]);
-    };
-
-    var createNotifications = function(){
-        var state = [];
-        return {show_success: show_success, show_danger: show_danger, view: view};
-
-        function show(value, time){
-            if ( time === void 0 ) time = 6000;
-
-            state.push(value);
-            m.redraw();
-            setTimeout(function (){state.pop(value);  m.redraw();}, time);
-        }
-
-        function show_success(value){
-            return show({value: value, type:'success'});
-        }
-
-        function show_danger(value){
-            return show({value: value, type:'danger'});
-        }
-
-
-        function view(){
-            return state.map(function (notes) { return m('.note.alert.animated.fade', {class: notes.type==='danger' ? 'alert-danger' : 'alert-success'},[
-                notes.value
-            ]); });
-
-        }
     };
 
     var notifications= createNotifications();

@@ -126,7 +126,7 @@ let stimuliSetsGeneratorComponent = {
                                             ))
                                     ),
                                     m('.col-sm-1',
-                                        stimulus_id > 0 ? '' :
+                                        ctrl.condition.stimuli_sets.length === 1 ? '' :
                                         m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id)}}, [
                                             m('i.fa.fa-close'), ' '
                                         ]))

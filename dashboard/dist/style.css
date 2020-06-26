@@ -16,6 +16,18 @@ h1 small, h2 small, h3 small, h4 small, h5 small {
   overflow-x: hidden;
   max-height: 100%; }
 
+.markdown {
+  padding-left: 2em;
+  overflow-y: scroll;
+  overflow-x: fragments;
+  overflow-wrap: break-word; }
+
+.invalid {
+  background-color: #ffeeee; }
+
+.invalid {
+  border: 1px solid #ff0000; }
+
 .translate-page {
   overflow: auto;
   max-height: 100%; }
@@ -215,7 +227,8 @@ blockquote {
   overflow: scroll; }
 
 .md {
-  height: 110%;
+  display: grid;
+  height: 100%;
   overflow: scroll; }
 
 html, body, .dasboard-root {

@@ -2,6 +2,7 @@ import {save} from '../sidebar/fileActions';
 import ace from './ace/aceComponent';
 import observerFactory from 'utils/observer';
 import marked from 'marked';
+import fullheight from 'utils/fullHeight';
 
 import jshintOptions from './jshintOptions';
 import syntaxComponent from './ace/syntaxComponent';
@@ -58,7 +59,9 @@ const textContent = (ctrl, {file, study, observer}) => {
             }
         });
         case 'validator': return validatorComponent({file});
-        case 'view': return m('div.blockquote.md', [
+
+
+        case 'view': return m('.markdown.md', {config: fullheight},[
             m.trust(marked(file.content()))
         ]);
 
@@ -83,5 +86,5 @@ let modeMap = {
     h: 'txt',
     py: 'py',
     xml: 'xml',
-    md: 'md'
+    md: 'markdown'
 };

@@ -1,22 +1,21 @@
 define(['pipAPI'], function(APIconstructor) {
 
     var API     = new APIconstructor();
-    var global  = API.getGlobal();
     var current = API.getCurrent();
 
     var version_id      = Math.random()>0.5 ? 2 : 1;
 
     var answers     = /*#*posible_answers*#*/;
-    var images2preload = /*#*images2preload*#*/;
-    API.addSettings('preloadImages', images2preload);
+    /*#*images2preload*#*/
 
     API.addCurrent({
         version_id   : version_id,
         answers      : answers,
-        inst_welcome : 'images/inst_welcome_2c_short_'+version_id+'.jpg',
-        inst_start   : 'images/inst_start_'+version_id+'.jpg',
-        inst_bye     : 'images/inst_bye.jpg',
-
+        instructions :{
+            inst_welcome : '/*#*instruction_welcome*#*/',
+            inst_start   : '/*#*instruction_start*#*/',
+            inst_bye     : '/*#*instruction_end*#*/',
+        },
         durations: {
             fixation: /*#*fixation_duration*#*/,
             iti: /*#*iti_duration*#*/,
@@ -37,9 +36,7 @@ define(['pipAPI'], function(APIconstructor) {
         canvasBackground : '#ffffff'
     });
 
-    API.addSettings('base_url',{
-        image : global.baseURL
-    });
+
 
     /***********************************************
      // Stimuli
@@ -47,41 +44,12 @@ define(['pipAPI'], function(APIconstructor) {
 
 
     API.addStimulusSets({
-        defaultStim: [{data : {alias:'default'}, css:{color:'black','font-size':'100px'}}],
-        fixation : [{
-            inherit:'defaultStim', data:{handle:'fixation', alias:'fixation'},
-            media: '+'
-        }],
-        error : [{
-            inherit:'defaultStim', data:{handle:'error', alias:'error'},
-            media: {word: '!תשובה לא נכונה'}
-        }],
-        correct : [{
-            inherit:'defaultStim', data:{handle:'correct', alias:'correct'},
-            media: {word: '!תשובה נכונה'}
-        }],
-        timeoutmessage : [{
-            inherit:'defaultStim', data:{handle:'timeoutmessage', alias:'timeoutmessage'},
-            media: {word: 'תשובה לא זוהתה'}
-        }]
+        defaultStim    : [{css:{color:'black', 'font-size':'100px'}}],
+        fixation       : [{inherit:'defaultStim', media: '+'}],
+        error          : [{inherit:'defaultStim', media: '/*#*feedback_incorrect*#*/'}],
+        correct        : [{inherit:'defaultStim', media: '/*#*feedback_correct*#*/'}],
+        timeoutmessage : [{inherit:'defaultStim', media: '/*#*feedback_noresponse*#*/'}]
     });
-
-
-    API.addStimulusSets('inst_welcome',[
-        {inherit:'defaultStim', data:{handle: 'instructions', alias:'instructions'},
-            media:{image: current.inst_welcome}}
-    ]);
-
-
-    API.addStimulusSets('inst_start',[
-        {inherit:'defaultStim', data:{handle: 'instructions', alias:'instructions'},
-            media:{image: current.inst_start}}
-    ]);
-
-    API.addStimulusSets('inst_bye',[
-        {inherit:'defaultStim', data:{handle: 'instructions', alias:'instructions'},
-            media:{image: current.inst_bye}}
-    ]);
 
     /***********************************************
      // INSTRUCTIONS TRIAL
@@ -93,15 +61,8 @@ define(['pipAPI'], function(APIconstructor) {
         ],
         interactions: [
             {
-                conditions: [{type:'begin'}],
-                actions: [
-                    {type:'showStim',handle:'instructions'}
-                ]
-            },
-            {
                 conditions: [{type:'inputEquals',value:'space'}],
                 actions: [
-                    {type:'hideStim',handle:'All'},
                     {type:'log'},
                     {type:'endTrial'}
                 ]
@@ -112,30 +73,24 @@ define(['pipAPI'], function(APIconstructor) {
 
     API.addTrialSets('inst_welcome',{
         inherit:'insts',
-        stimuli : [
-            {inherit:'inst_welcome'}
-        ]
+        layout: [{media: {image: current.instructions.inst_welcome}}]
     });
 
     API.addTrialSets('inst_start',{
         inherit:'insts',
-        stimuli : [
-            {inherit:'inst_start'}
-        ]
+        layout: [{media: {image: current.instructions.inst_start}}]
     });
 
     API.addTrialSets('inst_bye',{
         inherit:'insts',
-        stimuli : [
-            {inherit:'inst_bye'}
-        ]
+        layout: [{media: {image: current.instructions.inst_bye}}]
     });
 
     /***********************************************
      // Main trials
      ***********************************************/
 
-    API.addTrialSets('main',[{
+    API.addTrialSets('stimulus_trial',[{
         data: {score:0},
         interactions: [
             {
@@ -177,7 +132,7 @@ define(['pipAPI'], function(APIconstructor) {
                     {type:'removeInput',handle:['All']},
                     {type:'setTrialAttr', setter:{score:1}},
                     {type:'log'},
-                    {type:'custom',fn: function(){global.current.score++;}},
+                    {type:'custom',fn: function(){current.score++;}},
                     {type:'custom', fn: function(a, b, trial){trial.data.feedback = 'correct';}},
                     {type:'hideStim', handle:['All']},
                     {type:'trigger', handle:'ITI'}
@@ -271,7 +226,8 @@ define(['pipAPI'], function(APIconstructor) {
             {inherit:'error'},
             {inherit:'correct'},
             {inherit:'timeoutmessage'},
-            {inherit:'fixation'}
+            {inherit:'fixation'},
+            /*#*stimuli*#*/
         ]
     }]);
 
@@ -280,26 +236,25 @@ define(['pipAPI'], function(APIconstructor) {
      ***********************************************/
 
     API.addTrialSets('endOfPractice',{
-        input: [
-            {handle:'end', on: 'timeout', duration: 0}
-        ],
         interactions: [
             {
                 conditions: [
-                    {type:'custom',fn: function(){return global.current.score < global.current.minScore4exp;}}
+                    {type:'begin'},
+                    {type:'custom',fn: function(){return current.score < current.minScore4exp;}}
                 ],
                 actions: [
-                    {type:'custom',fn: function(){global.current.score=0;}},
+                    {type:'custom',fn: function(){current.score=0;}},
                     {type:'goto',destination: 'previousWhere', properties: {practice:true}},
                     {type:'endTrial'}
                 ]
             },
             {
                 conditions: [
-                    {type:'custom',fn: function(){return global.current.score >= global.current.minScore4exp;}}
+                    {type:'begin'},
+                    {type:'custom',fn: function(){return current.score >= current.minScore4exp;}}
                 ],
                 actions: [
-                    {type:'custom',fn: function(){global.current.score=0;}},
+                    {type:'custom',fn: function(){current.score=0;}},
                     {type:'goto',destination: 'nextWhere', properties: {exp:true}},
                     {type:'endTrial'}
                 ]
@@ -307,14 +262,12 @@ define(['pipAPI'], function(APIconstructor) {
         ]
     });
 
+
     API.addTrialSets('startPractice',{
-        input: [
-            {handle:'end', on: 'timeout', duration: 0}
-        ],
         interactions: [
             {
                 conditions: [
-                    {type:'custom',fn: function(){return true;}}
+                    {type:'begin'}
                 ],
                 actions: [
                     {type:'endTrial'}
@@ -325,13 +278,6 @@ define(['pipAPI'], function(APIconstructor) {
 
     /*#*conditions_general*#*/
 
-    API.addTrialSet('stimulus_trial', {
-        inherit: {set:'main', merge:['stimuli']},
-        stimuli: [
-/*#*stimuli*#*/
-
-        ]
-    });
 
     /*#*conditions*#*/
     /***********************************************
@@ -340,7 +286,6 @@ define(['pipAPI'], function(APIconstructor) {
 
     API.addSequence([
         {
-            data: {practice:true},
             inherit : {set:"inst_welcome"}
         },
         {
@@ -352,11 +297,8 @@ define(['pipAPI'], function(APIconstructor) {
                 /*#*sequencer_practice*#*/
             ]
         },
+
         {
-            inherit: {set:"endOfPractice"}
-        },
-        {
-            data: {exp:true},
             inherit : {set:"inst_start" }
         },
         {

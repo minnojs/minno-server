@@ -4,17 +4,18 @@ import constants_view from "../../generator/constantsGeneratorComponent";
 
 import stimuli_view from "../../generator/stimuliGeneratorComponent";
 import conditions_view from "../../generator/conditionsGeneratorComponent";
-import classNames from 'utils/classNames';
+import {createNotifications} from 'utils/notifyComponent';
 
 export default propEditor;
-
 
 const propEditor = args => m.component(propEditorComponent, args);
 
 const propEditorComponent = {
     controller: function({file, study}){
+
         let ctrl = {
-            err : m.prop(),
+            err : m.prop([]),
+            notifications: createNotifications(),
 
             mode : m.prop('constants'),
             loaded : m.prop(false),
@@ -27,48 +28,79 @@ const propEditorComponent = {
         let possible_responses = m.prop([]);
         let possible_stimuli = m.prop([]);
         let possible_conditions = m.prop([]);
+        let submitted = m.prop(false);
         let constants = {
-            fixation : m.prop('0'),
-            iti : m.prop('0')
-
+            durations : {
+                fixation: m.prop('0'),
+                iti: m.prop('0')
+            },
+            feedback:{
+                correct : m.prop(''),
+                incorrect : m.prop(''),
+                noresponse : m.prop('')
+            },
+            instructions:{
+                welcome : m.prop(''),
+                start : m.prop(''),
+                end : m.prop('')
+            }
         };
-
         let imgs   = m.prop([]);
 
         function modeClass(value) { return ctrl.mode() === value ? 'active' : ''; }
         function update_mode(value) {return ctrl.mode(value); }
 
         function load() {
+            console.log(file);
+            imgs(study.files().filter(file=>!file.isDir && ['png', 'jpg'].includes(file.type)));
+
             return file.get()
                 .catch(ctrl.err)
                 .then(() => {
+
+                    if(file.content()==='')
+                        return ctrl.loaded(true);
                     const content = JSON.parse(file.content());
                     possible_responses(content.responses);
                     possible_stimuli(content.stimuli);
                     possible_conditions(content.conditions_data);
-                    constants.fixation(content.constants && content.constants.fixation ? content.constants.fixation : '0');
-                    constants.iti(content.constants && content.constants.iti ? content.constants.iti : '0');
+                    constants.durations.fixation(content.constants.durations.fixation ? content.constants.durations.fixation : '0');
+                    constants.durations.iti(content.constants.durations.iti ? content.constants.durations.iti : '0');
 
-                    imgs(study.files().filter(file=>!file.isDir && ['png', 'jpg'].includes(file.type)));
+                    constants.feedback.correct(content.constants.feedback.correct ? content.constants.feedback.correct : '');
+                    constants.feedback.incorrect(content.constants.feedback.incorrect ? content.constants.feedback.incorrect : '');
+                    constants.feedback.noresponse(content.constants.feedback.noresponse ? content.constants.feedback.noresponse : '');
+
+                    constants.instructions.welcome(content.constants.instructions.welcome ? content.constants.instructions.welcome : '');
+                    constants.instructions.start(content.constants.instructions.start ? content.constants.instructions.start : '');
+                    constants.instructions.end(content.constants.instructions.end ? content.constants.instructions.end : '');
+
                     ctrl.loaded(true);
             })
             .then(m.redraw);
 
         }
         function do_save(){
-            save(m.route.param('studyId'), possible_responses().filter(response=>!!response.key), possible_stimuli, possible_conditions, constants)
-                .then(study.get());
+            ctrl.err([]);
+            submitted(true);
+            save(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(response=>!!response.key), possible_stimuli, possible_conditions, constants)
+                .then(study.get())
+                .then(()=>ctrl.notifications.show_success(`Experiment successfully saved`))
+                .then(m.redraw);
         }
         load();
-        return {ctrl, possible_conditions, possible_stimuli, possible_responses, imgs, constants};
+
+        return {ctrl, submitted, possible_conditions, possible_stimuli, possible_responses, imgs, constants};
     },
 
-    view({ctrl, possible_conditions, possible_stimuli, possible_responses, imgs, constants}){
+    view({ctrl, submitted, possible_conditions, possible_stimuli, possible_responses, imgs, constants}){
         return  !ctrl.loaded()
             ?
             m('.loader')
             :
             m('.generetor', [
+                m('div', ctrl.notifications.view()),
+
                 m('.btn-toolbar.editor-menu', [
                     m('.btn-group.btn-group-sm.pull-xs-left', [
                         m('a.btn.btn-secondary', { title:'Save', onclick:()=>ctrl.update_mode('constants'),
@@ -87,18 +119,20 @@ const propEditorComponent = {
                     ]),
 
                 ]),
-                ctrl.mode() !== 'constants' ? '' : responses_view({possible_responses}),
-                ctrl.mode() !== 'constants' ? '' : constants_view({fixation: constants.fixation, iti: constants.iti}),
-                ctrl.mode() !== 'stimuli' ? '' : stimuli_view({possible_stimuli, possible_conditions}),
-                ctrl.mode() !== 'conditions' ? '' : conditions_view({possible_conditions, possible_stimuli, possible_responses, imgs}),
+                responses_view({mode: ctrl.mode, submitted, possible_responses}),
+                constants_view({mode: ctrl.mode, constants, imgs}),
+                stimuli_view({mode: ctrl.mode, possible_stimuli, possible_conditions}),
+                conditions_view({mode: ctrl.mode, possible_conditions, possible_stimuli, possible_responses, imgs}),
+
+                ctrl.err().length === 0 ? '' : m('.row.space.alert.alert-danger', ctrl.err()),
+
                 m('.row.space.central_panel',
                     m('.col-sm-12.', [
                         m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:()=>ctrl.do_save()},
                             [m('i.fa.fa-save'), '  Save']
-                        )
-                    ])
-                )
+                        ),
 
+                    ])),
             ]);
     }
 };

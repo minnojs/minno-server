@@ -3,7 +3,7 @@ import messages from 'utils/messagesComponent';
 import {launchUrl} from 'modelUrls';
 
 import {
-    createDir, createEmpty, moveFile, duplicateFile, copyFile, renameFile, downloadFile, resetFile,
+    createDir, createEmpty, createCognitive, moveFile, duplicateFile, copyFile, renameFile, downloadFile, resetFile,
     update_experiment, delete_experiment
 } from './fileActions';
 
@@ -25,6 +25,8 @@ const fileContext = (file, study, notifications) => {
             // @TODO: we've decided to change the exports to be dynamic: to pull the wizard hash from somewhere external
             // this requires some sort of external configuration
             // {icon:'fa-file-text', text:'New from template', menu: mapWizardHash(wizardHash)},
+            {icon:'fa-clock-o', text:'New cognitive experiment', action: createCognitive(study, path)},
+
             {icon:'fa-magic', text:'New from wizard', menu: [
                 {text: 'Rating wizard', action: activateWizard(`rating`)}
             ]}

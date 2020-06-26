@@ -235,7 +235,7 @@ export let save = file => () => {
 let pathProp = path => m.prop(path.replace(/\/?$/, '/').replace(/^\//, ''));
 
 export let  createFile = (study, name, content) => {
-    study.createFile({name:name(), content:content()})
+    return study.createFile({name:name(), content:content()})
         .then(response => {
             m.route(`/editor/${study.id}/file/${encodeURIComponent(response.id)}`);
             return response;
@@ -279,6 +279,25 @@ export let createDir = (study, path='') => () => {
         }));
 };
 
+export let createCognitive = (study, path = '') => () => {
+    let name = pathProp(path);
+
+    let content = ()=>'';
+
+    messages.prompt({
+        header: 'Create cognitive experiment',
+        content: 'Please insert the experiment name:',
+        prop: name
+    }).then(response => {
+
+        if (response){
+            return createFile(study, m.prop(`${name()}.js`), content)
+            .then(createFile(study, m.prop(`${name()}.prop`), content));
+        }
+    });
+};
+
+
 export let createEmpty = (study, path = '') => () => {
     let name = pathProp(path);
     let content = ()=>'';
@@ -291,6 +310,7 @@ export let createEmpty = (study, path = '') => () => {
         if (response) return createFile(study, name,content);
     });
 };
+
 
 export let deleteFiles = study => () => {
     let chosenFiles = study.getChosenFiles();

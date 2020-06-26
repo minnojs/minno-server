@@ -4,8 +4,9 @@ let stimuli_view = args => m.component(stimuliGeneratorComponent, args);
 
 
 let stimuliGeneratorComponent = {
-    controller({possible_stimuli, possible_conditions}){
+    controller({mode, possible_stimuli, possible_conditions}){
         let ctrl = {
+            mode,
             default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
             num_of_stimuli:0,
             possible_stimuli,
@@ -59,8 +60,7 @@ let stimuliGeneratorComponent = {
                             if(add){
                                 stimulus.css2use.push(css);
                                 stimulus.css_data[css] = '';
-                                // console.log()
-                            }   
+                            }
                             else
                                 stimulus.css2use.splice(stimulus.css2use.findIndex(obj=>obj===css), 1);
                         }
@@ -113,10 +113,10 @@ let stimuliGeneratorComponent = {
         return ctrl;
     },
     view(ctrl){
-        return m('.row', [
+        return m('.row',  {style:{display: ctrl.mode()==='stimuli' ? 'block': 'none'}},[
             m('h4.space', 'Trial properties'),
             m('.row.col-sm-12',[
-                m('.col-sm-1',
+                m('.col-sm-2',
                     m('strong', 'Stimulus name')
                 ),
                 m('.col-sm-2',
@@ -138,7 +138,7 @@ let stimuliGeneratorComponent = {
 
             ctrl.possible_stimuli().map(function(stimulus, id) {
                 return m('row.col-sm-12',
-                    [m('.col-sm-1',
+                    [m('.col-sm-2',
                         m('label.input-group.space', [
                             m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value)}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value)}})
                         ])),
