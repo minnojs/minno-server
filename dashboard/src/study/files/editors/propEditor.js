@@ -28,7 +28,6 @@ const propEditorComponent = {
         let possible_responses = m.prop([]);
         let possible_stimuli = m.prop([]);
         let possible_conditions = m.prop([]);
-        let submitted = m.prop(false);
         let constants = {
             durations : {
                 fixation: m.prop('0'),
@@ -84,7 +83,6 @@ const propEditorComponent = {
         }
         function do_save(){
             ctrl.err([]);
-            submitted(true);
             save(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(response=>!!response.key), possible_stimuli, possible_conditions, constants)
                 .then(study.get())
                 .then(()=>ctrl.notifications.show_success(`Experiment successfully saved`))
@@ -92,10 +90,10 @@ const propEditorComponent = {
         }
         load();
 
-        return {ctrl, submitted, possible_conditions, possible_stimuli, possible_responses, imgs, constants};
+        return {ctrl, possible_conditions, possible_stimuli, possible_responses, imgs, constants};
     },
 
-    view({ctrl, submitted, possible_conditions, possible_stimuli, possible_responses, imgs, constants}){
+    view({ctrl, possible_conditions, possible_stimuli, possible_responses, imgs, constants}){
         return  !ctrl.loaded()
             ?
             m('.loader')
@@ -120,7 +118,7 @@ const propEditorComponent = {
                     ]),
 
                 ]),
-                responses_view({mode: ctrl.mode, submitted, possible_responses}),
+                responses_view({mode: ctrl.mode, possible_responses}),
                 constants_view({mode: ctrl.mode, constants, imgs}),
                 stimuli_view({mode: ctrl.mode, possible_stimuli, possible_conditions}),
                 conditions_view({mode: ctrl.mode, possible_conditions, possible_stimuli, possible_responses, imgs}),

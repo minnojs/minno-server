@@ -17166,12 +17166,10 @@
     var responsesGeneratorComponent = {
         controller: function controller(ref){
             var mode = ref.mode;
-            var submitted = ref.submitted;
             var possible_responses = ref.possible_responses;
 
             var ctrl = {
                 mode: mode,
-                submitted: submitted,
                 possible_responses: possible_responses,
                 update_possible_response:update_possible_response,
                 delete_possible_response:delete_possible_response
@@ -17212,7 +17210,7 @@
                         return m('row', [
                             m('.col-sm-2',
                                 m('label.input-group.space',  [
-                                    m('input.form-control.col-sm-1', {class: ctrl.submitted() && ctrl.possible_responses().filter(function (response){ return response.key!==''; }).length===0 ? 'invalid' : '', value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                    m('input.form-control.col-sm-1', {value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
                                     id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
                                 ])
                             )
@@ -17877,7 +17875,6 @@
             var possible_responses = m.prop([]);
             var possible_stimuli = m.prop([]);
             var possible_conditions = m.prop([]);
-            var submitted = m.prop(false);
             var constants = {
                 durations : {
                     fixation: m.prop('0'),
@@ -17933,7 +17930,6 @@
             }
             function do_save(){
                 ctrl.err([]);
-                submitted(true);
                 save$1(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
                     .then(study.get())
                     .then(function (){ return ctrl.notifications.show_success("Experiment successfully saved"); })
@@ -17941,12 +17937,11 @@
             }
             load();
 
-            return {ctrl: ctrl, submitted: submitted, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs, constants: constants};
+            return {ctrl: ctrl, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs, constants: constants};
         },
 
         view: function view(ref){
             var ctrl = ref.ctrl;
-            var submitted = ref.submitted;
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
@@ -17977,7 +17972,7 @@
                         ]),
 
                     ]),
-                    responses_view({mode: ctrl.mode, submitted: submitted, possible_responses: possible_responses}),
+                    responses_view({mode: ctrl.mode, possible_responses: possible_responses}),
                     constants_view({mode: ctrl.mode, constants: constants, imgs: imgs}),
                     stimuli_view({mode: ctrl.mode, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
                     conditions_view({mode: ctrl.mode, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
