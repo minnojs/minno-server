@@ -52,7 +52,7 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
                         const file_url = path.join('..',config.user_folder,study_data.folder_name, output_file);
                         return studies_comp.update_modify(study_id)
                             .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name, output_file))))
-                            .then(()=>({id: outpu_file, content: contents, url: file_url}));
+                            .then(()=>({id: output_file, content: contents, url: file_url}));
                     });
             });
         });
