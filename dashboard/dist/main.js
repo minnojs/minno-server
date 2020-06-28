@@ -17261,6 +17261,10 @@
                             m('.col-sm-2', 'ITI'),
                             m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value);}}))
                         ]),
+                        m('.row', [
+                            m('.col-sm-2', 'Feedback'),
+                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value);}}))
+                        ]),
                     ]),
 
                 ]),
@@ -17272,7 +17276,7 @@
                             m('.col-sm-5',
                                 m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'welcome', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.welcome() === ''},  'Select image'),
-                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                    m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.welcome() === img.path},  img.path); })
                                 ])
                             )
@@ -17282,7 +17286,7 @@
                             m('.col-sm-5',
                                 m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'start', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.start() === ''},  'Select image'),
-                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                    m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
 
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.start() === img.path},  img.path); })
                                 ])
@@ -17293,7 +17297,7 @@
                             m('.col-sm-5',
                                 m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.end() === ''},  'Select image'),
-                                    m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                    m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.end() === img.path},  img.path); })
                                 ])
                             )
@@ -17607,7 +17611,7 @@
                     css2use.forEach(function (css){css_data[css]= '';});
 
                     stimuli_object.push({stimulus_name:stimulus.stimulus_name,
-                                         media_type: 'text',
+                                         media_type: stimulus.media_type,
                                          media:'',
                                          default_times: stimulus.default_times,
                                          onset: stimulus.onset,
@@ -17877,7 +17881,9 @@
             var constants = {
                 durations : {
                     fixation: m.prop('0'),
-                    iti: m.prop('0')
+                    iti: m.prop('0'),
+                    feedback: m.prop('0'),
+
                 },
                 feedback:{
                     correct : m.prop(''),
@@ -17911,6 +17917,7 @@
                         possible_conditions(content.conditions_data);
                         constants.durations.fixation(content.constants.durations.fixation ? content.constants.durations.fixation : '0');
                         constants.durations.iti(content.constants.durations.iti ? content.constants.durations.iti : '0');
+                        constants.durations.feedback(content.constants.durations.feedback ? content.constants.durations.feedback : '0');
 
                         constants.feedback.correct(content.constants.feedback.correct ? content.constants.feedback.correct : '');
                         constants.feedback.incorrect(content.constants.feedback.incorrect ? content.constants.feedback.incorrect : '');
@@ -17953,7 +17960,6 @@
                 :
                 m('.generetor', [
                     m('div', ctrl.notifications.view()),
-
                     m('.btn-toolbar.editor-menu', [
                         m('.btn-group.btn-group-sm.pull-xs-left', [
                             m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('constants'); },

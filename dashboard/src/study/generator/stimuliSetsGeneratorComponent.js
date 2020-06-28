@@ -26,7 +26,7 @@ let stimuliSetsGeneratorComponent = {
                 css2use.forEach(css=>{css_data[css]= ''});
 
                 stimuli_object.push({stimulus_name:stimulus.stimulus_name,
-                                     media_type: 'text',
+                                     media_type: stimulus.media_type,
                                      media:'',
                                      default_times: stimulus.default_times,
                                      onset: stimulus.onset,

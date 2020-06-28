@@ -31,6 +31,10 @@ let constantsGeneratorComponent = {
                         m('.col-sm-2', 'ITI'),
                         m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value)}}))
                     ]),
+                    m('.row', [
+                        m('.col-sm-2', 'Feedback'),
+                        m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value)}}))
+                    ]),
                 ]),
 
             ]),
@@ -42,7 +46,7 @@ let constantsGeneratorComponent = {
                         m('.col-sm-5',
                             m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'welcome', this.value);}}, [
                                 m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.welcome() === ''},  'Select image'),
-                                m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
                                 ctrl.imgs().map(img=>m('option',{value:img.path, selected: ctrl.constants.instructions.welcome() === img.path},  img.path))
                             ])
                         )
@@ -52,7 +56,7 @@ let constantsGeneratorComponent = {
                         m('.col-sm-5',
                             m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'start', this.value);}}, [
                                 m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.start() === ''},  'Select image'),
-                                m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
 
                                 ctrl.imgs().map(img=>m('option',{value:img.path, selected: ctrl.constants.instructions.start() === img.path},  img.path))
                             ])
@@ -63,7 +67,7 @@ let constantsGeneratorComponent = {
                         m('.col-sm-5',
                             m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
                                 m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.end() === ''},  'Select image'),
-                                m('option',{value:'none',  selected: ctrl.constants.instructions.start() === 'none'},  'None'),
+                                m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
                                 ctrl.imgs().map(img=>m('option',{value:img.path, selected: ctrl.constants.instructions.end() === img.path},  img.path))
                             ])
                         )

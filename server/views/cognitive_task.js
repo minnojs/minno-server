@@ -3,23 +3,16 @@ define(['pipAPI'], function(APIconstructor) {
     var API     = new APIconstructor();
     var current = API.getCurrent();
 
-    var version_id      = Math.random()>0.5 ? 2 : 1;
-
-    var answers     = /*#*posible_answers*#*/;
+    var answers     = /*#*possible_answers*#*/;
     /*#*images2preload*#*/
 
     API.addCurrent({
-        version_id   : version_id,
         answers      : answers,
-        instructions :{
-            inst_welcome : '/*#*instruction_welcome*#*/',
-            inst_start   : '/*#*instruction_start*#*/',
-            inst_bye     : '/*#*instruction_end*#*/',
-        },
+        /*#*instructions_var*#*/
         durations: {
             fixation: /*#*fixation_duration*#*/,
             iti: /*#*iti_duration*#*/,
-            feedback_duration: 500
+            feedback_duration: /*#*feedback_duration*#*/
         },
         score             : 0,
         minScore4exp      : 0
@@ -70,21 +63,9 @@ define(['pipAPI'], function(APIconstructor) {
         ]
     });
 
-
-    API.addTrialSets('inst_welcome',{
-        inherit:'insts',
-        layout: [{media: {image: current.instructions.inst_welcome}}]
-    });
-
-    API.addTrialSets('inst_start',{
-        inherit:'insts',
-        layout: [{media: {image: current.instructions.inst_start}}]
-    });
-
-    API.addTrialSets('inst_bye',{
-        inherit:'insts',
-        layout: [{media: {image: current.instructions.inst_bye}}]
-    });
+    /*#*instruction_welcome_imp*#*/
+    /*#*instruction_start_imp*#*/
+    /*#*instruction_end_imp*#*/
 
     /***********************************************
      // Main trials
@@ -117,7 +98,7 @@ define(['pipAPI'], function(APIconstructor) {
             },
 
 
-            /*#*sequence*#*/,
+            /*#*trial_sequence*#*/,
             {
                 conditions: [{type:'inputEquals', value:'targetOut'}],
                 actions: [
@@ -285,31 +266,21 @@ define(['pipAPI'], function(APIconstructor) {
      ***********************************************/
 
     API.addSequence([
-        {
-            inherit : {set:"inst_welcome"}
-        },
-        {
-            inherit : {set:"startPractice"}
-        },
+        /*#*instruction_welcome_seq*#*/
         {
             mixer: 'random',
             data: [
-                /*#*sequencer_practice*#*/
+                /*#*sequence_practice*#*/
             ]
         },
-
-        {
-            inherit : {set:"inst_start" }
-        },
+        /*#*instruction_start_seq*#*/
         {
             mixer: 'random',
             data: [
-                /*#*sequencer_exp*#*/
+                /*#*sequence_exp*#*/
             ]
         },
-        {
-            inherit : {set:"inst_bye" }
-        }
+        /*#*instruction_end_seq*#*/
     ]);
     return API.script;
 });

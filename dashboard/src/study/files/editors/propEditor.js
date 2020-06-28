@@ -32,7 +32,9 @@ const propEditorComponent = {
         let constants = {
             durations : {
                 fixation: m.prop('0'),
-                iti: m.prop('0')
+                iti: m.prop('0'),
+                feedback: m.prop('0'),
+
             },
             feedback:{
                 correct : m.prop(''),
@@ -66,6 +68,7 @@ const propEditorComponent = {
                     possible_conditions(content.conditions_data);
                     constants.durations.fixation(content.constants.durations.fixation ? content.constants.durations.fixation : '0');
                     constants.durations.iti(content.constants.durations.iti ? content.constants.durations.iti : '0');
+                    constants.durations.feedback(content.constants.durations.feedback ? content.constants.durations.feedback : '0');
 
                     constants.feedback.correct(content.constants.feedback.correct ? content.constants.feedback.correct : '');
                     constants.feedback.incorrect(content.constants.feedback.incorrect ? content.constants.feedback.incorrect : '');
@@ -100,7 +103,6 @@ const propEditorComponent = {
             :
             m('.generetor', [
                 m('div', ctrl.notifications.view()),
-
                 m('.btn-toolbar.editor-menu', [
                     m('.btn-group.btn-group-sm.pull-xs-left', [
                         m('a.btn.btn-secondary', { title:'Save', onclick:()=>ctrl.update_mode('constants'),
