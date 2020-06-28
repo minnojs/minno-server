@@ -46,12 +46,12 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
 
                 const properties = {responses, stimuli, conditions_data, constants};
                 fs.writeFile(path.join(config.user_folder, study_data.folder_name, file_id), JSON.stringify(properties), 'utf8');
-                const outpu_file = `${path.parse(file_id).name}.js`;
-                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, outpu_file), contents, 'utf8')
+                const output_file = `${path.parse(file_id).name}.js`;
+                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, output_file), contents, 'utf8')
                     .then(function(){
-                        const file_url = path.join('..',config.user_folder,study_data.folder_name, outpu_file);
+                        const file_url = path.join('..',config.user_folder,study_data.folder_name, output_file);
                         return studies_comp.update_modify(study_id)
-                            .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name, 'exp.js'))))
+                            .then(dropbox.upload_users_file(user_id, study_id, path.resolve(path.join(config.user_folder,study_data.folder_name, output_file))))
                             .then(()=>({id: outpu_file, content: contents, url: file_url}));
                     });
             });

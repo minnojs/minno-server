@@ -53,7 +53,6 @@ const propEditorComponent = {
         function update_mode(value) {return ctrl.mode(value); }
 
         function load() {
-            console.log(file);
             imgs(study.files().filter(file=>!file.isDir && ['png', 'jpg'].includes(file.type)));
 
             return file.get()
