@@ -226,11 +226,6 @@ blockquote {
   height: 100%;
   overflow: scroll; }
 
-.md {
-  display: grid;
-  height: 100%;
-  overflow: scroll; }
-
 html, body, .dasboard-root {
   height: 100%; }
 

@@ -17121,7 +17121,7 @@
             case 'validator': return validate$1({file: file});
 
 
-            case 'view': return m('.markdown.md', {config: fullHeight},[
+            case 'view': return m('.markdown', {config: fullHeight},[
                 m.trust(marked_1(file.content()))
             ]);
 

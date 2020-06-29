@@ -61,7 +61,7 @@ const textContent = (ctrl, {file, study, observer}) => {
         case 'validator': return validatorComponent({file});
 
 
-        case 'view': return m('.markdown.md', {config: fullheight},[
+        case 'view': return m('.markdown', {config: fullheight},[
             m.trust(marked(file.content()))
         ]);
 
