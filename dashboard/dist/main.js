@@ -17295,7 +17295,7 @@
                             m('.col-sm-5',
                                 m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.end() === ''},  'Select image'),
-                                    m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
+                                    m('option',{value:'None',  selected: ctrl.constants.instructions.end() === 'None'},  'None'),
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.end() === img.path},  img.path); })
                                 ])
                             )
