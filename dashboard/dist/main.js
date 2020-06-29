@@ -13060,7 +13060,10 @@
             var loaded = m.prop(false);
             var error = m.prop(null);
             load_studies()
+
+
                 .then(function (response) { return studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())); })
+
                 .catch(error)
                 .then(loaded.bind(null, true))
                 .then(m.redraw);
@@ -13077,13 +13080,12 @@
             return m('div', [
             loaded() ? '' : m('.loader'),
             error() ? m('.alert.alert-warning', error().message): '',
-
             loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
 
             m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
                 m('option',{value:'', disabled: true}, 'Select Study'),
                 studies()
-                    .filter(function (study) { return !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
+                    .filter(function (study) { return study.permission!=='deleted' && !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
                     .map(function (study) { return m('option',{value:study.id, selected: new_study_id() === study.id}, study.name); })
             ])
         ]);

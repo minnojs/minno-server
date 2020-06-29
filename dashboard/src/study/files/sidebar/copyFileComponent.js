@@ -8,7 +8,10 @@ let copyFileComponent = {
         let loaded = m.prop(false);
         let error = m.prop(null);
         load_studies()
+
+
             .then(response => studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())))
+
             .catch(error)
             .then(loaded.bind(null, true))
             .then(m.redraw);
@@ -17,13 +20,12 @@ let copyFileComponent = {
     view: ({studies, study_id, new_study_id, new_study_name, loaded, error}) => m('div', [
         loaded() ? '' : m('.loader'),
         error() ? m('.alert.alert-warning', error().message): '',
-
         loaded() && !studies().length ? m('.alert.alert-info', 'You have no studies yet') : '',
 
         m('select.form-control', {value:new_study_id(), onchange: e => update_study_details(e, new_study_id, new_study_name)}, [
             m('option',{value:'', disabled: true}, 'Select Study'),
             studies()
-                .filter(study => !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id())
+                .filter(study => study.permission!=='deleted' && !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id())
                 .map(study => m('option',{value:study.id, selected: new_study_id() === study.id}, study.name))
         ])
     ])
