@@ -12933,14 +12933,14 @@
     function dirNode(dir, dirs, newPath){
         var children = dirs[dir.path.replace(/\/?$/, '/')]; // optionally add a backslash at the end
         return m('li', [
-            m('i.fa.fa-fw', {
+            m('i.fa.fa-fw.link', {
                 onclick: function () { return dir.isOpen(!dir.isOpen()); },
                 class: classNames({
                     'fa-caret-right' : children && !dir.isOpen(),
                     'fa-caret-down': children && dir.isOpen()
                 })
             }),
-            m('span', {onclick: function () { return newPath(dir.path); }}, [
+            m('span.link', {onclick: function () { return newPath(dir.path); }}, [
                 m('i.fa.fa-folder-o.m-r-1'),
                 dirName(dir.name)
             ]),
@@ -13377,8 +13377,8 @@
         var content = function (){ return ''; };
 
         messages.prompt({
-            header: 'Create cognitive experiment',
-            content: 'Please insert the experiment name:',
+            header: 'Create cognitive task',
+            content: 'Please insert task name:',
             prop: name
         }).then(function (response) {
 
@@ -18284,11 +18284,12 @@
                 // @TODO: we've decided to change the exports to be dynamic: to pull the wizard hash from somewhere external
                 // this requires some sort of external configuration
                 // {icon:'fa-file-text', text:'New from template', menu: mapWizardHash(wizardHash)},
-                {icon:'fa-clock-o', text:'New cognitive experiment', action: createCognitive(study, path)},
 
-                {icon:'fa-magic', text:'New from wizard', menu: [
-                    {text: 'Rating wizard', action: activateWizard("rating")}
-                ]}
+                {icon:'fa-magic', text:'Wizard', menu: [
+                    {text: 'Rating wizard', action: activateWizard("rating")},
+                    {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
+
+                    ]}
             ]);
         }
         var version_id = study.versions.length? study.versions[study.versions.length-1].id : '';

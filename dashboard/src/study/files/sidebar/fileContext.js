@@ -25,11 +25,12 @@ const fileContext = (file, study, notifications) => {
             // @TODO: we've decided to change the exports to be dynamic: to pull the wizard hash from somewhere external
             // this requires some sort of external configuration
             // {icon:'fa-file-text', text:'New from template', menu: mapWizardHash(wizardHash)},
-            {icon:'fa-clock-o', text:'New cognitive experiment', action: createCognitive(study, path)},
 
-            {icon:'fa-magic', text:'New from wizard', menu: [
-                {text: 'Rating wizard', action: activateWizard(`rating`)}
-            ]}
+            {icon:'fa-magic', text:'Wizard', menu: [
+                {text: 'Rating wizard', action: activateWizard(`rating`)},
+                {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
+
+                ]}
         ]);
     }
     let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';

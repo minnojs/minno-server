@@ -10,6 +10,9 @@ h1 small, h2 small, h3 small, h4 small, h5 small {
 .deploy, .sharing, .generetor, .downloadAccess, .StudyChangeRequest, .StudyRemoval, .downloads, .statistics, .pool, .tags-page, .translate-page, .sharing-page {
   padding-top: 1em; }
 
+.link {
+  cursor: pointer; }
+
 .generetor {
   padding-left: 2em;
   overflow-y: scroll;

@@ -285,8 +285,8 @@ export let createCognitive = (study, path = '') => () => {
     let content = ()=>'';
 
     messages.prompt({
-        header: 'Create cognitive experiment',
-        content: 'Please insert the experiment name:',
+        header: 'Create cognitive task',
+        content: 'Please insert task name:',
         prop: name
     }).then(response => {
 

@@ -39,14 +39,14 @@ const component = {
 function dirNode(dir, dirs, newPath){
     const children = dirs[dir.path.replace(/\/?$/, '/')]; // optionally add a backslash at the end
     return m('li', [
-        m('i.fa.fa-fw', {
+        m('i.fa.fa-fw.link', {
             onclick: () => dir.isOpen(!dir.isOpen()),
             class: classNames({
                 'fa-caret-right' : children && !dir.isOpen(),
                 'fa-caret-down': children && dir.isOpen()
             })
         }),
-        m('span', {onclick: () => newPath(dir.path)}, [
+        m('span.link', {onclick: () => newPath(dir.path)}, [
             m('i.fa.fa-folder-o.m-r-1'),
             dirName(dir.name)
         ]),
