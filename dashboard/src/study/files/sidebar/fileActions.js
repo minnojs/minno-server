@@ -283,13 +283,11 @@ export let createCognitive = (study, path = '') => () => {
     let name = pathProp(path);
 
     let content = ()=>'';
-
     messages.prompt({
         header: 'Create cognitive task',
         content: 'Please insert task name:',
         prop: name
     }).then(response => {
-
         if (response){
             return createFile(study, m.prop(`${name()}.js`), content)
             .then(createFile(study, m.prop(`${name()}.prop`), content));

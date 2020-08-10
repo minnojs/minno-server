@@ -22,7 +22,6 @@ studiesRouter.route('')
         function(req,res){
             return studies.get_studies(req.user_id)
                 .then(studies_data=>res.json({studies:studies_data}));
-
         })
     .post(function(req,res)
     {

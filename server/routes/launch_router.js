@@ -20,8 +20,6 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
         .catch(displayErrorPage(res));
 });
 
-
-
 router.get('/view_play/:link_id/:file_id',function(req, res){
     const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 

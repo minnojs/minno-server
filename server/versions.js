@@ -22,16 +22,18 @@ function insert_new_version(user_id, study_id, version, state, update_url) {
     .then(function({study_data}) {
         // fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
 
-        const version_id = generate_id(study_id, version, state);
+        let version_id = generate_id(study_id, version, state);
+        fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.user_folder, `${study_data.folder_name}-${version}`));
 
-        if (update_url==='update') return push_new_version(study_id, version, state, version_id);
-        if (update_url==='keep') return push_new_version(study_id, version, state, versions[versions.length-1].id);
-
-        const versions = study_data.versions.filter(version=>version.state==='Published');
-        return push_new_version(study_id, version, state, versions[versions.length-1].id)
-            .then(function({}){
-            });
-
+        if (update_url==='reuse'){
+            const versions = study_data.versions.filter(version=>version.state==='Published');
+            version_id = versions[versions.length-1].id;
+        }
+        if (update_url==='keep'){
+            const versions = study_data.versions;
+            version_id = versions[versions.length-1].id;
+        }
+        return push_new_version(study_id, version, state, version_id);
     });
 }
 
@@ -63,23 +65,31 @@ function restore_version(user_id, study_id, version_id) {
 function push_new_version(study_id, version, state, version_id){
     return connection.then(function (db) {
         const studies = db.collection('studies');
-        return studies.updateOne({_id: study_id}, {
-            $push: {
-                versions: {
-                    id: version_id,
-                    version: version,
-                    state: state
-                }
-            },
-            $set: {locked: true}
-        })
-        .then(function (user_result) {
-            if (!user_result)
-                return Promise.reject();
-            return Promise.resolve({id: version_id,
-                version: version,
-                state: state});
-        });
+        return studies.findOne({_id: study_id})
+            .then(study=>{
+                return studies.updateOne({_id: study_id, versions: { $elemMatch: {id:study.versions[study.versions.length-1].id}}},
+                    {$set: {'versions.$.invalid': true}}
+                );
+            })
+            .then(()=>
+                studies.updateOne({_id: study_id}, {
+                    $push: {
+                        versions: {
+                            id: version_id,
+                            version: version,
+                            state: state
+                        }
+                    },
+                    $set: {locked: true}
+                })
+                .then(function (user_result) {
+                    if (!user_result)
+                        return Promise.reject();
+                    return Promise.resolve({id: version_id,
+                        version: version,
+                        state: state});
+                })
+            );
     });
 }
 

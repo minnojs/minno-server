@@ -19,7 +19,6 @@ const connection    = Promise.resolve(require('mongoose').connection);
 
 const ejs = require('ejs');
 
-
 function walk(server_url, folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
     const file_path = full_path.slice(path.join(config.user_folder,base_path).length+1);
@@ -58,10 +57,11 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
     }
 }
 
-function get_study_files(user_id, study_id, server_url) {
+function get_study_files(user_id, study_id, server_url, version_id='') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
-        return walk(server_url, study_data.folder_name, study_data.experiments)
+        const folder_path = !version_id ? study_data.folder_name : `${study_data.folder_name}-${version_id}`;
+        return walk(server_url, folder_path, study_data.experiments)
         .then(files => {
             const study_user = study_data.users.find(user=>user.user_id===user_id);
             return {
@@ -76,7 +76,7 @@ function get_study_files(user_id, study_id, server_url) {
                 permission: study_user ? study_user.permission :'read only',
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
                 files: files.files,
-                base_url: urljoin(server_url, 'users', study_data.folder_name)
+                base_url: urljoin(server_url, 'users', folder_path)
             };
         });
     });
@@ -116,13 +116,14 @@ function update_file(user_id, study_id, file_id, content) {
     });
 }
 
-function get_file_content(user_id, study_id, file_id) {
+function get_file_content(user_id, study_id, file_id, version_id = '') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data}){
         file_id = urlencode.decode(file_id);
+        const folder_path = !version_id ? study_data.folder_name : `${study_data.folder_name}-${version_id}`;
 
-        return fs.readFile(path.join(config.user_folder,study_data.folder_name,file_id), 'utf8')
-        .then((content)=>({id: file_id, content}));
+        return fs.readFile(path.join(config.user_folder, folder_path, file_id), 'utf8')
+        .then(content=>({id: file_id, content}));
     });
 }
 

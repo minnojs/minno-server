@@ -45,14 +45,17 @@ function get_experiment_url (req) {
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
                 return users_comp.user_info(exp_data.users[0].id)
                     .then(function(){
-                        const last_version = exp_data.versions ? exp_data.versions[exp_data.versions.length-1] : '';
-                        if(last_version.id !== req.params.version_id)
+                        const version_data = exp_data.versions.filter(version=>version.id===req.params.version_id && !version.invalid)[0];
+                        if (!version_data)
                             return Promise.reject({status:400, message:'Error: Wrong version'});
-
+                        const version_name = version_data.version;
+                        let version_folder = `${exp_data.folder_name}-${version_name}`;
+                        if(exp_data.versions.length===1)
+                            version_folder = exp_data.folder_name;
                         const exp       = exp_data.experiments.filter(exp => exp.id===req.params.exp_id);
-                        const url       = urljoin(config.relative_path, 'users', exp_data.folder_name, exp[0].file_id);
-                        const base_url  = urljoin(config.relative_path, 'users', exp_data.folder_name,'/');
-                        const path      = join(config.user_folder,  exp_data.folder_name,exp[0].file_id);
+                        const url       = urljoin(config.relative_path, 'users', version_folder, exp[0].file_id);
+                        const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
+                        const path      = join(config.user_folder,  version_folder, exp[0].file_id);
 
                         return counters.findOneAndUpdate({_id:'session_id'},
                             {'$inc': {'seq': 1}},
@@ -60,7 +63,7 @@ function get_experiment_url (req) {
                             .then(function(counter_data){
                                 const session_id = counter_data.value.seq;
                                 return {
-                                    version_data: last_version,
+                                    version_data: version_data,
                                     exp_id:req.params.exp_id,
                                     descriptive_id: exp[0].descriptive_id,
                                     session_id,

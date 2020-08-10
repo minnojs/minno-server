@@ -12375,6 +12375,8 @@
         apiUrl: function apiUrl(){
             if(this.viewStudy)
                 return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
+            if (this.version_id)
+                return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
             return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
         },
 
@@ -12538,14 +12540,46 @@
 
             return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + path);
         },
+        apiVersionURL: function apiVersionURL(path, version){
+            if ( path === void 0 ) path = '';
 
+            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version + "/" + path);
+        },
+
+        get4version: function get4version(version){
+            var this$1 = this;
+
+            return fetchJson(this.apiVersionURL('', version))
+                .then(function (study) {
+                    this$1.version = version;
+                    var files = this$1.parseFiles(study.files);
+                    this$1.loaded = true;
+
+                    this$1.isReadonly = true;
+                    this$1.istemplate = study.is_template;
+                    this$1.is_locked = true;
+                    this$1.is_published = study.is_published;
+                    this$1.is_public = study.is_public;
+                    this$1.has_data_permission = false;
+                    this$1.description = study.description;
+
+                    this$1.name = study.study_name;
+                    this$1.type = study.type || 'minno02';
+                    this$1.base_url = study.base_url;
+                    this$1.versions = study.versions ? study.versions : [];
+                    this$1.files(files);
+                    this$1.sort();
+                })
+                .catch(function (reason) {
+                    this$1.error = true;
+                    return Promise.reject(reason); // do not swallow error
+                });
+        },
         get: function get(){
             var this$1 = this;
 
-
             return fetchJson(this.apiURL())
                 .then(function (study) {
-
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
                     this$1.isReadonly = study.is_readonly;
@@ -12567,21 +12601,21 @@
                     this$1.error = true;
                     return Promise.reject(reason); // do not swallow error
                 });
-
-
         },
 
         parseFiles: function parseFiles(files){
             var study = this;
-
             return ensureArray(files)
                 .map(fileFactory)
                 .map(spreadFile)
                 .reduce(flattenDeep, [])
-                .map(assignStudyId);
+                .map(assignStudyId)
+                .map(assignVersionId);
 
             function ensureArray(arr){ return arr || []; }
             function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
+            function assignVersionId(file){ return Object.assign(file, {version_id: study.version}); }
+
             function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
 
             // create an array including file and all its children
@@ -13042,9 +13076,9 @@
         method: 'post'
     }); };
 
-    var publish_study = function (study_id, publish, update_url) { return fetchJson(get_publish_url(study_id), {
+    var publish_study = function (study_id, version_name, publish, update_url) { return fetchJson(get_publish_url(study_id), {
         method: 'post',
-        body: {publish: publish, update_url: update_url}
+        body: {version_name: version_name, publish: publish, update_url: update_url}
     }); };
 
     var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
@@ -13375,13 +13409,11 @@
         var name = pathProp(path);
 
         var content = function (){ return ''; };
-
         messages.prompt({
             header: 'Create cognitive task',
             content: 'Please insert task name:',
             prop: name
         }).then(function (response) {
-
             if (response){
                 return createFile(study, m.prop(((name()) + ".js")), content)
                 .then(createFile(study, m.prop(((name()) + ".prop")), content));
@@ -18037,7 +18069,6 @@
             var id = m.route.param('fileId');
             var file = study.getFile(id);
             var editor = file && editors[file.type] || unknownComponent;
-
             return m('div', {config:fullHeight}, [
                 file
                     ? editor({file: file, study: study,  settings: args.settings, key:file.id})
@@ -18272,7 +18303,6 @@
 
     var fileContext = function (file, study, notifications) {
         // console.log(notifications);
-
         var path = !file ? '/' : file.isDir ? file.path : file.basePath;
         var isReadonly = study.isReadonly;
         var menu = [];
@@ -18288,12 +18318,12 @@
                 {icon:'fa-magic', text:'Wizard', menu: [
                     {text: 'Rating wizard', action: activateWizard("rating")},
                     {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
-
-                    ]}
+                ]}
             ]);
         }
         var version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-
+        if (study.version)
+            version_id = study.versions.filter(function (version){ return version.version === study.version; })[0].id;
 
         // Allows to use as a button without a specific file
         if (file) {
@@ -18522,11 +18552,12 @@
             var hasChildren = !!(file.isDir && file.files && file.files.length);
             return m('li.file-node',
                 {
+
                     key: file.id,
                     class: classNames({
                         open : vm.isOpen()
                     }),
-                    onclick: file.isDir ? toggleOpen(vm) : select(file),
+                    onclick: file.isDir ? toggleOpen(vm) : select(file, study),
                     oncontextmenu: fileContext(file, study, notifications),
                     config: file.isDir ? uploadConfig({onchange:uploadFiles(file.path, study)}) : null
                 },
@@ -18584,11 +18615,16 @@
     }; };
 
     // select specific file and display it
-    var select = function (file) { return function (e) {
+    var select = function (file, study) { return function (e) {
         e.stopPropagation();
         e.preventDefault();
-        if (file.viewStudy) m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
-        else m.route(("/editor/" + (file.studyId) + "/file/" + (encodeURIComponent(file.id))));
+        if (study.version)
+            m.route(("/editor/" + (file.studyId) + "/" + (study.version) + "/file/" + (encodeURIComponent(file.id))));
+        else
+            if (file.viewStudy)
+                m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
+            else
+                m.route(("/editor/" + (file.studyId) + "/file/" + (encodeURIComponent(file.id))));
         m.redraw.strategy('diff'); // make sure that the route change is diffed as opposed to redraws
     }; };
 
@@ -18676,7 +18712,7 @@
 
 
                 m('a.no-decoration', {href:("/editor/" + (study.id)), config:m.route},
-                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), study.name])
+                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("(" + (study.version) + ")")))])
             ]),
             study.isUploading
                 ? m('div', [
@@ -19686,6 +19722,267 @@
         body: {is_public: is_public}
     }); };
 
+    function sharing_dialog (args) { return m.component(sharing_dialog$1, args); }
+    // export default collaborationComponent;
+
+    var sharing_dialog$1 = {
+        controller: function controller(ref){
+            var study_id = ref.study_id;
+            var close = ref.close;
+
+            var ctrl = {
+                users:m.prop(),
+                is_public:m.prop(),
+
+                link:m.prop(''),
+                study_name:m.prop(),
+                user_name:m.prop(''),
+                permission:m.prop('can edit'),
+                data_permission:m.prop('visible'),
+                loaded:false,
+                col_error:m.prop(''),
+                pub_error:m.prop(''),
+                share_error:m.prop(''),
+                remove: remove,
+                do_update_permission: do_update_permission,
+                do_add_collaboration: do_add_collaboration,
+                do_add_link: do_add_link,
+                do_revoke_link: do_revoke_link,
+                do_make_public: do_make_public
+            };
+
+            function load() {
+                get_collaborations(study_id)
+                    .then(function (response) {ctrl.users(response.users);
+                        ctrl.is_public(response.is_public);
+                        ctrl.study_name(response.study_name);
+                        ctrl.link(response.link);
+                        ctrl.loaded = true;})
+                    .catch(function (error) {
+                        ctrl.col_error(error.message);
+                    }).then(m.redraw);
+
+            }
+            function remove(user_id){
+                messages.confirm({header:'Delete collaboration', content:'Are you sure?'})
+                    .then(function (response) {
+                        if (response)
+                            remove_collaboration(m.route.param('studyId'), user_id)
+                                .then(function (){
+                                    load();
+                                })
+                                .catch(function (error) {
+                                    ctrl.col_error(error.message);
+                                })
+                                .then(m.redraw);
+                    });
+            }
+
+            function do_update_permission(collaborator_id, ref){
+                var permission = ref.permission;
+                var data_permission = ref.data_permission;
+
+                update_permission(m.route.param('studyId'), collaborator_id, {permission: permission, data_permission: data_permission})
+                    .then(function (){ return load(); })
+                    .then(m.redraw);
+            }
+
+            function check_permission(ctrl){
+                return ctrl.data_permission(ctrl.permission() === 'invisible' ? 'visible' : ctrl.data_permission());
+            }
+
+            function do_add_collaboration()
+            {
+                messages.confirm({
+                    header:'Add a Collaborator',
+                    content: m.component({view: function () { return m('p', [
+                        m('p', 'Enter collaborator\'s user name:'),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$2, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+
+                        m('p.space', 'Select user\'s study file access:'),
+                        m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
+                            m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Edit'),
+                            m('option',{value:'read only', selected: ctrl.permission() === 'read only'}, 'Read only'),
+                            m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'No access'),
+
+                        ]),
+                        m('p.space', 'Select data visibility:'),
+                        m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
+                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Full'),
+                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'No access')
+                        ]),
+                        m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
+                    ]); }})
+                })
+                .then(function (response) {
+                    if (response){
+
+                        if(!ctrl.user_name())
+                        {
+                            ctrl.col_error('ERROR: user name is missing');
+                            return do_add_collaboration();
+
+                        }
+                        add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
+                            .then(function (){
+                                ctrl.col_error('');
+                                load();
+                            })
+                            .catch(function (error) {
+                                ctrl.col_error(error.message);
+                                do_add_collaboration();
+                            })
+                            .then(m.redraw);
+                    }
+                });
+            }
+
+            function do_add_link() {
+                add_link(m.route.param('studyId'))
+                    .then(function (response) {ctrl.link(response.link);})
+                    .catch(function (error) {
+                        ctrl.col_error(error.message);
+                    }).then(m.redraw);
+            }
+
+            function do_revoke_link() {
+                revoke_link(m.route.param('studyId'))
+                    .then(function () {ctrl.link('');})
+                    .catch(function (error) {
+                        ctrl.col_error(error.message);
+                    }).then(m.redraw);
+            }
+
+            function do_make_public(is_public){
+                messages.confirm({okText: ['Yes, make ', is_public ? 'public' : 'private'], cancelText: ['No, keep ', is_public ? 'private' : 'public' ], header:'Are you sure?', content:m('p', [m('p', is_public
+                    ?
+                    'Making the study public will allow everyone to view the files. It will NOT allow others to modify the study or its files.'
+                    :
+                    'Making the study private will hide its files from everyone but you.'),
+                m('span', {class: ctrl.pub_error()? 'alert alert-danger' : ''}, ctrl.pub_error())])})
+                    .then(function (response) {
+                        if (response) make_pulic(m.route.param('studyId'), is_public)
+                            .then(function (){
+                                ctrl.pub_error('');
+                                load();
+                            })
+                            .catch(function (error) {
+                                ctrl.pub_error(error.message);
+                                do_make_public(is_public);
+                            })
+                            .then(m.redraw);
+                    });
+
+            }
+            load();
+            return {ctrl: ctrl, close: close};
+        },
+        view: function view(ref){
+            var ctrl = ref.ctrl;
+            var close = ref.close;
+
+            return  !ctrl.loaded
+                ?
+                m('.loader')
+                :
+                m('.container.sharing-page', [
+                    m('.row',[
+                        m('.col-sm-7', [
+                            m('h3', [ctrl.study_name(), ' (Sharing Settings)'])
+                        ]),
+                        m('.col-sm-5', [
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_collaboration}, [
+                                m('i.fa.fa-plus'), '  Add a new collaborator'
+                            ]),
+                            m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])
+                        ])
+                    ]),
+
+                    m('.row.row-centered.space', [
+                        m('th.col-xs-7', 'User name'),
+                        m('th.col-xs-3', 'Permission'),
+                        m('th.col-xs-2', 'Remove')
+                    ]),
+
+
+                    ctrl.users().map(function (user) { return m('.row.space', [
+                            m('hr'),
+                            m('.col-xs-6',
+                                [user.user_name, user.status ? (" (" + (user.status) + ")") : '']
+                            ),
+                            m('.col-xs-4',[
+                                m('.row.row-centered', [
+                                    m('.col-xs-5',  'files'),
+                                    m('.col-xs-5', 'data'),
+                                ]),
+                                m('.row', [
+                                    m('.col-xs-5',
+                                        m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
+                                            m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
+                                            m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
+                                            m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
+                                        ])),
+                                    m('.col-xs-5',
+                                        m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
+                                            m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
+                                            m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
+                                        ])),
+                                ])
+                            ]),
+                            m('.col-xs-2',
+                                m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove')
+                            )
+
+                        ]); }),
+                    /**********/
+                    m('.row.space',
+                        m('.col-sm-12', [
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
+                                [m('i.fa.fa-plus'), '  Create / Re-create public link']
+                            ),
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_revoke_link},
+                                [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
+                            ),
+                            m('label.input-group.space',[
+                                m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                            ])
+                        ])
+                    ),
+
+                m('.text-xs-right.btn-toolbar',[
+                    m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close')
+                ])
+
+                ]);
+        }
+    };
+
+    var focus_it$2 = function (element, isInitialized) {
+        if (!isInitialized) setTimeout(function () { return element.focus(); });};
+
+    function getAbsoluteUrl$1(url) {
+        var a = document.createElement('a');
+        a.href=url;
+        return a.href;
+    }
+
+    function copy$1(text){
+        return new Promise(function (resolve, reject) {
+            var input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+            } catch(err){
+                reject(err);
+            }
+
+            input.parentNode.removeChild(input);
+        });
+    }
+
     var do_create = function (type, studies) {
         var study_name = m.prop('');
         var description = m.prop('');
@@ -19703,7 +20000,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$2})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$3})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -19770,6 +20067,18 @@
             .then(m.redraw);
     }; };
 
+
+
+
+    var do_sharing = function (study) { return function (e) {
+        e.preventDefault();
+        var study_id = study.id;
+        var versions = study.versions;
+        var close = messages.close;
+        messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
+            .then(m.redraw);
+    }; };
+
     var do_restore$1 = function (study) { return function (e) {
         e.preventDefault();
         var study_id = study.id;
@@ -19823,7 +20132,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$2, onchange: m.withAttr('value', study_description)}),
+                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$3, onchange: m.withAttr('value', study_description)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -19851,7 +20160,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('input.form-control',  {config: focus_it$2, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control',  {config: focus_it$3, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -19885,7 +20194,7 @@
         var ask = function () { return messages.confirm({
             header:'New Name',
             content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$2,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$3,value: study_name(), onchange: m.withAttr('value', study_name)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])
         }).then(function (response) { return response && duplicate(); }); };
@@ -19979,7 +20288,7 @@
         ask();
     }; };
 
-    var focus_it$2 = function (element, isInitialized) {
+    var focus_it$3 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var do_copy_url = function (study) { return copyUrl(study.base_url); };
@@ -19996,24 +20305,25 @@
     var not = function (fn) { return function (study) { return !fn(study); }; };
 
     var settings = {
+        'properties': [],
         'tags':[],
         'data':[],
         'stat':[],
         // 'restore':[],
-        'delete':[],
-        'rename':[],
-        'description':[],
-        'duplicate':[],
-        'publish':[],
-        'unpublish':[],
-        'lock':[],
-        'unlock':[],
+        // 'delete':[],
+        // 'rename':[],
+        // 'description':[],
+        // 'duplicate':[],
+        // 'publish':[],
+        // 'unpublish':[],
+        // 'lock':[],
+        // 'unlock':[],
         // 'deploy':[],
         // 'studyChangeRequest':[],
         // 'studyRemoval':[],
-        'sharing':[],
-        'public':[],
-        'private':[],
+        // 'sharing':[],
+        // 'public':[],
+        // 'private':[],
         // 'unpublic':[],
         'copyUrl':[]
     };
@@ -20061,6 +20371,12 @@
                 display: [can_edit, not(is_locked)],
                 onmousedown: update_study_description,
                 class: 'fa-comment'
+            }},
+        properties: {text: 'Properties',
+            config: {
+                display: [not(is_view)],
+                href: "/properties/",
+                class: 'fa-gear'
             }},
         duplicate: {text: 'Duplicate study',
             config: {
@@ -20130,7 +20446,9 @@
         sharing: {text: 'Sharing',
             config: {
                 display: [can_edit],
-                href: "/sharing/",
+                // href: `/sharing/`,
+                onmousedown: do_sharing,
+
                 class: 'fa-user-plus'
             }},
         copyUrl: {text: 'Copy Base URL',
@@ -20168,10 +20486,15 @@
         var readonly = study.isReadonly;
         return m('.sidebar-buttons.btn-toolbar', [
 
+
             m('.btn-group.btn-group-sm', [
-                dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
-                    draw_menu(study, notifications)
-                ]})
+                m('a.btn.btn-secondary.btn-sm', {onclick: function (){ return m.route(("/properties/" + (study.id))); }, title: "Study properties"}, [
+                    m('i.fa.fa-gear')
+                ]),
+
+                // dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
+                //     draw_menu(study, notifications)
+                // ]})
             ]),
             m('.btn-group.btn-group-sm', [
                 m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [
@@ -20276,14 +20599,22 @@
     var study;
     var editorLayoutComponent = {
         controller: function (){
+            var version = m.route.param('version_id');
             var id = m.route.param('studyId');
             if (!study || (study.id !== id)){
                 study = studyFactory(id);
-
+                !version
+                ?
                 study
                     .get()
                     .catch(function (err){ return study.err = err.message; })
+                    .then(m.redraw)
+                :
+                study
+                    .get4version(version)
+                    .catch(function (err){ return study.err = err.message; })
                     .then(m.redraw);
+
             }
 
             var ctrl = {study: study, onunload: onunload};
@@ -20735,7 +21066,7 @@
                                 ])
                             ]),
                             m('.col-sm-4', [
-                                m('input.form-control', {placeholder: 'Search...', config: focus_it$3, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                                m('input.form-control', {placeholder: 'Search...', config: focus_it$4, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
 
@@ -20842,7 +21173,7 @@
         }
     }
 
-    var focus_it$3 = function (element, isInitialized) {
+    var focus_it$4 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var deploy_url = baseUrl + "/deploy_list";
@@ -21575,7 +21906,7 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
-                                        config: focus_it$4,
+                                        config: focus_it$5,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
@@ -21631,7 +21962,7 @@
         };
     }
 
-    var focus_it$4 = function (element, isInitialized) {
+    var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function users_url()
@@ -23033,250 +23364,261 @@
         };
     }
 
+    function formatDate$1(date_str){
+        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
+    }
+
     var collaborationComponent$1 = {
         controller: function controller(){
             var ctrl = {
+                study_name:m.prop(),
+                description:m.prop(),
                 users:m.prop(),
                 is_public:m.prop(),
-
                 link:m.prop(''),
-                study_name:m.prop(),
                 user_name:m.prop(''),
                 permission:m.prop('can edit'),
                 data_permission:m.prop('visible'),
-                loaded:false,
+                loaded:m.prop(false),
                 col_error:m.prop(''),
                 pub_error:m.prop(''),
                 share_error:m.prop(''),
-                remove: remove,
-                do_update_permission: do_update_permission,
-                do_add_collaboration: do_add_collaboration,
-                do_add_link: do_add_link,
-                do_revoke_link: do_revoke_link,
-                do_make_public: do_make_public
+                study: study,
+                save: save,
+                lock: lock,
+                show_sharing: show_sharing,
+                show_duplicate: show_duplicate,
+                show_publish: show_publish
             };
-
-            function load() {
-                get_collaborations(m.route.param('studyId'))
-                    .then(function (response) {ctrl.users(response.users);
-                        ctrl.is_public(response.is_public);
-                        ctrl.study_name(response.study_name);
-                        ctrl.link(response.link);
-                        ctrl.loaded = true;})
-                    .catch(function (error) {
-                        ctrl.col_error(error.message);
-                    }).then(m.redraw);
-
+            function save(){
+                if (ctrl.study.name!==ctrl.study_name())
+                    rename_study(m.route.param('studyId'), ctrl.study_name());
+                if (ctrl.study.description!==ctrl.description())
+                    update_study(m.route.param('studyId'), {description:ctrl.description()});
             }
-            function remove(user_id){
-                messages.confirm({header:'Delete collaboration', content:'Are you sure?'})
-                    .then(function (response) {
-                        if (response)
-                            remove_collaboration(m.route.param('studyId'), user_id)
-                                .then(function (){
-                                    load();
-                                })
-                                .catch(function (error) {
-                                    ctrl.col_error(error.message);
-                                })
-                                .then(m.redraw);
-                    });
-            }
-
-            function do_update_permission(collaborator_id, ref){
-                var permission = ref.permission;
-                var data_permission = ref.data_permission;
-
-                update_permission(m.route.param('studyId'), collaborator_id, {permission: permission, data_permission: data_permission})
-                    .then(function (){ return load(); })
+            function lock(){
+                return lock_study(ctrl.study.id, !ctrl.study.is_locked)
+                    .then(function () { return ctrl.study.is_locked = !ctrl.study.is_locked; })
                     .then(m.redraw);
             }
 
-            function check_permission(ctrl){
-                return ctrl.data_permission(ctrl.permission() === 'invisible' ? 'visible' : ctrl.data_permission());
+            function show_sharing() {
+                var study_id = ctrl.study.id;
+                var close = messages.close;
+                messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
+                    .then(m.redraw);
             }
 
-            function do_add_collaboration()
-            {
-                messages.confirm({
-                    header:'Add a Collaborator',
-                    content: m.component({view: function () { return m('p', [
-                        m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$5, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+            function show_publish(){
+                var error = m.prop('');
+                var update_url = m.prop('update');
+                var version_name = m.prop('');
+                var ask = function () { return messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Unpublish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Unpublish' : 'Publish', ' the study?'],
+                    content:m('p',
+                        [m('p', ctrl.study.is_published
+                            ?
+                            'The launch URL participants used to run the study will be removed. Participants using this link will see an error page. Use it if you completed running the study, or if you want to pause the study and prevent participants from taking it for a while. You will be able to publish the study again, if you want.'
+                            :
+                            [
+                                m('p', 'This will create a link that participants can use to launch the study.'),
+                                m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
+                                m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
+                                m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
+                                m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it$6,value: version_name(), onchange: m.withAttr('value', version_name)}),
+                                m('.input-group.space', [
 
-                        m('p.space', 'Select user\'s study file access:'),
-                        m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
-                            m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Edit'),
-                            m('option',{value:'read only', selected: ctrl.permission() === 'read only'}, 'Read only'),
-                            m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'No access'),
-
-                        ]),
-                        m('p.space', 'Select data visibility:'),
-                        m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
-                            m('option',{value:'visible', selected: ctrl.data_permission() === 'visible' }, 'Full'),
-                            m('option',{value:'invisible', disabled: ctrl.permission() === 'invisible', selected: ctrl.data_permission() === 'invisible'}, 'No access')
-                        ]),
-                        m('p', {class: ctrl.col_error()? 'alert alert-danger' : ''}, ctrl.col_error())
-                    ]); }})
+                                    m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
+                                        m('option', {value:'update', selected:true}, 'Update the launch URL'),
+                                        m('option', {value:'keep'}, 'Keep the launch URL'),
+                                        ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
+                                    ])
+                            ])
+                            ]),
+                            !error() ? '' : m('p.alert.alert-danger', error())])
                 })
-                .then(function (response) {
-                    if (response){
 
-                        if(!ctrl.user_name())
-                        {
-                            ctrl.col_error('ERROR: user name is missing');
-                            return do_add_collaboration();
+                    .then(function (response) { return response && publish(); }); };
 
-                        }
-                        add_collaboration(m.route.param('studyId'), ctrl.user_name, ctrl.permission, ctrl.data_permission)
-                            .then(function (){
-                                ctrl.col_error('');
-                                load();
-                            })
-                            .catch(function (error) {
-                                ctrl.col_error(error.message);
-                                do_add_collaboration();
-                            })
-                            .then(m.redraw);
-                    }
-                });
+                var publish= function () { return publish_study(ctrl.study.id, !ctrl.study.is_published, update_url)
+                    .then(function (res){ return ctrl.study.versions.push(res); })
+                    .then(ctrl.study.is_published = !ctrl.study.is_published)
+                    // .then(()=>notifications.show_success(`'${ctrl.study.name}' ${ctrl.study.is_published ? 'published' : 'unpublished'} successfully`))
+                    .then(ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
+
+                    .catch(function (e) {
+                        error(e.message);
+                        ask();
+                    })
+                    .then(m.redraw); };
+                ask();
             }
 
-            function do_add_link() {
-                add_link(m.route.param('studyId'))
-                    .then(function (response) {ctrl.link(response.link);})
-                    .catch(function (error) {
-                        ctrl.col_error(error.message);
-                    }).then(m.redraw);
+
+            function show_duplicate(){
+                var study_name = m.prop(ctrl.study.name);
+                var error = m.prop('');
+
+                var ask = function () { return messages.confirm({
+                    header:'New Name',
+                    content: m('div', [
+                        m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$6,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        !error() ? '' : m('p.alert.alert-danger', error())
+                    ])
+                }).then(function (response) { return response && duplicate(); }); };
+
+                var duplicate= function () { return duplicate_study(ctrl.study.id, study_name)
+                    .then(function (response) { return m.route( ("/editor/" + (response.study_id))); })
+                    .then(m.redraw)
+                    .catch(function (e) {
+                        error(e.message);
+                        ask();
+                    }); };
+                ask();
             }
 
-            function do_revoke_link() {
-                revoke_link(m.route.param('studyId'))
-                    .then(function () {ctrl.link('');})
-                    .catch(function (error) {
-                        ctrl.col_error(error.message);
-                    }).then(m.redraw);
-            }
-
-            function do_make_public(is_public){
-                messages.confirm({okText: ['Yes, make ', is_public ? 'public' : 'private'], cancelText: ['No, keep ', is_public ? 'private' : 'public' ], header:'Are you sure?', content:m('p', [m('p', is_public
-                    ?
-                    'Making the study public will allow everyone to view the files. It will NOT allow others to modify the study or its files.'
-                    :
-                    'Making the study private will hide its files from everyone but you.'),
-                m('span', {class: ctrl.pub_error()? 'alert alert-danger' : ''}, ctrl.pub_error())])})
-                    .then(function (response) {
-                        if (response) make_pulic(m.route.param('studyId'), is_public)
-                            .then(function (){
-                                ctrl.pub_error('');
-                                load();
-                            })
-                            .catch(function (error) {
-                                ctrl.pub_error(error.message);
-                                do_make_public(is_public);
-                            })
-                            .then(m.redraw);
-                    });
-
+            var study;
+            function load() {
+                ctrl.study = studyFactory(m.route.param('studyId'));
+                    return ctrl.study.get()
+                        .catch(function (err) { return study.err = err.message; })
+                        .then(function (){
+                            ctrl.study_name(ctrl.study.name);
+                            ctrl.description(ctrl.study.description);
+                            ctrl.loaded(true);
+                        })
+                        .then(m.redraw);
             }
             load();
+
             return ctrl;
         },
         view: function view(ctrl){
-            return  !ctrl.loaded
+            return  !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('.container.sharing-page', [
                     m('.row',[
-                        m('.col-sm-7', [
-                            m('h3', [ctrl.study_name(), ' (Sharing Settings)'])
-                        ]),
-                        m('.col-sm-5', [
-                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_collaboration}, [
-                                m('i.fa.fa-plus'), '  Add a new collaborator'
-                            ]),
-                            m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])
+                        m('.col-sm-12', [
+                            m('h3', [ctrl.study_name(), ': properties'])
                         ])
                     ]),
-                    m('table', {class:'table table-striped table-hover'}, [
-                        m('thead', [
-                            m('tr', [
-                                m('th', 'User name'),
-                                m('th',  'Permission'),
-                                m('th',  ' Remove')
-                            ])
-                        ]),
-                        m('tbody', [
-                            ctrl.users().map(function (user) { return m('tr', [
-                                m('td', [user.user_name, user.status ? (" (" + (user.status) + ")") : '']),
-                                m('td.form-group', [
-                                    m('.row.row-centered', [
-                                        m('.col-xs-4',  'files'),
-                                        m('.col-xs-4', 'data'),
-                                    ]),
-                                    m('.row', [
-                                        m('.col-xs-4',
-                                            m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
-                                                m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
-                                                m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                                m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
-                                            ])),
-                                        m('.col-xs-4',
-                                            m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
-                                                m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
-                                                m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
-                                            ])),
-                                    ])
-                                ]),
-                                m('td', m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
-                            ]); })
+                    m('.row.space',
+                        m('.col-sm-2.space',  m('strong', 'Study name:')),
+                        m('.col-sm-10',
+                        m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
+                    ),
+                    m('.row.space',
+                        m('.col-sm-2.space',  m('strong', 'Description:')),
+                        m('.col-sm-10',
+                            m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
+                    ),
 
-                        ]),
-                          m('.row.space',
-                            m('.col-sm-12', [
-                                m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
-                                    [m('i.fa.fa-plus'), '  Create / Re-create public link']
-                                ),
-                                m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_revoke_link},
-                                    [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
-                                ),
-                                m('label.input-group.space',[
-                                    m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
-                                    m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
-                                ])
-                            ])
+
+                    m('.row.space',
+                        m('.col-sm-12.space',
+                            m('.text-xs-right.btn-toolbar',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save')
+                            )
                         )
+                    ),
+                    m('.row.space',
+                        m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id)));}}, 'View files'))
 
-                    ])
+
+                ),
+
+
+                    ctrl.study.versions.length === 1 ? ''
+                    :[
+                        m('.row.space',
+                            m('.col-sm-12.space',  m('h4', 'Previous published versions'))
+                        ),
+                    ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).map(function (version, id){ return id==0 && ctrl.study.versions.length === 1 ? '' :
+
+                        m('.row',
+                            ctrl.study.versions.length===id+1 ? '' : [
+                                m('.col-sm-3.space',  ("(" + (formatDate$1(version.version)) + ")")),
+                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'View')),
+                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'Active'))
+                            ]
+                        ); }
+                    )],
+                    m('.row.space',
+                        m('.col-sm-5.space.text-xs-right',
+                            m('button.btn.btn-secondary', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus-circle'), ' Develop a new version']))
+                    ),
+
+
+                    m('.row.space',
+                        m('.col-sm-2.space',  m('h4', 'Actions'))
+                    ),
+
+                    m('.row.frame.space',
+                        m('.col-sm-12', [
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                    m('strong', 'Duplicate study'),
+                                    m('.small', 'This will allows you to...')
+                                ]),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate}, 'Duplicate')
+                                )
+                            ),
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                    m('strong', 'Share study'),
+                                    m('.small', 'This will allows you to...')
+                                ]),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
+                                )
+                            ),
+
+                        ])
+                    ),
+
+                    m('.row.space',
+                        m('.col-sm-12',  m('h4', 'Danger zone'))
+
+                    ),
+
+                    m('.row.danger_zone.space',
+                        m('.col-sm-12', [
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                        m('strong', 'Publish study'),
+                                    ]),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Unpublish' : 'Publish')
+                                )
+                            ),
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                    m('strong', 'Lock study'),
+                                    m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
+                                    m('.small', 'However, if the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
+                                ]),
+
+                                m('.col-sm-1.space',
+                                    m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
+                                )
+                            ),
+                            m('.row.space',
+                                m('.col-sm-11.space',  m('strong', 'Delete study')),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.save}, 'Delete')
+                                )
+                            ),
+                        ])
+                    )
+
                 ]);
         }
     };
 
-    var focus_it$5 = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
-
-    function getAbsoluteUrl$1(url) {
-        var a = document.createElement('a');
-        a.href=url;
-        return a.href;
-    }
-
-    function copy$1(text){
-        return new Promise(function (resolve, reject) {
-            var input = document.createElement('input');
-            input.value = text;
-            document.body.appendChild(input);
-            input.select();
-            try {
-                document.execCommand('copy');
-            } catch(err){
-                reject(err);
-            }
-
-            input.parentNode.removeChild(input);
-        });
-    }
 
     // it makes sense to use this for cotnrast:
     // https://24ways.org/2010/calculating-color-contrast/
@@ -23295,7 +23637,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$7, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -23358,7 +23700,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$6 = function (element, isInitialized) {
+    var focus_it$7 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
@@ -23763,13 +24105,18 @@
         '/view/:code/:resource/:fileId': editorLayoutComponent$1,
 
 
+
         '/editor/:studyId': editorLayoutComponent,
+        '/editor/:studyId/:version_id': editorLayoutComponent,
         '/editor/:studyId/:resource/:fileId': editorLayoutComponent,
+        '/editor/:studyId/:version_id/:resource/:fileId': editorLayoutComponent,
+
         '/pool': poolComponent,
         '/pool/history': poolComponent$1,
         '/downloads': downloadsComponent,
         '/downloadsAccess': downloadsAccessComponent,
-        '/sharing/:studyId': collaborationComponent$1
+        '/sharing/:studyId': sharing_dialog,
+        '/properties/:studyId': collaborationComponent$1,
 
     };
 

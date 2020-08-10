@@ -9,12 +9,40 @@ const studyPrototype = {
     apiURL(path = ''){
         return `${baseUrl}/files/${encodeURIComponent(this.id)}${path}`;
     },
+    apiVersionURL(path = '', version){
+        return `${baseUrl}/files/${encodeURIComponent(this.id)}/version/${version}/${path}`;
+    },
 
+    get4version(version){
+        return fetchJson(this.apiVersionURL('', version))
+            .then(study => {
+                this.version = version;
+                const files = this.parseFiles(study.files);
+                this.loaded = true;
+
+                this.isReadonly = true;
+                this.istemplate = study.is_template;
+                this.is_locked = true;
+                this.is_published = study.is_published;
+                this.is_public = study.is_public;
+                this.has_data_permission = false;
+                this.description = study.description;
+
+                this.name = study.study_name;
+                this.type = study.type || 'minno02';
+                this.base_url = study.base_url;
+                this.versions = study.versions ? study.versions : [];
+                this.files(files);
+                this.sort();
+            })
+            .catch(reason => {
+                this.error = true;
+                return Promise.reject(reason); // do not swallow error
+            });
+    },
     get(){
-
         return fetchJson(this.apiURL())
             .then(study => {
-
                 const files = this.parseFiles(study.files);
                 this.loaded = true;
                 this.isReadonly = study.is_readonly;
@@ -36,21 +64,21 @@ const studyPrototype = {
                 this.error = true;
                 return Promise.reject(reason); // do not swallow error
             });
-
-
     },
 
     parseFiles(files){
         const study = this;
-
         return ensureArray(files)
             .map(fileFactory)
             .map(spreadFile)
             .reduce(flattenDeep, [])
-            .map(assignStudyId);
+            .map(assignStudyId)
+            .map(assignVersionId);
 
         function ensureArray(arr){ return arr || []; }
         function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
+        function assignVersionId(file){ return Object.assign(file, {version_id: study.version}); }
+
         function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
 
         // create an array including file and all its children

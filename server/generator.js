@@ -1,11 +1,7 @@
 const config = require('../config');
-
-
-
 const fs           = require('fs-extra');
 const path         = require('path');
 const dropbox      = require('./dropbox');
-
 const studies_comp = require('./studies');
 const {has_write_permission} = studies_comp;
 const {get_file_content}   = require('./files');
@@ -14,7 +10,6 @@ const {get_file_content}   = require('./files');
 function get_properties(user_id, study_id, file_id) {
     return get_file_content(user_id, study_id, file_id);
 }
-
 
 function save_file(user_id, study_id, file_id, responses, stimuli, conditions_data, constants) {
     let conditions = [];
@@ -34,8 +29,6 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
     return has_write_permission(user_id, study_id)
         .then(function({study_data}){
             return fs.readFile(config.base_folder+'/server/views/cognitive_task.js', 'utf8', function(err, contents) {
-
-
                 contents = write_possible_answers(contents, responses);
                 contents = write_constants(contents, constants);
                 contents = write_instructions(contents, constants.instructions);

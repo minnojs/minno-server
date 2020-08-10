@@ -62,16 +62,8 @@ app.use(Fingerprint({
         Fingerprint.useragent,
         Fingerprint.acceptHeaders,
         Fingerprint.geoip
-
-        // Additional parameters
-        /*function(next) {
-            // ...do something...
-            next(null,{
-            'param1':'value1'
-            })
-        },*/
     ]
-}))
+}));
 
 app.use(session({secret: config.session_secret,
     resave: true,
@@ -127,7 +119,6 @@ basePathRouter.route('/download').get(
 
 basePathRouter.use('/view_files' ,view_router);
 
-
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
 
@@ -136,6 +127,7 @@ basePathRouter.use(connections_router);
 basePathRouter.use(messages_router);
 basePathRouter.use(settings_router);
 basePathRouter.use('/files', files_router);
+
 basePathRouter.use('/tags', tags_router);
 
 basePathRouter.use('/studies' ,studies_router);

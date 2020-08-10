@@ -14,11 +14,12 @@ let nodeComponent = {
         const hasChildren = !!(file.isDir && file.files && file.files.length);
         return m('li.file-node',
             {
+
                 key: file.id,
                 class: classNames({
                     open : vm.isOpen()
                 }),
-                onclick: file.isDir ? toggleOpen(vm) : select(file),
+                onclick: file.isDir ? toggleOpen(vm) : select(file, study),
                 oncontextmenu: fileContext(file, study, notifications),
                 config: file.isDir ? uploadConfig({onchange:uploadFiles(file.path, study)}) : null
             },
@@ -76,11 +77,16 @@ const toggleOpen = vm => e => {
 };
 
 // select specific file and display it
-const select = (file) => e => {
+const select = (file, study) => e => {
     e.stopPropagation();
     e.preventDefault();
-    if (file.viewStudy) m.route(`/view/${m.route.param('code')}/file/${encodeURIComponent(file.id)}`);
-    else m.route(`/editor/${file.studyId}/file/${encodeURIComponent(file.id)}`);
+    if (study.version)
+        m.route(`/editor/${file.studyId}/${study.version}/file/${encodeURIComponent(file.id)}`);
+    else
+        if (file.viewStudy)
+            m.route(`/view/${m.route.param('code')}/file/${encodeURIComponent(file.id)}`);
+        else
+            m.route(`/editor/${file.studyId}/file/${encodeURIComponent(file.id)}`);
     m.redraw.strategy('diff'); // make sure that the route change is diffed as opposed to redraws
 };
 

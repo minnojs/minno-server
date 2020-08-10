@@ -1,11 +1,13 @@
+export default args => m.component(sharing_dialog, args);
+
 import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
 import messages from 'utils/messagesComponent';
 import {copyUrl} from 'utils/copyUrl';
 
-export default collaborationComponent;
+// export default collaborationComponent;
 
-let collaborationComponent = {
-    controller(){
+let sharing_dialog = {
+    controller({study_id, close}){
         let ctrl = {
             users:m.prop(),
             is_public:m.prop(),
@@ -28,7 +30,7 @@ let collaborationComponent = {
         };
 
         function load() {
-            get_collaborations(m.route.param('studyId'))
+            get_collaborations(study_id)
                 .then(response =>{ctrl.users(response.users);
                     ctrl.is_public(response.is_public);
                     ctrl.study_name(response.study_name);
@@ -149,9 +151,9 @@ let collaborationComponent = {
 
         }
         load();
-        return ctrl;
+        return {ctrl, close};
     },
-    view(ctrl){
+    view({ctrl, close}){
         return  !ctrl.loaded
             ?
             m('.loader')
@@ -168,56 +170,64 @@ let collaborationComponent = {
                         m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])
                     ])
                 ]),
-                m('table', {class:'table table-striped table-hover'}, [
-                    m('thead', [
-                        m('tr', [
-                            m('th', 'User name'),
-                            m('th',  'Permission'),
-                            m('th',  ' Remove')
-                        ])
-                    ]),
-                    m('tbody', [
-                        ctrl.users().map(user => m('tr', [
-                            m('td', [user.user_name, user.status ? ` (${user.status})` : '']),
-                            m('td.form-group', [
-                                m('.row.row-centered', [
-                                    m('.col-xs-4',  'files'),
-                                    m('.col-xs-4', 'data'),
-                                ]),
-                                m('.row', [
-                                    m('.col-xs-4',
-                                        m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
-                                            m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
-                                            m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
-                                            m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
-                                        ])),
-                                    m('.col-xs-4',
-                                        m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
-                                            m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
-                                            m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
-                                        ])),
-                                ])
+
+                m('.row.row-centered.space', [
+                    m('th.col-xs-7', 'User name'),
+                    m('th.col-xs-3', 'Permission'),
+                    m('th.col-xs-2', 'Remove')
+                ]),
+
+
+                ctrl.users().map(user =>
+                    m('.row.space', [
+                        m('hr'),
+                        m('.col-xs-6',
+                            [user.user_name, user.status ? ` (${user.status})` : '']
+                        ),
+                        m('.col-xs-4',[
+                            m('.row.row-centered', [
+                                m('.col-xs-5',  'files'),
+                                m('.col-xs-5', 'data'),
                             ]),
-                            m('td', m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove'))
-                        ]))
-
-                    ]),
-                      m('.row.space',
-                        m('.col-sm-12', [
-                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
-                                [m('i.fa.fa-plus'), '  Create / Re-create public link']
-                            ),
-                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_revoke_link},
-                                [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
-                            ),
-                            m('label.input-group.space',[
-                                m('.input-group-addon', {onclick: function() {copy(getAbsoluteUrl(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
-                                m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                            m('.row', [
+                                m('.col-xs-5',
+                                    m('select.form-control', {value:user.permission, onchange : function(){ctrl.do_update_permission(user.user_id, {permission: this.value});  }}, [
+                                        m('option',{value:'can edit', selected: user.permission === 'can edit'},  'Edit'),
+                                        m('option',{value:'read only', selected: user.permission === 'read only'}, 'Read only'),
+                                        m('option',{value:'invisible', selected: user.permission === 'invisible'}, 'No access')
+                                    ])),
+                                m('.col-xs-5',
+                                    m('select.form-control', {value:user.data_permission, onchange : function(){ctrl.do_update_permission(user.user_id, {data_permission: this.value});  }}, [
+                                        m('option',{value:'visible', selected: user.data_permission === 'visible'}, 'Full'),
+                                        m('option',{value:'invisible', selected: user.data_permission === 'invisible'}, 'No access')
+                                    ])),
                             ])
-                        ])
-                    )
+                        ]),
+                        m('.col-xs-2',
+                            m('button.btn.btn-danger', {onclick:function() {ctrl.remove(user.user_id);}}, 'Remove')
+                        )
 
-                ])
+                    ])),
+                /**********/
+                m('.row.space',
+                    m('.col-sm-12', [
+                        m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
+                            [m('i.fa.fa-plus'), '  Create / Re-create public link']
+                        ),
+                        m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_revoke_link},
+                            [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
+                        ),
+                        m('label.input-group.space',[
+                            m('.input-group-addon', {onclick: function() {copy(getAbsoluteUrl(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                            m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                        ])
+                    ])
+                ),
+
+            m('.text-xs-right.btn-toolbar',[
+                m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close')
+            ])
+
             ]);
     }
 };

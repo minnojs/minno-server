@@ -1,4 +1,4 @@
-import {update_study_description, do_delete, do_duplicate, do_rename, do_tags, do_data, do_stat, do_restore, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
+import {update_study_description, do_delete, do_sharing, do_duplicate, do_rename, do_tags, do_data, do_stat, do_restore, do_lock, do_publish, do_copy_url, do_make_public} from './studyActions';
 
 const can_edit = study => !study.isReadonly && study.permission !== 'read only';
 const can_see_data = study => study.has_data_permission;
@@ -12,24 +12,25 @@ const is_public = study => study.is_public;
 const not = fn => study => !fn(study);
 
 const settings = {
+    'properties': [],
     'tags':[],
     'data':[],
     'stat':[],
     // 'restore':[],
-    'delete':[],
-    'rename':[],
-    'description':[],
-    'duplicate':[],
-    'publish':[],
-    'unpublish':[],
-    'lock':[],
-    'unlock':[],
+    // 'delete':[],
+    // 'rename':[],
+    // 'description':[],
+    // 'duplicate':[],
+    // 'publish':[],
+    // 'unpublish':[],
+    // 'lock':[],
+    // 'unlock':[],
     // 'deploy':[],
     // 'studyChangeRequest':[],
     // 'studyRemoval':[],
-    'sharing':[],
-    'public':[],
-    'private':[],
+    // 'sharing':[],
+    // 'public':[],
+    // 'private':[],
     // 'unpublic':[],
     'copyUrl':[]
 };
@@ -77,6 +78,12 @@ const settings_hash = {
             display: [can_edit, not(is_locked)],
             onmousedown: update_study_description,
             class: 'fa-comment'
+        }},
+    properties: {text: 'Properties',
+        config: {
+            display: [not(is_view)],
+            href: `/properties/`,
+            class: 'fa-gear'
         }},
     duplicate: {text: 'Duplicate study',
         config: {
@@ -146,7 +153,9 @@ const settings_hash = {
     sharing: {text: 'Sharing',
         config: {
             display: [can_edit],
-            href: `/sharing/`,
+            // href: `/sharing/`,
+            onmousedown: do_sharing,
+
             class: 'fa-user-plus'
         }},
     copyUrl: {text: 'Copy Base URL',

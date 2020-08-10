@@ -47,7 +47,6 @@ let fileEditorComponent = {
         const id = m.route.param('fileId');
         const file = study.getFile(id);
         let editor = file && editors[file.type] || unknowEditor;
-
         return m('div', {config:fullHeight}, [
             file
                 ? editor({file, study,  settings: args.settings, key:file.id})

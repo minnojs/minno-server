@@ -35,6 +35,8 @@ import resetPasswordComponent from './settings/resetPasswordComponent';
 import recoveryComponent from './recovery/recoveryComponent';
 
 import sharingComponent from 'study/sharing/sharingComponent';
+import propertiesComponent from 'study/properties/propertiesComponent';
+
 import tagsComponent from 'tags/tagsComponent';
 import translateComponent from 'study/templates/pagesComponent';
 
@@ -74,13 +76,18 @@ let routes = {
     '/view/:code/:resource/:fileId': viewFilesComponent,
 
 
+
     '/editor/:studyId': filesComponent,
+    '/editor/:studyId/:version_id': filesComponent,
     '/editor/:studyId/:resource/:fileId': filesComponent,
+    '/editor/:studyId/:version_id/:resource/:fileId': filesComponent,
+
     '/pool': poolComponent,
     '/pool/history': historyComponent,
     '/downloads': downloadsComponent,
     '/downloadsAccess': downloadsAccessComponent,
-    '/sharing/:studyId': sharingComponent
+    '/sharing/:studyId': sharingComponent,
+    '/properties/:studyId': propertiesComponent,
 
 };
 

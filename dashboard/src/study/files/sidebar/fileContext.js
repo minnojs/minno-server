@@ -13,7 +13,6 @@ export default fileContext;
 
 const fileContext = (file, study, notifications) => {
     // console.log(notifications);
-
     let path = !file ? '/' : file.isDir ? file.path : file.basePath;
     let isReadonly = study.isReadonly;
     let menu = [];
@@ -29,12 +28,12 @@ const fileContext = (file, study, notifications) => {
             {icon:'fa-magic', text:'Wizard', menu: [
                 {text: 'Rating wizard', action: activateWizard(`rating`)},
                 {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
-
-                ]}
+            ]}
         ]);
     }
     let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-
+    if (study.version)
+        version_id = study.versions.filter(version=>version.version === study.version)[0].id;
 
     // Allows to use as a button without a specific file
     if (file) {

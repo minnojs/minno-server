@@ -25,7 +25,7 @@ let filesList = ({study}, notifications) => {
 
 
             m('a.no-decoration', {href:`/editor/${study.id}`, config:m.route},
-                [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), study.name])
+                [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), `${study.name} ${!study.version ? '' : `(${study.version})`}`])
         ]),
         study.isUploading
             ? m('div', [

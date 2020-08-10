@@ -43,6 +43,33 @@ filesRouter.route('/:study_id').get(
 
         });
 
+filesRouter.route('/:study_id/version/:version_id').get(
+    function(req, res){
+        const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+        files.get_study_files(req.user_id, parseInt(req.params.study_id), server_url, req.params.version_id)
+            .then(response => res.json(response))
+            .catch(function(err){
+                res.status(err.status || 500).json({message:err.message});
+            });
+    })
+    .post(
+        function(req, res){
+            return files.download_files(req.user_id, parseInt(req.params.study_id), req.body.files)
+                .then(response=>res.json(response))
+                .catch(function(err){
+                    res.status(err.status || 500).json({message:err.message});
+                });
+
+        });
+
+filesRouter.route('/:study_id/version/:version_id/file/:file_id')
+    .get(
+        function(req, res){
+            return files.get_file_content(req.user_id, parseInt(req.params.study_id), req.params.file_id,  req.params.version_id)
+                .then(tags_data=>res.json(tags_data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        });
+
 filesRouter.route('/:study_id/upload/')
     .post(
         function(req, res){
@@ -63,6 +90,7 @@ filesRouter.route('/:study_id/upload/:folder_id')
 filesRouter.route('/:study_id/file/')
     .post(
         function(req, res){
+            console.log('xx');
             if(req.body.isDir)
                 return files.create_folder(req.user_id, parseInt(req.params.study_id), req.body.name)
                     .then(tags_data=>res.json(tags_data))

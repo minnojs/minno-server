@@ -11,10 +11,15 @@ const sidebarButtons = ({study}, notifications) => {
     const readonly = study.isReadonly;
     return m('.sidebar-buttons.btn-toolbar', [
 
+
         m('.btn-group.btn-group-sm', [
-            dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
-                draw_menu(study, notifications)
-            ]})
+            m('a.btn.btn-secondary.btn-sm', {onclick: ()=>m.route(`/properties/${study.id}`), title: `Study properties`}, [
+                m('i.fa.fa-gear')
+            ]),
+
+            // dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
+            //     draw_menu(study, notifications)
+            // ]})
         ]),
         m('.btn-group.btn-group-sm', [
             m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [

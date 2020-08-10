@@ -9,14 +9,22 @@ import fullheight from 'utils/fullHeight';
 let study;
 let editorLayoutComponent = {
     controller: ()=>{
+        let version = m.route.param('version_id');
         let id = m.route.param('studyId');
         if (!study || (study.id !== id)){
             study = studyFactory(id);
-
+            !version
+            ?
             study
                 .get()
                 .catch(err=>study.err = err.message)
+                .then(m.redraw)
+            :
+            study
+                .get4version(version)
+                .catch(err=>study.err = err.message)
                 .then(m.redraw);
+
         }
 
         let ctrl = {study, onunload};
