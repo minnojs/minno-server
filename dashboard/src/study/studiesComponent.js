@@ -113,7 +113,9 @@ const mainComponent = {
                             m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                             m('option', {value:'public'}, 'Show public studies'),
                             m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
-                            m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
+                            studies()
+                                .filter(typeFilter('bank-cognitive')).length===0 ? '' :
+                                m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
                         ])
                     ])
                 ])

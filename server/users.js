@@ -3,7 +3,6 @@ const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
 const utils       = require('./utils');
-const sslCertificate = require('get-ssl-certificate')
 
 const connection    = Promise.resolve(require('mongoose').connection);
 const Validator = require('node-input-validator');

@@ -2,9 +2,8 @@ const config = require('../config');
 const utils         = require('./utils');
 const {has_read_permission, has_write_permission} = require('./studies');
 const connection    = Promise.resolve(require('mongoose').connection);
-
-const fs           = require('fs-extra');
-const path         = require('path');
+const path          = require('path');
+const fs            = require('fs-extra');
 
 
 
@@ -28,9 +27,7 @@ function insert_new_version(user_id, study_id, version, state, update_url) {
         if (update_url==='keep') return push_new_version(study_id, version, state, versions[versions.length-1].id);
 
         const versions = study_data.versions.filter(version=>version.state==='Published');
-        return push_new_version(study_id, version, state, versions[versions.length-1].id)
-            .then(function({}){
-            });
+        return push_new_version(study_id, version, state, versions[versions.length-1].id);
 
     });
 }
@@ -41,9 +38,9 @@ function restore_version(user_id, study_id, version_id) {
 
         const version = study_data.versions.find(version=>version.id===version_id).version;
         const data_files_path = path.join(config.history_folder, study_data.folder_name, version);
+        fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
+        return data_files_path;
 
-        // fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
-        //
         // const version_id = generate_id(study_id, version, state);
         //
         // if (update_url==='update') return push_new_version(study_id, version, state, version_id);

@@ -53,7 +53,7 @@ const settings_hash = {
             onmousedown: do_stat,
             class: 'fas.fa-bar-chart'
         }},
-  restore: {text: 'Restore',
+    restore: {text: 'Restore',
         config: {
             display: [can_edit],
             onmousedown: do_restore,

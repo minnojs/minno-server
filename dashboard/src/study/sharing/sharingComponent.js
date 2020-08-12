@@ -1,6 +1,5 @@
 import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
 import messages from 'utils/messagesComponent';
-import {copyUrl} from 'utils/copyUrl';
 
 export default collaborationComponent;
 
@@ -33,7 +32,6 @@ let collaborationComponent = {
                     ctrl.is_public(response.is_public);
                     ctrl.study_name(response.study_name);
                     ctrl.link(response.link);
-;
                     ctrl.loaded = true;})
                 .catch(error => {
                     ctrl.col_error(error.message);
@@ -202,7 +200,7 @@ let collaborationComponent = {
                         ]))
 
                     ]),
-                      m('.row.space',
+                    m('.row.space',
                         m('.col-sm-12', [
                             m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_link},
                                 [m('i.fa.fa-plus'), '  Create / Re-create public link']
@@ -236,7 +234,7 @@ function copy(text){
         let input = document.createElement('input');
         input.value = text;
         document.body.appendChild(input);
-        input.select(); s
+        input.select();
 
         try {
             document.execCommand('copy');

@@ -1,4 +1,4 @@
-import {get_config, update_config, set_gmail_params, unset_gmail_params, set_dbx_params, unset_dbx_params} from './configModel';
+import {get_config, update_config} from './configModel';
 import {createNotifications} from 'utils/notifyComponent';
 
 
@@ -99,7 +99,8 @@ let configComponent = {
                 .then(response => set_values(response))
                 .then(()=>ctrl.loaded(true))
                 .catch(error => {
-                    console.log(error.message);
+                    ctrl.loaded(true);
+                    show_fail_notification(error.message);
                 }).then(m.redraw);
         }
 
@@ -117,7 +118,6 @@ let configComponent = {
                 ((ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
                 (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password));
             ctrl.gmail.updated(updated);
-
             return m.redraw();
         }
 
@@ -125,7 +125,7 @@ let configComponent = {
             if(fields.hasOwnProperty('app_key'))
                 ctrl.dbx.app_key(fields.app_key);
             if(fields.hasOwnProperty('app_secret'))
-            ctrl.dbx.app_secret(fields.app_secret);
+                ctrl.dbx.app_secret(fields.app_secret);
             ctrl.dbx.enable(!!ctrl.dbx.app_key() || !!ctrl.dbx.app_secret());
 
             let updated = (ctrl.given_conf().hasOwnProperty('dbx') && !ctrl.dbx.enable()) ||
@@ -186,7 +186,7 @@ let configComponent = {
                         ((!ctrl.given_conf().server_data || !ctrl.given_conf().server_data.greenlock) ||
                             (ctrl.given_conf().server_data.greenlock.owner_email !== ctrl.server_data.greenlock.owner_email() ||
                                 (ctrl.given_conf().server_data.greenlock.domains.length !== ctrl.server_data.greenlock.domains().filter(domain => !!domain).length ||
-                                    !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index]}))
+                                    !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index];}))
                                 )
                             )
                         )
@@ -273,16 +273,16 @@ let configComponent = {
                     ]),
                     m('.col-sm-8',[
                         m('div', m('label.c-input.c-radio', [
-                                m('input[type=radio]', {
-                                    onclick: ()=>ctrl.toggle_visibility('gmail', false),
-                                    checked: !ctrl.gmail.enable(),
-                                }), m('span.c-indicator'), ' Disable Gmail'
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('gmail', false),
+                                checked: !ctrl.gmail.enable(),
+                            }), m('span.c-indicator'), ' Disable Gmail'
                         ])),
                         m('div', m('label.c-input.c-radio', [
-                                m('input[type=radio]', {
-                                    onclick: ()=>ctrl.toggle_visibility('gmail', true),
-                                    checked: ctrl.gmail.enable(),
-                                }), m('span.c-indicator'), ' Enable Gmail'
+                            m('input[type=radio]', {
+                                onclick: ()=>ctrl.toggle_visibility('gmail', true),
+                                checked: ctrl.gmail.enable(),
+                            }), m('span.c-indicator'), ' Enable Gmail'
                         ])),
 
                         m('.form-group.row', [
@@ -311,16 +311,15 @@ let configComponent = {
                                     m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.show_gmail_password(ctrl)},'Show password')  :
 
                                     m('input.form-control', {
-                                    type:'input',
-                                    placeholder: 'Password',
-                                    value: ctrl.gmail.password(),
-                                    oninput: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value}),
-                                    onchange: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value})
-                                })
+                                        type:'input',
+                                        placeholder: 'Password',
+                                        value: ctrl.gmail.password(),
+                                        oninput: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value}),
+                                        onchange: (e)=> ctrl.update_gmail_fields(ctrl, {password: e.target.value})
+                                    })
                             ])
                         ])
-                     ])
-
+                    ])
                 ]),
                 m('hr'),
                 m('.row', [
@@ -388,8 +387,8 @@ let configComponent = {
                         ])
                     ]),
                     m('.col-sm-8',[
-                        ctrl.server_data.type()!=='https' ? ''
-                            : [
+                        ctrl.server_data.type()!=='https' ? '':
+                            [
                                 m('.form-group.row.space', [
                                     m('.col-sm-2', [
                                         m('label.form-control-label', 'Private key')
@@ -425,54 +424,55 @@ let configComponent = {
                                             onchange: (e)=> ctrl.update_server_type_fields(ctrl, {https:{port: e.target.value}})                                })
                                     ])
                                 ]),
-                        ],
-                        ctrl.server_data.type()!=='greenlock' ? ''
-                            : [
-                                m('.form-group.row.space', [
-                                    m('.col-sm-2', [
-                                        m('label.form-control-label', 'Owner email')
-                                    ]),
-                                    m('.col-sm-6', [
-                                        m('input.form-control', {
-                                            type:'input',
-                                            placeholder: 'Owner email',
-                                            value: ctrl.server_data.greenlock.owner_email(),
-                                            oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}),
-                                            onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}})                                })
-                                    ])
-                                ]),
-                                m('.form-group.row.space', [
-                                    m('.col-sm-2', [
-                                        m('label.form-control-label', 'Domains')
-                                    ]),
-                                    m('.col-sm-9',
-                                        ctrl.server_data.greenlock.domains().map((domain, id)=>
-                                            m('.form-group.row', [
-                                                m('.col-sm-8',
-                                                    m('input.form-control', {
-                                                        type:'input',
-                                                        placeholder: `Domain ${id+1}`,
-                                                        value: domain,
-                                                        oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id}}),
-                                                        onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id}})
-                                                    })),
-                                                    m('.col-sm-1',
-                                                        m('button.btn.btn-primary', {onclick: ()=>ctrl.update_server_type_fields(ctrl, {greenlock:{remove:id}})},'X')
-                                                    )
-                                            ])),
-                                            ctrl.server_data.greenlock.domains().some(domain=> domain==='') ? '' :
-                                                m('.form-group.row', [
-                                                    m('.col-sm-8',
-                                                        m('input.form-control', {
-                                                            type:'input',
-                                                            placeholder: `Domain ${ctrl.server_data.greenlock.domains().length+1}`,
-                                                            value: '',
-                                                            oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}),
-                                                            onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}})
-                                                        })
-                                                )])
-                                    )]),
                             ],
+                        ctrl.server_data.type()!=='greenlock' ? '' : [
+                            m('.form-group.row.space', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Owner email')
+                                ]),
+                                m('.col-sm-6', [
+                                    m('input.form-control', {
+                                        type:'input',
+                                        placeholder: 'Owner email',
+                                        value: ctrl.server_data.greenlock.owner_email(),
+                                        oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}),
+                                        onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}})                                })
+                                ])
+                            ]),
+                            m('.form-group.row.space', [
+                                m('.col-sm-2', [
+                                    m('label.form-control-label', 'Domains')
+                                ]),
+                                m('.col-sm-9',
+                                    ctrl.server_data.greenlock.domains().map((domain, id)=>
+                                        m('.form-group.row', [
+                                            m('.col-sm-8',
+                                                m('input.form-control', {
+                                                    type:'input',
+                                                    placeholder: `Domain ${id+1}`,
+                                                    value: domain,
+                                                    oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id}}),
+                                                    onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id}})
+                                                })
+                                            ),
+                                            m('.col-sm-1',
+                                                m('button.btn.btn-primary', {onclick: ()=>ctrl.update_server_type_fields(ctrl, {greenlock:{remove:id}})},'X')
+                                            )
+                                        ])),
+                                    ctrl.server_data.greenlock.domains().some(domain=> domain==='') ? '' :
+                                        m('.form-group.row', [
+                                            m('.col-sm-8',
+                                                m('input.form-control', {
+                                                    type:'input',
+                                                    placeholder: `Domain ${ctrl.server_data.greenlock.domains().length+1}`,
+                                                    value: '',
+                                                    oninput: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}),
+                                                    onchange: (e)=> ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}})
+                                                })
+                                            )
+                                        ])
+                                )]),
+                        ],
                     ])
                 ]),
 

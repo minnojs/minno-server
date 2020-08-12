@@ -32,13 +32,13 @@ let layout = route => {
                     isloggedin = ctrl.isloggedin = response.isloggedin;
                     ctrl.present_templates(response.present_templates);
                     ctrl.first_admin_login(response.first_admin_login);
-                    let is_view = (m.route() == `/view/${m.route.param('code')}` || m.route() == `/view/${m.route.param('code')}/${m.route.param('resource')}/${encodeURIComponent(m.route.param('fileId'))}`);
+                    let is_view = (m.route() === `/view/${m.route.param('code')}` || m.route() === `/view/${m.route.param('code')}/${m.route.param('resource')}/${encodeURIComponent(m.route.param('fileId'))}`);
 
-                    if(ctrl.role()=='ro' && !is_view)
+                    if(ctrl.role()==='ro' && !is_view)
                         return doLogout();
-                    let is4su   = (m.route() == `/users` || m.route() == `/config`);
+                    let is4su   = (m.route() === `/users` || m.route() === `/config` || m.route() === `/homepage`);
 
-                    if(ctrl.role()!='su' && is4su)
+                    if(ctrl.role()!=='su' && is4su)
                         m.route('./');
 
                     if (!is_view &&  !ctrl.isloggedin  && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
@@ -47,7 +47,7 @@ let layout = route => {
                         m.route('/login');
                         location.hash = encodeURIComponent(url);
                     }
-                    if(ctrl.role()=='CU' && m.route() !== '/studies')
+                    if(ctrl.role()==='CU' && m.route() !== '/studies')
                         m.route('/downloads');
 
                     if(ctrl.first_admin_login() && m.route() !== '/settings')
@@ -97,7 +97,7 @@ let layout = route => {
                 // 'data':['downloads', 'downloadsAccess', 'statistics'],
                 // 'pool':[],
                 'tags':[]
-                ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config'/*, 'massMail'*/]
+                ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
             };
 
 
@@ -117,9 +117,10 @@ let layout = route => {
                         'removalList': {text:'Removal List', href:'/removalList'},
                         'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
                         'addUser': {text:'Add User', href: '/addUser'},
-                        'config': {text:'Edit Configuration', href: '/config'},
-                        'massMail': {text:'Send MassMail', href: '/massMail'},
-                        'users': {text:'Users Management', href: '/users'}
+                        'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
+                        'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
+                        'massMail': {text: 'Send MassMail', href: '/massMail'},
+                        'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
                     }}
 
             };

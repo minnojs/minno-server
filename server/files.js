@@ -1,7 +1,5 @@
 const config = require('../config');
 const zipFolder = require('zip-a-folder');
-const request_dep = require('request');
-const progress = require('request-progress');
 
 const fs           = require('fs-extra');
 const formidable   = require('formidable');
@@ -16,8 +14,6 @@ const urljoin       = require('url-join');
 const url = require('url');
 const connection    = Promise.resolve(require('mongoose').connection);
 
-
-const ejs = require('ejs');
 
 
 function walk(server_url, folder_path, exps, base_path = folder_path){
@@ -152,22 +148,6 @@ function download_zip(pth, res) {
             !exist ?
                 res.status(500).json({message: 'File doesn\'t exist'})
                 :
-                // request_dep('http://localhost:3000/download?path='+pth).pipe(fs.createWriteStream(full_path))
-
-
-                // progress(request_dep('http://localhost:3000/download?path='+pth), {
-                //     throttle:500
-                // })  .on('progress', function (state) {
-                //     process.stdout.write('----'+ (Math.round(state.percent*100))+'%');
-                // })
-                //     .on('error', function (err) {
-                //         console.log('error :( '+err);
-                //     })
-                //     .on('end', function () {
-                //         console.log('----100% \n Download Completed');
-                //     })
-                //     .pipe(fs.createWriteStream(full_path))
-
                 res.download(full_path, pth, function (err) {
                     if (err) {
                         return res.status(err.status || 500).json({message: err.message});
@@ -192,14 +172,11 @@ function download_data(user_id, pth, res) {
                     .then(()=>
                         fs.pathExists(full_path)
                             .then(exist=>
-                                !exist ?
+                                !exist
+                                    ?
                                     res.status(500).json({message: 'File doesn\'t exist'})
                                     :
-									fs.createReadStream(full_path).pipe(res)
-                                    /*res.download(full_path, pth, function (err) {
-                                        if (err)
-                                            return res.status(err.status || 500).json({message: err.message});
-                                    })*/
+                                    fs.createReadStream(full_path).pipe(res)
                             )
                     );
             })
@@ -280,10 +257,7 @@ function duplicate_file(user_id, study_id, file_id, new_file_id, server_url) {
                 .then(()=>studies_comp.update_modify(study_id))
                 .then(()=>
                     fs.stat(new_file_path)
-                        .then(res => {
-                            // if(!res.isDirectory())
-                            //     return  fs.readFile(new_file_path, 'utf8')
-                            //         .then(content=>({content, id: new_file_id, url:new_file_id}));
+                        .then(() => {
                             return get_study_files(user_id, study_id, server_url)
                                 .then(study => study.files);
 
@@ -318,12 +292,9 @@ function upload(user_id, study_id, req) {
                     const oldpath = file.path;
                     const file_path = path.join(study_path, file.name);
 
-                    log.info(`201804201330 | upload_file. oldpath:${oldpath}, file_path:${file_path}`);
-
-                    return fs
-                    .copy(oldpath, file_path)
-                    .then(() => fs.remove(oldpath))
-                    .then(dropbox.upload_users_file(user_id, study_id, path.resolve(file_path)));
+                    return fs.copy(oldpath, file_path)
+                        .then(() => fs.remove(oldpath))
+                        .then(dropbox.upload_users_file(user_id, study_id, path.resolve(file_path)));
                 });
                 return Promise.all(create_file_promises);
             })

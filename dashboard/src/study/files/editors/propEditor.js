@@ -1,9 +1,9 @@
-import {save} from "../../generator/generatorModel";
-import responses_view from "../../generator/responsesGeneratorComponent";
-import constants_view from "../../generator/constantsGeneratorComponent";
+import {save} from '../../generator/generatorModel';
+import responses_view from '../../generator/responsesGeneratorComponent';
+import constants_view from '../../generator/constantsGeneratorComponent';
 
-import stimuli_view from "../../generator/stimuliGeneratorComponent";
-import conditions_view from "../../generator/conditionsGeneratorComponent";
+import stimuli_view from '../../generator/stimuliGeneratorComponent';
+import conditions_view from '../../generator/conditionsGeneratorComponent';
 import {createNotifications} from 'utils/notifyComponent';
 
 export default propEditor;
@@ -57,7 +57,6 @@ const propEditorComponent = {
             return file.get()
                 .catch(ctrl.err)
                 .then(() => {
-
                     if(file.content()==='')
                         return ctrl.loaded(true);
                     const content = JSON.parse(file.content());
@@ -77,9 +76,8 @@ const propEditorComponent = {
                     constants.instructions.end(content.constants.instructions.end ? content.constants.instructions.end : '');
 
                     ctrl.loaded(true);
-            })
-            .then(m.redraw);
-
+                })
+                .then(m.redraw);
         }
         function do_save(){
             ctrl.err([]);

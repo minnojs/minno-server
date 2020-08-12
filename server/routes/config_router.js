@@ -38,6 +38,21 @@ configRouter.route('')
                     res.status(err.status || 500).json({message:err.message}));
     });
 
+
+configRouter.route('/homepage')
+    .get(function(req, res){
+        return config_db.get_homepage()
+            .then(homepage=>res.json(homepage))
+            .catch(err=>
+                res.status(err.status || 500).json({message:err.message}));
+    })
+    .put(function(req, res){
+        return config_db.update_homepage(req.body.upper_panel, req.body.right_panel)
+            .then((output)=>res.json(output))
+            .catch(err=>
+                res.status(err.status || 500).json({message:err.message}));
+    });
+
 configRouter.route('/params')
     .put(
         function(req, res){
@@ -52,7 +67,6 @@ configRouter.route('/params')
             .catch((err)=> {
                 const err_name = Object.keys(err)[0];
 
-                // console.log({fingerprint_err, gmail_err, dbx_err, server_err})
                 return res.status(err[err_name].status  || 500).json({
                     message:
                         err[err_name].message

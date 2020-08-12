@@ -84,7 +84,7 @@ function displayExperiment(params, res, fingerprint){
                     version:version_data.version,
                     state:version_data.state,
                     sessionId:exp_data.session_id,
-                    taskName:"_session_data",
+                    taskName:'_session_data',
                     studyId:exp_data.exp_id,
                     versionId:version_data.id,
                     data:[fingerprint]
@@ -107,7 +107,7 @@ function displayExperiment(params, res, fingerprint){
                 })
                 .then(res.send.bind(res))
                 .catch(err => Promise.reject({status:500,message:err.message}));
-        })
+            });
     };
 }
 

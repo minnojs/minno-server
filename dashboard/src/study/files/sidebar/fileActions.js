@@ -3,7 +3,6 @@ import downloadUrl from 'utils/downloadUrl';
 import moveFileComponent from './moveFileComponent';
 import copyFileComponent from './copyFileComponent';
 import {baseUrl} from 'modelUrls';
-import {duplicate_study} from "../../studyModel";
 
 export const uploadFiles = (path,study) => (fd, files) => {
     // validation (make sure files do not already exist)
@@ -83,7 +82,7 @@ export let renameFile = (file, study, notifications) => () => {
             return moveAction(newPath(), file, study)
                 .then(()=>notifications.show_success(`'${file.name}' successfully renamed to '${newPath()}'`))
                 .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${encodeURIComponent(encodeURIComponent(newPath()))}`): '');
-    })
+    });
 
 };
 
@@ -361,11 +360,9 @@ export const downloadChosenFiles = (study) => () => {
 
     study.downloadFiles(chosenFiles)
         .then(url => {
-
             const a = document.createElement('a');
             a.href=url;
-
-            console.log(a.href); return downloadUrl(url, study.name);})
+            return downloadUrl(url, study.name);})
         .catch(err => messages.alert({
             header: 'Failed to download files:',
             content: err.message
@@ -384,6 +381,3 @@ export const downloadFile = (study, file) => () => {
 };
 
 export let resetFile = file => () => file.content(file.sourceContent());
-
-const focus_it = (element, isInitialized) => {
-    if (!isInitialized) setTimeout(() => element.focus());};

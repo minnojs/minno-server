@@ -110,7 +110,7 @@ let data_dialog = {
         ctrl.downloaded() ? '' : m('.loader'),
         m('.text-xs-right.btn-toolbar',[
             m('button.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close'),
-            m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ask_get_data(ctrl)}}, 'Download')
+            m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ask_get_data(ctrl);}}, 'Download')
         ])
     ])
 };
@@ -297,14 +297,12 @@ function show_requests(ctrl){
                                         m('strong', 'Experimant Id: ')
                                     ),
                                     m('.col-xs-3',
-                                        ctrl.exps().map(exp=> console.log(exp.ids==download.exp_id[0])),
                                         download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
                                     ),
                                     m('.col-xs-3',
                                         m('strong', 'Version Id: ')
                                     ),
                                     m('.col-xs-2',
-                                        console.log(ctrl.versions),
                                         download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version                                     )
                                 ])
                             ])

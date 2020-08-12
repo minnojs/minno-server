@@ -1,11 +1,10 @@
 'use strict';
 module.exports = function(app) {
-  var controller = require('../controllers/controller');
+    const controller = require('../controllers/controller');
 
-  app.route('/data')
+    app.route('/data')
     .put(controller.insertData);
-	app.route('/data').get(controller.getData);
-
-  app.route('/study/start/:studyId')
-    .get(controller.newStudyInstance)
+    app.route('/data').get(controller.getData);
+    app.route('/study/start/:studyId')
+    .get(controller.newStudyInstance);
 };

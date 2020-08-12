@@ -3,13 +3,15 @@ const users             = require('../users');
 const connectionsRouter = express.Router();
 const config            = require('../../config');
 const url               = require('url');
+const config_db   = require('../config_db');
 
 module.exports = connectionsRouter;
 
 
 connectionsRouter.get('/is_loggedin',function(req, res){
     if (!req.session || !req.session.user)
-        return res.json({isloggedin: false, timeoutInSeconds: 0});
+        return config_db.get_homepage()
+            .then(homepage=>res.json({homepage, isloggedin: false, timeoutInSeconds: 0}));
 
     return users.new_msgs(req.session.user._id).then(new_msgs=>{
         let user_object = {new_msgs: new_msgs,

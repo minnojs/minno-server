@@ -29,8 +29,7 @@ const fileContext = (file, study, notifications) => {
             {icon:'fa-magic', text:'Wizard', menu: [
                 {text: 'Rating wizard', action: activateWizard(`rating`)},
                 {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
-
-                ]}
+            ]}
         ]);
     }
     let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
