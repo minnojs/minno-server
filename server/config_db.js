@@ -258,7 +258,9 @@ function get_homepage () {
         const config_data = db.collection('config');
         return config_data.find({}).toArray().then(data=>{
             let homepage = data.find(vars=>vars.var==='homepage');
-            return {upper_panel:homepage.upper_panel, right_panel:homepage.right_panel};
+            if(homepage)
+                return {upper_panel:homepage.upper_panel, right_panel:homepage.right_panel};
+            return {};
             });
     });
 }

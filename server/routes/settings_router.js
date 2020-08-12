@@ -18,9 +18,7 @@ settingsRouter.route('/settings')
         function(req, res){
             if (req.session.user.first_admin_login && req.session.user.user_name === 'admin' && req.body.params.password && req.body.params.password !== config.admin_default_pass) {
                 req.session.user.first_admin_login = false;
-                req.session.save(function (err) {
-                    res.status(err.status || 500).json({message:err.message});
-                });
+                req.session.save();
             }
             return users.update_details(req.user_id, req.body.params)
                 .then(data=>res.json(data))
