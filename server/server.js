@@ -236,9 +236,8 @@ exports.startServer = async function(app,serverConfig)
 			{await exports.startupHttps(app, server_data.https);}
 	    if(server_data.greenlock)
 			{
-
-				await exports.startupGreenlock(app, server_data.greenlock);
-				try{
+               try{
+				await exports.startupGreenlock(app, server_data.greenlock);	
 					await exports.testSSL(server_data.greenlock.domains[0])}
 					catch(err)
 					{
@@ -256,9 +255,8 @@ exports.startServer = async function(app,serverConfig)
 	
 	    if(config.server_type==='greenlock')
 			{
-
-				await exports.startupGreenlock(app, server_data.greenlock);
 				try{
+				await exports.startupGreenlock(app, server_data.greenlock);
 					await exports.testSSL(server_data.greenlock.domains[0])}
 					catch(err)
 					{
