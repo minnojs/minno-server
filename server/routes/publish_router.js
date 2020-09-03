@@ -21,12 +21,15 @@ publishRouter.route('/:study_id/publish')
         })
     .post(
         function(req, res){
-            const version_type = req.body.publish ? 'Published' : 'Develop';
             const update_url   = req.body.update_url;
+            const version_name   = req.body.version_name;
 
             const now = new Date();
             return versions.insert_new_version(req.user_id, parseInt(req.params.study_id),
+                version_name,
                 dateFormat(now, 'yyyymmdd.HHMMss'),
-                version_type, update_url)
+                'Published',
+                update_url)
                 .then(version_data=>res.json(version_data));
         });
+

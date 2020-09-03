@@ -9,6 +9,9 @@ const studyPrototype = {
     apiURL(path = ''){
         return `${baseUrl}/files/${encodeURIComponent(this.id)}${path}`;
     },
+    apiDownloadURL(version_id){
+        return `${baseUrl}/files/${encodeURIComponent(this.id)}/version/${version_id}/files`;
+    },
     apiVersionURL(path = '', version){
         return `${baseUrl}/files/${encodeURIComponent(this.id)}/version/${version}/${path}`;
     },
@@ -16,7 +19,7 @@ const studyPrototype = {
     get4version(version){
         return fetchJson(this.apiVersionURL('', version))
             .then(study => {
-                this.version = version;
+
                 const files = this.parseFiles(study.files);
                 this.loaded = true;
 
@@ -32,6 +35,8 @@ const studyPrototype = {
                 this.type = study.type || 'minno02';
                 this.base_url = study.base_url;
                 this.versions = study.versions ? study.versions : [];
+                this.version = study.versions.filter(version_obj=>version_obj.version === version)[0];
+
                 this.files(files);
                 this.sort();
             })
@@ -240,8 +245,11 @@ const studyPrototype = {
      * @param files [Array] a list of file.path to download
      * @returns url [String] the download url
      */
-    downloadFiles(files){
-        return fetchJson(this.apiURL(), {method: 'post', body: {files}})
+    downloadFiles(files, version){
+
+        console.log(!version);
+        version = !version ? 'sandbox' : version.version ;
+        return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files}})
             .then(response => `${baseUrl}/download?path=${response.zip_file}&study=_PATH`);
     },
 

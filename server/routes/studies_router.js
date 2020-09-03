@@ -35,13 +35,7 @@ studiesRouter.route('/pending')
         function(req,res){
             return studies.get_pending_studies(req.user_id)
                 .then(studies_data=>res.json({studies:studies_data}));
-        })
-    .post(function(req,res)
-    {
-        return studies.create_new_study({user_id: req.user_id, study_name: req.body.study_name, study_type: req.body.study_type, description: req.body.description})
-            .then(study_data=>res.json({study_id: study_data.study_id}))
-            .catch(err=>res.status(err.status || 500).json({message:err.message}));
-    });
+        });
 
 studiesRouter.route('/:study_id')
     .delete(
@@ -71,14 +65,6 @@ studiesRouter.route('/:study_id/rename')
 
 
 studiesRouter.route('/:study_id/versions')
-    .get(
-        function(req, res, next){
-            experiments.get_experiments(req.user_id, parseInt(req.params.study_id))
-                .then(function (study_data) {
-                    res.json({experiments: study_data.experiments});
-                })
-                .catch(next);
-        })
     .post(
         function(req, res, next){
             experiments.get_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id,
@@ -89,7 +75,16 @@ studiesRouter.route('/:study_id/versions')
                 .catch(next);
         });
 
+studiesRouter.route('/:study_id/versions/:version_id')
+    .put(
+        function(req, res, next){
 
+            versions.change_version_availability(req.user_id, parseInt(req.params.study_id), req.params.version_id, req.body.availability)
+                .then(function(data){
+                    res.json({data_file:data});
+                })
+                .catch(next);
+        });
 
 studiesRouter.route('/:study_id/statistics')
     .post(
@@ -122,8 +117,8 @@ studiesRouter.route('/:study_id/experiments')
     .get(
         function(req, res){
             experiments.get_experiments(req.user_id, parseInt(req.params.study_id))
-                .then(function (study_data) {
-                    res.json({experiments: study_data.experiments});
+                .then(function (experiments) {
+                    res.json({experiments});
                 })
                 .catch(err=> {
                     res.status(err.status || 500).json({message: err.message});

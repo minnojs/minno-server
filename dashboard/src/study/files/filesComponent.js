@@ -14,16 +14,16 @@ let editorLayoutComponent = {
         if (!study || (study.id !== id)){
             study = studyFactory(id);
             !version
-            ?
-            study
-                .get()
-                .catch(err=>study.err = err.message)
-                .then(m.redraw)
-            :
-            study
-                .get4version(version)
-                .catch(err=>study.err = err.message)
-                .then(m.redraw);
+                ?
+                study
+                    .get()
+                    .catch(err=>study.err = err.message)
+                    .then(m.redraw)
+                :
+                study
+                    .get4version(version)
+                    .catch(err=>study.err = err.message)
+                    .then(m.redraw);
 
         }
 

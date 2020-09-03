@@ -12276,6 +12276,10 @@
     var loginComponent = {
         controller: function controller(){
             var ctrl = {
+                homepage:{
+                    upper_panel:m.prop(''),
+                    right_panel:m.prop(''),
+                },
                 username:m.prop(''),
                 password:m.prop(''),
                 isloggedin: false,
@@ -12302,16 +12306,24 @@
                 getAuth().then(function (response) {
                     if(response.isloggedin)
                         m.route('./');
-                });
+                    ctrl.homepage.upper_panel(!response.homepage.upper_panel ? '' : response.homepage.upper_panel);
+                    ctrl.homepage.right_panel(!response.homepage.right_panel ? '' : response.homepage.right_panel);
+                })
+                .then(m.redraw);
             }
         },
         view: function view(ctrl){
-            return m('.login.centrify', {config:fullHeight},[
-                m('.card.card-inverse.col-md-4', [
-                    m('.card-block',[
-                        m('h4', 'Please sign in'),
-
-                        m('form', {onsubmit:ctrl.loginAction}, [
+            return m('.container.space.homepage', { config:fullHeight},[
+                m('.row', [
+                    m('.col-md-12',
+                        m('',
+                            m.trust(ctrl.homepage.upper_panel()))
+                    )
+                ]),
+                m('.row.space', {class: !ctrl.homepage.right_panel() ? 'centrify' : ''}, [
+                    m('.col-md-5.space',
+                        m('form.homepage-background', {onsubmit:function (){ return false; }}, [
+                            m('.space', 'Username / Email'),
                             m('input.form-control', {
                                 type:'username',
                                 placeholder: 'Username / Email',
@@ -12319,28 +12331,36 @@
                                 name: 'username',
                                 autofocus:true,
                                 oninput: m.withAttr('value', ctrl.username),
-                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.username),
                                 config: getStartValue(ctrl.username)
                             }),
+                            m('.space', 'Password'),
                             m('input.form-control', {
                                 type:'password',
                                 name:'password',
                                 placeholder: 'Password',
                                 value: ctrl.password(),
                                 oninput: m.withAttr('value', ctrl.password),
-                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
-                            })
-                        ]),
-
-                        !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                        m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
-                        m('p.text-center',
-                            m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
+                            }),
+                            !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                            m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
+                            m('p.text-center',
+                                m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
+                            )
+                        ])
+                    ),
+                    !ctrl.homepage.right_panel()
+                        ?
+                        ''
+                        :
+                        m('.col-md-7.space',
+                            m('.homepage-background',
+                                m.trust(ctrl.homepage.right_panel()))
                         )
-                    ])
                 ])
             ]);
         }
@@ -12540,6 +12560,9 @@
 
             return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + path);
         },
+        apiDownloadURL: function apiDownloadURL(version_id){
+            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version_id + "/files");
+        },
         apiVersionURL: function apiVersionURL(path, version){
             if ( path === void 0 ) path = '';
 
@@ -12551,7 +12574,7 @@
 
             return fetchJson(this.apiVersionURL('', version))
                 .then(function (study) {
-                    this$1.version = version;
+
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
 
@@ -12567,6 +12590,8 @@
                     this$1.type = study.type || 'minno02';
                     this$1.base_url = study.base_url;
                     this$1.versions = study.versions ? study.versions : [];
+                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.version === version; })[0];
+
                     this$1.files(files);
                     this$1.sort();
                 })
@@ -12792,8 +12817,11 @@
          * @param files [Array] a list of file.path to download
          * @returns url [String] the download url
          */
-        downloadFiles: function downloadFiles(files){
-            return fetchJson(this.apiURL(), {method: 'post', body: {files: files}})
+        downloadFiles: function downloadFiles(files, version){
+
+            console.log(!version);
+            version = !version ? 'sandbox' : version.version ;
+            return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files: files}})
                 .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
 
@@ -13019,8 +13047,13 @@
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/unlock");
     }
 
+
     function get_publish_url(study_id) {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
+    }
+
+    function get_version_url(study_id, version_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/versions/" + version_id);
     }
 
     /*CRUD*/
@@ -13076,12 +13109,17 @@
         method: 'post'
     }); };
 
-    var publish_study = function (study_id, version_name, publish, update_url) { return fetchJson(get_publish_url(study_id), {
+    var publish_study = function (study_id, version_name, update_url) { return fetchJson(get_publish_url(study_id), {
         method: 'post',
-        body: {version_name: version_name, publish: publish, update_url: update_url}
+        body: {version_name: version_name, update_url: update_url}
     }); };
 
     var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
+
+    var change_version_availability = function (study_id, version_id, availability) { return fetchJson(get_version_url(study_id, version_id), {
+        method: 'put',
+        body: {availability: availability}
+    }); };
 
     function copyFileComponent (args) { return m.component(copyFileComponent$1, args); }
     var copyFileComponent$1 = {
@@ -13221,7 +13259,7 @@
                 return moveAction(newPath(), file, study)
                     .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully renamed to '" + (newPath()) + "'")); })
                     .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(newPath()))))): ''; });
-        })
+        });
 
     }; };
 
@@ -13327,8 +13365,10 @@
 
         function openNew(){
             if (playground && !playground.closed) playground.close();
-            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
 
+            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
+            if (study.version)
+                url = baseUrl + "/play/" + (study.id) + "/" + (study.version.version) + "/" + (file.id);
             playground = window.open(url, 'Playground');
             playground.onload = function(){
                 playground.addEventListener('unload', function() {
@@ -13488,13 +13528,12 @@
             return;
         }
 
-        study.downloadFiles(chosenFiles)
-            .then(function (url) {
 
+        study.downloadFiles(chosenFiles, study.version)
+            .then(function (url) {
                 var a = document.createElement('a');
                 a.href=url;
-
-                console.log(a.href); return downloadLink(url, study.name);})
+                return downloadLink(url, study.name);})
             .catch(function (err) { return messages.alert({
                 header: 'Failed to download files:',
                 content: err.message
@@ -17064,7 +17103,7 @@
             m('.btn-group.btn-group-sm.pull-xs-right', [
 
                 !/^minno/.test(study.type) ? '' : [
-                    !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play$2(file,study), title:'Play this task'},[
+                    !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play$2(file, study), title:'Play this task'},[
                         m('strong.fa.fa-play')
                     ]),
 
@@ -17248,8 +17287,7 @@
                                     id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
                                 ])
                             )
-                        ])
-
+                        ]);
                     })
                 ])
             ]);
@@ -17353,9 +17391,7 @@
                         ]),
                     ]),
                 ]),
-            ])
-
-
+            ]);
         }
     };
 
@@ -17409,7 +17445,6 @@
                     condition.stimuli_sets.forEach(function (set){
                         set.forEach(function (stimulus){
                             stimulus[field] = stimulus.stimulus_name === stimulus_name ? new_field : stimulus[field];
-
                         });
                     });
                 });
@@ -17435,14 +17470,15 @@
             function do_add_stimulus() {
                 var possible_csss = {};
                 ctrl.default_css.map(function (css){ return possible_csss[css]= false; });
-                var new_stimulus = {stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
-                                      response:'without_response',
-                                      media_type:'text',
-                                      css:possible_csss,
-                                      relative_to : 'trial_onset',
-                                      default_times:true,
-                                      onset:'0',
-                                      offset:'0'};
+                var new_stimulus = {
+                    stimulus_name:("stimulus_" + (++ctrl.num_of_stimuli)),
+                    response:'without_response',
+                    media_type:'text',
+                    css:possible_csss,
+                    relative_to : 'trial_onset',
+                    default_times:true,
+                    onset:'0',
+                    offset:'0'};
                 ctrl.possible_stimuli().push(new_stimulus);
                 ctrl.add_stimulus_to_sets(new_stimulus);
             }
@@ -17500,104 +17536,109 @@
                 ]),
 
                 ctrl.possible_stimuli().map(function(stimulus, id) {
-                    return m('row.col-sm-12',
-                        [m('.col-sm-2',
+                    return m('row.col-sm-12', [
+                        m('.col-sm-2',
                             m('label.input-group.space', [
                                 m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
+                                    checked: stimulus.response === 'without_response',
+                                }), m('span.c-indicator'), ' Without response'
                             ])),
-                            m('.col-sm-2',
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
-                                        checked: stimulus.response === 'without_response',
-                                    }), m('span.c-indicator'), ' Without response'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
-                                        checked: stimulus.response === 'with_response',
-                                    }), m('span.c-indicator'), ' With response'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
-                                        checked: stimulus.response === 'with_stop_response',
-                                    }), m('span.c-indicator'), ' With stop response'
-                                ]))
-                            ),
-                            m('.col-sm-1',
-                                m('.row',[
-                                    ctrl.default_css.map(function (css){ return m('.col',
-                                                m('label.c-input.checkbox',  [ m('input[type=checkbox]',{
-                                                        onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
-                                                        checked: stimulus.css[css],
-                                                    }), m('span', css)
-                                                ])
-                                        ); }
-                                    )
-                                ])),
-                            m('.col-sm-1',
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'image'); },
-                                        checked: stimulus.media_type==='image',
-                                    }), m('span.c-indicator'), ' Image'
-                                ])),
-                                m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
-                                        checked: stimulus.media_type==='text',
-                                    }), m('span.c-indicator'), ' Text'
-                                ]))
-                            ),
-                            m('.col-sm-1',[
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
-                                            checked: !stimulus.default_times,
-                                        }), m('span.c-indicator'), ' Variable'
-                                    ])),
-                                    m('div', m('label.c-input.c-radio', [
-                                        m('input[type=radio]', {
-                                            onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
-                                            checked: stimulus.default_times,
-                                        }), m('span.c-indicator'), ' Fixed'
-                                    ]))
-                                ,
-                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
-                                        m('label.input-group', [
-                                        'Onset',
-                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
-                                ])),
-                                m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
-                                    m('label.input-group', [
-                                        'Offset',
-                                        m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
-                                    ])
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
+                                    checked: stimulus.response === 'with_response',
+                                }), m('span.c-indicator'), ' With response'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
+                                    checked: stimulus.response === 'with_stop_response',
+                                }), m('span.c-indicator'), ' With stop response'
+                            ]))
+                        ),
+                        m('.col-sm-1',
+                            m('.row', [
+                                ctrl.default_css.map(function (css){ return m('.col',
+                                        m('label.c-input.checkbox',  [
+                                            m('input[type=checkbox]', {
+                                                onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
+                                                checked: stimulus.css[css],
+                                            }),
+                                            m('span', css)
+                                        ])
+                                    ); }
                                 )
-                            ]),
-                            m('.col-sm-2',
-                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
-                                        checked: stimulus.relative_to === 'trial_onset',
-                                    }), m('span.c-indicator'), " Trial onset"
-                                ])),
-                                id===0 ? '' : m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
-                                        checked: stimulus.relative_to === 'last_offset',
-                                    }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
-                                ]))
+                            ])
+                        ),
+                        m('.col-sm-1',
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'image'); },
+                                    checked: stimulus.media_type==='image',
+                                }), m('span.c-indicator'), ' Image'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
+                                    checked: stimulus.media_type==='text',
+                                }), m('span.c-indicator'), ' Text'
+                            ]))
+                        ),
+                        m('.col-sm-1',[
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
+                                    checked: !stimulus.default_times,
+                                }), m('span.c-indicator'), ' Variable'
+                            ])),
+                            m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
+                                    checked: stimulus.default_times,
+                                }), m('span.c-indicator'), ' Fixed'
+                            ])),
+                            m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                m('label.input-group', [
+                                    'Onset', m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
+                                ])
                             ),
+                            m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
+                                m('label.input-group', [
+                                    'Offset',
+                                    m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                ])
+                            )
+                        ]),
+                        m('.col-sm-2',
+                            id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
+                                    checked: stimulus.relative_to === 'trial_onset',
+                                }), m('span.c-indicator'), " Trial onset"
+                            ])),
+                            id===0 ? '' : m('div', m('label.c-input.c-radio', [
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
+                                    checked: stimulus.relative_to === 'last_offset',
+                                }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
+                            ]))
+                        ),
 
-                            m('.col-sm-1',
-                                ctrl.possible_stimuli().length===1 ? '' :
+                        m('.col-sm-1',
+                            ctrl.possible_stimuli().length===1
+                                ?
+                                ''
+                                :
                                 m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', { onclick:function(){ctrl.delete_stimulus(id);}}, [
                                     m('i.fa.fa-close'), ' '
                                 ]))
-                            )
-                        ])
+                        )]);
                 }),
                 m('.row.space',
                     m('.col-sm-12', [
@@ -17606,7 +17647,7 @@
                         )
                     ])
                 )
-            ])
+            ]);
 
 
         }
@@ -17640,19 +17681,20 @@
                 ctrl.possible_stimuli().forEach(function(stimulus){
                     var css2use = Object.keys(stimulus.css).filter((function (key){ return stimulus.css[key]; }));
                     var css_data = {};
-                    css2use.forEach(function (css){css_data[css]= '';});
+                    css2use.forEach(function (css){css_data[css]='';});
 
-                    stimuli_object.push({stimulus_name:stimulus.stimulus_name,
-                                         media_type: stimulus.media_type,
-                                         media:'',
-                                         default_times: stimulus.default_times,
-                                         onset: stimulus.onset,
-                                         offset: stimulus.offset,
-                                         relative_to: stimulus.relative_to,
-                                         response:stimulus.response,
-                                         response_key:'',
-                                         css2use: css2use,
-                                         css_data: css_data});
+                    stimuli_object.push({
+                        stimulus_name:stimulus.stimulus_name,
+                        media_type: stimulus.media_type,
+                        media:'',
+                        default_times: stimulus.default_times,
+                        onset: stimulus.onset,
+                        offset: stimulus.offset,
+                        relative_to: stimulus.relative_to,
+                        response:stimulus.response,
+                        response_key:'',
+                        css2use: css2use,
+                        css_data: css_data});
                 });
                 condition.stimuli_sets.push(stimuli_object);
             }
@@ -17675,91 +17717,86 @@
         },
         view: function view(ctrl){
             return m('.row', [
-                        m('row.col-sm-12', [
-                            m('.row',[
-                                m('.col-sm-2',
-                                    m('strong', 'Stimulus name')
-                                ),
+                m('row.col-sm-12', [
+                    m('.row',[
+                        m('.col-sm-2',
+                            m('strong', 'Stimulus name')
+                        ),
+                        m('.col-sm-3',
+                            m('strong', 'Media')
+                        ),
+                        m('.col-sm-2',
+                            m('strong', 'Times')
+                        ),
+
+                        m('.col-sm-2',
+                            m('strong', 'Visual properties')
+                        ),
+                        m('.col-sm-2',
+                            m('strong', 'Response')
+                        )
+                    ]),
+                    ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
+                        return stimuli_set.map(function(stimulus, stimulus_id) {
+                            return m('row.col-sm-12',[
+                                stimulus_id>0 ?  '' : m('hr'),
+                                m('.col-sm-2', stimulus.stimulus_name),
                                 m('.col-sm-3',
-                                    m('strong', 'Media')
-                                ),
-                                m('.col-sm-2',
-                                    m('strong', 'Times')
-                                ),
-
-                                m('.col-sm-2',
-                                    m('strong', 'Visual properties')
-                                ),
-                                m('.col-sm-2',
-                                    m('strong', 'Response')
-                                )
-                            ]),
-                            ctrl.condition.stimuli_sets.map(function(stimuli_set, set_id){
-                                return stimuli_set.map(function(stimulus, stimulus_id) {
-                                    return m('row.col-sm-12',[
-                                        stimulus_id>0 ?  '' : m('hr'),
-                                        m('.col-sm-2', stimulus.stimulus_name),
-                                        m('.col-sm-3',
-                                            m('label.input-group.space', [
-                                                stimulus.media_type === 'image'
-                                                ?
-                                                m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
-                                                    m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
-                                                    ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: stimulus.media === img.path},  img.path); })
-                                                ])
-                                                :
-                                                m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
+                                    m('label.input-group.space', [
+                                        stimulus.media_type === 'image'
+                                            ?
+                                            m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
+                                                m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
+                                                ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: stimulus.media === img.path},  img.path); })
                                             ])
-                                        ),
-
-
-
-                                        m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
-                                            m('row', [
-                                                'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
-                                            ]),
-                                            m('row', [
-                                                'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
-                                            ])
-                                        ]),
-                                        m('.col-sm-2',
-
-                                            stimulus.css2use.length===0 ? '-' :
-                                                stimulus.css2use.map(function (css2use){ return m('row', [
-                                                    css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
-                                                ]); })
-                                        ),
-                                        m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
-                                                ctrl.possible_responses().map(function (response, key_id){ return m('row',[
-                                                        m('.col-sm-2', response.key.length !==1 ? '' :
-                                                            m('div', m('label.c-input.c-radio', [
-                                                                m('input[type=radio]', {
-                                                                    onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
-                                                                    checked: stimulus.response_key === key_id,
-                                                                }), m('span.c-indicator'), (" " + (response.key))
-                                                            ]))
-                                                        )]
-                                                ); })
-                                        ),
-                                        m('.col-sm-1',
-                                            ctrl.condition.stimuli_sets.length === 1 ? '' :
-                                            m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
-                                                m('i.fa.fa-close'), ' '
-                                            ]))
-                                        )
-
+                                            :
+                                            m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
                                     ])
-                                })
+                                ),
+                                m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
+                                    m('row', [
+                                        'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
+                                    ]),
+                                    m('row', [
+                                        'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
+                                    ])
+                                ]),
+                                m('.col-sm-2',
 
-                            }),
-                            m('.row.space',
-                                m('.col-sm-12', [
-                                    m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
-                                        [m('i.fa.fa-plus'), '  add stimuli set']
-                                    )
-                                ])
+                                    stimulus.css2use.length===0 ? '-' :
+                                        stimulus.css2use.map(function (css2use){ return m('row', [
+                                            css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
+                                        ]); })
+                                ),
+                                m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
+                                    ctrl.possible_responses().map(function (response, key_id){ return m('row',[
+                                            m('.col-sm-2', response.key.length !==1 ? '' :
+                                                m('div', m('label.c-input.c-radio', [
+                                                    m('input[type=radio]', {
+                                                        onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
+                                                        checked: stimulus.response_key === key_id,
+                                                    }), m('span.c-indicator'), (" " + (response.key))
+                                                ]))
+                                            )]
+                                        ); })
+                                ),
+                                m('.col-sm-1',
+                                    ctrl.condition.stimuli_sets.length === 1 ? '' :
+                                        m('label.input-group.space', m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.delete_stimuli_set(set_id);}}, [
+                                            m('i.fa.fa-close'), ' '
+                                        ]))
+                                )
+                            ]);
+                        });
+                    }),
+                    m('.row.space',
+                        m('.col-sm-12', [
+                            m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
+                                [m('i.fa.fa-plus'), '  add stimuli set']
                             )
                         ])
+                    )
+                ])
             ]);
         }
     };
@@ -17822,27 +17859,26 @@
                     ),
                 ]),
                 possible_conditions().map(function(condition, condition_id) {
-                    return  [m('row.col-sm-12',
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
-                            ])
+                    return  [
+                        m('row.col-sm-12',
+                            m('.col-sm-2',
+                                m('label.input-group.space', [
+                                    m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                                ])
+                            ),
+                            m('.col-sm-2',
+                                m('label.input-group.space', [
+                                    m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
+                                ])
+                            ),
+                            m('.col-sm-2',
+                                m('label.input-group.space', [
+                                    m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
+                                ])
+                            )
                         ),
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
-                            ])
-                        ),
-                        m('.col-sm-2',
-                            m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
-                            ])
-                        )
-                    ),
                         stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs})
-                ]}),
-
-
+                    ];}),
                 m('.row.space',
                     m('.col-sm-13', [
                         m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
@@ -17850,10 +17886,7 @@
                         )
                     ])
                 ),
-
             ]);
-
-
         }
     };
 
@@ -17938,7 +17971,6 @@
                 return file.get()
                     .catch(ctrl.err)
                     .then(function () {
-
                         if(file.content()==='')
                             return ctrl.loaded(true);
                         var content = JSON.parse(file.content());
@@ -17958,9 +17990,8 @@
                         constants.instructions.end(content.constants.instructions.end ? content.constants.instructions.end : '');
 
                         ctrl.loaded(true);
-                })
-                .then(m.redraw);
-
+                    })
+                    .then(m.redraw);
             }
             function do_save(){
                 ctrl.err([]);
@@ -18321,9 +18352,10 @@
                 ]}
             ]);
         }
-        var version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
+        // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
+        var version_id = study.versions[0].id;
         if (study.version)
-            version_id = study.versions.filter(function (version){ return version.version === study.version; })[0].id;
+            version_id = study.version.id;
 
         // Allows to use as a button without a specific file
         if (file) {
@@ -18619,12 +18651,13 @@
         e.stopPropagation();
         e.preventDefault();
         if (study.version)
-            m.route(("/editor/" + (file.studyId) + "/" + (study.version) + "/file/" + (encodeURIComponent(file.id))));
-        else
+            m.route(("/editor/" + (file.studyId) + "/" + (study.version.version) + "/file/" + (encodeURIComponent(file.id))));
+        else {
             if (file.viewStudy)
                 m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
             else
                 m.route(("/editor/" + (file.studyId) + "/file/" + (encodeURIComponent(file.id))));
+        }
         m.redraw.strategy('diff'); // make sure that the route change is diffed as opposed to redraws
     }; };
 
@@ -18709,10 +18742,8 @@
                     })
                 ]),
 
-
-
                 m('a.no-decoration', {href:("/editor/" + (study.id)), config:m.route},
-                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("(" + (study.version) + ")")))])
+                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("(" + (study.version.version_name) + ")")))])
             ]),
             study.isUploading
                 ? m('div', [
@@ -18742,6 +18773,493 @@
         var chosenCount = study.files().reduce(function (result, file) { return vm(file.id).isChosen() ? result + 1 : result; }, 0);
         return !chosenCount ? 0 : filesCount === chosenCount ? 1 : -1;
     }
+
+    var sidebarButtons = function (ref, notifications) {
+        var study = ref.study;
+
+        var readonly = study.isReadonly;
+        return m('.sidebar-buttons.btn-toolbar', [
+
+
+            m('.btn-group.btn-group-sm', [
+                m('a.btn.btn-secondary.btn-sm', {onclick: function (){ return m.route(("/properties/" + (study.id))); }, title: "Study properties"}, [
+                    m('i.fa.fa-gear')
+                ]),
+
+                // dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
+                //     draw_menu(study, notifications)
+                // ]})
+            ]),
+            m('.btn-group.btn-group-sm', [
+                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [
+                    m('i.fa.fa-plus')
+                ]),
+                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
+                    m('i.fa.fa-close')
+                ]),
+                m('a.btn.btn-secondary.btn-sm', {onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
+                    m('i.fa.fa-download')
+                ]),
+                m('label.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', title: 'Drag files over the file list in order to upload easily'}, [
+                    m('i.fa.fa-upload'),
+                    readonly ? '' : m('input[type="file"]', {style: 'display:none', multiple:'true', onchange: uploadonchange({onchange:uploadFiles('/', study)})})
+                ])
+            ])
+        ]);
+    };
+
+    var notifications= createNotifications();
+
+    var sidebarComponent = {
+        view: function (ctrl , ref) {
+            var study = ref.study;
+
+            return m('.sidebar', {config: config}, [
+                m('div', notifications.view()),
+
+                sidebarButtons({study: study}, notifications),
+                filesList({study: study}, notifications)
+            ]);
+        }
+    };
+
+    function config(el, isInitialized, ctx){
+        if (!isInitialized) el.addEventListener('scroll', listen, false);
+        el.scrollTop = ctx.scrollTop || 0;
+
+        function listen(){
+            ctx.scrollTop = el.scrollTop;
+        }
+    }
+
+    var splitPane = function (args) { return m.component(splitComponent, args); };
+
+    var splitComponent = {
+        controller: function controller(ref){
+            var leftWidth = ref.leftWidth;
+
+            return {
+                parentWidth: m.prop(),
+                parentOffset: m.prop(),
+                leftWidth: leftWidth || m.prop('auto')
+            };
+        },
+
+        view: function view(ref, ref$1){
+            var parentWidth = ref.parentWidth;
+            var parentOffset = ref.parentOffset;
+            var leftWidth = ref.leftWidth;
+            var left = ref$1.left; if ( left === void 0 ) left = '';
+            var right = ref$1.right; if ( right === void 0 ) right = '';
+
+            return m('.split-pane', {config: config$1(parentWidth, parentOffset, leftWidth)}, [
+                m('.split-pane-col-left', {style: {flexBasis: leftWidth() + 'px'}}, left),
+                m('.split-pane-divider', {onmousedown: onmousedown(parentOffset, leftWidth)}),
+                m('.split-pane-col-right', right)
+            ]);
+        }
+    };
+
+    var config$1 = function (parentWidth, parentLeft, leftWidth) { return function (element, isInitialized, ctx) {
+        if (!isInitialized){
+            update();
+            if (leftWidth() === undefined) leftWidth(parentWidth()/6);
+        }
+
+        document.addEventListener('resize', update);
+        ctx.onunload = function () { return document.removeEventListener('resize', update); };
+        
+        function update(){
+            parentWidth(element.offsetWidth);
+            parentLeft(element.getBoundingClientRect().left);
+        }
+    }; };
+
+    var onmousedown = function (parentOffset, leftWidth) { return function () {
+        document.addEventListener('mouseup', mouseup);
+        document.addEventListener('mousemove', mousemove);
+
+        function mouseup() {
+            document.removeEventListener('mousemove', mousemove);
+            document.removeEventListener('mouseup', mousemove);
+        }
+
+        function mousemove(e){
+            leftWidth(e.pageX - parentOffset());
+            m.redraw();
+        }
+    }; };
+
+    var study;
+    var editorLayoutComponent = {
+        controller: function (){
+            var version = m.route.param('version_id');
+            var id = m.route.param('studyId');
+            if (!study || (study.id !== id)){
+                study = studyFactory(id);
+                !version
+                    ?
+                    study
+                        .get()
+                        .catch(function (err){ return study.err = err.message; })
+                        .then(m.redraw)
+                    :
+                    study
+                        .get4version(version)
+                        .catch(function (err){ return study.err = err.message; })
+                        .then(m.redraw);
+
+            }
+
+            var ctrl = {study: study, onunload: onunload};
+
+            window.addEventListener('beforeunload', beforeunload);
+
+            return ctrl;
+
+            function hasUnsavedData(){
+                return study.files().some(function (f) { return f.content() !== f.sourceContent(); });
+            }
+
+            function beforeunload(event) {
+                if (hasUnsavedData()) return event.returnValue = 'You have unsaved data are you sure you want to leave?';
+            }
+
+            function onunload(e){
+
+                var leavingEditor = !/^\/editor\//.test(m.route());
+                if (leavingEditor && hasUnsavedData() && !window.confirm('You have unsaved data are you sure you want to leave?')){
+                    e.preventDefault();
+                } else {
+                    window.removeEventListener('beforeunload', beforeunload);
+                }
+
+                if (leavingEditor) study = null;
+            }
+        },
+        view: function (ref) {
+            var study = ref.study;
+
+            return m('.study', {config: fullHeight},  [
+                study.err ?
+                    m('.alert.alert-danger',
+                        m('strong', 'Error: '), study.err)
+                    :
+                    !study.loaded ? '' :
+                        splitPane({
+                            leftWidth: leftWidth,
+                            left: m.component(sidebarComponent, {study: study}),
+                            right: m.route.param('resource') === 'wizard'
+                                ? m.component(wizardComponent, {study: study})
+                                : m.component(fileEditorComponent, {study: study})
+                        })
+            ]);
+        }
+    };
+
+    // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
+    // Essentially this is a global variable
+    function leftWidth(val){
+        if (arguments.length) localStorage.fileSidebarWidth = val;
+        return localStorage.fileSidebarWidth;
+    }
+
+    var studyPrototype$1 = {
+        apiURL: function apiURL(path){
+            if ( path === void 0 ) path = '';
+
+            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
+        },
+
+        get: function get(){
+            var this$1 = this;
+
+            return fetchFullJson(this.apiURL())
+                .then(function (study) {
+                    // const files = this.parseFiles(study.files);
+                    var files = flattenFiles(study.files)
+                        .map(assignStudyId(this$1.id))
+                        .map(assignViewStudy())
+                        .map(fileFactory);
+                    this$1.loaded = true;
+                    this$1.isReadonly = study.is_readonly;
+                    this$1.istemplate = study.is_template;
+                    this$1.is_locked = study.is_locked;
+                    this$1.is_published = study.is_published;
+                    this$1.is_public = study.is_public;
+                    this$1.has_data_permission = study.has_data_permission;
+                    this$1.description = study.description;
+
+                    this$1.name = study.study_name;
+                    this$1.type = study.type || 'minno02';
+                    this$1.base_url = study.base_url;
+                    this$1.versions = study.versions ? study.versions : [];
+                    this$1.files(files);
+                    this$1.sort();
+
+                })
+                .catch(function (reason) {
+                    this$1.error = true;
+                    throw(reason);
+                    // if(reason.status==404)
+                    //
+                    // console.log(reason.status);
+                    //
+                    // return Promise.reject(reason); // do not swallow error
+                });
+
+            function flattenFiles(files){
+                if (!files) return [];
+                return files
+                    .map(spreadFile)
+                    .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
+            }
+
+            function assignStudyId(id){
+                return function (f) { return Object.assign(f, {studyId: id}); };
+            }
+
+            function assignViewStudy(){
+                return function (f) { return Object.assign(f, {viewStudy: true}); };
+            }
+
+            // create an array including file and all its children
+            function spreadFile(file){
+                return [file].concat(flattenFiles(file.files));
+            }
+        },
+
+        getFile: function getFile(id){
+            return this.files().find(function (f) { return f.id === id; });
+        },
+
+        // makes sure not to return both a folder and its contents.
+        // This is important mainly for server side clarity (don't delete or download both a folder and its content)
+        // We go recurse through all the files, starting with those sitting in root (we don't have a root node, so we need to get them manually).
+        getChosenFiles: function getChosenFiles(){
+            var vm = this.vm;
+            var rootFiles = this.files().filter(function (f) { return f.basePath === '/'; });
+            return getChosen(rootFiles);
+
+            function getChosen(files){
+                return files.reduce(function (response, file) {
+                    // a chosen file/dir does not need sub files to be checked
+                    if (vm(file.id).isChosen() === 1) response.push(file);
+                    // if not chosen, we need to look deeper
+                    else response = response.concat(getChosen(file.files || []));
+                    return response;
+                }, []);
+            }
+        },
+
+        addFile: function addFile(file){
+            this.files().push(file);
+            // update the parent folder
+            var parent = this.getParents(file).reduce(function (result, f) { return result && (result.path.length > f.path.length) ? result : f; } , null); 
+            if (parent) {
+                parent.files || (parent.files = []);
+                parent.files.push(file);
+            }
+        },
+        parseFiles: function parseFiles(files){
+            var study = this;
+
+            return ensureArray(files)
+                .map(fileFactory)
+                .map(spreadFile)
+                .reduce(flattenDeep, [])
+                .map(assignStudyId);
+
+            function ensureArray(arr){ return arr || []; }
+            function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
+            function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
+
+            // create an array including file and all its children
+            function spreadFile(file){
+                var children = ensureArray(file.files).map(spreadFile);
+                return [file].concat(children);
+            }
+        },
+        createFile: function createFile(ref){
+            var this$1 = this;
+            var name = ref.name;
+            var content = ref.content; if ( content === void 0 ) content = '';
+            var isDir = ref.isDir;
+
+            // validation (make sure there are no invalid characters)
+            // eslint-disable-next-line no-useless-escape
+            if(/[^\/-_.A-Za-z0-9]/.test(name)) return Promise.reject({message: ("The file name \"" + name + "\" is not valid")});
+
+            // validation (make sure file does not already exist)
+            var exists = this.files().some(function (file) { return file.path === name; });
+            if (exists) return Promise.reject({message: ("The file \"" + name + "\" already exists")});
+
+            // validateion (make sure direcotry exists)
+            var basePath = (name.substring(0, name.lastIndexOf('/'))).replace(/^\//, '');
+            var dirExists = basePath === '' || this.files().some(function (file) { return file.isDir && file.path === basePath; });
+            if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
+            return fetchJson(this.apiURL('/file'), {method:'post', body: {name: name, content: content, isDir: isDir}})
+                .then(function (response) {
+                    Object.assign(response, {studyId: this$1.id, content: content, path:name, isDir: isDir});
+                    var file = fileFactory(response);
+                    file.loaded = true;
+                    this$1.addFile(file);
+                    return response;
+                })
+                .then(this.sort.bind(this));
+        },
+        sort: function sort(response){
+            var files = this.files().sort(sort);
+            this.files(files);
+            return response;
+
+            function sort(a,b){
+                // sort by isDir then name
+                var nameA= +!a.isDir + a.name.toLowerCase(), nameB=+!b.isDir + b.name.toLowerCase();
+                if (nameA < nameB) return -1;//sort string ascending
+                if (nameA > nameB) return 1;
+                return 0; //default return value (no sorting)
+            }
+        },
+
+
+        /*
+         * @param files [Array] a list of file.path to download
+         * @returns url [String] the download url
+         */
+        downloadFiles: function downloadFiles(files){
+            return fetchJson(this.apiURL(), {method: 'post', body: {files: files}})
+                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
+        },
+
+
+        getParents: function getParents(file){
+            return this.files().filter(function (f) { return f.isDir && file.basePath.indexOf(f.path) === 0; });
+        },
+
+        // returns array of children for this file, including itself
+        getChildren: function getChildren(file){
+            return children(file);
+           
+            function children(file){
+                if (!file.files) return [file];
+                return file.files
+                    .map(children) // harvest children
+                    .reduce(function (result, files) { return result.concat(files); }, [file]); // flatten
+            }
+        }
+    };
+
+    var studyFactory$1 =  function (code) {
+        var study = Object.create(studyPrototype$1);
+        Object.assign(study, {
+            code    : code,
+            id      : study.id,
+            view    : true,
+            files   : m.prop([]),
+            loaded  : false,
+            error   :false,
+            vm      : viewModelMap$1({
+                isOpen: m.prop(false),
+                isChanged: m.prop(false),
+                isChosen: m.prop(0)
+            })
+        });
+
+        return study;
+    };
+
+    // http://lhorie.github.io/mithril-blog/mapping-view-models.html
+    var viewModelMap$1 = function(signature) {
+        var map = {};
+        return function(key) {
+            if (!map[key]) {
+                map[key] = {};
+                for (var prop in signature) map[key][prop] = m.prop(signature[prop]());
+            }
+            return map[key];
+        };
+    };
+
+    var study$1;
+
+    var editorLayoutComponent$1 = {
+        controller: function (){
+
+            var code = m.route.param('code');
+            if (!study$1 || (study$1.code !== code)){
+                study$1 = studyFactory$1(code);
+
+                study$1
+                    .get()
+                    .catch(function (reason) {
+                        if(reason.status==403)
+                            m.route('/');
+                    })
+                    .then(m.redraw);
+            }
+
+            var ctrl = {study: study$1, onunload: onunload};
+            return ctrl;
+        },
+        view: function (ref) {
+            var study = ref.study;
+
+            return m('.study', {config: fullHeight},  [
+                !study.loaded ? '' : splitPane({
+                    leftWidth: leftWidth$1,
+                    left: m.component(sidebarComponent, {study: study}),
+                    right: m.route.param('resource') === 'wizard'
+                        ? m.component(wizardComponent, {study: study})
+                        : m.component(fileEditorComponent, {study: study})
+                })
+            ]);
+        }
+    };
+
+    // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
+    // Essentially this is a global variable
+    function leftWidth$1(val){
+        if (arguments.length) localStorage.fileSidebarWidth = val;
+        return localStorage.fileSidebarWidth;
+    }
+
+    function tag_url(tag_id)
+    {
+        return (tagsUrl + "/" + (encodeURIComponent(tag_id)));
+    }
+
+    function study_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/tags");
+    }
+
+    var update_tags_in_study = function (study_id, tags) { return fetchJson(study_url(study_id), {
+        method: 'put',
+        body: {tags: tags}
+    }); };
+
+    var get_tags = function () { return fetchJson(tagsUrl, {
+        method: 'get'
+    }); };
+
+
+    var get_tags_for_study = function (study_id) { return fetchJson(study_url(study_id), {
+        method: 'get'
+    }); };
+
+    var remove_tag = function (tag_id) { return fetchJson(tag_url(tag_id), {
+        method: 'delete'
+    }); };
+
+    var add_tag = function (tag_text, tag_color) { return fetchJson(tagsUrl, {
+        method: 'post',
+        body: {tag_text: tag_text, tag_color: tag_color}
+    }); };
+
+    var edit_tag = function (tag_id, tag_text, tag_color) { return fetchJson(tag_url(tag_id), {
+        method: 'put',
+        body: {tag_text: tag_text, tag_color: tag_color}
+    }); };
 
     /**
      * VirtualElement dropdown(Object {String toggleSelector, Element toggleContent, Element elements})
@@ -18858,43 +19376,6 @@
         return study.permission == 'owner';
     }; };
 
-    function tag_url(tag_id)
-    {
-        return (tagsUrl + "/" + (encodeURIComponent(tag_id)));
-    }
-
-    function study_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/tags");
-    }
-
-    var update_tags_in_study = function (study_id, tags) { return fetchJson(study_url(study_id), {
-        method: 'put',
-        body: {tags: tags}
-    }); };
-
-    var get_tags = function () { return fetchJson(tagsUrl, {
-        method: 'get'
-    }); };
-
-
-    var get_tags_for_study = function (study_id) { return fetchJson(study_url(study_id), {
-        method: 'get'
-    }); };
-
-    var remove_tag = function (tag_id) { return fetchJson(tag_url(tag_id), {
-        method: 'delete'
-    }); };
-
-    var add_tag = function (tag_text, tag_color) { return fetchJson(tagsUrl, {
-        method: 'post',
-        body: {tag_text: tag_text, tag_color: tag_color}
-    }); };
-
-    var edit_tag = function (tag_id, tag_text, tag_color) { return fetchJson(tag_url(tag_id), {
-        method: 'put',
-        body: {tag_text: tag_text, tag_color: tag_color}
-    }); };
-
     function studyTagsComponent (args) { return m.component(studyTagsComponent$1, args); }
     var studyTagsComponent$1 = {
         controller: function controller(ref){
@@ -18925,7 +19406,7 @@
                     placeholder: 'Filter Tags',
                     value: tagName(),
                     oninput: m.withAttr('value', tagName),
-                    config: focus_it$1
+                    config: focus_it
                 }),
                 m('span.input-group-btn', [
                     m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -18969,7 +19450,7 @@
     }
 
 
-    var focus_it$1 = function (element, isInitialized) {
+    var focus_it = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function data_dialog (args) { return m.component(data_dialog$1, args); }
@@ -19280,14 +19761,12 @@
                                             m('strong', 'Experimant Id: ')
                                         ),
                                         m('.col-xs-3',
-                                            ctrl.exps().map(function (exp){ return console.log(exp.ids==download.exp_id[0]); }),
                                             download.exp_id.length>1 ? 'All' : ctrl.exps().filter(function (exp){ return exp.ids==download.exp_id[0]; })[0].descriptive_id
                                         ),
                                         m('.col-xs-3',
                                             m('strong', 'Version Id: ')
                                         ),
                                         m('.col-xs-2',
-                                            console.log(ctrl.versions),
                                             download.version_id.length>1 ? 'All' : ctrl.versions.filter(function (version){ return version.id==download.version_id[0]; })[0].version                                     )
                                     ])
                                 ])
@@ -19634,17 +20113,18 @@
 
             return m('div', [
             m('.card-block', [
-
-                    m('.col-sm-6', [
-                        m('.input-group', [m('strong', 'Version'),
-                            ctrl.versions().length<1 ? m('.alert.alert-info', 'There are no versions')
+                m('.col-sm-6', [
+                    m('.input-group', [m('strong', 'Version'),
+                        ctrl.versions().length<1
+                            ?
+                            m('.alert.alert-info', 'There are no versions')
                             :
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
                                 ctrl.versions().map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
                             ])
-                        ])
                     ])
-                ]),
+                ])
+            ]),
             ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
             m('.text-xs-right.btn-toolbar',[
                 m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
@@ -19660,7 +20140,7 @@
 
         return restore2version(ctrl.study_id, ctrl.version_id())
             .then(function (response) {
-                var stat_data = response.version;
+                var version = response.version;
                 if (version == null) return Promise.reject('There was a problem restore your study, please contact your administrator');
                 ctrl.stat_data(response.stat_data);
             })
@@ -19797,7 +20277,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$2, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$1, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -19897,7 +20377,6 @@
                             m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])
                         ])
                     ]),
-
                     m('.row.row-centered.space', [
                         m('th.col-xs-7', 'User name'),
                         m('th.col-xs-3', 'Permission'),
@@ -19950,15 +20429,15 @@
                         ])
                     ),
 
-                m('.text-xs-right.btn-toolbar',[
-                    m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close')
-                ])
+                    m('.text-xs-right.btn-toolbar',[
+                        m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close')
+                    ])
 
                 ]);
         }
     };
 
-    var focus_it$2 = function (element, isInitialized) {
+    var focus_it$1 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function getAbsoluteUrl$1(url) {
@@ -19973,6 +20452,7 @@
             input.value = text;
             document.body.appendChild(input);
             input.select();
+
             try {
                 document.execCommand('copy');
             } catch(err){
@@ -20000,7 +20480,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$3})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$2})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -20073,7 +20553,6 @@
     var do_sharing = function (study) { return function (e) {
         e.preventDefault();
         var study_id = study.id;
-        var versions = study.versions;
         var close = messages.close;
         messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
             .then(m.redraw);
@@ -20132,7 +20611,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$3, onchange: m.withAttr('value', study_description)}),
+                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$2, onchange: m.withAttr('value', study_description)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -20160,7 +20639,7 @@
             content: {
                 view: function view(){
                     return m('div', [
-                        m('input.form-control',  {config: focus_it$3, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control',  {config: focus_it$2, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ]);
                 }
@@ -20194,7 +20673,7 @@
         var ask = function () { return messages.confirm({
             header:'New Name',
             content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$3,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$2,value: study_name(), onchange: m.withAttr('value', study_name)}),
                 !error() ? '' : m('p.alert.alert-danger', error())
             ])
         }).then(function (response) { return response && duplicate(); }); };
@@ -20288,7 +20767,7 @@
         ask();
     }; };
 
-    var focus_it$3 = function (element, isInitialized) {
+    var focus_it$2 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var do_copy_url = function (study) { return copyUrl(study.base_url); };
@@ -20347,7 +20826,7 @@
                 onmousedown: do_stat,
                 class: 'fas.fa-bar-chart'
             }},
-      restore: {text: 'Restore',
+        restore: {text: 'Restore',
             config: {
                 display: [can_edit],
                 onmousedown: do_restore$1,
@@ -20480,456 +20959,6 @@
         return !config.display || config.display.every(function (fn) { return fn(study); });
     }
 
-    var sidebarButtons = function (ref, notifications) {
-        var study = ref.study;
-
-        var readonly = study.isReadonly;
-        return m('.sidebar-buttons.btn-toolbar', [
-
-
-            m('.btn-group.btn-group-sm', [
-                m('a.btn.btn-secondary.btn-sm', {onclick: function (){ return m.route(("/properties/" + (study.id))); }, title: "Study properties"}, [
-                    m('i.fa.fa-gear')
-                ]),
-
-                // dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-menu-right', toggleContent: m('i.fa.fa-bars'), elements: [
-                //     draw_menu(study, notifications)
-                // ]})
-            ]),
-            m('.btn-group.btn-group-sm', [
-                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || fileContext(null, study, notifications), title: 'Create new files'}, [
-                    m('i.fa.fa-plus')
-                ]),
-                m('a.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', onclick: readonly || deleteFiles(study), title: 'Delete selected files'}, [
-                    m('i.fa.fa-close')
-                ]),
-                m('a.btn.btn-secondary.btn-sm', {onclick: downloadChosenFiles(study), title: 'Download selected files'}, [
-                    m('i.fa.fa-download')
-                ]),
-                m('label.btn.btn-secondary.btn-sm', {class: readonly ? 'disabled' : '', title: 'Drag files over the file list in order to upload easily'}, [
-                    m('i.fa.fa-upload'),
-                    readonly ? '' : m('input[type="file"]', {style: 'display:none', multiple:'true', onchange: uploadonchange({onchange:uploadFiles('/', study)})})
-                ])
-            ])
-        ]);
-    };
-
-    var notifications= createNotifications();
-
-    var sidebarComponent = {
-        view: function (ctrl , ref) {
-            var study = ref.study;
-
-            return m('.sidebar', {config: config}, [
-                m('div', notifications.view()),
-
-                sidebarButtons({study: study}, notifications),
-                filesList({study: study}, notifications)
-            ]);
-        }
-    };
-
-    function config(el, isInitialized, ctx){
-        if (!isInitialized) el.addEventListener('scroll', listen, false);
-        el.scrollTop = ctx.scrollTop || 0;
-
-        function listen(){
-            ctx.scrollTop = el.scrollTop;
-        }
-    }
-
-    var splitPane = function (args) { return m.component(splitComponent, args); };
-
-    var splitComponent = {
-        controller: function controller(ref){
-            var leftWidth = ref.leftWidth;
-
-            return {
-                parentWidth: m.prop(),
-                parentOffset: m.prop(),
-                leftWidth: leftWidth || m.prop('auto')
-            };
-        },
-
-        view: function view(ref, ref$1){
-            var parentWidth = ref.parentWidth;
-            var parentOffset = ref.parentOffset;
-            var leftWidth = ref.leftWidth;
-            var left = ref$1.left; if ( left === void 0 ) left = '';
-            var right = ref$1.right; if ( right === void 0 ) right = '';
-
-            return m('.split-pane', {config: config$1(parentWidth, parentOffset, leftWidth)}, [
-                m('.split-pane-col-left', {style: {flexBasis: leftWidth() + 'px'}}, left),
-                m('.split-pane-divider', {onmousedown: onmousedown(parentOffset, leftWidth)}),
-                m('.split-pane-col-right', right)
-            ]);
-        }
-    };
-
-    var config$1 = function (parentWidth, parentLeft, leftWidth) { return function (element, isInitialized, ctx) {
-        if (!isInitialized){
-            update();
-            if (leftWidth() === undefined) leftWidth(parentWidth()/6);
-        }
-
-        document.addEventListener('resize', update);
-        ctx.onunload = function () { return document.removeEventListener('resize', update); };
-        
-        function update(){
-            parentWidth(element.offsetWidth);
-            parentLeft(element.getBoundingClientRect().left);
-        }
-    }; };
-
-    var onmousedown = function (parentOffset, leftWidth) { return function () {
-        document.addEventListener('mouseup', mouseup);
-        document.addEventListener('mousemove', mousemove);
-
-        function mouseup() {
-            document.removeEventListener('mousemove', mousemove);
-            document.removeEventListener('mouseup', mousemove);
-        }
-
-        function mousemove(e){
-            leftWidth(e.pageX - parentOffset());
-            m.redraw();
-        }
-    }; };
-
-    var study;
-    var editorLayoutComponent = {
-        controller: function (){
-            var version = m.route.param('version_id');
-            var id = m.route.param('studyId');
-            if (!study || (study.id !== id)){
-                study = studyFactory(id);
-                !version
-                ?
-                study
-                    .get()
-                    .catch(function (err){ return study.err = err.message; })
-                    .then(m.redraw)
-                :
-                study
-                    .get4version(version)
-                    .catch(function (err){ return study.err = err.message; })
-                    .then(m.redraw);
-
-            }
-
-            var ctrl = {study: study, onunload: onunload};
-
-            window.addEventListener('beforeunload', beforeunload);
-
-            return ctrl;
-
-            function hasUnsavedData(){
-                return study.files().some(function (f) { return f.content() !== f.sourceContent(); });
-            }
-
-            function beforeunload(event) {
-                if (hasUnsavedData()) return event.returnValue = 'You have unsaved data are you sure you want to leave?';
-            }
-
-            function onunload(e){
-
-                var leavingEditor = !/^\/editor\//.test(m.route());
-                if (leavingEditor && hasUnsavedData() && !window.confirm('You have unsaved data are you sure you want to leave?')){
-                    e.preventDefault();
-                } else {
-                    window.removeEventListener('beforeunload', beforeunload);
-                }
-
-                if (leavingEditor) study = null;
-            }
-        },
-        view: function (ref) {
-            var study = ref.study;
-
-            return m('.study', {config: fullHeight},  [
-                study.err ?
-                    m('.alert.alert-danger',
-                        m('strong', 'Error: '), study.err)
-                    :
-                    !study.loaded ? '' :
-                        splitPane({
-                            leftWidth: leftWidth,
-                            left: m.component(sidebarComponent, {study: study}),
-                            right: m.route.param('resource') === 'wizard'
-                                ? m.component(wizardComponent, {study: study})
-                                : m.component(fileEditorComponent, {study: study})
-                        })
-            ]);
-        }
-    };
-
-    // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
-    // Essentially this is a global variable
-    function leftWidth(val){
-        if (arguments.length) localStorage.fileSidebarWidth = val;
-        return localStorage.fileSidebarWidth;
-    }
-
-    var studyPrototype$1 = {
-        apiURL: function apiURL(path){
-            if ( path === void 0 ) path = '';
-
-            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
-        },
-
-        get: function get(){
-            var this$1 = this;
-
-            return fetchFullJson(this.apiURL())
-                .then(function (study) {
-                    // const files = this.parseFiles(study.files);
-                    var files = flattenFiles(study.files)
-                        .map(assignStudyId(this$1.id))
-                        .map(assignViewStudy())
-                        .map(fileFactory);
-                    this$1.loaded = true;
-                    this$1.isReadonly = study.is_readonly;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked;
-                    this$1.is_published = study.is_published;
-                    this$1.is_public = study.is_public;
-                    this$1.has_data_permission = study.has_data_permission;
-                    this$1.description = study.description;
-
-                    this$1.name = study.study_name;
-                    this$1.type = study.type || 'minno02';
-                    this$1.base_url = study.base_url;
-                    this$1.versions = study.versions ? study.versions : [];
-                    this$1.files(files);
-                    this$1.sort();
-
-                })
-                .catch(function (reason) {
-                    this$1.error = true;
-                    throw(reason);
-                    // if(reason.status==404)
-                    //
-                    // console.log(reason.status);
-                    //
-                    // return Promise.reject(reason); // do not swallow error
-                });
-
-            function flattenFiles(files){
-                if (!files) return [];
-                return files
-                    .map(spreadFile)
-                    .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
-            }
-
-            function assignStudyId(id){
-                return function (f) { return Object.assign(f, {studyId: id}); };
-            }
-
-            function assignViewStudy(){
-                return function (f) { return Object.assign(f, {viewStudy: true}); };
-            }
-
-            // create an array including file and all its children
-            function spreadFile(file){
-                return [file].concat(flattenFiles(file.files));
-            }
-        },
-
-        getFile: function getFile(id){
-            return this.files().find(function (f) { return f.id === id; });
-        },
-
-        // makes sure not to return both a folder and its contents.
-        // This is important mainly for server side clarity (don't delete or download both a folder and its content)
-        // We go recurse through all the files, starting with those sitting in root (we don't have a root node, so we need to get them manually).
-        getChosenFiles: function getChosenFiles(){
-            var vm = this.vm;
-            var rootFiles = this.files().filter(function (f) { return f.basePath === '/'; });
-            return getChosen(rootFiles);
-
-            function getChosen(files){
-                return files.reduce(function (response, file) {
-                    // a chosen file/dir does not need sub files to be checked
-                    if (vm(file.id).isChosen() === 1) response.push(file);
-                    // if not chosen, we need to look deeper
-                    else response = response.concat(getChosen(file.files || []));
-                    return response;
-                }, []);
-            }
-        },
-
-        addFile: function addFile(file){
-            this.files().push(file);
-            // update the parent folder
-            var parent = this.getParents(file).reduce(function (result, f) { return result && (result.path.length > f.path.length) ? result : f; } , null); 
-            if (parent) {
-                parent.files || (parent.files = []);
-                parent.files.push(file);
-            }
-        },
-        parseFiles: function parseFiles(files){
-            var study = this;
-
-            return ensureArray(files)
-                .map(fileFactory)
-                .map(spreadFile)
-                .reduce(flattenDeep, [])
-                .map(assignStudyId);
-
-            function ensureArray(arr){ return arr || []; }
-            function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
-            function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
-
-            // create an array including file and all its children
-            function spreadFile(file){
-                var children = ensureArray(file.files).map(spreadFile);
-                return [file].concat(children);
-            }
-        },
-        createFile: function createFile(ref){
-            var this$1 = this;
-            var name = ref.name;
-            var content = ref.content; if ( content === void 0 ) content = '';
-            var isDir = ref.isDir;
-
-            // validation (make sure there are no invalid characters)
-            // eslint-disable-next-line no-useless-escape
-            if(/[^\/-_.A-Za-z0-9]/.test(name)) return Promise.reject({message: ("The file name \"" + name + "\" is not valid")});
-
-            // validation (make sure file does not already exist)
-            var exists = this.files().some(function (file) { return file.path === name; });
-            if (exists) return Promise.reject({message: ("The file \"" + name + "\" already exists")});
-
-            // validateion (make sure direcotry exists)
-            var basePath = (name.substring(0, name.lastIndexOf('/'))).replace(/^\//, '');
-            var dirExists = basePath === '' || this.files().some(function (file) { return file.isDir && file.path === basePath; });
-            if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
-            return fetchJson(this.apiURL('/file'), {method:'post', body: {name: name, content: content, isDir: isDir}})
-                .then(function (response) {
-                    Object.assign(response, {studyId: this$1.id, content: content, path:name, isDir: isDir});
-                    var file = fileFactory(response);
-                    file.loaded = true;
-                    this$1.addFile(file);
-                    return response;
-                })
-                .then(this.sort.bind(this));
-        },
-        sort: function sort(response){
-            var files = this.files().sort(sort);
-            this.files(files);
-            return response;
-
-            function sort(a,b){
-                // sort by isDir then name
-                var nameA= +!a.isDir + a.name.toLowerCase(), nameB=+!b.isDir + b.name.toLowerCase();
-                if (nameA < nameB) return -1;//sort string ascending
-                if (nameA > nameB) return 1;
-                return 0; //default return value (no sorting)
-            }
-        },
-
-
-        /*
-         * @param files [Array] a list of file.path to download
-         * @returns url [String] the download url
-         */
-        downloadFiles: function downloadFiles(files){
-            return fetchJson(this.apiURL(), {method: 'post', body: {files: files}})
-                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
-        },
-
-
-        getParents: function getParents(file){
-            return this.files().filter(function (f) { return f.isDir && file.basePath.indexOf(f.path) === 0; });
-        },
-
-        // returns array of children for this file, including itself
-        getChildren: function getChildren(file){
-            return children(file);
-           
-            function children(file){
-                if (!file.files) return [file];
-                return file.files
-                    .map(children) // harvest children
-                    .reduce(function (result, files) { return result.concat(files); }, [file]); // flatten
-            }
-        }
-    };
-
-    var studyFactory$1 =  function (code) {
-        var study = Object.create(studyPrototype$1);
-        Object.assign(study, {
-            code    : code,
-            id      : study.id,
-            view    : true,
-            files   : m.prop([]),
-            loaded  : false,
-            error   :false,
-            vm      : viewModelMap$1({
-                isOpen: m.prop(false),
-                isChanged: m.prop(false),
-                isChosen: m.prop(0)
-            })
-        });
-
-        return study;
-    };
-
-    // http://lhorie.github.io/mithril-blog/mapping-view-models.html
-    var viewModelMap$1 = function(signature) {
-        var map = {};
-        return function(key) {
-            if (!map[key]) {
-                map[key] = {};
-                for (var prop in signature) map[key][prop] = m.prop(signature[prop]());
-            }
-            return map[key];
-        };
-    };
-
-    var study$1;
-
-    var editorLayoutComponent$1 = {
-        controller: function (){
-
-            var code = m.route.param('code');
-            if (!study$1 || (study$1.code !== code)){
-                study$1 = studyFactory$1(code);
-
-                study$1
-                    .get()
-                    .catch(function (reason) {
-                        if(reason.status==403)
-                            m.route('/');
-                    })
-                    .then(m.redraw);
-            }
-
-            var ctrl = {study: study$1, onunload: onunload};
-            return ctrl;
-        },
-        view: function (ref) {
-            var study = ref.study;
-
-            return m('.study', {config: fullHeight},  [
-                !study.loaded ? '' : splitPane({
-                    leftWidth: leftWidth$1,
-                    left: m.component(sidebarComponent, {study: study}),
-                    right: m.route.param('resource') === 'wizard'
-                        ? m.component(wizardComponent, {study: study})
-                        : m.component(fileEditorComponent, {study: study})
-                })
-            ]);
-        }
-    };
-
-    // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
-    // Essentially this is a global variable
-    function leftWidth$1(val){
-        if (arguments.length) localStorage.fileSidebarWidth = val;
-        return localStorage.fileSidebarWidth;
-    }
-
     var mainComponent = {
 
         controller: function(){
@@ -21044,7 +21073,9 @@
                                 m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                                 m('option', {value:'public'}, 'Show public studies'),
                                 m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
-                                m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
+                                studies()
+                                    .filter(typeFilter('bank-cognitive')).length===0 ? '' :
+                                    m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
                             ])
                         ])
                     ])
@@ -21066,7 +21097,7 @@
                                 ])
                             ]),
                             m('.col-sm-4', [
-                                m('input.form-control', {placeholder: 'Search...', config: focus_it$4, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
+                                m('input.form-control', {placeholder: 'Search...', config: focus_it$3, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
 
@@ -21077,7 +21108,7 @@
                             .filter(permissionFilter(permissionChoice()))
                             .filter(searchFilter(globalSearch()))
                             .filter(function (study){ return !study.deleted; })
-                            .map(function (study) { return m('a', {href: m.route() != '/studies' ? ("/translate/" + (study.id)) : ("/editor/" + (study.id)),config:routeConfig, key: study.id}, [
+                            .map(function (study) { return m('a', {href: m.route() != '/studies' ? ("/translate/" + (study.id)) : ("/properties/" + (study.id)),config:routeConfig, key: study.id}, [
                                 m('.row.study-row', [
                                     m('.col-sm-5', [
                                         m('.study-text', [
@@ -21173,7 +21204,7 @@
         }
     }
 
-    var focus_it$4 = function (element, isInitialized) {
+    var focus_it$3 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var deploy_url = baseUrl + "/deploy_list";
@@ -21906,7 +21937,7 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
-                                        config: focus_it$5,
+                                        config: focus_it$4,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
@@ -21962,7 +21993,7 @@
         };
     }
 
-    var focus_it$5 = function (element, isInitialized) {
+    var focus_it$4 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function users_url()
@@ -22221,7 +22252,8 @@
                     .then(function (response) { return set_values(response); })
                     .then(function (){ return ctrl.loaded(true); })
                     .catch(function (error) {
-                        console.log(error.message);
+                        ctrl.loaded(true);
+                        show_fail_notification(error.message);
                     }).then(m.redraw);
             }
 
@@ -22239,7 +22271,6 @@
                     ((ctrl.gmail.enable() && ctrl.gmail.email() !== ctrl.given_conf().gmail.email) ||
                     (ctrl.gmail.enable() && ctrl.gmail.password() !== ctrl.given_conf().gmail.password));
                 ctrl.gmail.updated(updated);
-
                 return m.redraw();
             }
 
@@ -22247,7 +22278,7 @@
                 if(fields.hasOwnProperty('app_key'))
                     ctrl.dbx.app_key(fields.app_key);
                 if(fields.hasOwnProperty('app_secret'))
-                ctrl.dbx.app_secret(fields.app_secret);
+                    ctrl.dbx.app_secret(fields.app_secret);
                 ctrl.dbx.enable(!!ctrl.dbx.app_key() || !!ctrl.dbx.app_secret());
 
                 var updated = (ctrl.given_conf().hasOwnProperty('dbx') && !ctrl.dbx.enable()) ||
@@ -22308,7 +22339,7 @@
                             ((!ctrl.given_conf().server_data || !ctrl.given_conf().server_data.greenlock) ||
                                 (ctrl.given_conf().server_data.greenlock.owner_email !== ctrl.server_data.greenlock.owner_email() ||
                                     (ctrl.given_conf().server_data.greenlock.domains.length !== ctrl.server_data.greenlock.domains().filter(function (domain) { return !!domain; }).length ||
-                                        !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index]}))
+                                        !(ctrl.server_data.greenlock.domains().slice().sort().every(function(value, index) { return value === ctrl.given_conf().server_data.greenlock.domains.slice().sort()[index];}))
                                     )
                                 )
                             )
@@ -22395,16 +22426,16 @@
                         ]),
                         m('.col-sm-8',[
                             m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.toggle_visibility('gmail', false); },
-                                        checked: !ctrl.gmail.enable(),
-                                    }), m('span.c-indicator'), ' Disable Gmail'
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('gmail', false); },
+                                    checked: !ctrl.gmail.enable(),
+                                }), m('span.c-indicator'), ' Disable Gmail'
                             ])),
                             m('div', m('label.c-input.c-radio', [
-                                    m('input[type=radio]', {
-                                        onclick: function (){ return ctrl.toggle_visibility('gmail', true); },
-                                        checked: ctrl.gmail.enable(),
-                                    }), m('span.c-indicator'), ' Enable Gmail'
+                                m('input[type=radio]', {
+                                    onclick: function (){ return ctrl.toggle_visibility('gmail', true); },
+                                    checked: ctrl.gmail.enable(),
+                                }), m('span.c-indicator'), ' Enable Gmail'
                             ])),
 
                             m('.form-group.row', [
@@ -22433,16 +22464,15 @@
                                         m('a', {href:'javascript:void(0)', onclick: function (){ return ctrl.show_gmail_password(ctrl); }},'Show password')  :
 
                                         m('input.form-control', {
-                                        type:'input',
-                                        placeholder: 'Password',
-                                        value: ctrl.gmail.password(),
-                                        oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); },
-                                        onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }
-                                    })
+                                            type:'input',
+                                            placeholder: 'Password',
+                                            value: ctrl.gmail.password(),
+                                            oninput: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); },
+                                            onchange: function (e){ return ctrl.update_gmail_fields(ctrl, {password: e.target.value}); }
+                                        })
                                 ])
                             ])
-                         ])
-
+                        ])
                     ]),
                     m('hr'),
                     m('.row', [
@@ -22510,8 +22540,8 @@
                             ])
                         ]),
                         m('.col-sm-8',[
-                            ctrl.server_data.type()!=='https' ? ''
-                                : [
+                            ctrl.server_data.type()!=='https' ? '':
+                                [
                                     m('.form-group.row.space', [
                                         m('.col-sm-2', [
                                             m('label.form-control-label', 'Private key')
@@ -22547,58 +22577,196 @@
                                                 onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {https:{port: e.target.value}}); }                                })
                                         ])
                                     ]),
-                            ],
-                            ctrl.server_data.type()!=='greenlock' ? ''
-                                : [
-                                    m('.form-group.row.space', [
-                                        m('.col-sm-2', [
-                                            m('label.form-control-label', 'Owner email')
-                                        ]),
-                                        m('.col-sm-6', [
-                                            m('input.form-control', {
-                                                type:'input',
-                                                placeholder: 'Owner email',
-                                                value: ctrl.server_data.greenlock.owner_email(),
-                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); },
-                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); }                                })
-                                        ])
-                                    ]),
-                                    m('.form-group.row.space', [
-                                        m('.col-sm-2', [
-                                            m('label.form-control-label', 'Domains')
-                                        ]),
-                                        m('.col-sm-9',
-                                            ctrl.server_data.greenlock.domains().map(function (domain, id){ return m('.form-group.row', [
-                                                    m('.col-sm-8',
-                                                        m('input.form-control', {
-                                                            type:'input',
-                                                            placeholder: ("Domain " + (id+1)),
-                                                            value: domain,
-                                                            oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); },
-                                                            onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); }
-                                                        })),
-                                                        m('.col-sm-1',
-                                                            m('button.btn.btn-primary', {onclick: function (){ return ctrl.update_server_type_fields(ctrl, {greenlock:{remove:id}}); }},'X')
-                                                        )
-                                                ]); }),
-                                                ctrl.server_data.greenlock.domains().some(function (domain){ return domain===''; }) ? '' :
-                                                    m('.form-group.row', [
-                                                        m('.col-sm-8',
-                                                            m('input.form-control', {
-                                                                type:'input',
-                                                                placeholder: ("Domain " + (ctrl.server_data.greenlock.domains().length+1)),
-                                                                value: '',
-                                                                oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); },
-                                                                onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); }
-                                                            })
-                                                    )])
-                                        )]),
                                 ],
+                            ctrl.server_data.type()!=='greenlock' ? '' : [
+                                m('.form-group.row.space', [
+                                    m('.col-sm-2', [
+                                        m('label.form-control-label', 'Owner email')
+                                    ]),
+                                    m('.col-sm-6', [
+                                        m('input.form-control', {
+                                            type:'input',
+                                            placeholder: 'Owner email',
+                                            value: ctrl.server_data.greenlock.owner_email(),
+                                            oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); },
+                                            onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{owner_email: e.target.value}}); }                                })
+                                    ])
+                                ]),
+                                m('.form-group.row.space', [
+                                    m('.col-sm-2', [
+                                        m('label.form-control-label', 'Domains')
+                                    ]),
+                                    m('.col-sm-9',
+                                        ctrl.server_data.greenlock.domains().map(function (domain, id){ return m('.form-group.row', [
+                                                m('.col-sm-8',
+                                                    m('input.form-control', {
+                                                        type:'input',
+                                                        placeholder: ("Domain " + (id+1)),
+                                                        value: domain,
+                                                        oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); },
+                                                        onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id: id}}); }
+                                                    })
+                                                ),
+                                                m('.col-sm-1',
+                                                    m('button.btn.btn-primary', {onclick: function (){ return ctrl.update_server_type_fields(ctrl, {greenlock:{remove:id}}); }},'X')
+                                                )
+                                            ]); }),
+                                        ctrl.server_data.greenlock.domains().some(function (domain){ return domain===''; }) ? '' :
+                                            m('.form-group.row', [
+                                                m('.col-sm-8',
+                                                    m('input.form-control', {
+                                                        type:'input',
+                                                        placeholder: ("Domain " + (ctrl.server_data.greenlock.domains().length+1)),
+                                                        value: '',
+                                                        oninput: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); },
+                                                        onchange: function (e){ return ctrl.update_server_type_fields(ctrl, {greenlock:{domain: e.target.value, id:-1}}); }
+                                                    })
+                                                )
+                                            ])
+                                    )]),
+                            ],
                         ])
                     ]),
 
                     m('.row.central_panel', [
                         m('.col-sm-2', m('button.btn.btn-primary', {disabled: ctrl.donot_update() || (!ctrl.fingerprint.updated() && !ctrl.gmail.updated() && !ctrl.dbx.updated() && !ctrl.server_data.updated()), onclick: ctrl.do_update_config},'Save'))
+                    ]),
+                    m('div', ctrl.notifications.view()),
+
+                ]);
+        }
+    };
+
+    function homepage_url()
+    {
+        return (baseUrl + "/config/homepage");
+    }
+
+
+    var get_homepage = function () { return fetchJson(homepage_url(), {
+        method: 'get'
+    }); };
+
+    var update_homepage = function (upper_panel, right_panel) { return fetchJson(homepage_url(), {
+        body: {upper_panel: upper_panel, right_panel: right_panel},
+        method: 'put'
+
+    }); };
+
+    var homepageComponent = {
+        controller: function controller(){
+            var ctrl = {
+                loaded:m.prop(false),
+                upper_panel:m.prop(''),
+                right_panel:m.prop(''),
+                mode:m.prop('edit'),
+                notifications: createNotifications(),
+                do_update_homepage: do_update_homepage,
+            };
+
+            function set_values(response){
+                ctrl.upper_panel(!response.upper_panel ? '' : response.upper_panel );
+                ctrl.right_panel(!response.right_panel ? '' : response.right_panel);
+                return m.redraw();
+            }
+
+            function load() {
+                get_homepage()
+                    .then(function (response) { return set_values(response); })
+                    .then(function (){ return ctrl.loaded(true); })
+                    .catch(function (error) {
+                        ctrl.loaded(true);
+                        show_fail_notification(error.message);
+                    }).then(m.redraw);
+            }
+
+            function show_success_notification(res) {
+                if(res)
+                    ctrl.notifications.show_success(res);
+            }
+
+            function show_fail_notification(res) {
+                ctrl.notifications.show_danger(res);
+            }
+
+            function do_update_homepage(){
+                m.redraw();
+                update_homepage(ctrl.upper_panel, ctrl.right_panel)
+                    .then(function (res){
+                        show_success_notification(res);
+                        return get_homepage()
+                            .then(function (response) { return set_values(response); });
+                    })
+                    .catch(function (error) { return show_fail_notification(error.message); })
+                    .then(m.redraw);
+            }
+            load();
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return  !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+                m('.container.space', [
+                    m('.row.space',[
+                        m('.col-md-10', m('h3', 'Homepage')),
+                        m('.col-md-2', [
+                            m('.btn-group.btn-group-md.pull-md-right', [
+                                m('a.btn.btn-secondary', {onclick: function (){ return ctrl.mode('view'); }, class: ctrl.mode() === 'view' ? 'active' : ''}, [
+                                    m('strong', 'View' )
+                                ]),
+                            ]),
+                            m('.btn-group.btn-group-md.pull-md-right', [
+                                m('a.btn.btn-secondary', {onclick: function (){ return ctrl.mode('edit'); }, class: ctrl.mode() === 'edit' ? 'active' : ''}, [
+                                    m('strong', 'Edit' )
+                                ]),
+                            ]),
+                        ])
+                    ]),
+
+                    m('.row.space', [
+                        m('.col-md-12',
+                            m('',
+                                ctrl.mode()==='edit'
+                                    ?
+                                    m('textarea.form-control.fixed_textarea', { rows:6, value: ctrl.upper_panel(), onchange: m.withAttr('value', ctrl.upper_panel)})
+                                    :
+                                    m.trust(ctrl.upper_panel())
+                            )
+                        )
+                    ]),
+                    m('.row.space', {class: ctrl.mode() ==='view' && !ctrl.right_panel() ? 'centrify' : ''}, [
+                        m('.space.col-md-5',
+                            m('.homepage-background', [
+                                m('.card-block',[
+                                    m('form.space.disable_properties', [
+                                        m('.space', 'Username / Email'),
+                                        m('input.form-control', {placeholder: 'Username / Email'}),
+                                        m('.space', 'Password'),
+                                        m('input.form-control', {type:'password', placeholder: 'Password'})
+                                    ]),
+                                    m('.space', m('button.btn.btn-primary.btn-block', {disabled:true}, 'Sign in')),
+                                    m('p.text-center',
+                                        m('small.text-muted',  m('a', {href:'#'}, 'Lost your password?'))
+                                    )
+                                ])
+                            ])
+                        ),
+                        ctrl.mode()==='view' && !ctrl.right_panel() ? '' :
+                            m('.col-md-7.space',
+                                m('.homepage-background',
+                                    ctrl.mode()==='edit'
+                                        ?
+                                        m('textarea.form-control.fixed_textarea', { rows:15, value: ctrl.right_panel(), onchange: m.withAttr('value', ctrl.right_panel)})
+                                        :
+                                        m.trust(ctrl.right_panel())
+                                )
+                            )
+                    ]),
+
+                    m('.row.text-xs-right.space', [
+                        m('.col-md-12', m('button.btn.btn-primary', {onclick: ctrl.do_update_homepage}, 'Save'))
                     ]),
                     m('div', ctrl.notifications.view()),
 
@@ -23388,8 +23556,14 @@
                 lock: lock,
                 show_sharing: show_sharing,
                 show_duplicate: show_duplicate,
-                show_publish: show_publish
+                show_publish: show_publish,
+                show_delete: show_delete,
+                show_change_availability: show_change_availability
             };
+
+            function show_change_availability(version_id, availability){
+                change_version_availability(m.route.param('studyId'), version_id, availability);
+            }
             function save(){
                 if (ctrl.study.name!==ctrl.study_name())
                     rename_study(m.route.param('studyId'), ctrl.study_name());
@@ -23400,6 +23574,19 @@
                 return lock_study(ctrl.study.id, !ctrl.study.is_locked)
                     .then(function () { return ctrl.study.is_locked = !ctrl.study.is_locked; })
                     .then(m.redraw);
+            }
+
+
+            function show_delete(){
+                return messages.confirm({header:'Delete study', content:'Are you sure?'})
+                    .then(function (response) {
+                        if (response) delete_study(ctrl.study.id)
+                            .then(function (){ return ctrl.study.deleted=true; })
+                            .catch(function (error) { return messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}); })
+                            .then(m.redraw)
+                            .then(m.route('./'))
+                        ;
+                    });
             }
 
             function show_sharing() {
@@ -23413,37 +23600,36 @@
                 var error = m.prop('');
                 var update_url = m.prop('update');
                 var version_name = m.prop('');
-                var ask = function () { return messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Unpublish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Unpublish' : 'Publish', ' the study?'],
+                var ask = function () { return messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Republish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Republish' : 'Publish', ' the study?'],
                     content:m('p',
-                        [m('p', ctrl.study.is_published
-                            ?
-                            'The launch URL participants used to run the study will be removed. Participants using this link will see an error page. Use it if you completed running the study, or if you want to pause the study and prevent participants from taking it for a while. You will be able to publish the study again, if you want.'
-                            :
-                            [
-                                m('p', 'This will create a link that participants can use to launch the study.'),
-                                m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
-                                m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
-                                m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
-                                m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it$6,value: version_name(), onchange: m.withAttr('value', version_name)}),
-                                m('.input-group.space', [
-
-                                    m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
-                                        m('option', {value:'update', selected:true}, 'Update the launch URL'),
-                                        m('option', {value:'keep'}, 'Keep the launch URL'),
-                                        ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
-                                    ])
+                        [m('p', [
+                            m('p', 'This will create a link that participants can use to launch the study.'),
+                            m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
+                            m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
+                            m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
+                            m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it$5,value: version_name(), onchange: m.withAttr('value', version_name)}),
+                            m('.input-group.space', [
+                                m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
+                                    m('option', {value:'update', selected:true}, 'Create a new launch URL'),
+                                    ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous version')
+                                ])
                             ])
-                            ]),
-                            !error() ? '' : m('p.alert.alert-danger', error())])
+                        ]),
+                        !error() ? '' : m('p.alert.alert-danger', error())])
                 })
 
-                    .then(function (response) { return response && publish(); }); };
+                .then(function (response) {
+                    if (response && !version_name()) {
+                        error('Version name cannot be empty');
+                        return ask();
+                    }
+                    return  response && publish();
+                }); };
 
-                var publish= function () { return publish_study(ctrl.study.id, !ctrl.study.is_published, update_url)
+                var publish= function () { return publish_study(ctrl.study.id, version_name, update_url)
                     .then(function (res){ return ctrl.study.versions.push(res); })
-                    .then(ctrl.study.is_published = !ctrl.study.is_published)
-                    // .then(()=>notifications.show_success(`'${ctrl.study.name}' ${ctrl.study.is_published ? 'published' : 'unpublished'} successfully`))
-                    .then(ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
+                    .then(function (){ return ctrl.study.is_published = true; })
+                    // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
 
                     .catch(function (e) {
                         error(e.message);
@@ -23461,7 +23647,7 @@
                 var ask = function () { return messages.confirm({
                     header:'New Name',
                     content: m('div', [
-                        m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$6,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$5,value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ])
                 }).then(function (response) { return response && duplicate(); }); };
@@ -23479,14 +23665,14 @@
             var study;
             function load() {
                 ctrl.study = studyFactory(m.route.param('studyId'));
-                    return ctrl.study.get()
-                        .catch(function (err) { return study.err = err.message; })
-                        .then(function (){
-                            ctrl.study_name(ctrl.study.name);
-                            ctrl.description(ctrl.study.description);
-                            ctrl.loaded(true);
-                        })
-                        .then(m.redraw);
+                return ctrl.study.get()
+                    .catch(function (err) { return study.err = err.message; })
+                    .then(function (){
+                        ctrl.study_name(ctrl.study.name);
+                        ctrl.description(ctrl.study.description);
+                        ctrl.loaded(true);
+                    })
+                    .then(m.redraw);
             }
             load();
 
@@ -23506,7 +23692,7 @@
                     m('.row.space',
                         m('.col-sm-2.space',  m('strong', 'Study name:')),
                         m('.col-sm-10',
-                        m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
+                            m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
                     ),
                     m('.row.space',
                         m('.col-sm-2.space',  m('strong', 'Description:')),
@@ -23523,32 +23709,27 @@
                         )
                     ),
                     m('.row.space',
-                        m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id)));}}, 'View files'))
+                        m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id)));}}, [m('i.fa.fa-wrench'), ' View sandbox']))
 
 
-                ),
-
-
-                    ctrl.study.versions.length === 1 ? ''
-                    :[
-                        m('.row.space',
-                            m('.col-sm-12.space',  m('h4', 'Previous published versions'))
-                        ),
-                    ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).map(function (version, id){ return id==0 && ctrl.study.versions.length === 1 ? '' :
-
-                        m('.row',
-                            ctrl.study.versions.length===id+1 ? '' : [
-                                m('.col-sm-3.space',  ("(" + (formatDate$1(version.version)) + ")")),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'View')),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'Active'))
-                            ]
-                        ); }
-                    )],
-                    m('.row.space',
-                        m('.col-sm-5.space.text-xs-right',
-                            m('button.btn.btn-secondary', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus-circle'), ' Develop a new version']))
                     ),
-
+                    ctrl.study.versions.length === 1 ? ''
+                        :
+                        [
+                            m('.row.space',
+                                m('.col-sm-12.space',  m('h4', 'Published versions'))
+                            ),
+                            console.log(ctrl.study.versions),
+                            ctrl.study.versions.filter(function (version){ return version.state === 'Published'; })
+                                .map(function (version, id){ return m('.row',
+                                    [
+                                        m('.col-sm-3.space',  [m('strong', version.version_name), (" (" + (formatDate$1(version.version)) + ")")]),
+                                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'Review')),
+                                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(version.version, !version.availability); }}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
+                                    ]
+                                ); }
+                            )
+                        ],
 
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Actions'))
@@ -23587,10 +23768,10 @@
                         m('.col-sm-12', [
                             m('.row.',
                                 m('.col-sm-11.space',[
-                                        m('strong', 'Publish study'),
-                                    ]),
+                                    m('strong', 'Publish study'),
+                                ]),
                                 m('.col-sm-1.space',
-                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Unpublish' : 'Publish')
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Republish' : 'Publish')
                                 )
                             ),
                             m('.row.',
@@ -23607,7 +23788,7 @@
                             m('.row.space',
                                 m('.col-sm-11.space',  m('strong', 'Delete study')),
                                 m('.col-sm-1.space',
-                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.save}, 'Delete')
+                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
                                 )
                             ),
                         ])
@@ -23617,7 +23798,7 @@
         }
     };
 
-    var focus_it$6 = function (element, isInitialized) {
+    var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     // it makes sense to use this for cotnrast:
@@ -23637,7 +23818,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$7, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -23700,7 +23881,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$7 = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
@@ -24091,6 +24272,7 @@
         '/addUser':  addComponent,
         '/users':  usersComponent,
         '/config':  configComponent,
+        '/homepage':  homepageComponent,
         '/massMail':  massMailComponent,
 
         '/studyChangeRequest/:studyId':  studyChangeRequestComponent,
@@ -24147,22 +24329,21 @@
                         isloggedin = ctrl.isloggedin = response.isloggedin;
                         ctrl.present_templates(response.present_templates);
                         ctrl.first_admin_login(response.first_admin_login);
-                        var is_view = (m.route() == ("/view/" + (m.route.param('code'))) || m.route() == ("/view/" + (m.route.param('code')) + "/" + (m.route.param('resource')) + "/" + (encodeURIComponent(m.route.param('fileId')))));
+                        var is_view = (m.route() === ("/view/" + (m.route.param('code'))) || m.route() === ("/view/" + (m.route.param('code')) + "/" + (m.route.param('resource')) + "/" + (encodeURIComponent(m.route.param('fileId')))));
 
-                        if(ctrl.role()=='ro' && !is_view)
+                        if(ctrl.role()==='ro' && !is_view)
                             return doLogout();
-                        var is4su   = (m.route() == "/users" || m.route() == "/config");
+                        var is4su   = (m.route() === "/users" || m.route() === "/config" || m.route() === "/homepage");
 
-                        if(ctrl.role()!='su' && is4su)
+                        if(ctrl.role()!=='su' && is4su)
                             m.route('./');
 
                         if (!is_view &&  !ctrl.isloggedin  && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
-                            // doLogout();
                             var url = m.route();
                             m.route('/login');
                             location.hash = encodeURIComponent(url);
                         }
-                        if(ctrl.role()=='CU' && m.route() !== '/studies')
+                        if(ctrl.role()==='CU' && m.route() !== '/studies')
                             m.route('/downloads');
 
                         if(ctrl.first_admin_login() && m.route() !== '/settings')
@@ -24212,7 +24393,7 @@
                     // 'data':['downloads', 'downloadsAccess', 'statistics'],
                     // 'pool':[],
                     'tags':[]
-                    ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config'/*, 'massMail'*/]
+                    ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
                 };
 
 
@@ -24232,9 +24413,10 @@
                             'removalList': {text:'Removal List', href:'/removalList'},
                             'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
                             'addUser': {text:'Add User', href: '/addUser'},
-                            'config': {text:'Edit Configuration', href: '/config'},
-                            'massMail': {text:'Send MassMail', href: '/massMail'},
-                            'users': {text:'Users Management', href: '/users'}
+                            'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
+                            'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
+                            'massMail': {text: 'Send MassMail', href: '/massMail'},
+                            'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
                         }}
 
                 };

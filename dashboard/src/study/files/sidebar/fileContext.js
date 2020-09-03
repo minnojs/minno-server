@@ -31,9 +31,10 @@ const fileContext = (file, study, notifications) => {
             ]}
         ]);
     }
-    let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
+    // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
+    let version_id = study.versions[0].id;
     if (study.version)
-        version_id = study.versions.filter(version=>version.version === study.version)[0].id;
+        version_id = study.version.id;
 
     // Allows to use as a button without a specific file
     if (file) {

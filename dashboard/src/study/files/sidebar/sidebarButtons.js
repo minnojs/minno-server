@@ -2,8 +2,6 @@ import {deleteFiles, downloadChosenFiles} from './fileActions';
 import fileContext from './fileContext';
 import {uploadFiles} from './fileActions';
 import {uploadonchange} from 'utils/uploader';
-import dropdown from 'utils/dropdown';
-import {draw_menu} from '../../studyMenu';
 
 export default sidebarButtons;
 

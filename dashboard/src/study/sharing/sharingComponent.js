@@ -2,7 +2,6 @@ export default args => m.component(sharing_dialog, args);
 
 import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
 import messages from 'utils/messagesComponent';
-import {copyUrl} from 'utils/copyUrl';
 
 // export default collaborationComponent;
 
@@ -35,7 +34,6 @@ let sharing_dialog = {
                     ctrl.is_public(response.is_public);
                     ctrl.study_name(response.study_name);
                     ctrl.link(response.link);
-;
                     ctrl.loaded = true;})
                 .catch(error => {
                     ctrl.col_error(error.message);
@@ -170,7 +168,6 @@ let sharing_dialog = {
                         m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])
                     ])
                 ]),
-
                 m('.row.row-centered.space', [
                     m('th.col-xs-7', 'User name'),
                     m('th.col-xs-3', 'Permission'),
@@ -224,9 +221,9 @@ let sharing_dialog = {
                     ])
                 ),
 
-            m('.text-xs-right.btn-toolbar',[
-                m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close')
-            ])
+                m('.text-xs-right.btn-toolbar',[
+                    m('a.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close')
+                ])
 
             ]);
     }
@@ -246,7 +243,7 @@ function copy(text){
         let input = document.createElement('input');
         input.value = text;
         document.body.appendChild(input);
-        input.select(); s
+        input.select();
 
         try {
             document.execCommand('copy');

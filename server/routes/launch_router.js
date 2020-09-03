@@ -28,7 +28,6 @@ router.get('/view_play/:link_id/:file_id',function(req, res){
     return studies.get_id_with_link(link)
         .then(function(study) {
             const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
-
             return experiments
                 .get_play_url(owner_id, study._id, req.params.file_id)
                 .then(displayExperiment(req.query, res, req.fingerprint))
@@ -50,6 +49,21 @@ router.get('/play/:study_id/:file_id',function(req, res){
         .then(displayExperiment(req.query, res, req.fingerprint))
         .catch(displayErrorPage(res));
 });
+
+router.get('/play/:study_id/:version_id/:file_id',function(req, res){
+    const sess = req.session;
+
+    if(!sess.user) return displayErrorPage(res)({
+        status: 401,
+        message: 'You must be logged in to access this page'
+    });
+
+    return experiments
+        .get_play_url(sess.user.id, req.params.study_id, req.params.file_id, req.params.version_id)
+        .then(displayExperiment(req.query, res, req.fingerprint))
+        .catch(displayErrorPage(res));
+});
+
 
 function displayExperiment(params, res, fingerprint){
     return function(exp_data){
@@ -82,7 +96,7 @@ function displayExperiment(params, res, fingerprint){
                     version:version_data.version,
                     state:version_data.state,
                     sessionId:exp_data.session_id,
-                    taskName:"_session_data",
+                    taskName:'_session_data',
                     studyId:exp_data.exp_id,
                     versionId:version_data.id,
                     data:[fingerprint]
@@ -105,7 +119,7 @@ function displayExperiment(params, res, fingerprint){
                 })
                 .then(res.send.bind(res))
                 .catch(err => Promise.reject({status:500,message:err.message}));
-        })
+            });
     };
 }
 

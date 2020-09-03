@@ -31,7 +31,8 @@
         {
             "files":"server/bank/**",
             "rules": {
-                "no-mixed-spaces-and-tabs": "off"
+                "no-mixed-spaces-and-tabs": "off",
+                "no-var": "off"
             },
             "env": {
                 "browser":true,

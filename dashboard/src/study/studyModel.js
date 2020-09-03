@@ -35,8 +35,13 @@ function get_lock_url(study_id , lock) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/unlock`;
 }
 
+
 function get_publish_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/publish`;
+}
+
+function get_version_url(study_id, version_id) {
+    return `${baseUrl}/${encodeURIComponent(study_id)}/versions/${version_id}`;
 }
 
 /*CRUD*/
@@ -92,10 +97,14 @@ export let lock_study = (study_id, lock) => fetchJson(get_lock_url(study_id, loc
     method: 'post'
 });
 
-export let publish_study = (study_id, version_name, publish, update_url) => fetchJson(get_publish_url(study_id), {
+export let publish_study = (study_id, version_name, update_url) => fetchJson(get_publish_url(study_id), {
     method: 'post',
-    body: {version_name, publish, update_url}
+    body: {version_name, update_url}
 });
 
 export let delete_study = (study_id) => fetchJson(get_url(study_id), {method: 'delete'});
 
+export let change_version_availability = (study_id, version_id, availability) => fetchJson(get_version_url(study_id, version_id), {
+    method: 'put',
+    body: {availability}
+});

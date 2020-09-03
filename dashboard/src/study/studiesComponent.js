@@ -113,7 +113,9 @@ const mainComponent = {
                             m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                             m('option', {value:'public'}, 'Show public studies'),
                             m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
-                            m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
+                            studies()
+                                .filter(typeFilter('bank-cognitive')).length===0 ? '' :
+                                m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
                         ])
                     ])
                 ])
@@ -146,7 +148,7 @@ const mainComponent = {
                         .filter(permissionFilter(permissionChoice()))
                         .filter(searchFilter(globalSearch()))
                         .filter(study=>!study.deleted)
-                        .map(study => m('a', {href: m.route() != '/studies' ? `/translate/${study.id}` : `/editor/${study.id}`,config:routeConfig, key: study.id}, [
+                        .map(study => m('a', {href: m.route() != '/studies' ? `/translate/${study.id}` : `/properties/${study.id}`,config:routeConfig, key: study.id}, [
                             m('.row.study-row', [
                                 m('.col-sm-5', [
                                     m('.study-text', [

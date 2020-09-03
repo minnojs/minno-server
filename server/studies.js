@@ -6,8 +6,6 @@ const utils         = require('./utils');
 const sender        = require('./sender');
 const sanitize      = require('sanitize-filename');
 const connection    = Promise.resolve(require('mongoose').connection);
-const url         = require('url');
-
 
 const {user_info, user_info_by_name}   = require('./users');
 
@@ -270,11 +268,12 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
                 type: study_type,
                 users: [{id: user_id}],
                 experiments: [],
-                modify_date: Date.now()
+                modify_date: Date.now(),
+                is_public
             }, additional_params);
             return insert_obj(user_id, study_obj)
                 .then(study => {
-                    return  fs.mkdirp(study.dir).then(() => study);
+                    return  fs.mkdirp(study.dir).then(()=>fs.mkdirp(path.join(study.dir, 'sandbox'))).then(() => study).then(() => study);
                 });
         });
 }
@@ -446,8 +445,9 @@ function insert_obj(user_id, study_props) {
         })
         .then(function(){
             const dir = path.join(config.user_folder, study_obj.folder_name);
+            const version_id = study_obj.versions[0].version;
             const study_id = study_obj._id;
-            return {study_id, dir};
+            return {study_id, dir, version_id};
         });
     });
 }

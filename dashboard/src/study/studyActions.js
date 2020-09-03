@@ -12,7 +12,7 @@ import {update_tags_in_study} from '../tags/tagsModel';
 import {make_pulic} from './sharing/sharingModel';
 import {copyUrl} from 'utils/copyUrl';
 import studyFactory from './files/fileCollectionModel';
-import sharing_dialog from "./sharing/sharingComponent";
+import sharing_dialog from './sharing/sharingComponent';
 
 export let do_create = (type, studies) => {
     const study_name = m.prop('');
@@ -104,7 +104,6 @@ export let do_stat = (study) => e => {
 export let do_sharing = (study) => e => {
     e.preventDefault();
     let study_id = study.id;
-    let versions = study.versions;
     let close = messages.close;
     messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id, close})})
         .then(m.redraw);

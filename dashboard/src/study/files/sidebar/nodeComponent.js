@@ -81,12 +81,13 @@ const select = (file, study) => e => {
     e.stopPropagation();
     e.preventDefault();
     if (study.version)
-        m.route(`/editor/${file.studyId}/${study.version}/file/${encodeURIComponent(file.id)}`);
-    else
+        m.route(`/editor/${file.studyId}/${study.version.version}/file/${encodeURIComponent(file.id)}`);
+    else {
         if (file.viewStudy)
             m.route(`/view/${m.route.param('code')}/file/${encodeURIComponent(file.id)}`);
         else
             m.route(`/editor/${file.studyId}/file/${encodeURIComponent(file.id)}`);
+    }
     m.redraw.strategy('diff'); // make sure that the route change is diffed as opposed to redraws
 };
 

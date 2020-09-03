@@ -253,4 +253,27 @@ function get_dbx() {
 }
 
 
-module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server, update_fingerprint, get_fingerprint};
+function get_homepage () {
+    return connection.then(function (db) {
+        const config_data = db.collection('config');
+        return config_data.find({}).toArray().then(data=>{
+            let homepage = data.find(vars=>vars.var==='homepage');
+            if(homepage)
+                return {upper_panel:homepage.upper_panel, right_panel:homepage.right_panel};
+            return {};
+            });
+    });
+}
+
+function update_homepage (upper_panel, right_panel) {
+
+    return connection.then(function (db) {
+        const config_data   = db.collection('config');
+        return config_data.updateOne({var: 'homepage'},
+            {$set: {upper_panel, right_panel}}, { upsert : true })
+            .then(() => ('Homepage successfully updated'));
+    });
+
+}
+
+module.exports = {get_config, update_gmail, set_gmail, unset_gmail, get_gmail, update_dbx, set_dbx, unset_dbx, get_dbx, get_server_data, update_server, update_fingerprint, get_fingerprint, get_homepage, update_homepage};

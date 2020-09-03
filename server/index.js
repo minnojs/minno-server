@@ -156,9 +156,7 @@ basePathRouter.route('/download_data')
             return res.send(JSON.stringify({message: 'ERROR: Permission denied!'}));
         }
         files.download_data(req.session.user.id, req.query.path, res);
-    })
-
-;
+    });
 
 
 mongoose.Promise = global.Promise;

@@ -109,7 +109,7 @@ const textMenuView = ({mode, file, study, observer}) => {
         m('.btn-group.btn-group-sm.pull-xs-right', [
 
             !/^minno/.test(study.type) ? '' : [
-                !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play(file,study), title:'Play this task'},[
+                !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play(file, study), title:'Play this task'},[
                     m('strong.fa.fa-play')
                 ]),
 

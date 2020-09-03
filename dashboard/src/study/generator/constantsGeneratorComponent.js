@@ -25,15 +25,15 @@ let constantsGeneratorComponent = {
                 m('.col-sm-5',[
                     m('.row', [
                         m('.col-sm-2', 'Fixation'),
-                        m('.col-sm-3', m('input.form-control', { type:'number', min:'0', value: ctrl.constants.durations.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_constant('durations', 'fixation', this.value)}}))
+                        m('.col-sm-3', m('input.form-control', { type:'number', min:'0', value: ctrl.constants.durations.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_constant('durations', 'fixation', this.value);}}))
                     ]),
                     m('.row', [
                         m('.col-sm-2', 'ITI'),
-                        m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value)}}))
+                        m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value);}}))
                     ]),
                     m('.row', [
                         m('.col-sm-2', 'Feedback'),
-                        m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value)}}))
+                        m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value);}}))
                     ]),
                 ]),
 
@@ -79,21 +79,19 @@ let constantsGeneratorComponent = {
                 m('.col-sm-7',[
                     m('.row', [
                         m('.col-sm-2', 'Correct'),
-                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.correct(), placeholder: 'Correct', onchange:function(){ctrl.update_constant('feedback',  'correct', this.value)}}))
+                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.correct(), placeholder: 'Correct', onchange:function(){ctrl.update_constant('feedback',  'correct', this.value);}}))
                     ]),
                     m('.row', [
                         m('.col-sm-2', 'Incorrect'),
-                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.incorrect(), placeholder: 'Incorrect', onchange:function(){ctrl.update_constant('feedback', 'incorrect', this.value)}}))
+                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.incorrect(), placeholder: 'Incorrect', onchange:function(){ctrl.update_constant('feedback', 'incorrect', this.value);}}))
                     ]),
                     m('.row', [
                         m('.col-sm-2', 'No response'),
-                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.noresponse(), placeholder: 'No response', onchange:function(){ctrl.update_constant('feedback', 'noresponse', this.value)}}))
+                        m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.noresponse(), placeholder: 'No response', onchange:function(){ctrl.update_constant('feedback', 'noresponse', this.value);}}))
                     ]),
                 ]),
             ]),
-        ])
-
-
+        ]);
     }
 };
 

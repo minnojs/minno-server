@@ -1,13 +1,10 @@
-import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './propertiesModel';
 import messages from 'utils/messagesComponent';
-import {copyUrl} from 'utils/copyUrl';
 import studyFactory from '../files/fileCollectionModel';
-import {publish_study, update_study, rename_study, lock_study, duplicate_study} from '../studyModel';
+import {delete_study, publish_study, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
 
 
-import {stop_gdrive_sync} from "../../settings/settingsActions";
-import sharing_dialog from "../sharing/sharingComponent";
+import sharing_dialog from '../sharing/sharingComponent';
 
 export default collaborationComponent;
 
@@ -31,8 +28,14 @@ let collaborationComponent = {
             lock,
             show_sharing,
             show_duplicate,
-            show_publish
+            show_publish,
+            show_delete,
+            show_change_availability
         };
+
+        function show_change_availability(version_id, availability){
+            change_version_availability(m.route.param('studyId'), version_id, availability);
+        }
         function save(){
             if (ctrl.study.name!==ctrl.study_name())
                 rename_study(m.route.param('studyId'), ctrl.study_name());
@@ -43,6 +46,19 @@ let collaborationComponent = {
             return lock_study(ctrl.study.id, !ctrl.study.is_locked)
                 .then(() => ctrl.study.is_locked = !ctrl.study.is_locked)
                 .then(m.redraw);
+        }
+
+
+        function show_delete(){
+            return messages.confirm({header:'Delete study', content:'Are you sure?'})
+                .then(response => {
+                    if (response) delete_study(ctrl.study.id)
+                        .then(()=>ctrl.study.deleted=true)
+                        .catch(error => messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}))
+                        .then(m.redraw)
+                        .then(m.route('./'))
+                    ;
+                });
         }
 
         function show_sharing() {
@@ -56,37 +72,36 @@ let collaborationComponent = {
             let error = m.prop('');
             let update_url = m.prop('update');
             let version_name = m.prop('');
-            let ask = () => messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Unpublish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Unpublish' : 'Publish', ' the study?'],
+            let ask = () => messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Republish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Republish' : 'Publish', ' the study?'],
                 content:m('p',
-                    [m('p', ctrl.study.is_published
-                        ?
-                        'The launch URL participants used to run the study will be removed. Participants using this link will see an error page. Use it if you completed running the study, or if you want to pause the study and prevent participants from taking it for a while. You will be able to publish the study again, if you want.'
-                        :
-                        [
-                            m('p', 'This will create a link that participants can use to launch the study.'),
-                            m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
-                            m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
-                            m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
-                            m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it,value: version_name(), onchange: m.withAttr('value', version_name)}),
-                            m('.input-group.space', [
-
-                                m('select.c-select.form-control.space',{onchange: e => update_url(e.target.value)}, [
-                                    m('option', {value:'update', selected:true}, 'Update the launch URL'),
-                                    m('option', {value:'keep'}, 'Keep the launch URL'),
-                                    ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
-                                ])
+                    [m('p', [
+                        m('p', 'This will create a link that participants can use to launch the study.'),
+                        m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
+                        m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
+                        m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
+                        m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it,value: version_name(), onchange: m.withAttr('value', version_name)}),
+                        m('.input-group.space', [
+                            m('select.c-select.form-control.space',{onchange: e => update_url(e.target.value)}, [
+                                m('option', {value:'update', selected:true}, 'Create a new launch URL'),
+                                ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous version')
+                            ])
                         ])
-                        ]),
-                        !error() ? '' : m('p.alert.alert-danger', error())])
+                    ]),
+                    !error() ? '' : m('p.alert.alert-danger', error())])
             })
 
-                .then(response => response && publish());
+            .then(response => {
+                if (response && !version_name()) {
+                    error('Version name cannot be empty');
+                    return ask();
+                }
+                return  response && publish();
+            });
 
-            let publish= () => publish_study(ctrl.study.id, !ctrl.study.is_published, update_url)
+            let publish= () => publish_study(ctrl.study.id, version_name, update_url)
                 .then(res=>ctrl.study.versions.push(res))
-                .then(ctrl.study.is_published = !ctrl.study.is_published)
-                // .then(()=>notifications.show_success(`'${ctrl.study.name}' ${ctrl.study.is_published ? 'published' : 'unpublished'} successfully`))
-                .then(ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
+                .then(()=>ctrl.study.is_published = true)
+                // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
 
                 .catch(e => {
                     error(e.message);
@@ -122,14 +137,14 @@ let collaborationComponent = {
         let study;
         function load() {
             ctrl.study = studyFactory(m.route.param('studyId'));
-                return ctrl.study.get()
-                    .catch(err => study.err = err.message)
-                    .then(()=>{
-                        ctrl.study_name(ctrl.study.name);
-                        ctrl.description(ctrl.study.description);
-                        ctrl.loaded(true);
-                    })
-                    .then(m.redraw);
+            return ctrl.study.get()
+                .catch(err => study.err = err.message)
+                .then(()=>{
+                    ctrl.study_name(ctrl.study.name);
+                    ctrl.description(ctrl.study.description);
+                    ctrl.loaded(true);
+                })
+                .then(m.redraw);
         }
         load();
 
@@ -149,7 +164,7 @@ let collaborationComponent = {
                 m('.row.space',
                     m('.col-sm-2.space',  m('strong', 'Study name:')),
                     m('.col-sm-10',
-                    m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
+                        m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
                 ),
                 m('.row.space',
                     m('.col-sm-2.space',  m('strong', 'Description:')),
@@ -166,32 +181,28 @@ let collaborationComponent = {
                     )
                 ),
                 m('.row.space',
-                    m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}`)}}, 'View files'))
+                    m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}`);}}, [m('i.fa.fa-wrench'), ' View sandbox']))
 
 
-            ),
-
-
-                ctrl.study.versions.length === 1 ? ''
-                :[
-                    m('.row.space',
-                        m('.col-sm-12.space',  m('h4', 'Previous published versions'))
-                    ),
-                ctrl.study.versions.filter(version=> version.state === 'Published').map((version, id)=>id==0 && ctrl.study.versions.length === 1 ? '' :
-
-                    m('.row',
-                        ctrl.study.versions.length===id+1 ? '' : [
-                            m('.col-sm-3.space',  `(${formatDate(version.version)})`),
-                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.version}`)}}, 'View')),
-                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.version}`)}}, 'Active'))
-                        ]
-                    )
-                )],
-                m('.row.space',
-                    m('.col-sm-5.space.text-xs-right',
-                        m('button.btn.btn-secondary', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus-circle'), ' Develop a new version']))
                 ),
-
+                ctrl.study.versions.length === 1 ? ''
+                    :
+                    [
+                        m('.row.space',
+                            m('.col-sm-12.space',  m('h4', 'Published versions'))
+                        ),
+                        console.log(ctrl.study.versions),
+                        ctrl.study.versions.filter(version=> version.state === 'Published')
+                            .map((version, id)=>
+                            m('.row',
+                                [
+                                    m('.col-sm-3.space',  [m('strong', version.version_name), ` (${formatDate(version.version)})`]),
+                                    m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.version}`);}}, 'Review')),
+                                    m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(version.version, !version.availability)}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
+                                ]
+                            )
+                        )
+                    ],
 
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Actions'))
@@ -230,10 +241,10 @@ let collaborationComponent = {
                     m('.col-sm-12', [
                         m('.row.',
                             m('.col-sm-11.space',[
-                                    m('strong', 'Publish study'),
-                                ]),
+                                m('strong', 'Publish study'),
+                            ]),
                             m('.col-sm-1.space',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Unpublish' : 'Publish')
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Republish' : 'Publish')
                             )
                         ),
                         m('.row.',
@@ -250,7 +261,7 @@ let collaborationComponent = {
                         m('.row.space',
                             m('.col-sm-11.space',  m('strong', 'Delete study')),
                             m('.col-sm-1.space',
-                                m('button.btn.btn-danger.btn-sm', {onclick:ctrl.save}, 'Delete')
+                                m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
                             )
                         ),
                     ])
@@ -262,26 +273,3 @@ let collaborationComponent = {
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
-
-function getAbsoluteUrl(url) {
-    const a = document.createElement('a');
-    a.href=url;
-    return a.href;
-}
-
-function copy(text){
-    return new Promise((resolve, reject) => {
-        let input = document.createElement('input');
-        input.value = text;
-        document.body.appendChild(input);
-        input.select(); s
-
-        try {
-            document.execCommand('copy');
-        } catch(err){
-            reject(err);
-        }
-
-        input.parentNode.removeChild(input);
-    });
-}

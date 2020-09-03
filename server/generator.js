@@ -200,7 +200,7 @@ function write_trial_sequence(contents, stimuli, responses) {
                 actions: [
                     ${response}
                     {type:'showStim', handle: '${stimulus['stimulus_name']}'},
-                    ${stimulus.response === 'without_response' ? '' :  "{type:'resetTimer'},"}
+                    ${stimulus.response === 'without_response' ? '' :  `{type:'resetTimer'},`}
                     {type:'trigger',handle:'hide_${stimulus['stimulus_name']}', duration: '<%= trialData.times_${stimulus['stimulus_name']}.duration %>'}
                    
                 ]

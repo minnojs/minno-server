@@ -15,12 +15,13 @@ const {has_read_permission, has_read_data_permission, has_write_permission} = st
 
 // get data for playing a file without creating an experiment
 // creates sham info for the player
-function get_play_url (user_id, study_id, file_id) {
+function get_play_url (user_id, study_id, file_id, version_id='') {
     return has_read_permission(user_id, study_id)
         .then(({study_data})  => {
-            const url = urljoin(config.relative_path,'users',study_data.folder_name,file_id);
-            const base_url = urljoin(config.relative_path,'users',study_data.folder_name, '/');
-            const path = join(config.user_folder,study_data.folder_name,file_id);
+            const version = !version_id ? 'sandbox' : version_id;
+            const url = urljoin(config.relative_path, 'users', study_data.folder_name, version, file_id);
+            const base_url = urljoin(config.relative_path, 'users',study_data.folder_name, version,  '/');
+            const file_path = join(config.user_folder, study_data.folder_name, version, file_id);
 
             // set sham experiment data
             return {
@@ -29,7 +30,7 @@ function get_play_url (user_id, study_id, file_id) {
                 session_id:-1,
                 type: study_data.type,
                 url,
-                path,
+                path: file_path,
                 base_url
             };
         });
@@ -45,17 +46,23 @@ function get_experiment_url (req) {
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
                 return users_comp.user_info(exp_data.users[0].id)
                     .then(function(){
-                        const version_data = exp_data.versions.filter(version=>version.id===req.params.version_id && !version.invalid)[0];
+
+                        const version_data = exp_data.versions.filter(version=>version.id===req.params.version_id  && version.availability===undefined || version.availability)[0] ;
+
                         if (!version_data)
                             return Promise.reject({status:400, message:'Error: Wrong version'});
                         const version_name = version_data.version;
-                        let version_folder = `${exp_data.folder_name}-${version_name}`;
-                        if(exp_data.versions.length===1)
-                            version_folder = exp_data.folder_name;
-                        const exp       = exp_data.experiments.filter(exp => exp.id===req.params.exp_id);
+                        let version_folder = path.join(exp_data.folder_name, 'sandbox');
+                        let exp            = exp_data.experiments.filter(exp => exp.id===req.params.exp_id);
+
+                        if (version_data.state !== 'Develop'){
+                            version_folder = path.join(exp_data.folder_name, version_name);
+                            exp = version_data.experiments.filter(exp => exp.id===req.params.exp_id);
+                        }
+
                         const url       = urljoin(config.relative_path, 'users', version_folder, exp[0].file_id);
                         const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
-                        const path      = join(config.user_folder,  version_folder, exp[0].file_id);
+                        const file_path      = join(config.user_folder,  version_folder, exp[0].file_id);
 
                         return counters.findOneAndUpdate({_id:'session_id'},
                             {'$inc': {'seq': 1}},
@@ -69,7 +76,7 @@ function get_experiment_url (req) {
                                     session_id,
                                     type: exp_data.type,
                                     url,
-                                    path,
+                                    path: file_path,
                                     base_url
                                 };
                             });
@@ -80,7 +87,7 @@ function get_experiment_url (req) {
 
 function get_experiments(user_id, study_id) {
     return has_read_permission(user_id, study_id)
-        .then(({study_data})=>study_data);
+        .then(({study_data})=>study_data.experiments);
 }
 
 // This function are used for update the requests that sent by *all* the users.
@@ -199,7 +206,6 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
 function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
     if (!descriptive_id)
         return Promise.reject({status:402, message: 'ERROR: descriptive id is missing!'});
-
     return has_write_permission(user_id, study_id)
         .then(function() {
             return connection.then(function (db) {
@@ -282,16 +288,5 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
             });
         });
 }
-
-// function is_descriptive_id_exist(user_id, study_id, descriptive_id) {
-//     return has_read_permission(user_id, study_id)
-//         .then(function() {
-//             return connection.then(function (db) {
-//                 const studies = db.collection('studies');
-//                 return studies.findOne({_id: study_id, experiments: { $elemMatch: { descriptive_id: descriptive_id } }})
-//                 .then(study_data => !!study_data);
-//             });
-//         });
-// }
 
 module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_data_requests, delete_data_request, get_stat};

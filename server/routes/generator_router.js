@@ -1,8 +1,5 @@
 const express     = require('express');
 const generator       = require('../generator');
-const experiments = require('../experiments');
-const config      = require('../../config');
-const url         = require('url');
 const generetorRouter = express.Router();
 
 module.exports = generetorRouter;
@@ -25,6 +22,6 @@ generetorRouter.route('/:study_id/generator/:file_id')
     .put(
         function(req, res){
             return generator.save_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.responses, req.body.stimuli, req.body.conditions, req.body.constants)
-                .then(properties=>res.json({}))
+                .then(()=>res.json({}))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
