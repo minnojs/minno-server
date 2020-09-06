@@ -14,7 +14,13 @@ const urljoin       = require('url-join');
 const url = require('url');
 const connection    = Promise.resolve(require('mongoose').connection);
 
+const logger = require('./logger');
 
+// const winston = require('winston');
+
+// logger.add(new winston.transports.Console({
+//     format: winston.format.simple(),
+// }));
 
 function walk(server_url, folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);
@@ -55,6 +61,9 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
 }
 
 function get_study_files(user_id, study_id, server_url) {
+    logger.info({message:'Info', location:'here'});
+    logger.error({message: 'Error'});
+
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
         return walk(server_url, study_data.folder_name, study_data.experiments)

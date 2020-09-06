@@ -41,13 +41,6 @@ const cors = require('cors');
 const day  = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
 
-SimpleNodeLogger = require('simple-node-logger'),
-opts = {
-    logFilePath:`${config.logs_folder}/${day}.log`,
-    timestampFormat:'YYYY-MM-DD HH:mm:ss.SSS'
-},
-log = SimpleNodeLogger.createSimpleLogger( opts );
-
 app.use(cors({
     credentials: true, origin: true,
     'methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
