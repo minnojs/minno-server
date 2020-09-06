@@ -51,7 +51,7 @@ let loginComponent = {
             ]),
             m('.row.space', {class: !ctrl.homepage.right_panel() ? 'centrify' : ''}, [
                 m('.col-md-5.space',
-                    m('form.homepage-background', {onsubmit:ctrl.loginAction}, [
+                    m('form.homepage-background', {onsubmit:()=>false}, [
                         m('.space', 'Username / Email'),
                         m('input.form-control', {
                             type:'username',
@@ -60,7 +60,7 @@ let loginComponent = {
                             name: 'username',
                             autofocus:true,
                             oninput: m.withAttr('value', ctrl.username),
-                            onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                            onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction: false;},
                             onchange: m.withAttr('value', ctrl.username),
                             config: getStartValue(ctrl.username)
                         }),
@@ -71,14 +71,14 @@ let loginComponent = {
                             placeholder: 'Password',
                             value: ctrl.password(),
                             oninput: m.withAttr('value', ctrl.password),
-                            onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                            onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction: false;},
                             onchange: m.withAttr('value', ctrl.password),
                             config: getStartValue(ctrl.password)
                         }),
                         !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                         m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
                         m('p.text-center',
-                            m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
+                            m('small.text-muted',  m('a', {href: './?/recovery'}, 'Lost your password?'))
                         )
                     ])
                 ),

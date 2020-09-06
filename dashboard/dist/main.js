@@ -12322,7 +12322,7 @@
                 ]),
                 m('.row.space', {class: !ctrl.homepage.right_panel() ? 'centrify' : ''}, [
                     m('.col-md-5.space',
-                        m('form.homepage-background', {onsubmit:ctrl.loginAction}, [
+                        m('form.homepage-background', {onsubmit:function (){ return false; }}, [
                             m('.space', 'Username / Email'),
                             m('input.form-control', {
                                 type:'username',
@@ -12331,7 +12331,7 @@
                                 name: 'username',
                                 autofocus:true,
                                 oninput: m.withAttr('value', ctrl.username),
-                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.username),
                                 config: getStartValue(ctrl.username)
                             }),
@@ -12342,14 +12342,14 @@
                                 placeholder: 'Password',
                                 value: ctrl.password(),
                                 oninput: m.withAttr('value', ctrl.password),
-                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction(): false;},
+                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.password),
                                 config: getStartValue(ctrl.password)
                             }),
                             !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                             m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
                             m('p.text-center',
-                                m('small.text-muted',  m('a', {href:'index.html?/recovery'}, 'Lost your password?'))
+                                m('small.text-muted',  m('a', {href: './?/recovery'}, 'Lost your password?'))
                             )
                         ])
                     ),
