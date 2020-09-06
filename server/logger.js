@@ -2,8 +2,8 @@ const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf } = format;
 
 
-const myFormat = printf(({ level, message, location, timestamp }) => {
-    return `${timestamp} ${level}: ${message} [${location ? location : ''}]`;
+const myFormat = printf(({ level, message, log_id, timestamp }) => {
+    return `${timestamp} ${level}: ${message} [${log_id ? log_id : ''}]`;
 });
 
 
@@ -15,7 +15,7 @@ const logger = createLogger({
     ),
     transports: [
         new transports.File({ filename: 'logs/error.log', level: 'Error' }),
-        new transports.File({ filename: 'logs/info.log' }),
+        new transports.File({ filename: 'logs/all.log' }),
     ],
 });
 

@@ -61,7 +61,7 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
 }
 
 function get_study_files(user_id, study_id, server_url) {
-    // logger.info({message:'Info', location:'here'});
+        // logger.info({message:'Info', log_id:'here'});
     // logger.error({message: 'Error'});
 
     return has_read_permission(user_id, study_id)
