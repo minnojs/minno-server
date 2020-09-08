@@ -1,35 +1,35 @@
 'use strict';
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+let mongoose = require('mongoose');
+let Schema = mongoose.Schema;
 
-var CounterSchema = Schema({
+let CounterSchema = Schema({
     _id: {type: String, required: true},
     seq: { type: Number, default: 0 }
 });
-var counter = mongoose.model('counter', CounterSchema);
+let counter = mongoose.model('counter', CounterSchema);
 
-var studySchema = new Schema({
-  studyId: {
-    type: String,
-    required: [true,'A studyID is required for data posts']
-  },
-  createdDate: {
-    type: Date,
-    default: Date.now
-  },
-  userAgent: {
-    type: String
-  },
-  referrer: {
-    type: String
-  },
-  conditions: {
-    type: Object
-  }
+let studySchema = new Schema({
+    studyId: {
+        type: String,
+        required: [true,'A studyID is required for data posts']
+    },
+    createdDate: {
+        type: Date,
+        default: Date.now
+    },
+    userAgent: {
+        type: String
+    },
+    referrer: {
+        type: String
+    },
+    conditions: {
+        type: Object
+    }
   
 });
 studySchema.pre('save', function(next) {
-    var doc = this;
+    let doc = this;
     counter.findByIdAndUpdate({_id: 'studyId'}, {$inc: { seq: 1} }, function(error, counter)   {
         if(error)
             return next(error);
