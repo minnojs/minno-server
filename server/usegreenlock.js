@@ -3,7 +3,7 @@
 // npm install spdy@3.x
 
 let Greenlock = require('greenlock-express');
-
+const logger = require('./logger');
 
 let greenlock = Greenlock.create({
     // Let's Encrypt v2 is ACME draft 11
@@ -43,8 +43,7 @@ let redirectHttps = require('redirect-https')();
 let acmeChallengeHandler = greenlock.middleware(redirectHttps);
 require('http')
 	.createServer(acmeChallengeHandler)
-	.listen(80, function() {
-		console.log('Listening for ACME http-01 challenges on', this.address());
+	.listen(80, function() {logger.info({message:'Listening for ACME http-01 challenges on'+ this.address()});
 	});
 
 ////////////////////////
@@ -60,9 +59,9 @@ spdyOptions.spdy = {
 let myApp = require('./index.js');
 let server = require('spdy').createServer(spdyOptions, myApp.app);
 server.on('error', function(err) {
-    console.error(err);
+    logger.error({message:err});
 });
 server.on('listening', function() {
-    console.log('Listening for SPDY/http2/https requests on', this.address());
+    logger.info({message:'Listening for SPDY/http2/https requests on'+ this.address()});
 });
 server.listen(443);

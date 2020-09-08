@@ -6,6 +6,7 @@ const fs = require('fs-extra');
 let glxServers = null;
 const config = require('../config');
 const Path = require('path');
+const logger = require('./logger');
 exports.greenlockError = false;
 //const configDb = require('./config_db');
 const sslChecker = require('ssl-checker');
@@ -42,10 +43,10 @@ exports.startupGreenlock = async function(app, greenlock_data) {
             }
         };
         fs.outputFileSync(config.base_folder + '/data/greenlock/package.json', JSON.stringify(greenlockFileData), function(err) {
-            if (err) return console.log(err);
+            if (err) return logger.error({message:err});
         });
         fs.outputFileSync(config.base_folder + '/data/greenlock/.greenlockrc', '{}', function(err) {
-            if (err) return console.log(err);
+            if (err) return logger.error({message:err});
         });
     }
     await glx.init(() => {
@@ -136,12 +137,12 @@ exports.shutdownGreenlock = async function() {
     if (glxServers != null) {
         let greenlockHttp = glxServers.httpServer();
         if (greenlockHttp != null) {
-            console.log('Closing Greenlock HTTP Server');
+            logger.info({message:'Closing Greenlock HTTP Server'});
             await greenlockHttp.close();
         }
         let greenlockHttps = glxServers.httpsServer();
         if (greenlockHttps != null) {
-            console.log('Closing Greenlock HTTPS Server');
+            logger.info({message:'Closing Greenlock HTTPS Server'});
             await greenlockHttps.close();
         }
     }
@@ -153,7 +154,7 @@ exports.startupHttp = async function(app) {
     await exports.shutdownGreenlock();
     await exports.shutdownHttp();
     httpServer = await app.listen(config.port, function() {
-        console.log('Minno-server Started on PORT ' + config.port);
+        logger.info({message:'Minno-server Started on PORT ' + config.port});
     });
     httpServer.keepAliveTimeout = keepAliveTimeout;
 };
@@ -162,7 +163,7 @@ exports.shutdownHttp = async function() {
     if (httpServer != null) {
         await httpServer.close();
         httpServer = null;
-        console.log('shutdown http server');
+        logger.info({message:'shutdown http server'});
     }
 };
 
@@ -175,7 +176,7 @@ exports.startupHttps = async function(app, server_data) {
 		.createServer(function(/*req, res*/) {});
     httpServer.keepAliveTimeout = keepAliveTimeout;
     httpServer.listen(config.port);
-    console.log('Minno-server HTTPS redirect Started on PORT ' + config.port);
+    logger.info({message:'Minno-server HTTPS redirect Started on PORT ' + config.port});
 
     httpServer.on('request', require('redirect-https')({
         port: config.sslport,
@@ -189,7 +190,6 @@ exports.startupHttps = async function(app, server_data) {
             certificate: config.certFile,
             port: config.sslport
         };
-    console.log(JSON.stringify(server_data));
     const credentials = {
         key: server_data.privateKey,
         cert: server_data.certificate
@@ -199,9 +199,9 @@ exports.startupHttps = async function(app, server_data) {
         httpsServer = await https.createServer(credentials, app);
         httpsServer.listen(config.sslport);
         httpsServer.keepAliveTimeout = keepAliveTimeout;
-        console.log('Minno-server Started on PORT ' + config.sslport);
+        logger.info({message:'Minno-server Started on PORT ' + config.sslport});
     } catch (e) {
-        console.log(e);
+        logger.error({message:e});
         throw e;
     }
 };
@@ -214,7 +214,7 @@ exports.shutdownHttps = async function() {
     }
 };
 exports.testSSL = async function(domain) {
-    await sslChecker(domain, 'HEAD', 443).then(console.log).catch((err) => {
+    await sslChecker(domain, 'HEAD', 443).then().catch((err) => {
         if (err.code === 'ENOTFOUND') {
             throw ('Domain invalid.  Please make sure that DNS is configured correctly');
         } else {
@@ -236,7 +236,7 @@ exports.startServer = async function(app, serverConfig) {
                     await exports.startupGreenlock(app, server_data.greenlock);
                     await exports.testSSL(server_data.greenlock.domains[0]);
                 } catch (err) {
-                    console.log(err);
+                    logger.error({message:err});
                     await exports.shutdownHttps(app);
                     await exports.startupHttp(app);
                 }
@@ -251,7 +251,7 @@ exports.startServer = async function(app, serverConfig) {
                     await exports.startupGreenlock(app, server_data.greenlock);
                     await exports.testSSL(server_data.greenlock.domains[0]);
                 } catch (err) {
-                    console.log(err);
+                    logger.error({message:err});
                     await exports.shutdownHttps(app);
                     await exports.startupHttp(app);
                 }
@@ -265,7 +265,7 @@ exports.startServer = async function(app, serverConfig) {
         }
     } catch (e) {
         await exports.startupHttp(app);
-        console.log(e);
+        logger.error({message:e});
     }
 };
 const deleteFolderRecursive = function(path) {

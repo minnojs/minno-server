@@ -1,15 +1,15 @@
 'use strict';
 const config = require.main.require('../config'),
     mongoose = require('mongoose'),
-    // Data = require('../models/dataSchema'),
-    //DataRequest = require('../models/dataRequestSchema'),
+     Data2 = require('../models/dataSchema'),
+    DataRequest2 = require('../models/dataRequestSchema'),
     Study = require('../models/studySchema'), //created model loading here
     DataRequest = mongoose.model('DataRequest'),
     Data = mongoose.model('Data'),
-    //experimentSessionSchema=require('../models/experimentSessionSchema'),
+    experimentSessionSchema2=require('../models/experimentSessionSchema'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
-	
+const logger = require('../../logger');	
 
 let fs = require('fs-extra');
 // var convert = require('mongoose_schema-json');
@@ -51,7 +51,7 @@ exports.insertExperimentSession = async function(params) {
     let newData = new experimentSessionSchema(params);
     newData.save(function(err) {
         if (err)
-            console.error(err);
+            logger.error({message:err});
         return true;
     });
 };
@@ -271,7 +271,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         }}
     catch(e)
     {
-        console.error(e);
+        logger.error({message:e});
     }
     await fileSetup(fileConfig);
     if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')

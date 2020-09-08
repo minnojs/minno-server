@@ -2,7 +2,6 @@ const express     = require('express');
 const session     = require('express-session');
 const config      = require('../config');
 const files       = require('./files');
-const dateFormat  = require('dateformat');
 
 
 
@@ -25,6 +24,7 @@ const collaboration_router  = require('./routes/collaboration_router');
 const Server				= require('./server.js');
 const Fingerprint 			= require('express-fingerprint');
 const configDb = require('./config_db');
+const logger = require('./logger');
 
 const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
@@ -37,7 +37,6 @@ const app        = express();
 module.exports = {app};
 
 const cors = require('cors');
-const day  = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
 
 app.use(cors({
@@ -167,11 +166,11 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', async function() {
-    curConfig=await configDb.get_config();
+    const curConfig=await configDb.get_config();
     await Server.startServer(app,curConfig);
 
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    logger.error({message:'Unhandled Rejection at: Promise'+p+ 'reason:'+ reason});
 });
