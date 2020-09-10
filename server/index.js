@@ -2,8 +2,6 @@ const express     = require('express');
 const session     = require('express-session');
 const config      = require('../config');
 const files       = require('./files');
-const config_db   = require('./config_db');
-const dateFormat  = require('dateformat');
 
 
 
@@ -26,6 +24,7 @@ const collaboration_router  = require('./routes/collaboration_router');
 const Server				= require('./server.js');
 const Fingerprint 			= require('express-fingerprint');
 const configDb = require('./config_db');
+const logger = require('./logger');
 
 const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
@@ -38,7 +37,6 @@ const app        = express();
 module.exports = {app};
 
 const cors = require('cors');
-const day  = dateFormat(new Date(), 'yyyy-mm-dd');
 require('./config_validation');
 
 app.use(cors({
@@ -64,7 +62,7 @@ app.use(Fingerprint({
             })
         },*/
     ]
-}))
+}));
 
 app.use(session({secret: config.session_secret,
     resave: true,
@@ -100,7 +98,7 @@ basePathRouter.use('/dashboard/static', express.static('./dashboard/dist'));
 basePathRouter.use('/dashboard', (req,res) => {
     if(req._parsedUrl.pathname!=='/dashboard/')
         return res.redirect(urljoin(config.relative_path, 'dashboard/'));
-    return res.render('dashboard', config)});
+    return res.render('dashboard', config);});
 
 basePathRouter.use('/static', express.static(config.static_path));
 
@@ -168,11 +166,11 @@ mongoose.connection.once('open', function() {
 });
 
 app.on('ready', async function() {
-	curConfig=await configDb.get_config();
-	await Server.startServer(app,curConfig);
+    const curConfig=await configDb.get_config();
+    await Server.startServer(app,curConfig);
 
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    logger.error({message:'Unhandled Rejection at: Promise'+p+ 'reason:'+ reason});
 });

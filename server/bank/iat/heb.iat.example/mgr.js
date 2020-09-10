@@ -1,5 +1,5 @@
 define(['managerAPI'], function(Manager) {
-    var API = new Manager();
+    let API = new Manager();
 
     API.setName('mgr');
     API.addSettings('rtl', true);
@@ -20,14 +20,14 @@ define(['managerAPI'], function(Manager) {
             header: 'ברוכים הבאים'
         }],
 
-		instiat: [{
-			inherit: 'instructions',
-			name: 'instiat',
-			templateUrl: 'instiat.jst',
-			title: 'הוראות למטלת המיון',
-			piTemplate: true,
-			header: 'מבחן אסוציאציות חבויות'
-		}],
+        instiat: [{
+            inherit: 'instructions',
+            name: 'instiat',
+            templateUrl: 'instiat.jst',
+            title: 'הוראות למטלת המיון',
+            piTemplate: true,
+            header: 'מבחן אסוציאציות חבויות'
+        }],
 
         explicits: [{
             type: 'quest',
@@ -48,23 +48,23 @@ define(['managerAPI'], function(Manager) {
         }]
     });
 
-	API.addSequence([
-		{inherit: 'realstart'},
-		{
-			mixer:'random',
-			data:[
-				{inherit: 'explicits'},
-				{
-					mixer: 'wrapper',
-					data: [
-						{inherit: 'instiat'},
-						{inherit: 'iat'}
-					]
-				}
-			]
-		},
-		{inherit: 'debriefing'}
-	]);
+    API.addSequence([
+        {inherit: 'realstart'},
+        {
+            mixer:'random',
+            data:[
+                {inherit: 'explicits'},
+                {
+                    mixer: 'wrapper',
+                    data: [
+                        {inherit: 'instiat'},
+                        {inherit: 'iat'}
+                    ]
+                }
+            ]
+        },
+        {inherit: 'debriefing'}
+    ]);
 
     return API.script;
 });
