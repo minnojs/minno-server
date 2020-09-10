@@ -181,28 +181,22 @@ let collaborationComponent = {
                     )
                 ),
                 m('.row.space',
-                    m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}`);}}, [m('i.fa.fa-wrench'), ' View sandbox']))
-
-
+                    m('.col-sm-12.space',  m('h4', 'Versions'))
                 ),
-                ctrl.study.versions.length === 1 ? ''
-                    :
-                    [
-                        m('.row.space',
-                            m('.col-sm-12.space',  m('h4', 'Published versions'))
-                        ),
-                        console.log(ctrl.study.versions),
-                        ctrl.study.versions.filter(version=> version.state === 'Published')
-                            .map((version, id)=>
-                            m('.row',
-                                [
-                                    m('.col-sm-3.space',  [m('strong', version.version_name), ` (${formatDate(version.version)})`]),
-                                    m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.version}`);}}, 'Review')),
-                                    m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(version.version, !version.availability)}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
-                                ]
-                            )
-                        )
-                    ],
+                ctrl.study.versions
+                    .map((version, id)=>
+                    m('.row',
+                        [
+                            m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(version.version, !version.availability)}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
+                        ]
+                    )
+                ),
+                m('.row.space',
+                    m('.col-sm-3.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus'), ' Create a new version']))
+                ),
+
 
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Actions'))

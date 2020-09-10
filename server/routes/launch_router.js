@@ -50,7 +50,7 @@ router.get('/play/:study_id/:file_id',function(req, res){
         .catch(displayErrorPage(res));
 });
 
-router.get('/play/:study_id/:version_id/:file_id',function(req, res){
+router.get('/play/:study_id/:version_id/:file_id', function(req, res){
     const sess = req.session;
 
     if(!sess.user) return displayErrorPage(res)({

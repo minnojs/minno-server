@@ -18,19 +18,16 @@ function get_versions(user_id, study_id) {
 }
 
 function change_version_availability(user_id, study_id, version_id, availability) {
-    console.log({study_id, version_id, availability});
     return has_write_permission(user_id, study_id)
         .then(() =>
         {
             return connection.then(function (db) {
-
                 const studies = db.collection('studies');
                 return studies.updateOne(
                     {_id: study_id, versions: {$elemMatch: {version:version_id}}},
                     {$set: {'versions.$.availability': availability}}
                 )
                     .then(function (user_result) {
-                        console.log(user_result);
                         if (!user_result)
                             return Promise.reject();
                         return Promise.resolve({id: version_id, availability});
@@ -40,23 +37,24 @@ function change_version_availability(user_id, study_id, version_id, availability
 }
 
 
-function insert_new_version(user_id, study_id, version_name, version_date, state, update_url) {
+function insert_new_version(user_id, study_id, version_name, creation_date, state, update_url) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}) {
-        // fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
+        const last_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+        const version_id = last_version.id;
 
-        let version_id = generate_id(study_id, version_date, state);
-        fs.copy(path.join(config.user_folder, study_data.folder_name, 'sandbox'), path.join(config.user_folder, study_data.folder_name, version_date));
+        let version_hash = generate_id(study_id, creation_date, state);
+        fs.copy(path.join(config.user_folder, study_data.folder_name, 'v'+version_id), path.join(config.user_folder, study_data.folder_name, 'v'+(version_id+1)));
 
         if (update_url==='reuse'){
             const versions = study_data.versions.filter(version=>version.state==='Published');
-            version_id = versions[versions.length-1].id;
+            version_hash = versions[versions.length-1].id;
         }
         if (update_url==='keep'){
             const versions = study_data.versions;
-            version_id = versions[versions.length-1].id;
+            version_hash = versions[versions.length-1].id;
         }
-        return push_new_version(user_id, study_id, version_name, version_date, state, version_id);
+        return push_new_version(user_id, study_id, version_name, creation_date, state, version_id+1, version_hash);
     });
 }
 
@@ -85,7 +83,7 @@ function restore_version(user_id, study_id, version_id) {
 
 
 
-function push_new_version(user_id, study_id, version_name, version, state, version_id){
+function push_new_version(user_id, study_id, version_name, creation_date, state, id, hash){
     return connection.then(function (db) {
         const studies = db.collection('studies');
 
@@ -94,9 +92,10 @@ function push_new_version(user_id, study_id, version_name, version, state, versi
                 studies.updateOne({_id: study_id}, {
                     $push: {
                         versions: {
-                            id: version_id,
+                            id,
+                            hash,
                             version_name,
-                            version,
+                            creation_date,
                             state,
                             experiments
                         }
@@ -105,7 +104,7 @@ function push_new_version(user_id, study_id, version_name, version, state, versi
                 .then(function (user_result) {
                     if (!user_result)
                         return Promise.reject();
-                    return Promise.resolve({id: version_id, version_name, version, state});
+                    return Promise.resolve({id, hash, version_name, creation_date, state});
                 })
             );
     });

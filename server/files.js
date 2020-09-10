@@ -23,7 +23,6 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
         .then(res => res.isDirectory() ? dir(exps) : file(exps));
 
     function dir(exps){
-
         return fs.readdir(full_path)
             .then(files => files.map(file=>getFiles(server_url, file, exps)))
             .then(Promise.all.bind(Promise))
@@ -56,9 +55,12 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
 function get_study_files(user_id, study_id, server_url, version_id='') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
-        const folder_path = !version_id ? path.join(study_data.folder_name, 'sandbox') : path.join(study_data.folder_name, version_id);
+        if (!version_id)
+            version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+        const experiments = study_data.versions.filter(version=>version.id === version_id)[0].experiments;
 
-        const experiments = !version_id ? study_data.experiments : study_data.versions.filter(version=>version.version === version_id)[0].experiments;
+        const folder_path = path.join(study_data.folder_name, 'v' + version_id);
+
         return walk(server_url, folder_path, experiments)
         .then(files => {
             const study_user = study_data.users.find(user=>user.user_id===user_id);
@@ -80,12 +82,13 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
     });
 }
 
-
 function create_folder(user_id, study_id, folder_id) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
         folder_id = urlencode.decode(folder_id);
-        const folder_path = path.join(config.user_folder, study_data.folder_name, 'sandbox', folder_id);
+        const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+
+        const folder_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, folder_id);
         return fs.pathExists(folder_path)
         .then(existing => existing
             ? Promise.reject({status:500, message: 'ERROR: folder aleady exists in FS!'})
@@ -103,8 +106,9 @@ function create_folder(user_id, study_id, folder_id) {
 function update_file(user_id, study_id, file_id, content) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
+        const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
         file_id = urlencode.decode(file_id);
-        const path2write = path.join(config.user_folder, study_data.folder_name, 'sandbox', file_id);
+        const path2write = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file_id);
         return fs.writeFile(path2write, content, 'utf8')
         .then(function(){
             const file_url = path.join('..', config.user_folder, study_data.folder_name, 'sandbox', file_id);
@@ -119,7 +123,10 @@ function get_file_content(user_id, study_id, file_id, version_id = '') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data}){
         file_id = urlencode.decode(file_id);
-        const folder_path = !version_id ? path.join(study_data.folder_name, 'sandbox') : path.join(study_data.folder_name, version_id);
+        if (!version_id)
+            version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+
+        const folder_path = path.join(study_data.folder_name, 'v'+version_id);
 
         return fs.readFile(path.join(config.user_folder, folder_path, file_id), 'utf8')
         .then(content=>({id: file_id, content}));
@@ -190,14 +197,16 @@ function download_data(user_id, pth, res) {
 }
 
 function download_files(user_id, study_id, version_id, files) {
-    console.log(files);
     const zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
     const zip_path = config.base_folder + config.zip_folder + zip_name;
     const zip_file = zip_path+'.zip';
     return has_read_permission(user_id, study_id)
         .then(function({study_data}){
+            if (version_id==='latest')
+                version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+
             return Promise.all(files.map(function(file) {
-                const path2copy = path.join(config.user_folder, study_data.folder_name, version_id, file);
+                const path2copy = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file);
                 return fs.copy(path2copy, zip_path + '/' + file);
             }));
         })
@@ -218,8 +227,9 @@ function rename_file(user_id, study_id, file_id, new_path, server_url) {
     return has_write_permission(user_id, study_id)
     .then(function({study_data}){
         const fid = urlencode.decode(file_id);
-        const new_file_path = path.join(config.user_folder, study_data.folder_name, 'sandbox', new_path);
-        const exist_file_path = path.join(config.user_folder, study_data.folder_name, 'sandbox', fid);
+        const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+        const new_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, new_path);
+        const exist_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, fid);
 
         return Promise.all([
             fs.rename(exist_file_path, new_file_path),
@@ -256,8 +266,9 @@ function duplicate_file(user_id, study_id, file_id, new_file_id, server_url) {
         .then(function({study_data:study_data}){
 
             file_id = urlencode.decode(file_id);
-            const new_file_path = path.join(config.user_folder,study_data.folder_name, 'sandbox', new_file_id);
-            const exist_file_path = path.join(config.user_folder,study_data.folder_name, 'sandbox', file_id);
+            const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+            const new_file_path = path.join(config.user_folder,study_data.folder_name, 'v'+version_id, new_file_id);
+            const exist_file_path = path.join(config.user_folder,study_data.folder_name, 'v'+version_id, file_id);
             return fs.copy(exist_file_path, new_file_path)
                 .then(()=> studies_comp.update_modify(study_id))
                 .then(()=>studies_comp.update_modify(study_id))
@@ -291,7 +302,9 @@ function upload(user_id, study_id, req) {
             .then(function({study_data}){
                 const uploadedFiles = Array.isArray(files['files[]']) ? files['files[]'] : [files['files[]']];
                 const prefix = !req.params.folder_id ? '' : req.params.folder_id +'/';
-                const study_path = path.join(config.user_folder,  study_data.folder_name, 'sandbox', prefix);
+                const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+
+                const study_path = path.join(config.user_folder,  study_data.folder_name, 'v'+version_id, prefix);
 
                 const create_file_promises = uploadedFiles
                 .map(function(file){

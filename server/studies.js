@@ -10,19 +10,18 @@ const connection    = Promise.resolve(require('mongoose').connection);
 const {user_info, user_info_by_name}   = require('./users');
 
 
-// const {duplicate_experiments}   = require('./experiments');
-
 const PERMISSION_OWNER     = 'owner';
 const PERMISSION_READ_ONLY = 'read only';
 
-function create_version_obj(study_id, state) {
+function create_version_obj(study_id, state, id) {
     const now     = new Date();
-    const version = dateFormat(now, 'yyyymmdd.HHMMss');
-    return {id: generate_id(study_id, version, state), version: version, state: state};
+    const creation_date = dateFormat(now, 'yyyymmdd.HHMMss');
+
+    return {id, hash: generate_hash(study_id, creation_date, state), creation_date, state, experiments:[]};
 }
 
-function generate_id(study_id, version, state) {
-    return utils.sha1(study_id + version + state+'*');
+function generate_hash(study_id, creation_date, state, id) {
+    return utils.sha1(study_id + creation_date + state + id + '*');
 }
 
 function get_pending_studies(user_id) {
@@ -267,13 +266,12 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
                 folder_name: path.join(user_name, study_name),
                 type: study_type,
                 users: [{id: user_id}],
-                experiments: [],
                 modify_date: Date.now(),
                 is_public
             }, additional_params);
             return insert_obj(user_id, study_obj)
                 .then(study => {
-                    return  fs.mkdirp(study.dir).then(()=>fs.mkdirp(path.join(study.dir, 'sandbox'))).then(() => study).then(() => study);
+                    return  fs.mkdirp(study.dir).then(()=>fs.mkdirp(path.join(study.dir, 'v1'))).then(() => study).then(() => study);
                 });
         });
 }
@@ -434,7 +432,7 @@ function insert_obj(user_id, study_props) {
             const study_id = counter_data.value.seq;
             study_obj._id = study_id;
             study_obj.folder_name = `${study_obj.folder_name}-${study_id}`;
-            study_obj.versions = [create_version_obj(study_obj._id, 'Develop')];
+            study_obj.versions = [create_version_obj(study_obj._id, 'Develop', 1)];
             return studies.insertOne(study_obj);
         })
         .then(function(){

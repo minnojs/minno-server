@@ -32,9 +32,9 @@ const fileContext = (file, study, notifications) => {
         ]);
     }
     // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-    let version_id = study.versions[0].id;
+    let version_id = study.versions[0].hash;
     if (study.version)
-        version_id = study.version.id;
+        version_id = study.version.hash;
 
     // Allows to use as a button without a specific file
     if (file) {

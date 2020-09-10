@@ -18,10 +18,12 @@ const {has_read_permission, has_read_data_permission, has_write_permission} = st
 function get_play_url (user_id, study_id, file_id, version_id='') {
     return has_read_permission(user_id, study_id)
         .then(({study_data})  => {
-            const version = !version_id ? 'sandbox' : version_id;
-            const url = urljoin(config.relative_path, 'users', study_data.folder_name, version, file_id);
-            const base_url = urljoin(config.relative_path, 'users',study_data.folder_name, version,  '/');
-            const file_path = join(config.user_folder, study_data.folder_name, version, file_id);
+            if (!version_id)
+                version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+
+            const url = urljoin(config.relative_path, 'users', study_data.folder_name, 'v'+version_id, file_id);
+            const base_url = urljoin(config.relative_path, 'users',study_data.folder_name, 'v'+version_id,  '/');
+            const file_path = join(config.user_folder, study_data.folder_name, 'v'+version_id, file_id);
 
             // set sham experiment data
             return {
@@ -40,46 +42,36 @@ function get_experiment_url (req) {
     return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
-        return studies.findOne({experiments: { $elemMatch: {id: req.params.exp_id} }})
-            .then(function(exp_data){
-                if(!exp_data)
+        return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id} }})
+            .then(function(study_data){
+                if(!study_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
-                return users_comp.user_info(exp_data.users[0].id)
-                    .then(function(){
+                const version_data = study_data.versions.filter(version=>version.hash === req.params.version_id)[0];
+                const exp_data = version_data.experiments.filter(exp=>exp.id === req.params.exp_id)[0];
+                if (!exp_data)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
 
-                        const version_data = exp_data.versions.filter(version=>version.id===req.params.version_id  && version.availability===undefined || version.availability)[0] ;
+                const version_folder = path.join(study_data.folder_name, 'v'+version_data.id);
 
-                        if (!version_data)
-                            return Promise.reject({status:400, message:'Error: Wrong version'});
-                        const version_name = version_data.version;
-                        let version_folder = path.join(exp_data.folder_name, 'sandbox');
-                        let exp            = exp_data.experiments.filter(exp => exp.id===req.params.exp_id);
+                const url       = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
+                const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
+                const file_path = join(config.user_folder,  version_folder, exp_data.file_id);
 
-                        if (version_data.state !== 'Develop'){
-                            version_folder = path.join(exp_data.folder_name, version_name);
-                            exp = version_data.experiments.filter(exp => exp.id===req.params.exp_id);
-                        }
-
-                        const url       = urljoin(config.relative_path, 'users', version_folder, exp[0].file_id);
-                        const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
-                        const file_path      = join(config.user_folder,  version_folder, exp[0].file_id);
-
-                        return counters.findOneAndUpdate({_id:'session_id'},
-                            {'$inc': {'seq': 1}},
-                            {upsert: true, new: true, returnOriginal: false})
-                            .then(function(counter_data){
-                                const session_id = counter_data.value.seq;
-                                return {
-                                    version_data: version_data,
-                                    exp_id:req.params.exp_id,
-                                    descriptive_id: exp[0].descriptive_id,
-                                    session_id,
-                                    type: exp_data.type,
-                                    url,
-                                    path: file_path,
-                                    base_url
-                                };
-                            });
+                return counters.findOneAndUpdate({_id:'session_id'},
+                    {'$inc': {'seq': 1}},
+                    {upsert: true, new: true, returnOriginal: false})
+                    .then(function(counter_data){
+                        const session_id = counter_data.value.seq;
+                        return {
+                            version_data: version_data,
+                            exp_id:req.params.exp_id,
+                            descriptive_id: exp_data.descriptive_id,
+                            session_id,
+                            type: study_data.type,
+                            url,
+                            path: file_path,
+                            base_url
+                        };
                     });
             });
     });
@@ -187,7 +179,6 @@ function get_stat(user_id, study_id, exp_id, version_id, start_date, end_date, d
 
 
 function get_data(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
-
     return has_read_data_permission(user_id, study_id)
         .then(()=>
             add_data_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id)
@@ -207,58 +198,52 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
     if (!descriptive_id)
         return Promise.reject({status:402, message: 'ERROR: descriptive id is missing!'});
     return has_write_permission(user_id, study_id)
-        .then(function() {
+        .then(function({study_data}) {
             return connection.then(function (db) {
                 const studies = db.collection('studies');
-                return studies.findOneAndUpdate({_id: study_id, experiments: {$elemMatch:{file_id:file_id, descriptive_id: descriptive_id}}},
-                    {$unset:{'experiments.$.inactive': false}},
-                    {upsert: false, new: true, returnOriginal: true})
-                    .then(function(data){
-                        const id = utils.sha1(study_id + file_id + descriptive_id + Math.random());
-                        if(!data.lastErrorObject || !data.lastErrorObject.n)
-                            return studies.updateOne({_id: study_id}, {
-                                $push: {
-                                    experiments: {
-                                        id: id,
-                                        file_id: file_id, descriptive_id: descriptive_id
-                                    }
-                                }
-                            })
-                            .then(function (user_result) {
-                                if (!user_result)
-                                    return Promise.reject({status:500, message: 'ERROR: internal error!'});
-                                return ({id: id,
-                                    file_id: file_id,
-                                    descriptive_id: descriptive_id
-                                });
-                            });
-                        const exp_data = data.value.experiments.find(exp=>exp.file_id===file_id && descriptive_id===descriptive_id);
-                        return ({
-                            id: exp_data.id,
-                            file_id: file_id,
-                            descriptive_id: descriptive_id
-                        });
 
+                const versions = study_data.versions;
+                const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
-                    });
+                let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id && exp.descriptive_id === descriptive_id);
+                if(!!exp_data) {
+                    exp_data.inactive = false;
+                }
+                else {
+                    const id = utils.sha1(study_id + file_id + descriptive_id + Math.random());
+                    exp_data = {id, file_id, descriptive_id};
+                    version_data.experiments.push(exp_data);
+                }
+
+                return studies.updateOne({_id: study_id},
+                    {$set:{versions}}
+                )
+                .then(function (user_result) {
+                    if (!user_result)
+                        return Promise.reject({status:500, message: 'ERROR: internal error!'});
+                    return (exp_data);
+                });
             });
         });
 }
 
 function delete_experiment(user_id, study_id, file_id) {
     return has_write_permission(user_id, study_id)
-        .then(function() {
+        .then(function({study_data}) {
             return connection.then(function (db) {
+                const versions = study_data.versions;
+                const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id);
+                exp_data.inactive = true;
                 const studies = db.collection('studies');
-                return studies.findOne({_id: study_id, experiments:{$elemMatch:{file_id:file_id}}})
-                    .then(function(study_data){
-                        if (!study_data)
-                            return;
-                        const exps = study_data.experiments.map(exp=>exp.file_id!==file_id ? exp : {id:exp.id, file_id:exp.file_id, descriptive_id: exp.descriptive_id, inactive:true});
-                        return studies.updateOne({_id: study_id},
-                            {$set:{experiments: exps}}
-                        );
-                    });
+                return studies.updateOne({_id: study_id},
+                    {$set:{versions}}
+                )
+                .then(function (user_result) {
+                    if (!user_result)
+                        return Promise.reject({status:500, message: 'ERROR: internal error!'});
+                    return (exp_data);
+                });
             });
         });
 }

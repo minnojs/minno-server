@@ -28,7 +28,7 @@ publishRouter.route('/:study_id/publish')
             return versions.insert_new_version(req.user_id, parseInt(req.params.study_id),
                 version_name,
                 dateFormat(now, 'yyyymmdd.HHMMss'),
-                'Published',
+                'Develop',
                 update_url)
                 .then(version_data=>res.json(version_data));
         });

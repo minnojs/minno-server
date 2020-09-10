@@ -12820,7 +12820,7 @@
         downloadFiles: function downloadFiles(files, version){
 
             console.log(!version);
-            version = !version ? 'sandbox' : version.version ;
+            version = !version ? 'latest' : version.version ;
             return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files: files}})
                 .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
@@ -18353,9 +18353,9 @@
             ]);
         }
         // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-        var version_id = study.versions[0].id;
+        var version_id = study.versions[0].hash;
         if (study.version)
-            version_id = study.version.id;
+            version_id = study.version.hash;
 
         // Allows to use as a button without a specific file
         if (file) {
@@ -23709,27 +23709,21 @@
                         )
                     ),
                     m('.row.space',
-                        m('.col-sm-2.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id)));}}, [m('i.fa.fa-wrench'), ' View sandbox']))
-
-
+                        m('.col-sm-12.space',  m('h4', 'Versions'))
                     ),
-                    ctrl.study.versions.length === 1 ? ''
-                        :
-                        [
-                            m('.row.space',
-                                m('.col-sm-12.space',  m('h4', 'Published versions'))
-                            ),
-                            console.log(ctrl.study.versions),
-                            ctrl.study.versions.filter(function (version){ return version.state === 'Published'; })
-                                .map(function (version, id){ return m('.row',
-                                    [
-                                        m('.col-sm-3.space',  [m('strong', version.version_name), (" (" + (formatDate$1(version.version)) + ")")]),
-                                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.version)));}}, 'Review')),
-                                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(version.version, !version.availability); }}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
-                                    ]
-                                ); }
-                            )
-                        ],
+                    ctrl.study.versions
+                        .map(function (version, id){ return m('.row',
+                            [
+                                m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
+                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
+                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(version.version, !version.availability); }}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
+                            ]
+                        ); }
+                    ),
+                    m('.row.space',
+                        m('.col-sm-3.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus'), ' Create a new version']))
+                    ),
+
 
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Actions'))

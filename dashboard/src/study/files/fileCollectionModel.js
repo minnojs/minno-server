@@ -248,7 +248,7 @@ const studyPrototype = {
     downloadFiles(files, version){
 
         console.log(!version);
-        version = !version ? 'sandbox' : version.version ;
+        version = !version ? 'latest' : version.version ;
         return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files}})
             .then(response => `${baseUrl}/download?path=${response.zip_file}&study=_PATH`);
     },
