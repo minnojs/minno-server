@@ -17,7 +17,7 @@ const settings = {
     'data':[],
     'stat':[],
     // 'restore':[],
-    // 'delete':[],
+    'delete':[],
     // 'rename':[],
     // 'description':[],
     // 'duplicate':[],

@@ -26,7 +26,7 @@ const textEditorComponent = {
         return ctrl;
     },
 
-    view: function(ctrl, {file,study}){
+    view: function(ctrl, {file, study}){
         const {observer, err, mode} = ctrl;
 
         if (!file.loaded) return m('.loader');
@@ -38,7 +38,7 @@ const textEditorComponent = {
 
         return m('.editor', [
             textMenu({mode, file, study, observer}),
-            textContent(ctrl, {key: file.id, file,observer, study})
+            textContent(ctrl, {key: file.id, file, observer, study})
         ]);
     }
 };

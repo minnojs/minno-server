@@ -20,6 +20,8 @@ const studyPrototype = {
         return fetchJson(this.apiVersionURL('', version))
             .then(study => {
 
+                this.version = study.versions.filter(version_obj=>version_obj.id === parseInt(version))[0];
+
                 const files = this.parseFiles(study.files);
                 this.loaded = true;
 
@@ -35,7 +37,6 @@ const studyPrototype = {
                 this.type = study.type || 'minno02';
                 this.base_url = study.base_url;
                 this.versions = study.versions ? study.versions : [];
-                this.version = study.versions.filter(version_obj=>version_obj.version === version)[0];
 
                 this.files(files);
                 this.sort();
@@ -82,7 +83,7 @@ const studyPrototype = {
 
         function ensureArray(arr){ return arr || []; }
         function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
-        function assignVersionId(file){ return Object.assign(file, {version_id: study.version}); }
+        function assignVersionId(file){ return !study.version ? file : Object.assign(file, {version_id: study.version.id}); }
 
         function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
 
@@ -246,8 +247,6 @@ const studyPrototype = {
      * @returns url [String] the download url
      */
     downloadFiles(files, version){
-
-        console.log(!version);
         version = !version ? 'latest' : version.version ;
         return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files}})
             .then(response => `${baseUrl}/download?path=${response.zip_file}&study=_PATH`);
@@ -299,7 +298,6 @@ const studyPrototype = {
 
 const studyFactory =  id =>{
     const study = Object.create(studyPrototype);
-
     Object.assign(study, {
         id      : id,
         files   : m.prop([]),

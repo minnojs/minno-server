@@ -31,11 +31,10 @@ const fileContext = (file, study, notifications) => {
             ]}
         ]);
     }
-    // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-    let version_id = study.versions[0].hash;
-    if (study.version)
-        version_id = study.version.hash;
 
+    let version_hash = study.versions[study.versions.length-1].hash;
+    if (study.version)
+        version_hash = study.version.hash;
     // Allows to use as a button without a specific file
     if (file) {
         // console.log(file);
@@ -52,13 +51,13 @@ const fileContext = (file, study, notifications) => {
                 :  {icon:'fa-desktop', text:'Experiment options', menu: [
                     {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications, true), disabled: isReadonly },
                     {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study, notifications), disabled: isReadonly },
-                    { icon:'fa-play', href:`${launchUrl}/${file.exp_data.id}/${version_id}`, text:'Play this task'},
-                    {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl(`${launchUrl}/${file.exp_data.id}/${version_id}`, true)}
+                    { icon:'fa-play', href:`${launchUrl}/${file.exp_data.id}/${version_hash}`, text:'Play this task'},
+                    {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl(`${launchUrl}/${file.exp_data.id}/${version_hash}`, true)}
                 ]},
             {icon:'fa-close', text:'Delete', action: deleteFile, disabled: isReadonly },
             {icon:'fa-arrows-v', text:'Move', action: moveFile(file, study, notifications), disabled: isReadonly },
             {icon:'fa-clone', text:'Duplicate', action: duplicateFile(file, study), disabled: isReadonly },
-            {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file, study, notifications), disabled: isReadonly },
+            {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file, study, notifications)},
             {icon:'fa-exchange', text:'Rename...', action: renameFile(file, study, notifications), disabled: isReadonly }
         ]);
     }

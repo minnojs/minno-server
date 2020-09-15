@@ -12575,6 +12575,8 @@
             return fetchJson(this.apiVersionURL('', version))
                 .then(function (study) {
 
+                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
+
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
 
@@ -12590,7 +12592,6 @@
                     this$1.type = study.type || 'minno02';
                     this$1.base_url = study.base_url;
                     this$1.versions = study.versions ? study.versions : [];
-                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.version === version; })[0];
 
                     this$1.files(files);
                     this$1.sort();
@@ -12639,7 +12640,7 @@
 
             function ensureArray(arr){ return arr || []; }
             function assignStudyId(file){ return Object.assign(file, {studyId: study.id}); }
-            function assignVersionId(file){ return Object.assign(file, {version_id: study.version}); }
+            function assignVersionId(file){ return !study.version ? file : Object.assign(file, {version_id: study.version.id}); }
 
             function flattenDeep(acc, val) { return Array.isArray(val) ? acc.concat(val.reduce(flattenDeep,[])) : acc.concat(val); }
 
@@ -12818,8 +12819,6 @@
          * @returns url [String] the download url
          */
         downloadFiles: function downloadFiles(files, version){
-
-            console.log(!version);
             version = !version ? 'latest' : version.version ;
             return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files: files}})
                 .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
@@ -12871,7 +12870,6 @@
 
     var studyFactory =  function (id) {
         var study = Object.create(studyPrototype);
-
         Object.assign(study, {
             id      : id,
             files   : m.prop([]),
@@ -17167,7 +17165,7 @@
 
             return m('.editor', [
                 textMenuView({mode: mode, file: file, study: study, observer: observer$$1}),
-                textContent(ctrl, {key: file.id, file: file,observer: observer$$1, study: study})
+                textContent(ctrl, {key: file.id, file: file, observer: observer$$1, study: study})
             ]);
         }
     };
@@ -18352,11 +18350,10 @@
                 ]}
             ]);
         }
-        // let version_id = study.versions.length? study.versions[study.versions.length-1].id : '';
-        var version_id = study.versions[0].hash;
-        if (study.version)
-            version_id = study.version.hash;
 
+        var version_hash = study.versions[study.versions.length-1].hash;
+        if (study.version)
+            version_hash = study.version.hash;
         // Allows to use as a button without a specific file
         if (file) {
             // console.log(file);
@@ -18373,13 +18370,13 @@
                     :  {icon:'fa-desktop', text:'Experiment options', menu: [
                         {icon:'fa-exchange', text:'Rename', action: update_experiment(file, study, notifications, true), disabled: isReadonly },
                         {icon:'fa-close', text:'Cancel Experiment File', action: delete_experiment(file, study, notifications), disabled: isReadonly },
-                        { icon:'fa-play', href:(launchUrl + "/" + (file.exp_data.id) + "/" + version_id), text:'Play this task'},
-                        {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl((launchUrl + "/" + (file.exp_data.id) + "/" + version_id), true)}
+                        { icon:'fa-play', href:(launchUrl + "/" + (file.exp_data.id) + "/" + version_hash), text:'Play this task'},
+                        {icon:'fa-link', text: 'Copy Launch URL', action: copyUrl((launchUrl + "/" + (file.exp_data.id) + "/" + version_hash), true)}
                     ]},
                 {icon:'fa-close', text:'Delete', action: deleteFile, disabled: isReadonly },
                 {icon:'fa-arrows-v', text:'Move', action: moveFile(file, study, notifications), disabled: isReadonly },
                 {icon:'fa-clone', text:'Duplicate', action: duplicateFile(file, study), disabled: isReadonly },
-                {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file, study, notifications), disabled: isReadonly },
+                {icon:'fa-clone', text:'Copy to Different Study', action: copyFile(file, study, notifications)},
                 {icon:'fa-exchange', text:'Rename...', action: renameFile(file, study, notifications), disabled: isReadonly }
             ]);
         }
@@ -18582,6 +18579,7 @@
 
             var vm = study.vm(file.id); // vm is created by the studyModel
             var hasChildren = !!(file.isDir && file.files && file.files.length);
+
             return m('li.file-node',
                 {
 
@@ -18651,7 +18649,7 @@
         e.stopPropagation();
         e.preventDefault();
         if (study.version)
-            m.route(("/editor/" + (file.studyId) + "/" + (study.version.version) + "/file/" + (encodeURIComponent(file.id))));
+            m.route(("/editor/" + (file.studyId) + "/" + (study.version.id) + "/file/" + (encodeURIComponent(file.id))));
         else {
             if (file.viewStudy)
                 m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
@@ -18893,7 +18891,7 @@
     var study;
     var editorLayoutComponent = {
         controller: function (){
-            var version = m.route.param('version_id');
+            var version = parseInt(m.route.param('version_id'));
             var id = m.route.param('studyId');
             if (!study || (study.id !== id)){
                 study = studyFactory(id);
@@ -18910,7 +18908,6 @@
                         .then(m.redraw);
 
             }
-
             var ctrl = {study: study, onunload: onunload};
 
             window.addEventListener('beforeunload', beforeunload);
@@ -20789,7 +20786,7 @@
         'data':[],
         'stat':[],
         // 'restore':[],
-        // 'delete':[],
+        'delete':[],
         // 'rename':[],
         // 'description':[],
         // 'duplicate':[],
@@ -23561,7 +23558,9 @@
                 show_change_availability: show_change_availability
             };
 
-            function show_change_availability(version_id, availability){
+            function show_change_availability(study, version_id, availability){
+                study.versions.map(function (version){ return version.availability = version.hash === version_id ? !version.availability : version.availability; });
+                m.redraw();
                 change_version_availability(m.route.param('studyId'), version_id, availability);
             }
             function save(){
@@ -23575,7 +23574,6 @@
                     .then(function () { return ctrl.study.is_locked = !ctrl.study.is_locked; })
                     .then(m.redraw);
             }
-
 
             function show_delete(){
                 return messages.confirm({header:'Delete study', content:'Are you sure?'})
@@ -23611,7 +23609,7 @@
                             m('.input-group.space', [
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                    ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous version')
+                                    ctrl.study.versions.length<2 ? '' : m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                                 ])
                             ])
                         ]),
@@ -23666,7 +23664,6 @@
             function load() {
                 ctrl.study = studyFactory(m.route.param('studyId'));
                 return ctrl.study.get()
-                    .catch(function (err) { return study.err = err.message; })
                     .then(function (){
                         ctrl.study_name(ctrl.study.name);
                         ctrl.description(ctrl.study.description);
@@ -23711,18 +23708,20 @@
                     m('.row.space',
                         m('.col-sm-12.space',  m('h4', 'Versions'))
                     ),
-                    ctrl.study.versions
-                        .map(function (version, id){ return m('.row',
-                            [
-                                m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(version.version, !version.availability); }}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
-                            ]
-                        ); }
+                    ctrl.study.versions .map(function (version, id){ return m('.row', [
+                            m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive'))
+                        ]); }
                     ),
                     m('.row.space',
-                        m('.col-sm-3.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus'), ' Create a new version']))
+                        m('.col-sm-9.space'),
+                        m('.col-sm-3.space',
+                            m('button.btn.btn-danger.btn-block.btn-sm', {onclick:ctrl.show_publish}, ' Publish and create a new version')
+                        )
                     ),
+
+
 
 
                     m('.row.space',

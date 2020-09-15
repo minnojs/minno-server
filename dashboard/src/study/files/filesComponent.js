@@ -9,7 +9,7 @@ import fullheight from 'utils/fullHeight';
 let study;
 let editorLayoutComponent = {
     controller: ()=>{
-        let version = m.route.param('version_id');
+        let version = parseInt(m.route.param('version_id'));
         let id = m.route.param('studyId');
         if (!study || (study.id !== id)){
             study = studyFactory(id);
@@ -26,7 +26,6 @@ let editorLayoutComponent = {
                     .then(m.redraw);
 
         }
-
         let ctrl = {study, onunload};
 
         window.addEventListener('beforeunload', beforeunload);

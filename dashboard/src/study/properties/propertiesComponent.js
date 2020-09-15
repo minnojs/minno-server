@@ -33,7 +33,9 @@ let collaborationComponent = {
             show_change_availability
         };
 
-        function show_change_availability(version_id, availability){
+        function show_change_availability(study, version_id, availability){
+            study.versions.map(version=>version.availability = version.hash === version_id ? !version.availability : version.availability);
+            m.redraw();
             change_version_availability(m.route.param('studyId'), version_id, availability);
         }
         function save(){
@@ -47,7 +49,6 @@ let collaborationComponent = {
                 .then(() => ctrl.study.is_locked = !ctrl.study.is_locked)
                 .then(m.redraw);
         }
-
 
         function show_delete(){
             return messages.confirm({header:'Delete study', content:'Are you sure?'})
@@ -83,7 +84,7 @@ let collaborationComponent = {
                         m('.input-group.space', [
                             m('select.c-select.form-control.space',{onchange: e => update_url(e.target.value)}, [
                                 m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                ctrl.study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous version')
+                                ctrl.study.versions.length<2 ? '' : m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                             ])
                         ])
                     ]),
@@ -138,7 +139,6 @@ let collaborationComponent = {
         function load() {
             ctrl.study = studyFactory(m.route.param('studyId'));
             return ctrl.study.get()
-                .catch(err => study.err = err.message)
                 .then(()=>{
                     ctrl.study_name(ctrl.study.name);
                     ctrl.description(ctrl.study.description);
@@ -183,19 +183,21 @@ let collaborationComponent = {
                 m('.row.space',
                     m('.col-sm-12.space',  m('h4', 'Versions'))
                 ),
-                ctrl.study.versions
-                    .map((version, id)=>
-                    m('.row',
-                        [
-                            m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
-                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
-                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(version.version, !version.availability)}, version.availability ===undefined || version.availability? 'Active' : 'Inactive'))
-                        ]
-                    )
+                ctrl.study.versions .map((version, id)=>
+                    m('.row', [
+                        m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
+                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
+                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive'))
+                    ])
                 ),
                 m('.row.space',
-                    m('.col-sm-3.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick:ctrl.show_publish}, [m('i.fa.fa-plus'), ' Create a new version']))
+                    m('.col-sm-9.space'),
+                    m('.col-sm-3.space',
+                        m('button.btn.btn-danger.btn-block.btn-sm', {onclick:ctrl.show_publish}, ' Publish and create a new version')
+                    )
                 ),
+
+
 
 
                 m('.row.space',

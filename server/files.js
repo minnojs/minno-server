@@ -60,7 +60,6 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
         const experiments = study_data.versions.filter(version=>version.id === version_id)[0].experiments;
 
         const folder_path = path.join(study_data.folder_name, 'v' + version_id);
-
         return walk(server_url, folder_path, experiments)
         .then(files => {
             const study_user = study_data.users.find(user=>user.user_id===user_id);
@@ -242,16 +241,17 @@ function rename_file(user_id, study_id, file_id, new_path, server_url) {
     .then(study => study.files);
 }
 
-function copy_file(user_id, study_id, file_id, new_study_id) {
+function copy_file(user_id, study_id, file_id, new_study_id, version_id = '') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data}){
+        if (!version_id)
+            version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
         return has_write_permission(user_id, new_study_id)
         .then(function({study_data:new_study_data}){
-
+            const latest_version_id = new_study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
             file_id = urlencode.decode(file_id);
-            const new_file_path = path.join(config.user_folder,new_study_data.folder_name, 'sandbox', file_id);
-            const exist_file_path = path.join(config.user_folder,study_data.folder_name, 'sandbox', file_id);
-
+            const exist_file_path = path.join(config.user_folder,study_data.folder_name, 'v'+version_id, file_id);
+            const new_file_path = path.join(config.user_folder,new_study_data.folder_name, 'v'+latest_version_id, file_id);
             return fs.copy(exist_file_path, new_file_path)
                 .then(()=> studies_comp.update_modify(new_study_id))
                 .then(()=>({}));

@@ -42,10 +42,10 @@ function get_experiment_url (req) {
     return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
-        return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id} }})
+        return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id, availability:true} }})
             .then(function(study_data){
                 if(!study_data)
-                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
                 const version_data = study_data.versions.filter(version=>version.hash === req.params.version_id)[0];
                 const exp_data = version_data.experiments.filter(exp=>exp.id === req.params.exp_id)[0];
                 if (!exp_data)
@@ -250,26 +250,44 @@ function delete_experiment(user_id, study_id, file_id) {
 
 function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
     return has_write_permission(user_id, study_id)
-        .then(function() {
+        .then(function({study_data}) {
             return connection.then(function (db) {
+                const versions = study_data.versions;
+                const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id);
+                exp_data.descriptive_id = descriptive_id;
+
                 const studies = db.collection('studies');
-                return studies.updateOne(
-                    {_id: study_id, experiments:{$elemMatch:{file_id, inactive:{$ne:true}}}},
-                    {$set:{'experiments.$.descriptive_id': descriptive_id}}
-                );
+                return studies.updateOne({_id: study_id},
+                    {$set:{versions}}
+                )
+                    .then(function (user_result) {
+                        if (!user_result)
+                            return Promise.reject({status:500, message: 'ERROR: internal error!'});
+                        return (exp_data);
+                    });
             });
         });
 }
 
 function update_file_id(user_id, study_id, file_id, new_file_id) {
     return has_write_permission(user_id, study_id)
-        .then(function() {
+        .then(function({study_data}) {
             return connection.then(function (db) {
+                const versions = study_data.versions;
+                const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id);
+                exp_data.file_id = new_file_id;
+
                 const studies = db.collection('studies');
-                return studies.updateOne(
-                    {_id: study_id, experiments:{$elemMatch:{file_id:file_id}}},
-                    {$set:{'experiments.$.file_id':new_file_id}}
-                );
+                return studies.updateOne({_id: study_id},
+                    {$set:{versions}}
+                )
+                .then(function (user_result) {
+                    if (!user_result)
+                        return Promise.reject({status:500, message: 'ERROR: internal error!'});
+                    return (exp_data);
+                });
             });
         });
 }

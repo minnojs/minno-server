@@ -136,6 +136,14 @@ filesRouter.route('/:study_id/file/:file_id/copy')
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
+filesRouter.route('/:study_id/version/:version_id/file/:file_id/copy')
+    .put(
+        function(req, res){
+            return files.copy_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, parseInt(req.body.new_study_id), req.params.version_id)
+                .then(data=>res.json(data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        });
+
 filesRouter.route('/:study_id/file/:file_id/experiment')
     .post(
         function(req, res){

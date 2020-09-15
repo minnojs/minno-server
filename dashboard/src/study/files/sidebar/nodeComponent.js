@@ -12,6 +12,7 @@ let nodeComponent = {
     view: (ctrl, {file,folderHash, study, notifications}) => {
         const vm = study.vm(file.id); // vm is created by the studyModel
         const hasChildren = !!(file.isDir && file.files && file.files.length);
+
         return m('li.file-node',
             {
 
@@ -81,7 +82,7 @@ const select = (file, study) => e => {
     e.stopPropagation();
     e.preventDefault();
     if (study.version)
-        m.route(`/editor/${file.studyId}/${study.version.version}/file/${encodeURIComponent(file.id)}`);
+        m.route(`/editor/${file.studyId}/${study.version.id}/file/${encodeURIComponent(file.id)}`);
     else {
         if (file.viewStudy)
             m.route(`/view/${m.route.param('code')}/file/${encodeURIComponent(file.id)}`);
