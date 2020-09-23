@@ -271,7 +271,10 @@ function create_new_study({user_id, study_name, study_type = 'minnoj0.2', descri
             }, additional_params);
             return insert_obj(user_id, study_obj)
                 .then(study => {
-                    return  fs.mkdirp(study.dir).then(()=>fs.mkdirp(path.join(study.dir, 'v1'))).then(() => study).then(() => study);
+                    const dir = path.join(config.user_folder, study.folder_name);
+                    return fs.mkdirp(dir)
+                        .then(()=>fs.mkdirp(path.join(dir, 'v1')))
+                        .then(() => study);
                 });
         });
 }
@@ -283,25 +286,36 @@ function duplicate_study(user_id, study_id, new_study_name) {
         ensure_study_not_exist(user_id, new_study_name)
     ])
     .then(function([{user_data, study_data: original_study}]){
+        const latest_version = original_study.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+        const version_id = latest_version.id;
+        const exps = latest_version.experiments;
+        let experiments = [];
+        exps.map(function(exp) {
+            const id = utils.sha1(study_id + exp.file_id + exp.descriptive_id + Math.random());
+            experiments.push({
+                id,
+                file_id: exp.file_id,
+                descriptive_id: exp.descriptive_id
+            });
+        });
+
         const study_obj = {
             name: new_study_name,
             folder_name: path.join(user_data.user_name, new_study_name),
             type: original_study.type,
-            description: original_study.description
-
+            description: original_study.description,
         };
-
         return insert_obj(user_id, study_obj)
             .then(function (study_data) {
-
-                const originalPath = path.join(config.user_folder ,original_study.folder_name);
-                return fs.pathExists(study_data.dir)
+                const originalPath = path.join(config.user_folder, original_study.folder_name, 'v'+version_id);
+                const dir = path.join(config.user_folder, study_data.folder_name, 'v1');
+                return fs.pathExists(dir)
                     .then(exists => {
                         if (!exists)
-                            return fs.copy(originalPath, study_data.dir)
+                            return fs.copy(originalPath, dir)
                                 .then(()=>
-                                    duplicate_experiments(study_data.study_id, original_study.experiments)
-                                        .then(() => ({study_id: study_data.study_id}))
+                                    duplicate_experiments(study_data, experiments)
+                                        .then(() => ({study_id: study_data._id}))
                                         .catch(() => Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'}))
 
                                 );
@@ -310,20 +324,16 @@ function duplicate_study(user_id, study_id, new_study_name) {
     });
 }
 
-function duplicate_experiments(study_id, exps) {
+function duplicate_experiments(study_data, experiments) {
     return connection.then(function (db) {
         const studies = db.collection('studies');
-        return Promise.all(exps.map(function(exp) {
-            const id = utils.sha1(study_id + exp.file_id + exp.descriptive_id + Math.random());
-            return studies.updateOne({_id: study_id}, {
-                $push: {
-                    experiments: {
-                        id,
-                        file_id: exp.file_id, descriptive_id: exp.descriptive_id
-                    }
-                }
-            });
-        }));
+        const versions = study_data.versions;
+
+        const version_data = versions[0];
+        version_data.experiments = experiments;
+        return studies.updateOne({_id: study_data._id},
+            {$set:{versions}}
+        );
     });
 }
 
@@ -392,7 +402,7 @@ function ensure_study_not_exist(user_id, study_name) {
             users
                 .findOne({_id:user_id})
                 .then(user_data => {
-                    return fs.pathExists(path.join(config.user_folder,user_data.user_name,study_name));
+                    return fs.pathExists(path.join(config.user_folder, user_data.user_name, study_name));
                 })
                 
         ]);
@@ -418,7 +428,6 @@ function insert_obj(user_id, study_props) {
     };
 
     const study_obj = Object.assign({}, study_props, dflt_study_props);
-
     return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies  = db.collection('studies');
@@ -445,7 +454,7 @@ function insert_obj(user_id, study_props) {
             const dir = path.join(config.user_folder, study_obj.folder_name);
             const version_id = study_obj.versions[0].version;
             const study_id = study_obj._id;
-            return {study_id, dir, version_id};
+            return study_obj;
         });
     });
 }

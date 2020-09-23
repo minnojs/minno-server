@@ -2,7 +2,6 @@ const config        = require('../config');
 const urljoin       = require('url-join');
 const studies_comp  = require('./studies');
 const join          = require('path').join;
-const users_comp    = require('./users');
 const utils         = require('./utils');
 const data_server   = require('./data_server/controllers/controller');
 const connection    = Promise.resolve(require('mongoose').connection);
@@ -206,7 +205,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                 const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
                 let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id && exp.descriptive_id === descriptive_id);
-                if(!!exp_data) {
+                if(exp_data) {
                     exp_data.inactive = false;
                 }
                 else {

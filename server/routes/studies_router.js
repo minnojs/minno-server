@@ -26,7 +26,7 @@ studiesRouter.route('')
     .post(function(req,res)
     {
         return studies.create_new_study({user_id: req.user_id, study_name: req.body.study_name, study_type: req.body.study_type, description: req.body.description})
-            .then(study_data=>res.json({study_id: study_data.study_id}))
+            .then(study_data=>res.json({study_id: study_data._id}))
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
 

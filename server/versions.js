@@ -1,5 +1,4 @@
 const config = require('../config');
-const experiments  = require('./experiments');
 const utils         = require('./utils');
 const {has_read_permission, has_write_permission} = require('./studies');
 const connection    = Promise.resolve(require('mongoose').connection);
@@ -55,9 +54,7 @@ function insert_new_version(user_id, study_id, version_name, creation_date, stat
 
         last_version.state = 'Published';
 
-        versions.push({id:version_id+1, hash:version_hash, availability: true, version_name, creation_date, state, experiments:last_version.experiments})
-
-
+        versions.push({id:version_id+1, hash:version_hash, availability: true, version_name, creation_date, state, experiments:last_version.experiments});
 
         return connection.then(function (db) {
             const studies = db.collection('studies');

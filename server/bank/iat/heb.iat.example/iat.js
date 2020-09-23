@@ -157,7 +157,7 @@ define(['https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat7.js'], func
         fb_slight_Att1WithCatA_Att2WithCatB : 'התוצאות מעידות על העדפה אוטומטית קלה לcategoryB על פני categoryA',
         fb_equal_CatAvsCatB : 'התוצאות שלך לא מצביעות על העדפה אוטומטית בין categoryA לcategoryB',
 
-		//Error messages in the feedback
+        //Error messages in the feedback
         manyErrors: 'אי-אפשר לחשב העדפה מהתוצאות כי טעית לעיתים קרובות',
         tooFast: 'אי-אפשר לחשב העדפה מהתוצאות כי השבת מהר מדי בתכיפות גבוהה',
         notEnough: 'אי-אפשר לחשב העדפה מהתוצאות כי לא השבת נכון מספיק פעמים.'

@@ -190,15 +190,6 @@ let collaborationComponent = {
                         m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive'))
                     ])
                 ),
-                m('.row.space',
-                    m('.col-sm-9.space'),
-                    m('.col-sm-3.space',
-                        m('button.btn.btn-danger.btn-block.btn-sm', {onclick:ctrl.show_publish}, ' Publish and create a new version')
-                    )
-                ),
-
-
-
 
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Actions'))
@@ -237,10 +228,10 @@ let collaborationComponent = {
                     m('.col-sm-12', [
                         m('.row.',
                             m('.col-sm-11.space',[
-                                m('strong', 'Publish study'),
+                                m('strong', 'Publish and create a new version'),
                             ]),
                             m('.col-sm-1.space',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, ctrl.study.is_published ? 'Republish' : 'Publish')
+                                m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
                             )
                         ),
                         m('.row.',
