@@ -23533,9 +23533,12 @@
         return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
     }
 
+    var notifications$1= createNotifications();
+
     var collaborationComponent$1 = {
         controller: function controller(){
             var ctrl = {
+                notifications: notifications$1,
                 study_name:m.prop(),
                 description:m.prop(),
                 users:m.prop(),
@@ -23565,10 +23568,13 @@
             }
             function save(){
                 if (ctrl.study.name!==ctrl.study_name())
-                    rename_study(m.route.param('studyId'), ctrl.study_name());
+                    rename_study(m.route.param('studyId'), ctrl.study_name())
+                        .then(ctrl.notifications.show_success('Details were successfully updated'));
                 if (ctrl.study.description!==ctrl.description())
-                    update_study(m.route.param('studyId'), {description:ctrl.description()});
+                    update_study(m.route.param('studyId'), {description:ctrl.description()})
+                        .then(ctrl.notifications.show_success('Details were successfully updated'));
             }
+
             function lock(){
                 return lock_study(ctrl.study.id, !ctrl.study.is_locked)
                     .then(function () { return ctrl.study.is_locked = !ctrl.study.is_locked; })
@@ -23681,6 +23687,8 @@
                 m('.loader')
                 :
                 m('.container.sharing-page', [
+                    m('div', ctrl.notifications.view()),
+
                     m('.row',[
                         m('.col-sm-12', [
                             m('h3', [ctrl.study_name(), ': properties'])

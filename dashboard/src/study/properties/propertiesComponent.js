@@ -5,12 +5,15 @@ import formatDate from 'utils/formatDate_str';
 
 
 import sharing_dialog from '../sharing/sharingComponent';
+import {createNotifications} from 'utils/notifyComponent';
 
 export default collaborationComponent;
+const notifications= createNotifications();
 
 let collaborationComponent = {
     controller(){
         let ctrl = {
+            notifications,
             study_name:m.prop(),
             description:m.prop(),
             users:m.prop(),
@@ -40,10 +43,13 @@ let collaborationComponent = {
         }
         function save(){
             if (ctrl.study.name!==ctrl.study_name())
-                rename_study(m.route.param('studyId'), ctrl.study_name());
+                rename_study(m.route.param('studyId'), ctrl.study_name())
+                    .then(ctrl.notifications.show_success('Details were successfully updated'));
             if (ctrl.study.description!==ctrl.description())
-                update_study(m.route.param('studyId'), {description:ctrl.description()});
+                update_study(m.route.param('studyId'), {description:ctrl.description()})
+                    .then(ctrl.notifications.show_success('Details were successfully updated'));
         }
+
         function lock(){
             return lock_study(ctrl.study.id, !ctrl.study.is_locked)
                 .then(() => ctrl.study.is_locked = !ctrl.study.is_locked)
@@ -156,6 +162,8 @@ let collaborationComponent = {
             m('.loader')
             :
             m('.container.sharing-page', [
+                m('div', ctrl.notifications.view()),
+
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [ctrl.study_name(), ': properties'])
