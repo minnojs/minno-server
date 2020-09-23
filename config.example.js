@@ -22,6 +22,6 @@ module.exports = {
 
     maxFileSize: 100*1024*1024,
     logs_folder: 'logs',
-    minnojsDevUrl: 'https://raw.githack.com/minnojs/minno-quest/0.2/dist',
-    minnojsUrl: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.2/dist/'
+    minnojsDevUrl: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.3/dist/',
+    minnojsUrl: '//cdn.jsdelivr.net/gh/minnojs/minno-quest@0.3/dist/'
 };
