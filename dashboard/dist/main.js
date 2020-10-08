@@ -12574,18 +12574,15 @@
 
             return fetchJson(this.apiVersionURL('', version))
                 .then(function (study) {
-
                     this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
-
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
-
-                    this$1.isReadonly = true;
+                    this$1.isReadonly = !study.is_last;
                     this$1.istemplate = study.is_template;
-                    this$1.is_locked = true;
+                    this$1.is_locked = !study.is_last;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
-                    this$1.has_data_permission = false;
+                    this$1.has_data_permission = study.is_last;
                     this$1.description = study.description;
 
                     this$1.name = study.study_name;
@@ -18740,8 +18737,8 @@
                     })
                 ]),
 
-                m('a.no-decoration', {href:("/editor/" + (study.id)), config:m.route},
-                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("(" + (study.version.version_name) + ")")))])
+                m('a.no-decoration', {href:'javascript:void(0);'},
+                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("- v" + (study.version.id) + " (" + (study.version.version_name) + ")")))])
             ]),
             study.isUploading
                 ? m('div', [

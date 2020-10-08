@@ -54,9 +54,13 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
 function get_study_files(user_id, study_id, server_url, version_id='') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
+        const last_version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
         if (!version_id)
-            version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
-        const experiments = study_data.versions.filter(version=>version.id === version_id)[0].experiments;
+            version_id = last_version_id;
+        const version_data = study_data.versions.filter(version=>version.id === version_id)[0];
+        if (!version_data)
+            return Promise.reject({status:400, message: 'Version does not exist!'});
+        const experiments = version_data.experiments;
 
         const folder_path = path.join(study_data.folder_name, 'v' + version_id);
         return walk(server_url, folder_path, experiments)
@@ -74,6 +78,7 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
                 permission: study_user ? study_user.permission :'read only',
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
                 files: files.files,
+                is_last: version_id === last_version_id,
                 base_url: urljoin(server_url, 'users', folder_path)
             };
         });
