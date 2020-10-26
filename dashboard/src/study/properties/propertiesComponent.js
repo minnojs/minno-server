@@ -206,20 +206,20 @@ let collaborationComponent = {
                 m('.row.frame.space',
                     m('.col-sm-12', [
                         m('.row.',
-                            m('.col-sm-11.space',[
+                            m('.col-sm-10.space',[
                                 m('strong', 'Duplicate study'),
                                 m('.small', 'This will allows you to...')
                             ]),
-                            m('.col-sm-1.space',
+                            m('.col-sm-2.space.text-sm-right',
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate}, 'Duplicate')
                             )
                         ),
                         m('.row.',
-                            m('.col-sm-11.space',[
+                            m('.col-sm-10.space',[
                                 m('strong', 'Share study'),
                                 m('.small', 'This will allows you to...')
                             ]),
-                            m('.col-sm-1.space',
+                            m('.col-sm-2.space.text-sm-right',
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                             )
                         ),
