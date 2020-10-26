@@ -128,21 +128,21 @@ let collaborationComponent = {
 
 
         function show_deploy(){
-            let study_id = ctrl.study.id;
+            let study = ctrl.study;
             let close = messages.close;
-            messages.custom({header:'Statistics', wide: true, content: deployDialog({study_id, close})})
+            messages.custom({header:'Deploy', preventEnterSubmits: true, wide: true, content: deployDialog({study, close})})
                 .then(m.redraw);
         }
         function show_change(){
             let study_id = ctrl.study.id;
             let close = messages.close;
-            messages.custom({header:'Statistics', wide: true, content: changeRequestDialog({study_id, close})})
+            messages.custom({header:'Change request', preventEnterSubmits: true, wide: true, content: changeRequestDialog({study_id, close})})
                 .then(m.redraw);
         }
         function show_removal(){
             let study_id = ctrl.study.id;
             let close = messages.close;
-            messages.custom({header:'Statistics', wide: true, content: removalDialog({study_id, close})})
+            messages.custom({header:'Removal request', wide: true, content: removalDialog({study_id, close})})
                 .then(m.redraw);
 
         }
@@ -174,11 +174,15 @@ let collaborationComponent = {
             ctrl.study = studyFactory(m.route.param('studyId'));
             return ctrl.study.get()
                 .then(()=>{
+                    console.log(ctrl.study);
+
                     ctrl.study_name(ctrl.study.name);
                     ctrl.description(ctrl.study.description);
                     ctrl.loaded(true);
                 })
+
                 .then(m.redraw);
+
         }
         load();
 
@@ -234,20 +238,20 @@ let collaborationComponent = {
                 m('.row.frame.space',
                     m('.col-sm-12', [
                         m('.row.',
-                            m('.col-sm-11.space',[
+                            m('.col-sm-10.space',[
                                 m('strong', 'Duplicate study'),
                                 m('.small', 'This will allows you to...')
                             ]),
-                            m('.col-sm-1.space',
+                            m('.col-sm-2.space.text-sm-right',
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate}, 'Duplicate')
                             )
                         ),
                         m('.row.',
-                            m('.col-sm-11.space',[
+                            m('.col-sm-10.space',[
                                 m('strong', 'Share study'),
                                 m('.small', 'This will allows you to...')
                             ]),
-                            m('.col-sm-1.space',
+                            m('.col-sm-2.space.text-sm-right',
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                             )
                         ),

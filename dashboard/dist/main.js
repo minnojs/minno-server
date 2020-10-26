@@ -21471,20 +21471,18 @@
     }; };
 
     function deployDialog (args) { return m.component(deployDialog$1, args); }
-    var ASTERIX = m('span.text-danger', '*');
+    var ASTERISK = m('span.text-danger.font-weight-bold', '*');
 
     var deployDialog$1 = {
         controller: function controller(ref){
-            var studyId = ref.studyId;
+            var study = ref.study;
             var close = ref.close;
 
             var form = formFactory();
             var ctrl = {
                 sent:false,
                 error: m.prop(''),
-                folder_location: m.prop(''),
-                researcher_email: m.prop(''),
-                researcher_name: m.prop(''),
+                study: study,
                 target_number: m.prop(''),
                 
                 rulesValue: m.prop('parent'), // this value is defined by the rule generator
@@ -21509,23 +21507,20 @@
                 
             };
 
-            get_study_prop(studyId)
-                .then(function (response) {
-                    ctrl.exist_rule_file(response.have_rule_file ? response.study_name+'.rules.xml' : '');
-                    ctrl.study_name = response.study_name;
-                    ctrl.researcher_name(response.researcher_name);
-                    ctrl.researcher_email(response.researcher_email);
-                    ctrl.folder_location(response.folder);
-                    ctrl.experiment_files(response.experiment_file.reduce(function (obj, row) {obj[row.file_name] = row.file_name;
-                        return obj;
-                    }, {}));
-                })
-                .catch(function (response) {
-                    ctrl.error(response.message);
-                })
-                .then(m.redraw);
-        
-            return {ctrl: ctrl, form: form, submit: submit, studyId: studyId};
+            // get_study_prop(study)
+            //     .then(response =>{
+            //         ctrl.exist_rule_file(response.have_rule_file ? response.study_name+'.rules.xml' : '');
+            //         ctrl.study_name = response.study_name;
+            //
+            //         ctrl.experiment_files(response.experiment_file.reduce((obj, row) => {obj[row.file_name] = row.file_name;
+            //             return obj;
+            //         }, {}));
+            //     })
+            //     .catch(response => {
+            //         ctrl.error(response.message);
+            //     })
+            //     .then(m.redraw);
+            return {ctrl: ctrl, form: form, submit: submit, study: study};
             function submit(){
                 form.showValidation(true);
                 if (!form.isValid())
@@ -21557,129 +21552,160 @@
             ]);
             
             return m('.deploy.container', [
-                m('h3', [
-                    'Request Deploy ',
-                    m('small', ctrl.study_name)
+                m('.row',[
+                    m('.col-sm-12', [
+                        m('h3', [
+                            'Request Deploy ',
+                            m('small', ctrl.study.name)
+                        ]),
+                    ])
                 ]),
 
-                m('.row', [
-                    m('.col-sm-3', m('strong', 'Researcher Name: ')),
-                    m('.col-sm-9', ctrl.researcher_name())
-                ]),
-                m('.row', [
-                    m('.col-sm-3', m('strong', 'Researcher Email Address: ')),
-                    m('.col-sm-9', ctrl.researcher_email())
-                ]),
-                m('.row.m-b-1', [
-                    m('.col-sm-3', m('strong', 'Study Folder Location: ')),
-                    m('.col-sm-9', ctrl.folder_location())
+
+
+                m('.row.space',[
+                    m('.col-sm-3',[
+                        ASTERISK, ' Name of Experiment File'
+                    ])
                 ]),
 
-                radioInput({
-                    label:m('span', ['Name of Experiment File', ASTERIX]),
-                    prop: ctrl.experiment_file,
-                    values:ctrl.experiment_files(),
-                    form: form, required:true, isStack:true
-                }),
+                m('.row.space',[
+                    m('.col-sm-3',[
+                        m('select.c-select.form-control.space',{onchange: function (e) {}}, [
+                            m('option', {value:'', selected:ctrl.experiment_file()==='', disabled:true}, 'Select experiment file'),
+                            ctrl.study.files().filter(function (file){ return file.exp_data; }).map(function (file){ return m('option', {value:file.name, selected:ctrl.experiment_file()===file.name}, file.name); }
+                            )
+                        ])
+                    ])
+                ]),
 
-                textInput({help: 'For private studies (not in the Project Implicit research pool), enter n/a', label:['Target Number of Completed Study Sessions', ASTERIX],  placeholder: 'Target Number of Completed Study Sessions', prop: ctrl.target_number, form: form, required:true, isStack:true}),
+                m('.row.space',[
+                    m('.col-sm-5',[
+                        ASTERISK, ' Target Number of Completed Study Sessions'
+                    ])
+                ]),
 
-                m('.font-weight-bold', 'Participant Restrictions'),
+                m('.row',[
+                    m('.col-sm-5',[
+                        m('input.form-control', {value: ctrl.target_number(), onchange:  m.withAttr('value', ctrl.target_number), onkeyup: m.withAttr('value', ctrl.target_number), placeholder:'Target Number of Completed Study Sessions'})
+                    ])
+                ]),
+                m('.row',[
+                    m('.col-sm-12',[
+                        m('small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
+                    ])
+                ]),
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        m('h5', 'Participant Restrictions')
+                    ])
+                ]),
+
+
                 rulesEditor({value:ctrl.rulesValue, visual: ctrl.rulesVisual, comments: ctrl.rulesComments, exist_rule_file: ctrl.exist_rule_file}),
 
-                m('.font-weight-bold', 'Study is ready for deploy: ', ASTERIX),
-                m('.m-b-1', [
-                    checkbox({description: 'The study\'s study-id starts with my user name', prop: ctrl.valid_study_name, form: form, required:true, isStack:true}),
-                    checkbox({
-                        description:  'This study has been approved by the appropriate IRB ', 
-                        prop: ctrl.approved_by_irb,
-                        required:true,
-                        form: form, isStack:true
-                    }),
-                    checkbox({
-                        description:  [
-                            'The study is compliant with ',
-                            m('a', {hxref:'https://docs.google.com/document/d/1pglAQELqNLWbV1yscE2IVd7G5xVgZ8b4lkT8PYeumu8/edit?usp=sharing', target:'_blank'}, 'PI Research Pool Guidelines and Required Elements & Study Conventions'),
-                            ' .'
-                        ],
-                        prop: ctrl.completed_checklist,
-                        form: form, isStack:true,
-                        required:true
-                    }),
-                    checkbox({
-                        description: 'My study folder includes ZERO files that aren\'t necessary for the study (e.g., word documents, older versions of files, items that were dropped from the final version)',
-                        prop: ctrl.zero_unnecessary_files,
-                        required:true,
-                        form: form, isStack:true
-                    }),
-                    checkbox({description: 'I used a realstart and lastpage tasks', prop: ctrl.realstart, form: form, required:true, isStack:true})
+                m('.row.space',[
+                    m('.col-sm-12',[
+                         m('.font-weight-bold', 'Study is ready for deploy: ')
+                    ])
                 ]),
-                radioInput({
-                    label:['Study has been approved by a *User Experience* Reviewer (Calvin Lai): ', ASTERIX],
-                    prop: ctrl.approved_by_a_reviewer,
-                    values: {
-                        'No, this study is not for the Project Implicit pool.' : 'No, this study is not for the Project Implicit pool.',
-                        'Yes' : 'Yes'
-                    },
-                    form: form, required:true, isStack:true
-                }),
 
-                radioInput({
-                    label: ['If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? ', ASTERIX],
-                    prop: ctrl.launch_confirmation,
-                    values: {
-                        'No,this study is mine': 'No,this study is mine',
-                        'Yes' : 'Yes'
-                    },
-                    form: form, required:true, isStack:true
-                }),
+                m('.row.space',[
+                    m('.col-sm-12',{onclick: function () { return ctrl.approved_by_irb(!ctrl.approved_by_irb()); }},[
+                        ASTERISK, m('i.fa.fa-fw', {
+                            class: classNames({'fa-square-o' : !ctrl.approved_by_irb(), 'fa-check-square-o' : ctrl.approved_by_irb()})
+                        }), 'This study has been approved by the appropriate IRB '
 
-                textInput({isArea: true, label: m('span', 'Additional comments'),  placeholder: 'Additional comments', prop: ctrl.comments, form: form, isStack:true}),
+                    ])
+                ]),
+                m('.row.space',[
+                    m('.col-sm-12',{onclick: function () { return ctrl.completed_checklist(!ctrl.completed_checklist()); }},[
+                        ASTERISK, m('i.fa.fa-fw', {
+                            class: classNames({'fa-square-o' : !ctrl.completed_checklist(), 'fa-check-square-o' : ctrl.completed_checklist()})
+                        }), 'The study is compliant with ',
+                        m('a', {href:'https://docs.google.com/document/d/1pglAQELqNLWbV1yscE2IVd7G5xVgZ8b4lkT8PYeumu8/edit?usp=sharing', target:'_blank'}, 'PI Research Pool Guidelines and Required Elements & Study Conventions'),
+                        ' .'
+                    ])
+                ]),
+
+                m('.row.space',[
+                    m('.col-sm-12',{onclick: function () { return ctrl.zero_unnecessary_files(!ctrl.zero_unnecessary_files()); }},[
+                        ASTERISK, m('i.fa.fa-fw', {
+                            class: classNames({'fa-square-o' : !ctrl.zero_unnecessary_files(), 'fa-check-square-o' : ctrl.zero_unnecessary_files()})
+                        }), 'My study folder includes ZERO files that aren\'t necessary for the study (e.g., word documents, older versions of files, items that were dropped from the final version)'
+
+                    ])
+                ]),
+
+                m('.row.space',[
+                    m('.col-sm-12',{onclick: function () { return ctrl.realstart(!ctrl.realstart()); }},[
+                        ASTERISK, m('i.fa.fa-fw', {
+                            class: classNames({'fa-square-o' : !ctrl.realstart(), 'fa-check-square-o' : ctrl.realstart()})
+                        }), 'I used a realstart and lastpage tasks'
+
+                    ])
+                ]),
+
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        ASTERISK, ' Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
+                    ])
+                ]),
+
+                m('.row',[
+                    m('.col-sm-5',[
+                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
+                            m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
+                            m('option', {value:'No, this study is not for the Project Implicit pool.', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool.'}, 'No, this study is not for the Project Implicit pool.'),
+                            m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
+                        ])
+                    ])
+                ]),
+
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        ASTERISK, ' If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? '
+                    ])
+                ]),
+
+                m('.row',[
+                    m('.col-sm-5',[
+                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.launch_confirmation)}, [
+                            m('option', {value:'', selected:ctrl.launch_confirmation()==='', disabled:true}, 'Select answer'),
+                            m('option', {value:'No,this study is mine.', selected:ctrl.launch_confirmation()==='No,this study is mine.'}, 'No,this study is mine.'),
+                            m('option', {value:'Yes', selected:ctrl.launch_confirmation()==='yes'}, 'Yes'),
+                        ])
+                    ])
+                ]),
+
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        'Additional comments'
+                    ])
+                ]),
+
+                m('.row',[
+                    m('.col-sm-12',[
+                        m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
+                    ])
+                ]),
+
                 !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                m('button.btn.btn-primary', {onclick: submit}, 'Request Deploy')
+                m('.row.space',[
+                    m('.col-sm-12.text-sm-right',[
+                        m('button.btn.btn-primary', {onclick: submit}, 'Request Deploy')
+                    ])
+                ]),
             ]);
         }
     };
 
-    var checkbox = function (args) { return m.component({
-        controller: function controller(ref){
-            var prop = ref.prop;
-            var form = ref.form;
-            var required = ref.required;
-
-            var validity = function () { return !required || prop(); };
-            if (!form) throw new Error('Form not defined');
-            form.register(validity);
-
-            return {validity: validity, showValidation: form.showValidation};
-        },
-        view: function (ctrl, ref) {
-            var prop = ref.prop;
-            var description = ref.description; if ( description === void 0 ) description = '';
-            var help = ref.help;
-            var required = ref.required;
-            var form = ref.form;
-
-            return m('.checkmarked', 
-            { onclick: function (){ return prop(!prop()); } },
-            [
-                m('i.fa.fa-fw', {
-                    class: classNames({
-                        'fa-square-o' : !prop(),
-                        'fa-check-square-o' : prop(),
-                        'text-success' : required && form.showValidation() && prop(),
-                        'text-danger' : required && form.showValidation() && !prop()
-                    })
-                }),
-                m.trust('&nbsp;'),
-                description,
-                !help ? '' : m('small.text-muted', help)
-            ]);
-        }
-    }, args); };
-
     function removalDialog (args) { return m.component(removalDialog$1, args); }
-    var ASTERIX$1 = m('span.text-danger', '*');
+    var ASTERIX = m('span.text-danger', '*');
 
     var removalDialog$1 = {
         controller: function controller(ref){
@@ -21760,7 +21786,7 @@
                     ]),
 
                     radioInput({
-                        label:m('span', ['Study name', ASTERIX$1]), 
+                        label:m('span', ['Study name', ASTERIX]), 
                         prop: ctrl.study_name,
                         values:ctrl.study_names(),
                         help: 'This is the name you submitted to the RDE (e.g., colinsmith.elmcogload) ',
@@ -21774,7 +21800,7 @@
         }
     };
 
-    var ASTERIX$2 = m('span.text-danger', '*');
+    var ASTERIX$1 = m('span.text-danger', '*');
     function changeRequestDialog (args) { return m.component(changeRequestDialog$1, args); }
     var changeRequestDialog$1 = {
         controller: function controller(ref){
@@ -21858,7 +21884,7 @@
                 textInput({label: m('span', ['Target number of additional sessions (In addition to the sessions completed so far)', m('span.text-danger', ' *')]),  placeholder: 'Target number of additional sessions', prop: ctrl.target_sessions, form: form, required:true, isStack:true}),
 
                 radioInput({
-                    label: m('span', ['What\'s the current status of your study?', ASTERIX$2]),
+                    label: m('span', ['What\'s the current status of your study?', ASTERIX$1]),
                     prop: ctrl.status,
                     values: {
                         'Currently collecting data and does not need to be unpaused': 'Currently collecting data and does not need to be unpaused',
@@ -23653,21 +23679,21 @@
 
 
             function show_deploy(){
-                var study_id = ctrl.study.id;
+                var study = ctrl.study;
                 var close = messages.close;
-                messages.custom({header:'Statistics', wide: true, content: deployDialog({study_id: study_id, close: close})})
+                messages.custom({header:'Deploy', preventEnterSubmits: true, wide: true, content: deployDialog({study: study, close: close})})
                     .then(m.redraw);
             }
             function show_change(){
                 var study_id = ctrl.study.id;
                 var close = messages.close;
-                messages.custom({header:'Statistics', wide: true, content: changeRequestDialog({study_id: study_id, close: close})})
+                messages.custom({header:'Change request', preventEnterSubmits: true, wide: true, content: changeRequestDialog({study_id: study_id, close: close})})
                     .then(m.redraw);
             }
             function show_removal(){
                 var study_id = ctrl.study.id;
                 var close = messages.close;
-                messages.custom({header:'Statistics', wide: true, content: removalDialog({study_id: study_id, close: close})})
+                messages.custom({header:'Removal request', wide: true, content: removalDialog({study_id: study_id, close: close})})
                     .then(m.redraw);
 
             }
@@ -23699,11 +23725,15 @@
                 ctrl.study = studyFactory(m.route.param('studyId'));
                 return ctrl.study.get()
                     .then(function (){
+                        console.log(ctrl.study);
+
                         ctrl.study_name(ctrl.study.name);
                         ctrl.description(ctrl.study.description);
                         ctrl.loaded(true);
                     })
+
                     .then(m.redraw);
+
             }
             load();
 
@@ -23758,20 +23788,20 @@
                     m('.row.frame.space',
                         m('.col-sm-12', [
                             m('.row.',
-                                m('.col-sm-11.space',[
+                                m('.col-sm-10.space',[
                                     m('strong', 'Duplicate study'),
                                     m('.small', 'This will allows you to...')
                                 ]),
-                                m('.col-sm-1.space',
+                                m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate}, 'Duplicate')
                                 )
                             ),
                             m('.row.',
-                                m('.col-sm-11.space',[
+                                m('.col-sm-10.space',[
                                     m('strong', 'Share study'),
                                     m('.small', 'This will allows you to...')
                                 ]),
-                                m('.col-sm-1.space',
+                                m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                                 )
                             ),
