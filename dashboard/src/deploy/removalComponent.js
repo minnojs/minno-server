@@ -1,12 +1,12 @@
+export default args => m.component(removalDialog, args);
+
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import {study_removal, get_study_prop} from 'deploy/deployModel';
 
-export default StudyRemovalComponent;
 const ASTERIX = m('span.text-danger', '*');
 
-let StudyRemovalComponent = {
-    controller(){
-        const studyId = m.route.param('studyId');
+let removalDialog = {
+    controller({studyId, close}){
         let form = formFactory();
         let ctrl = {
             sent:false,

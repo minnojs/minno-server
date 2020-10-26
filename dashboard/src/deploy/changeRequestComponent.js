@@ -1,12 +1,11 @@
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import {Study_change_request, get_study_prop} from 'deploy/deployModel';
 
-export default studyChangeRequestComponent;
 const ASTERIX = m('span.text-danger', '*');
+export default args => m.component(changeRequestDialog, args);
 
-let studyChangeRequestComponent = {
-    controller(){
-        const studyId = m.route.param('studyId');
+let changeRequestDialog = {
+    controller({studyId, close}){
         let form = formFactory();
         let ctrl = {
             sent:false,

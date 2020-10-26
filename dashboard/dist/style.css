@@ -142,6 +142,12 @@ blockquote {
 .warning_text {
   color: red; }
 
+.success_text {
+  color: green; }
+
+optgroup.rule_optgroup {
+  background-color: #c8dadf; }
+
 #ruleGenerator {
   background-color: #bcdae2;
   border-color: #bcdae2;
@@ -307,6 +313,16 @@ input.input_switch:checked + .slider:before {
   border-radius: 10px;
   padding: 15px;
   margin: 2px; }
+
+.rules_frame {
+  border: 1px solid #2882b5;
+  padding: 5px 0px 15px 15px;
+  margin: 5px 0px 5px 0px; }
+
+.rules_string {
+  border: 1px solid #2882b5;
+  padding: 15px 15px 15px 15px;
+  margin: 5px 0px 5px 0px; }
 
 .danger_zone {
   border: 1px solid red;

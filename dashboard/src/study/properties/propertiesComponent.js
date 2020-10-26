@@ -3,8 +3,13 @@ import studyFactory from '../files/fileCollectionModel';
 import {delete_study, publish_study, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
 
+import deployDialog from '../../deploy/deployComponent';
+import changeRequestDialog from '../../deploy/changeRequestComponent';
+import removalDialog from '../../deploy/removalComponent';
+
 
 import sharing_dialog from '../sharing/sharingComponent';
+
 import {createNotifications} from 'utils/notifyComponent';
 
 export default collaborationComponent;
@@ -27,6 +32,9 @@ let collaborationComponent = {
             pub_error:m.prop(''),
             share_error:m.prop(''),
             study,
+            show_deploy,
+            show_change,
+            show_removal,
             save,
             lock,
             show_sharing,
@@ -118,6 +126,26 @@ let collaborationComponent = {
             ask();
         }
 
+
+        function show_deploy(){
+            let study_id = ctrl.study.id;
+            let close = messages.close;
+            messages.custom({header:'Statistics', wide: true, content: deployDialog({study_id, close})})
+                .then(m.redraw);
+        }
+        function show_change(){
+            let study_id = ctrl.study.id;
+            let close = messages.close;
+            messages.custom({header:'Statistics', wide: true, content: changeRequestDialog({study_id, close})})
+                .then(m.redraw);
+        }
+        function show_removal(){
+            let study_id = ctrl.study.id;
+            let close = messages.close;
+            messages.custom({header:'Statistics', wide: true, content: removalDialog({study_id, close})})
+                .then(m.redraw);
+
+        }
 
         function show_duplicate(){
             let study_name = m.prop(ctrl.study.name);
@@ -223,9 +251,47 @@ let collaborationComponent = {
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                             )
                         ),
+                        m('.row.space',
+                            m('.col-sm-4.space',  m('h4', 'Project Implicit Actions'))
+                        ),
+                        m('.row',
+                            m('.col-sm-12', [
+                                m('.row',
+                                    m('.col-sm-10.space',[
+                                        m('strong', 'Request deploy'),
+                                        m('.small', 'This will allows you to...')
+                                    ]),
+                                    m('.col-sm-2.space.text-sm-right',
+                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_deploy}, 'Deploy')
+                                    )
+                                ),
+                                m('.row.',
+                                    m('.col-sm-10.space',[
+                                        m('strong', 'Request change'),
+                                        m('.small', 'This will allows you to...')
+                                    ]),
+                                    m('.col-sm-2.space.text-sm-right',
+                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_change}, 'Change')
+                                    )
+                                ),
+                                m('.row.',
+                                    m('.col-sm-10.space',[
+                                        m('strong', 'Request removal'),
+                                        m('.small', 'This will allows you to...')
+                                    ]),
+                                    m('.col-sm-2.space.text-sm-right',
+                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_removal}, 'Removal')
+                                    )
+                                ),
+                            ])
+                        ),
+
 
                     ])
                 ),
+
+
+
 
                 m('.row.space',
                     m('.col-sm-12',  m('h4', 'Danger zone'))

@@ -1,14 +1,14 @@
+export default args => m.component(deployDialog, args);
+
 import {deploy, get_study_prop} from './deployModel';
 import classNames from 'utils/classNames';
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import rulesEditor from './rulesComponent';
-export default deployComponent;
 
 const ASTERIX = m('span.text-danger', '*');
 
-let deployComponent = {
-    controller(){
-        const studyId = m.route.param('studyId');
+let deployDialog = {
+    controller({studyId, close}){
         let form = formFactory();
         let ctrl = {
             sent:false,

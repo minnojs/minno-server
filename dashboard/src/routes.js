@@ -19,8 +19,8 @@ import changeRequestListComponent from 'deploy/forms/changeRequestList/changeReq
 import removalListComponent from 'deploy/forms/removalList/removalListComponent';
 
 import deployComponent from './deploy/deployComponent';
-import studyRemovalComponent from './deploy/studyRemovalComponent';
-import studyChangeRequestComponent from './deploy/studyChangeRequestComponent';
+import removalComponent from './deploy/removalComponent';
+import changeRequestComponent from './deploy/changeRequestComponent';
 
 import addUserComponent from './addUser/addUserComponent';
 import usersComponent from './admin/users/usersComponent';
@@ -37,6 +37,7 @@ import recoveryComponent from './recovery/recoveryComponent';
 
 import sharingComponent from 'study/sharing/sharingComponent';
 import propertiesComponent from 'study/properties/propertiesComponent';
+import ruletableComponent from 'study/ruletable/ruletableComponent';
 
 import tagsComponent from 'tags/tagsComponent';
 import translateComponent from 'study/templates/pagesComponent';
@@ -66,8 +67,8 @@ let routes = {
     '/homepage':  homepageComponent,
     '/massMail':  massMailComponent,
 
-    '/studyChangeRequest/:studyId':  studyChangeRequestComponent,
-    '/studyRemoval/:studyId':  studyRemovalComponent,
+    '/changeRequest/:studyId':  changeRequestComponent,
+    '/studyRemoval/:studyId':  removalComponent,
     '/deploy/:studyId': deployComponent,
     '/login': loginComponent,
     '/studies' : studiesComponent,
@@ -90,6 +91,7 @@ let routes = {
     '/downloadsAccess': downloadsAccessComponent,
     '/sharing/:studyId': sharingComponent,
     '/properties/:studyId': propertiesComponent,
+    '/ruletable/:studyId': ruletableComponent,
 
 };
 

@@ -1,4 +1,4 @@
-const config = require('../config');
+    const config = require('../config');
 const zipFolder = require('zip-a-folder');
 
 const fs           = require('fs-extra');
