@@ -37,7 +37,7 @@ import recoveryComponent from './recovery/recoveryComponent';
 
 import sharingComponent from 'study/sharing/sharingComponent';
 import propertiesComponent from 'study/properties/propertiesComponent';
-import ruletableComponent from 'study/ruletable/ruletableComponent';
+import ruletableComponent from 'ruletable/ruletableComponent';
 
 import tagsComponent from 'tags/tagsComponent';
 import translateComponent from 'study/templates/pagesComponent';
@@ -91,7 +91,7 @@ let routes = {
     '/downloadsAccess': downloadsAccessComponent,
     '/sharing/:studyId': sharingComponent,
     '/properties/:studyId': propertiesComponent,
-    '/ruletable/:studyId': ruletableComponent,
+    '/ruletable': ruletableComponent,
 
 };
 

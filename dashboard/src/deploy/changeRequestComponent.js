@@ -1,14 +1,15 @@
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import {Study_change_request, get_study_prop} from 'deploy/deployModel';
 
-const ASTERIX = m('span.text-danger', '*');
+const ASTERISK = m('span.text-danger.font-weight-bold', '*');
 export default args => m.component(changeRequestDialog, args);
 
 let changeRequestDialog = {
-    controller({studyId, close}){
+    controller({study, close}){
         let form = formFactory();
         let ctrl = {
             sent:false,
+            study,
             user_name: m.prop(''),
             researcher_name: m.prop(''),
             researcher_email: m.prop(''),
@@ -19,17 +20,6 @@ let changeRequestDialog = {
             comments: m.prop(''),
             error: m.prop('')
         };
-        get_study_prop(studyId)
-            .then(response =>{
-                ctrl.researcher_name(response.researcher_name);
-                ctrl.researcher_email(response.researcher_email);
-                ctrl.user_name(response.user_name);
-                ctrl.study_name(response.study_name);
-            })
-            .catch(response => {
-                ctrl.error(response.message);
-            })
-            .then(m.redraw);
 
         function submit(){
             form.showValidation(true);
@@ -38,7 +28,7 @@ let changeRequestDialog = {
                 ctrl.error('Missing parameters');
                 return;
             }
-            Study_change_request(studyId, ctrl)
+            Study_change_request(study, ctrl)
                 .then(() => {
                     ctrl.sent = true;
                 })
@@ -46,52 +36,91 @@ let changeRequestDialog = {
                     ctrl.error(response.message);
                 }).then(m.redraw);
         }
-        return {ctrl, form, submit, studyId};
+        return {ctrl, form, submit};
     },
     view({form, ctrl, submit}){
-        let study_showfiles_link = document.location.origin + '/implicit/showfiles.jsp?user=' + ctrl.user_name() + '&study=' + ctrl.study_name();
 
         if (ctrl.sent) return m('.deploy.centrify',[
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
             m('h5', ['The change request form was sent successfully ', m('a', {href:'/changeRequestList', config: m.route}, 'View change request  requests')])
         ]);
-            
         return m('.StudyChangeRequest.container', [
-            m('h3', [
-                'Study Change Request ',
-                m('small', ctrl.study_name())
+            m('.row',[
+                m('.col-sm-12', [
+                    m('h3', [
+                        'Study Change Request ',
+                        m('small', ctrl.study.name)
+                    ]),
+                ])
+            ]),
+            m('.row.space',[
+                m('.col-sm-12',[
+                    ASTERISK, ' Target number of additional sessions (In addition to the sessions completed so far)'
+                ])
             ]),
 
-            m('.row', [
-                m('.col-sm-3', m('strong', 'Researcher Name: ')),
-                m('.col-sm-9', ctrl.researcher_name())
-            ]),
-            m('.row', [
-                m('.col-sm-3', m('strong', 'Researcher Email Address: ')),
-                m('.col-sm-9', ctrl.researcher_email())
-            ]),
-            m('.row.m-b-1', [
-                m('.col-sm-3', m('strong', 'Study showfiles link: ')),
-                m('.col-sm-9', m('a', {href:study_showfiles_link, target: '_blank'}, study_showfiles_link))
+            m('.row',[
+                m('.col-sm-5',[
+                    m('input.form-control', {value: ctrl.target_sessions(), onchange:  m.withAttr('value', ctrl.target_sessions), onkeyup: m.withAttr('value', ctrl.target_sessions), placeholder:'Target number of additional sessions'})
+                ])
             ]),
 
 
-            textInput({label: m('span', ['Target number of additional sessions (In addition to the sessions completed so far)', m('span.text-danger', ' *')]),  placeholder: 'Target number of additional sessions', prop: ctrl.target_sessions, form, required:true, isStack:true}),
+            m('.row.space',[
+                m('.col-sm-12',[
+                    ASTERISK, ' What is the current status of your study? '
+                ])
+            ]),
 
-            radioInput({
-                label: m('span', ['What\'s the current status of your study?', ASTERIX]),
-                prop: ctrl.status,
-                values: {
-                    'Currently collecting data and does not need to be unpaused': 'Currently collecting data and does not need to be unpaused',
-                    'Manually paused and needs to be unpaused' : 'Manually paused and needs to be unpaused',
-                    'Auto-paused due to low completion rates or meeting target N.' : 'Auto-paused due to low completion rates or meeting target N.'
-                },
-                form, required:true, isStack:true
-            }),
-            textInput({isArea: true, label: m('span', ['Change Request', m('span.text-danger', ' *')]), help: 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)',  placeholder: 'Change Request', prop: ctrl.file_names, form, required:true, isStack:true}),
-            textInput({isArea: true, label: m('span', 'Additional comments'),  placeholder: 'Additional comments', prop: ctrl.comments, form, isStack:true}),
+            m('.row',[
+                m('.col-sm-6',[
+                    m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.status)}, [
+                        m('option', {value:'', selected:ctrl.status()==='', disabled:true}, 'Select status'),
+                        m('option', {value:'Currently collecting data and does not need to be unpaused', selected:ctrl.status()==='Currently collecting data and does not need to be unpaused'}, 'Currently collecting data and does not need to be unpaused'),
+                        m('option', {value:'Manually paused and needs to be unpaused', selected:ctrl.status()==='Manually paused and needs to be unpaused'}, 'Manually paused and needs to be unpaused'),
+                        m('option', {value:'Auto-paused due to low completion rates or meeting target N', selected:ctrl.status()==='Auto-paused due to low completion rates or meeting target N'}, 'Auto-paused due to low completion rates or meeting target N')
+                    ])
+                ])
+            ]),
+
+            m('.row.space',[
+                m('.col-sm-12',[
+                    ASTERISK, ' Change Request'
+                ])
+            ]),
+
+            m('.row',[
+                m('.col-sm-12',[
+                    m('textarea.form-control', {value: ctrl.file_names(), onchange:  m.withAttr('value', ctrl.file_names), onkeyup: m.withAttr('value', ctrl.file_names), placeholder:'Change Request'})
+                ])
+            ]),
+            m('.row',[
+                m('.col-sm-12',[
+                    m('small.text-muted', 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)')
+                ])
+            ]),
+
+
+            // textInput({isArea: true, label: m('span', ['Change Request', m('span.text-danger', ' *')]), help: 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)',  placeholder: 'Change Request', prop: ctrl.file_names, form, required:true, isStack:true}),
+
+            m('.row.space',[
+                m('.col-sm-12',[
+                    'Additional comments'
+                ])
+            ]),
+
+            m('.row',[
+                m('.col-sm-12',[
+                    m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
+                ])
+            ]),
             !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-            m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+            m('.row.space',[
+                m('.col-sm-12.text-sm-right',[
+                    m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                ])
+            ])
+
         ]);
     }
 };

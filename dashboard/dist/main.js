@@ -9199,6 +9199,7 @@
     // console.log(location.href);
     var baseUrl            = "" + urlPrefix;
     var studyUrl           = urlPrefix + "/studies";
+    var PIUrl              = urlPrefix + "/PI";
     var launchUrl          = urlPrefix + "/launch";
     var templatesUrl       = urlPrefix + "/templates";
     var tagsUrl            = urlPrefix + "/tags";
@@ -9587,35 +9588,6 @@
         return m.component(textInputComponent, fixedArgs);
     };
 
-    var selectInputComponent$1 = {
-        controller: function controller(ref){
-            var prop = ref.prop;
-            var form = ref.form;
-            var required = ref.required;
-
-            if (!form) throw new Error('Inputs require a form');
-
-            var validity = function () { return !required || prop(); };
-            form.register(validity);
-
-            return {validity: validity, showValidation: form.showValidation};
-        },
-        view: inputWrapper(function (ctrl, ref) {
-            var prop = ref.prop;
-            var values = ref.values; if ( values === void 0 ) values = {};
-
-            var keys = Object.keys(values);
-            if (keys.length === 1)
-                prop(values[keys[0]]);
-            return m('.c-inputs-stacked', keys
-                .map(function (key) { return m('label.c-input.c-radio', [
-                    m('input', {type:'radio', checked: values[key] === prop(), onchange: prop.bind(null, values[key])}),
-                    m('span.c-indicator'),
-                    key
-                ]); }));
-        })
-    };
-
     function formFactory(){
         var validationHash = [];
         return {
@@ -9633,7 +9605,6 @@
     var maybeInput = function (args) { return m.component(maybeInputComponent, args); };
     var checkboxInput = function (args) { return m.component(checkboxInputComponent, args); };
     var selectInput = function (args) { return m.component(selectInputComponent, args); };
-    var radioInput = function (args) { return m.component(selectInputComponent$1, args); };
     var arrayInput$1 = arrayInput;
 
     var statisticsForm = function (args) { return m.component(statisticsFormComponent, args); };
@@ -21386,14 +21357,18 @@
         }
     };
 
+    var print_rules = function (set) {
+        var clean_rules   = set.data.map(function (rule){ return (rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
+        var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
+
+        var print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
+        return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
+    };
+
     function deploy_url$1(study_id)
     {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/deploy");
+        return (PIUrl + "/deploy/" + (encodeURIComponent(study_id)));
     }
-
-    var get_study_prop = function (study_id) { return fetchJson(deploy_url$1(study_id), {
-        method: 'get'
-    }); };
 
     var study_removal = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
         method: 'delete',
@@ -21402,7 +21377,7 @@
 
     var deploy = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
         method: 'post',
-        body: {target_number: ctrl.target_number, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, experiment_file: ctrl.experiment_file, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments, rulesValue: ctrl.rulesValue}
+        body: {props:{sets: ctrl.sets, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
     }); };
 
     var Study_change_request = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
@@ -21410,128 +21385,128 @@
         body: {file_names: ctrl.file_names, target_sessions: ctrl.target_sessions, status: ctrl.status, comments: ctrl.comments}
     }); };
 
-    function rulesEditor (args) { return m.component(rulesComponent, args); }
-    var rulesComponent = {
-        controller: function controller(ref){
-            var visual = ref.visual;
-            var value = ref.value;
-            var comments = ref.comments;
-            var exist_rule_file = ref.exist_rule_file;
+    function rules_url() {
+        return (PIUrl + "/rules");
+    }
 
-            return {visual: visual, value: value, edit: edit, remove: remove, addcomments: addcomments, exist_rule_file: exist_rule_file};
+    function rule_url(set_name) {
+        return (PIUrl + "/rules/" + set_name);
+    }
 
-            function edit(){
-                window.open('../ruletable.html');
-            }
+    var get_rules = function () { return fetchJson(rules_url(), {
+        method: 'get'
+    }); };
 
-            function remove(){
-                visual('None');
-                value('parent'); // this value is defined by the rule generator
-            }
+    var save_new_set = function (rules) { return fetchJson(rules_url(), {
+            method: 'post',
+            body: {rules: rules}
+        }); };
 
-            function addcomments(){
-                messages.prompt({
-                    prop: comments,
-                    header: 'Edit rule comments'
-                });
-            }
-        },
-        view: function (ref) {
-            var visual = ref.visual;
-            var value = ref.value;
-            var edit = ref.edit;
-            var remove = ref.remove;
-            var exist_rule_file = ref.exist_rule_file;
 
-            return m('div', [
-                !exist_rule_file() ? '' : m('.small.text-muted', [
-                    'You already have a rule file by the name of "',
-                    exist_rule_file(),
-                    '", it will be overwritten if you create a new one.'
-                ]),
-                m('.btn-group', [
-                    m('.btn.btn-secondary.btn-sm', {onclick: edit},  [
-                        m('i.fa.fa-edit'), ' Rule editor'
-                    ]),
-                    m('.btn.btn-secondary.btn-sm', {onclick: remove},  [
-                        m('i.fa.fa-remove'), ' Clear rules'
-                    ])
-                ]),
-                m('#ruleGenerator.card', {config: getInputs(visual, value)}, [
-                    m('.card-block', visual())
-                ])
-            ]);
-        }
-    };
+    var update_set = function (rules) { return fetchJson(rules_url(), {
+            method: 'put',
+            body: {rules: rules}
+        }); };
 
-    var getInputs = function (visual, value) { return function (element, isInit) {
-        if (isInit) return true;
-        element.ruleGeneratorVisual = visual;
-        element.ruleGeneratorValue = value;
-    }; };
+
+    var remove_set = function (set_id) { return fetchJson(rule_url(set_id), {
+            method: 'delete',
+        }); };
 
     function deployDialog (args) { return m.component(deployDialog$1, args); }
-    var ASTERISK = m('span.text-danger.font-weight-bold', '*');
+    var ASTERISK = m('span.text-danger.font-weight-bold', '* ');
 
     var deployDialog$1 = {
         controller: function controller(ref){
             var study = ref.study;
             var close = ref.close;
 
-            var form = formFactory();
             var ctrl = {
+                study: study,
+                latest_version:0,
                 sent:false,
                 error: m.prop(''),
-                study: study,
                 target_number: m.prop(''),
-                
-                rulesValue: m.prop('parent'), // this value is defined by the rule generator
-                rulesVisual: m.prop('None'),
-                rulesComments: m.prop(''),
-                rule_file: m.prop(''),
-                exist_rule_file: m.prop(''),
+                all_rules: m.prop([]),
+                sets: m.prop([{rules: '', experiment_file: '', target_number:'', priority:26}]),
+                add_set: add_set,
+                remove_rule: remove_rule,
+                update_rule: update_rule,
+                update_priority: update_priority,
+                update_target_number: update_target_number,
+                update_experiment_file: update_experiment_file,
+                print_rules: print_rules,
+                check_sets_validity: check_sets_validity,
+                check_form_validity: check_form_validity,
+                loaded: m.prop(false),
+
+                approved_by_irb: m.prop(false),
+
+                zero_unnecessary_files: m.prop(false),
+                completed_checklist: m.prop(false),
+                real_start: m.prop(false),
 
                 approved_by_a_reviewer: m.prop(''),
-                zero_unnecessary_files: m.prop(''),
-
-                // unnecessary
-                completed_checklist: m.prop(''),
-                approved_by_irb: m.prop(''),
-                valid_study_name: m.prop(''),
-                realstart: m.prop(''),
-
-                experiment_file: m.prop(''),
-                experiment_files: m.prop(''),
                 launch_confirmation: m.prop(''),
                 comments: m.prop('')   
                 
             };
 
-            // get_study_prop(study)
-            //     .then(response =>{
-            //         ctrl.exist_rule_file(response.have_rule_file ? response.study_name+'.rules.xml' : '');
-            //         ctrl.study_name = response.study_name;
-            //
-            //         ctrl.experiment_files(response.experiment_file.reduce((obj, row) => {obj[row.file_name] = row.file_name;
-            //             return obj;
-            //         }, {}));
-            //     })
-            //     .catch(response => {
-            //         ctrl.error(response.message);
-            //     })
-            //     .then(m.redraw);
-            return {ctrl: ctrl, form: form, submit: submit, study: study};
-            function submit(){
-                form.showValidation(true);
-                if (!form.isValid())
-                {
-                    ctrl.error('Missing parameters');
-                    return;
-                }
+            function check_sets_validity(){
+                return ctrl.sets().filter(function (set){ return set.experiment_file==='' || set.target_number ==='' || set.priority===''; }).length>0;
+            }
 
-                deploy(studyId, ctrl)
+            function check_form_validity(){
+                return  ctrl.check_sets_validity() ||
+                        !ctrl.zero_unnecessary_files() ||
+                        !ctrl.completed_checklist() ||
+                        !ctrl.approved_by_irb() ||
+                        !ctrl.real_start() ||
+                        ctrl.approved_by_a_reviewer()==='' ||
+                        ctrl.launch_confirmation()==='';
+            }
+
+            function update_rule(set_id, rule_id){
+                ctrl.sets()[set_id].rules = rule_id==='' ? '' : ctrl.all_rules().find(function (rule){ return rule.id===rule_id; });
+            }
+            function update_experiment_file(set_id, experiment_file){
+                ctrl.sets()[set_id].experiment_file = experiment_file;
+            }
+
+            function update_priority(set_id, priority){
+                ctrl.sets()[set_id].priority = priority;
+            }
+
+            function update_target_number(set_id, target_number){
+                ctrl.sets()[set_id].target_number = target_number;
+            }
+
+            function remove_rule(set_id){
+                ctrl.sets(ctrl.sets().filter(function (set, id){ return id!==set_id; }));
+            }
+
+            function add_set(){
+                ctrl.sets().push({rules: '', experiment_file: '', target_number:'', priority:26});
+            }
+
+            function load() {
+                get_rules()
                     .then(function (response) {
-                        ctrl.rule_file(response.rule_file);
+                        ctrl.loaded(true);
+                        ctrl.all_rules(response.sets);
+                        console.log(ctrl.study.versions);
+                        ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; }).id;
+                    }).then(m.redraw);
+            }
+
+            load();
+            return {ctrl: ctrl, submit: submit};
+
+            function submit(){
+                return check_form_validity() ? false :
+
+                deploy(study.id, ctrl)
+                    .then(function (response) {
                         ctrl.sent = true;
                     })
                     .catch(function (response) {
@@ -21541,7 +21516,6 @@
             }
         },
         view: function view(ref){
-            var form = ref.form;
             var ctrl = ref.ctrl;
             var submit = ref.submit;
 
@@ -21550,60 +21524,91 @@
                 m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
                 ctrl.rule_file() !='' ? m('h5', ['Rule File: ', m('a', {href: ("/editor/" + (m.route.param('studyId')) + "/file/" + (ctrl.rule_file()) + ".xml"), config: m.route}, ctrl.rule_file())]) : ''
             ]);
-            
-            return m('.deploy.container', [
+            var exps = ctrl.study.files().filter(function (file){ return file.exp_data; });
+            return !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+                m('.deploy.container', [
+
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [
                             'Request Deploy ',
-                            m('small', ctrl.study.name)
+                            m('small', ((ctrl.study.name) + " (v" + (ctrl.latest_version) + ")"))
                         ]),
                     ])
                 ]),
 
 
-
                 m('.row.space',[
+                    m('.col-sm-1',''),
+
+                    m('.col-sm-2',[
+                        ASTERISK, m('strong.space', 'Experiment File')
+                    ]),
+                    m('.col-sm-2',[
+                        ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions'),
+                        m('p.small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
+                    ]),
+                    m('.col-sm-2',[
+                        ASTERISK, m('strong.space', 'Priority')
+                    ]),
+                    m('.col-sm-2',[
+                        m('strong.space', 'Rule set'),
+                        m('p.small.text-muted', ['Create and edit rules sets ',
+                            m('a', {href:'?/ruletable', target:'_blank'}, 'Here')
+                        ])
+                    ]),
                     m('.col-sm-3',[
-                        ASTERISK, ' Name of Experiment File'
-                    ])
+                        m('strong.space', 'Summary of Rule Logic')
+                    ]),
                 ]),
 
-                m('.row.space',[
-                    m('.col-sm-3',[
-                        m('select.c-select.form-control.space',{onchange: function (e) {}}, [
-                            m('option', {value:'', selected:ctrl.experiment_file()==='', disabled:true}, 'Select experiment file'),
-                            ctrl.study.files().filter(function (file){ return file.exp_data; }).map(function (file){ return m('option', {value:file.name, selected:ctrl.experiment_file()===file.name}, file.name); }
+                ctrl.sets().map(function (set, set_id) { return m('.row.space',[
+                        m('.col-sm-1',
+                            m('',
+                                ctrl.sets().length === 1 ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set_id); }}, m('i.fa.fa-times'))
+                            )
+                        ),
+                        m('.col-sm-2',[
+                            m('select.c-select.form-control.space',{ onchange: function (e) {ctrl.update_experiment_file(set_id, e.target.value);}}, [
+                                exps.length===1 ? ctrl.update_experiment_file(set_id, exps[0].name) && exps[0].name :
+                                    m('option', {value:'', selected:set.experiment_file==='', disabled:true}, 'Select experiment file'),
+                                exps.map(function (file){ return m('option', {value:file.name, selected:set.experiment_file===file.name}, file.name); }
+                                )
+                            ])
+                        ]),
+                        m('.col-sm-2',[
+                            m('input.form-control.space', {value: set.target_number,  placeholder:'Target Number', onkeyup: function (e) {ctrl.update_target_number(set_id, e.target.value);}, onchange: function (e) {ctrl.update_target_number(set_id, e.target.value);}})
+                        ]),
+                        m('.col-sm-2',[
+                            m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', onkeyup: function (e) {ctrl.update_priority(set_id, e.target.value);}, onchange: function (e) {ctrl.update_priority(set_id, e.target.value);}})
+                        ]),
+
+                        m('.col-sm-2',[
+                            m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_rule(set_id, e.target.value);}}, [
+                                m('option', {value:''}, 'None'),
+                                ctrl.all_rules().map(function (rule){ return m('option', {value:rule.id}, rule.name); })
+                            ])
+                        ]),
+                        m('.col-sm-3',[
+                            m('',
+                                set.rules==='' ? 'None' :   ctrl.print_rules(set.rules)
                             )
                         ])
+                    ]); }
+                ),
+                    ctrl.sets() === 1 ? '' : m('.row.double_space',[
+                    m('.col-sm-12.text-sm-right',[
+                        m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: function (){ return ctrl.add_set(); }}, 'Add set')
                     ])
                 ]),
-
-                m('.row.space',[
-                    m('.col-sm-5',[
-                        ASTERISK, ' Target Number of Completed Study Sessions'
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-5',[
-                        m('input.form-control', {value: ctrl.target_number(), onchange:  m.withAttr('value', ctrl.target_number), onkeyup: m.withAttr('value', ctrl.target_number), placeholder:'Target Number of Completed Study Sessions'})
-                    ])
-                ]),
-                m('.row',[
-                    m('.col-sm-12',[
-                        m('small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
-                    ])
-                ]),
-
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        m('h5', 'Participant Restrictions')
-                    ])
-                ]),
-
-
-                rulesEditor({value:ctrl.rulesValue, visual: ctrl.rulesVisual, comments: ctrl.rulesComments, exist_rule_file: ctrl.exist_rule_file}),
+                    m('.row.space',[
+                        m('.col-sm-12',[
+                            m('hr')
+                        ])
+                    ]),
 
                 m('.row.space',[
                     m('.col-sm-12',[
@@ -21639,9 +21644,9 @@
                 ]),
 
                 m('.row.space',[
-                    m('.col-sm-12',{onclick: function () { return ctrl.realstart(!ctrl.realstart()); }},[
+                    m('.col-sm-12',{onclick: function () { return ctrl.real_start(!ctrl.real_start()); }},[
                         ASTERISK, m('i.fa.fa-fw', {
-                            class: classNames({'fa-square-o' : !ctrl.realstart(), 'fa-check-square-o' : ctrl.realstart()})
+                            class: classNames({'fa-square-o' : !ctrl.real_start(), 'fa-check-square-o' : ctrl.real_start()})
                         }), 'I used a realstart and lastpage tasks'
 
                     ])
@@ -21650,7 +21655,7 @@
 
                 m('.row.space',[
                     m('.col-sm-12',[
-                        ASTERISK, ' Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
+                        ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
                     ])
                 ]),
 
@@ -21658,7 +21663,7 @@
                     m('.col-sm-5',[
                         m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
                             m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
-                            m('option', {value:'No, this study is not for the Project Implicit pool.', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool.'}, 'No, this study is not for the Project Implicit pool.'),
+                            m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
                             m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
                         ])
                     ])
@@ -21667,7 +21672,7 @@
 
                 m('.row.space',[
                     m('.col-sm-12',[
-                        ASTERISK, ' If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? '
+                        ASTERISK, 'If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? '
                     ])
                 ]),
 
@@ -21675,7 +21680,7 @@
                     m('.col-sm-5',[
                         m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.launch_confirmation)}, [
                             m('option', {value:'', selected:ctrl.launch_confirmation()==='', disabled:true}, 'Select answer'),
-                            m('option', {value:'No,this study is mine.', selected:ctrl.launch_confirmation()==='No,this study is mine.'}, 'No,this study is mine.'),
+                            m('option', {value:'No,this study is mine', selected:ctrl.launch_confirmation()==='No,this study is mine'}, 'No,this study is mine'),
                             m('option', {value:'Yes', selected:ctrl.launch_confirmation()==='yes'}, 'Yes'),
                         ])
                     ])
@@ -21694,26 +21699,30 @@
                     ])
                 ]),
 
-                !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                !ctrl.error() ? '' : m('.alert.alert-danger', m('strong', 'Error: '), ctrl.error()),
                 m('.row.space',[
                     m('.col-sm-12.text-sm-right',[
-                        m('button.btn.btn-primary', {onclick: submit}, 'Request Deploy')
+                        m('button.btn.btn-primary', {disabled: ctrl.check_form_validity(), onclick: submit}, 'Request Deploy'),
+                        !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'All mandatory fields have to be filled')
+
                     ])
                 ]),
             ]);
         }
     };
 
-    function removalDialog (args) { return m.component(removalDialog$1, args); }
+    function removalComponent (args) { return m.component(removalDialog, args); }
     var ASTERIX = m('span.text-danger', '*');
+    var ASTERISK$1 = m('span.text-danger.font-weight-bold', '*');
 
-    var removalDialog$1 = {
+    var removalDialog = {
         controller: function controller(ref){
-            var studyId = ref.studyId;
+            var study = ref.study;
             var close = ref.close;
 
             var form = formFactory();
             var ctrl = {
+                study: study,
                 sent:false,
                 researcher_name: m.prop(''),
                 researcher_email: m.prop(''),
@@ -21724,21 +21733,6 @@
                 comments: m.prop(''),
                 error: m.prop('')
             };
-
-            get_study_prop(studyId)
-                .then(function (response) {
-                    ctrl.researcher_name(response.researcher_name);
-                    ctrl.researcher_email(response.researcher_email);
-                    ctrl.global_study_name(response.study_name);
-                    ctrl.study_names(response.experiment_file.reduce(function (obj, row) {
-                        obj[row.file_id] = row.file_id;
-                        return obj;
-                    }, {}));
-                })
-                .catch(function (response) {
-                    ctrl.error(response.message);
-                })
-                .then(m.redraw);
 
             function submit(){
                 form.showValidation(true);
@@ -21763,6 +21757,8 @@
             var ctrl = ref.ctrl;
             var submit = ref.submit;
 
+            var exps = ctrl.study.files().filter(function (file){ return file.exp_data; });
+
             return ctrl.sent
                 ?
                 m('.deploy.centrify',[
@@ -21771,45 +21767,92 @@
                 ])
                 :
                 m('.StudyRemoval.container', [
-                    m('h3', [
-                        'Study Removal Request ',
-                        m('small', ctrl.global_study_name())
+
+                    m('.row',[
+                        m('.col-sm-12', [
+                            m('h3', [
+                                'Study Removal Request ',
+                                m('small', ctrl.study.name)
+                            ]),
+                        ])
                     ]),
 
-                    m('.row', [
-                        m('.col-sm-3', m('strong', 'Researcher Name: ')),
-                        m('.col-sm-9', ctrl.researcher_name())
-                    ]),
-                    m('.row.m-b-1', [
-                        m('.col-sm-3', m('strong', 'Researcher Email Address: ')),
-                        m('.col-sm-9', ctrl.researcher_email())
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            ASTERISK$1, ' Name of Experiment File'
+                        ])
                     ]),
 
-                    radioInput({
-                        label:m('span', ['Study name', ASTERIX]), 
-                        prop: ctrl.study_name,
-                        values:ctrl.study_names(),
-                        help: 'This is the name you submitted to the RDE (e.g., colinsmith.elmcogload) ',
-                        form: form, required:true, isStack:true
-                    }),
-                    textInput({label: m('span', ['Please enter your completed n below ', m('span.text-danger', ' *')]), help: m('span', ['you can use the following link: ', m('a', {href:'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3'}, 'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3')]),  placeholder: 'completed n', prop: ctrl.completed_n, form: form, required:true, isStack:true}),
-                    textInput({isArea: true, label: m('span', 'Additional comments'), help: '(e.g., anything unusual about the data collection, consistent participant comments, etc.)',  placeholder: 'Additional comments', prop: ctrl.comments, form: form, isStack:true}),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('select.c-select.form-control.space',{onchange: function (e) {}}, [
+                                exps.length===1 ? exps[0].name :
+                                    m('option', {value:'', selected:ctrl.study_name()==='', disabled:true}, 'Select experiment file'),
+                                exps.map(function (file){ return m('option', {value:file.name, selected:ctrl.study_name()===file.name}, file.name); }
+                                )
+                            ])
+                        ])
+                    ]),
+                    m('.row',[
+                        m('.col-sm-12',[
+                            m('small.text-muted', 'This is the name you submitted to the RDE (e.g., colinsmith.elmcogload)')
+                        ])
+                    ]),
+
+                    m('.row.space',[
+                        m('.col-sm-5',[
+                            ASTERISK$1, ' Please enter your completed n below'
+                        ])
+                    ]),
+
+                    m('.row',[
+                        m('.col-sm-5',[
+                            m('input.form-control', {value: ctrl.completed_n(), onchange:  m.withAttr('value', ctrl.completed_n), onkeyup: m.withAttr('value', ctrl.completed_n), placeholder:'Completed n'})
+                        ])
+                    ]),
+                    m('.row',[
+                        m('.col-sm-12',[
+                            m('small.text-muted', m('span', ['you can use the following link: ', m('a', {href:'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3'}, 'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3')]))
+                        ])
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-12',[
+                            'Additional comments'
+                        ])
+                    ]),
+
+                    m('.row',[
+                        m('.col-sm-12',[
+                            m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
+                        ])
+                    ]),
+                    m('.row',[
+                        m('.col-sm-12',[
+                            m('small.text-muted', '(e.g., anything unusual about the data collection, consistent participant comments, etc.)')
+                        ])
+                    ]),
+
                     !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                    m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                    m('.row.space',[
+                        m('.col-sm-12.text-sm-right',[
+                            m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                        ])
+                    ]),
                 ]);
         }
     };
 
-    var ASTERIX$1 = m('span.text-danger', '*');
-    function changeRequestDialog (args) { return m.component(changeRequestDialog$1, args); }
-    var changeRequestDialog$1 = {
+    var ASTERISK$2 = m('span.text-danger.font-weight-bold', '*');
+    function changeRequestComponent (args) { return m.component(changeRequestDialog, args); }
+    var changeRequestDialog = {
         controller: function controller(ref){
-            var studyId = ref.studyId;
+            var study = ref.study;
             var close = ref.close;
 
             var form = formFactory();
             var ctrl = {
                 sent:false,
+                study: study,
                 user_name: m.prop(''),
                 researcher_name: m.prop(''),
                 researcher_email: m.prop(''),
@@ -21820,17 +21863,6 @@
                 comments: m.prop(''),
                 error: m.prop('')
             };
-            get_study_prop(studyId)
-                .then(function (response) {
-                    ctrl.researcher_name(response.researcher_name);
-                    ctrl.researcher_email(response.researcher_email);
-                    ctrl.user_name(response.user_name);
-                    ctrl.study_name(response.study_name);
-                })
-                .catch(function (response) {
-                    ctrl.error(response.message);
-                })
-                .then(m.redraw);
 
             function submit(){
                 form.showValidation(true);
@@ -21839,7 +21871,7 @@
                     ctrl.error('Missing parameters');
                     return;
                 }
-                Study_change_request(studyId, ctrl)
+                Study_change_request(study, ctrl)
                     .then(function () {
                         ctrl.sent = true;
                     })
@@ -21847,56 +21879,95 @@
                         ctrl.error(response.message);
                     }).then(m.redraw);
             }
-            return {ctrl: ctrl, form: form, submit: submit, studyId: studyId};
+            return {ctrl: ctrl, form: form, submit: submit};
         },
         view: function view(ref){
             var form = ref.form;
             var ctrl = ref.ctrl;
             var submit = ref.submit;
 
-            var study_showfiles_link = document.location.origin + '/implicit/showfiles.jsp?user=' + ctrl.user_name() + '&study=' + ctrl.study_name();
 
             if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
                 m('h5', ['The change request form was sent successfully ', m('a', {href:'/changeRequestList', config: m.route}, 'View change request  requests')])
             ]);
-                
             return m('.StudyChangeRequest.container', [
-                m('h3', [
-                    'Study Change Request ',
-                    m('small', ctrl.study_name())
+                m('.row',[
+                    m('.col-sm-12', [
+                        m('h3', [
+                            'Study Change Request ',
+                            m('small', ctrl.study.name)
+                        ]),
+                    ])
+                ]),
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        ASTERISK$2, ' Target number of additional sessions (In addition to the sessions completed so far)'
+                    ])
                 ]),
 
-                m('.row', [
-                    m('.col-sm-3', m('strong', 'Researcher Name: ')),
-                    m('.col-sm-9', ctrl.researcher_name())
-                ]),
-                m('.row', [
-                    m('.col-sm-3', m('strong', 'Researcher Email Address: ')),
-                    m('.col-sm-9', ctrl.researcher_email())
-                ]),
-                m('.row.m-b-1', [
-                    m('.col-sm-3', m('strong', 'Study showfiles link: ')),
-                    m('.col-sm-9', m('a', {href:study_showfiles_link, target: '_blank'}, study_showfiles_link))
+                m('.row',[
+                    m('.col-sm-5',[
+                        m('input.form-control', {value: ctrl.target_sessions(), onchange:  m.withAttr('value', ctrl.target_sessions), onkeyup: m.withAttr('value', ctrl.target_sessions), placeholder:'Target number of additional sessions'})
+                    ])
                 ]),
 
 
-                textInput({label: m('span', ['Target number of additional sessions (In addition to the sessions completed so far)', m('span.text-danger', ' *')]),  placeholder: 'Target number of additional sessions', prop: ctrl.target_sessions, form: form, required:true, isStack:true}),
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        ASTERISK$2, ' What is the current status of your study? '
+                    ])
+                ]),
 
-                radioInput({
-                    label: m('span', ['What\'s the current status of your study?', ASTERIX$1]),
-                    prop: ctrl.status,
-                    values: {
-                        'Currently collecting data and does not need to be unpaused': 'Currently collecting data and does not need to be unpaused',
-                        'Manually paused and needs to be unpaused' : 'Manually paused and needs to be unpaused',
-                        'Auto-paused due to low completion rates or meeting target N.' : 'Auto-paused due to low completion rates or meeting target N.'
-                    },
-                    form: form, required:true, isStack:true
-                }),
-                textInput({isArea: true, label: m('span', ['Change Request', m('span.text-danger', ' *')]), help: 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)',  placeholder: 'Change Request', prop: ctrl.file_names, form: form, required:true, isStack:true}),
-                textInput({isArea: true, label: m('span', 'Additional comments'),  placeholder: 'Additional comments', prop: ctrl.comments, form: form, isStack:true}),
+                m('.row',[
+                    m('.col-sm-6',[
+                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.status)}, [
+                            m('option', {value:'', selected:ctrl.status()==='', disabled:true}, 'Select status'),
+                            m('option', {value:'Currently collecting data and does not need to be unpaused', selected:ctrl.status()==='Currently collecting data and does not need to be unpaused'}, 'Currently collecting data and does not need to be unpaused'),
+                            m('option', {value:'Manually paused and needs to be unpaused', selected:ctrl.status()==='Manually paused and needs to be unpaused'}, 'Manually paused and needs to be unpaused'),
+                            m('option', {value:'Auto-paused due to low completion rates or meeting target N', selected:ctrl.status()==='Auto-paused due to low completion rates or meeting target N'}, 'Auto-paused due to low completion rates or meeting target N')
+                        ])
+                    ])
+                ]),
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        ASTERISK$2, ' Change Request'
+                    ])
+                ]),
+
+                m('.row',[
+                    m('.col-sm-12',[
+                        m('textarea.form-control', {value: ctrl.file_names(), onchange:  m.withAttr('value', ctrl.file_names), onkeyup: m.withAttr('value', ctrl.file_names), placeholder:'Change Request'})
+                    ])
+                ]),
+                m('.row',[
+                    m('.col-sm-12',[
+                        m('small.text-muted', 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)')
+                    ])
+                ]),
+
+
+                // textInput({isArea: true, label: m('span', ['Change Request', m('span.text-danger', ' *')]), help: 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)',  placeholder: 'Change Request', prop: ctrl.file_names, form, required:true, isStack:true}),
+
+                m('.row.space',[
+                    m('.col-sm-12',[
+                        'Additional comments'
+                    ])
+                ]),
+
+                m('.row',[
+                    m('.col-sm-12',[
+                        m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
+                    ])
+                ]),
                 !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                m('.row.space',[
+                    m('.col-sm-12.text-sm-right',[
+                        m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                    ])
+                ])
+
             ]);
         }
     };
@@ -23564,6 +23635,96 @@
         return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
     }
 
+    function oldDeploysComponent (args) { return m.component(oldDeploysDialog, args); }
+    var ASTERISK$3 = m('span.text-danger.font-weight-bold', '* ');
+
+    var oldDeploysDialog = {
+        controller: function controller(ref){
+            var deploy2show = ref.deploy2show;
+            var close = ref.close;
+
+            return {deploy2show: deploy2show, close: close};
+
+
+        },
+        view: function view(ref){
+            var deploy2show = ref.deploy2show;
+            var close = ref.close;
+
+
+            return m('.deploy.container', [
+
+                m('.row',[
+                    m('.col-sm-12', [
+                        m('h3', [
+                            'Old Deploy Requests',
+                        ]),
+                    ])
+                ]),
+                m('.row.space',[
+                    m('.col-sm-2',[
+                        m('strong.space', 'Creation date')
+                    ]),
+                    m('.col-sm-2',[
+                        m('strong.space', 'Experiment File')
+                    ]),
+                    m('.col-sm-1',[
+                        m('strong.space', 'Target Number'),
+                    ]),
+                    m('.col-sm-1',[
+                        m('strong.space', 'Priority')
+                    ]),
+
+                    m('.col-sm-1',[
+                        m('strong.space', 'Approved')
+                    ]),
+                    m('.col-sm-1',[
+                        m('strong.space', 'Another researcher')
+                    ]),
+                    m('.col-sm-4',[
+                        m('strong.space', 'Summary of Rule Logic')
+                    ])
+                ]),
+                deploy2show.map(function (deploy$$1){ return deploy$$1.sets.map(function (set){ return m('.row',[
+
+                            m('.col-sm-2',[
+                                deploy$$1.creation_date
+                            ]),
+                            m('.col-sm-2',[
+                                set.experiment_file
+                            ]),
+
+                            m('.col-sm-1',[
+                                set.target_number
+                            ]),
+                            m('.col-sm-1',[
+                                set.priority
+                            ]),
+
+                            m('.col-sm-1',[
+                                deploy$$1.approved_by_a_reviewer==='Yes' ? 'Yes' : 'No'
+                            ]),
+                            m('.col-sm-1',[
+                                deploy$$1.launch_confirmation==='Yes' ? 'Yes' : 'No'
+                            ]),
+
+                            m('.col-sm-4',[
+                                set.rules === '' ? 'None' : print_rules(set.rules)
+                            ])
+                        ]); }
+                    ); }
+                ),
+
+
+                m('.row.space',[
+                    m('.col-sm-12.text-sm-right',
+                        m('button.btn.btn-primary', {onclick: close}, 'Close')
+                    )
+                ]),
+            ]);
+        }
+    };
+
     var notifications$1= createNotifications();
 
     var collaborationComponent$1 = {
@@ -23584,8 +23745,8 @@
                 share_error:m.prop(''),
                 study: study,
                 show_deploy: show_deploy,
-                show_change: show_change,
-                show_removal: show_removal,
+                deploy2show:m.prop(''),
+                present_deploys: present_deploys,
                 save: save,
                 lock: lock,
                 show_sharing: show_sharing,
@@ -23626,6 +23787,14 @@
                         ;
                     });
             }
+
+            function show_sharing() {
+                var study_id = ctrl.study.id;
+                var close = messages.close;
+                messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
+                    .then(m.redraw);
+            }
+
 
             function show_sharing() {
                 var study_id = ctrl.study.id;
@@ -23684,18 +23853,15 @@
                 messages.custom({header:'Deploy', preventEnterSubmits: true, wide: true, content: deployDialog({study: study, close: close})})
                     .then(m.redraw);
             }
-            function show_change(){
-                var study_id = ctrl.study.id;
-                var close = messages.close;
-                messages.custom({header:'Change request', preventEnterSubmits: true, wide: true, content: changeRequestDialog({study_id: study_id, close: close})})
-                    .then(m.redraw);
-            }
-            function show_removal(){
-                var study_id = ctrl.study.id;
-                var close = messages.close;
-                messages.custom({header:'Removal request', wide: true, content: removalDialog({study_id: study_id, close: close})})
-                    .then(m.redraw);
 
+            function present_deploys(deploy2show){
+                console.log(deploy2show[0].sets[0].rules);
+                var close = messages.close;
+                return messages.custom({header:'Old deploys',
+                                        preventEnterSubmits: true,
+                                        wide: true,
+                                        content: oldDeploysComponent({deploy2show: deploy2show, close: close})})
+                    .then(m.redraw);
             }
 
             function show_duplicate(){
@@ -23725,8 +23891,6 @@
                 ctrl.study = studyFactory(m.route.param('studyId'));
                 return ctrl.study.get()
                     .then(function (){
-                        console.log(ctrl.study);
-
                         ctrl.study_name(ctrl.study.name);
                         ctrl.description(ctrl.study.description);
                         ctrl.loaded(true);
@@ -23763,7 +23927,6 @@
                             m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                     ),
 
-
                     m('.row.space',
                         m('.col-sm-12.space',
                             m('.text-xs-right.btn-toolbar',
@@ -23774,10 +23937,20 @@
                     m('.row.space',
                         m('.col-sm-12.space',  m('h4', 'Versions'))
                     ),
+
                     ctrl.study.versions .map(function (version, id){ return m('.row', [
                             m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
                             m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
-                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive'))
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
+                            m('.col-xs-2.space',
+                                !version.deploys ? '' :
+                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys); }}, 'Old deploy requests')
+                            ),
+
+                                m('.col-xs-3.space',
+                                !version.deploy2show ? '' :
+                                    version.deploy2show
+                                )
                         ]); }
                     ),
 
@@ -23811,41 +23984,21 @@
                             m('.row',
                                 m('.col-sm-12', [
                                     m('.row',
-                                        m('.col-sm-10.space',[
+                                        m('.col-sm-9.space',[
                                             m('strong', 'Request deploy'),
                                             m('.small', 'This will allows you to...')
                                         ]),
-                                        m('.col-sm-2.space.text-sm-right',
-                                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_deploy}, 'Deploy')
-                                        )
-                                    ),
-                                    m('.row.',
-                                        m('.col-sm-10.space',[
-                                            m('strong', 'Request change'),
-                                            m('.small', 'This will allows you to...')
-                                        ]),
-                                        m('.col-sm-2.space.text-sm-right',
-                                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_change}, 'Change')
-                                        )
-                                    ),
-                                    m('.row.',
-                                        m('.col-sm-10.space',[
-                                            m('strong', 'Request removal'),
-                                            m('.small', 'This will allows you to...')
-                                        ]),
-                                        m('.col-sm-2.space.text-sm-right',
-                                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_removal}, 'Removal')
-                                        )
-                                    ),
+                                        m('.col-sm-3.space.text-sm-right',[
+                                            m('button.btn.btn-primary.btn-sm', {disabled: ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).length===0, onclick:ctrl.show_deploy}, 'Deploy'),
+                                            ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).length>0 ? '' : m('p.small.text-muted', 'There are no published versions yet')
+                                        ])
+                                    )
                                 ])
                             ),
 
 
                         ])
                     ),
-
-
-
 
                     m('.row.space',
                         m('.col-sm-12',  m('h4', 'Danger zone'))
@@ -23896,9 +24049,30 @@
             .fill(start)
             .map(function (year, index) { return year + index; });
     }
+    function sort_studies_by_name$2(study1, study2){
+        return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
+    }
 
+    function get_all_rules()
+    {
+        return load_studies()
+            .then(function (response) {
+                var studies = response.studies.filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$2);
+                var full_rules = JSON.parse(JSON.stringify(rules$1));
+                full_rules.push({
+                        name:'Did not Start or Complete Study',
+                        nameXML:'study',
+                        equal:['Study name'],
+                        equalXML:['Study name'],
+                        values:studies.map(function (study){ return study.name; }),
+                        valuesXML:studies.map(function (study){ return study.id; }),
+                        data:{represent:'dropdown'},
+                });
+                return full_rules;
+            });
+    }
 
-    var conditions = [
+    var rules$1 = [
         {
             name:'Sex',
             nameXML:'sex',
@@ -24627,16 +24801,16 @@
                 'zw'
             ],
             cType:'dropdown'},
-        {
-            name:'Did not Start or Complete Study',
-            nameXML:'study',
-            equal:['Study ID'],
-            equalXML:[],
-            values:['Study ID'],
-            valuesXML:[],
-            data:{represent:'string'},
-            cType:'label'
-        },
+        // {
+        //     name:'Did not Start or Complete Study',
+        //     nameXML:'study',
+        //     equal:['Study ID'],
+        //     equalXML:[],
+        //     values:['Study ID'],
+        //     valuesXML:[],
+        //     data:{represent:'string'},
+        //     cType:'label'
+        // },
         {
             name:'Number of Studies Started',
             nameXML:'started_studies',
@@ -25205,80 +25379,144 @@
     ];
 
     var notifications$2= createNotifications();
-
-
-
     var ruletableComponent = {
         controller: function controller(){
             var ctrl = {
-                all_rules: conditions,
-                sets: [],
+                all_rules: m.prop([]),
+                sets: m.prop([]),
+                sets2show:m.prop([]),
+                new_set: m.prop(''),
                 notifications: notifications$2,
                 error: m.prop(''),
-                study_name:m.prop(),
                 loaded:m.prop(false),
+                filter_sets: filter_sets,
+                add_new_set: add_new_set,
+                save_new_set: save_new_set,
+                remove_set: remove_set,
+                update_set: update_set,
                 push_set: push_set,
                 push_sub_set: push_sub_set,
                 remove_sub_set: remove_sub_set,
-                update_set_type: update_set_type,
+                update_set_comparator: update_set_comparator,
                 update_set_name: update_set_name,
                 push_rule: push_rule,
                 remove_rule: remove_rule,
-                set_condition: set_condition,
-                set_expression: set_expression,
+                set_field: set_field,
+                set_comparator: set_comparator,
                 set_value: set_value,
                 save: save,
-                study: study,
+                remove: remove,
+                edit_set: edit_set,
+                download_set: download_set,
+                cancel: cancel,
+                print_rules: print_rules
             };
-
-            function save(){
-
-                // const check = ctrl.sets.maprules.filter(rule=>rule.expression==='' || rule.expression==='' || rule.value==='');
+            function load() {
+                get_rules()
+                    .then(function (response) {
+                        ctrl.loaded(true);
+                        ctrl.sets(response.sets);
+                        ctrl.sets2show(ctrl.sets());
+                        get_all_rules()
+                        .then(function (all_rules) { return ctrl.all_rules = all_rules; });
+                        m.redraw();
+                    })
+                    .catch(function (error) {
+                        ctrl.error(error.message);
+                    }).then(m.redraw);
             }
 
-            function init_set(){
-                return {type:'All', name: '', sub_sets: [], rules:[empty_rule()]};
+
+            function save(save_new){
+                if (!ctrl.new_set().edit)
+                    return ctrl.save_new_set(ctrl.new_set())
+                        .then(function (new_set){ return ctrl.sets().push(new_set.rules); })
+                        .then(ctrl.sets2show(ctrl.sets()))
+                        .then(ctrl.new_set(''))
+                        .then(m.redraw);
+
+                delete ctrl.new_set().edit;
+                if (save_new)
+                    return ctrl.save_new_set(ctrl.new_set())
+                        .then(function (new_set){ return ctrl.sets().push(new_set.rules); })
+                        .then(ctrl.sets2show(ctrl.sets()))
+                        .then(ctrl.new_set(''))
+                        .then(m.redraw);
+                return ctrl.update_set(ctrl.new_set())
+                    .then(ctrl.sets(ctrl.sets().map(function (set){ return set.id===ctrl.new_set().id ? ctrl.new_set() : set; })))
+                    .then(ctrl.sets2show(ctrl.sets()))
+                    .then(function (){ return ctrl.new_set(''); })
+                    .then(m.redraw);
             }
-
-            function empty_rule(){
-                return {condition:'', condition_text:'', expression_text: '', expression:'', value:'', value_text:''};
+            function remove(set_id){
+                ctrl.remove_set(set_id)
+                    .then(ctrl.sets(ctrl.sets().filter(function (set){ return set.id!==set_id; })))
+                    .then(ctrl.sets2show(ctrl.sets()))
+                    .then(m.redraw);
             }
-
-            function set_condition(user_rule, value, text){
-                user_rule.condition  = value;
-                user_rule.condition_text  = text;
-
-                user_rule.expression = '';
-                user_rule.expression_text= '';
-                user_rule.value      = '';
-                user_rule.value_text      = '';
+            function filter_sets(str){
+                ctrl.sets2show(ctrl.sets().filter(function (set){ return set.name.match(new RegExp(str, 'i')); }));
                 m.redraw();
             }
 
+            function edit_set(set){
+                set['edit'] = true;
+                ctrl.new_set(JSON.parse(JSON.stringify(set)));
+            }
+            function download_set(set){
+                var data2save = new Blob([JSON.stringify(set)], {type: 'application/json'});
+                var downloadLink = document.createElement("a");
+                downloadLink.download = set.name+'.json';
+                downloadLink.href = window.URL.createObjectURL(data2save);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                downloadLink.remove();
+            }
+            function cancel(){
+                ctrl.new_set('');
+            }
 
-            function set_expression(user_rule, value, text){
-                user_rule.expression = value;
-                user_rule.expression_text = text;
+            function init_set(){
+                return {comparator:'&', comparator_str:'All', name: '', sub_sets: [], data:[empty_rule()]};
+            }
+
+            function empty_rule(){
+                return {field:'', field_text:'', comparator_text: '', comparator:'', value:'', value_text:''};
+            }
+
+            function set_field(user_rule, value, text){
+                user_rule.field             = value;
+                user_rule.field_text        = text;
+                user_rule.comparator        = '';
+                user_rule.comparator_text   = '';
+                user_rule.value             = '';
+                user_rule.value_text        = '';
+                m.redraw();
+            }
+
+            function set_comparator(user_rule, value, text){
+                user_rule.comparator        = value;
+                user_rule.comparator_text   = text;
             }
 
             function set_value(user_rule, value, text){
-                user_rule.value = value;
-                user_rule.value_text = text;
+                user_rule.value         = value;
+                user_rule.value_text    = text;
             }
 
-            function update_set_type(set, type){
-                set.type = type;
+            function update_set_comparator(set, comparator, comparator_str){
+                set.comparator_str = comparator_str;
+                set.comparator     = comparator;
             }
-
 
             function update_set_name(set, name){
                 set.name = name;
             }
 
-
-
-            if (ctrl.sets.length===0)
-                ctrl.sets = [init_set()];
+            function add_new_set(){
+                ctrl.new_set(init_set());
+            }
 
             function push_sub_set(set){
                 set.sub_sets.push(init_set());
@@ -25289,83 +25527,53 @@
             }
 
             function remove_sub_set(set, parent){
-                set.rules = [];
-                if(parent)
-                    return parent.sub_sets = parent.sub_sets.filter(function (set){ return set.rules.length>0; });
-                return ctrl.sets = ctrl.sets.filter(function (set){ return set.rules.length>0; });
+                set.data = [];
+                return parent.sub_sets = parent.sub_sets.filter(function (set){ return set.data.length>0; });
             }
 
             function push_rule(set){
-                set.rules.push(empty_rule());
+                set.data.push(empty_rule());
             }
-
             function remove_rule(set, user_condition){
-                set.rules = set.rules.filter(function (user_rule){ return user_rule.condition!==user_condition.condition ||
-                                                                        user_rule.expression!==user_condition.expression ||
-                                                                        user_rule.value!==user_condition.value; });
-            }
-
-            var study;
-            function load() {
-                ctrl.study = studyFactory(m.route.param('studyId'));
-                return ctrl.study.get()
-                    .then(function (){
-                        ctrl.study_name(ctrl.study.name);
-                        ctrl.loaded(true);
-                    })
-                    .then(m.redraw);
+                set.data = set.data.filter(function (user_rule) { return user_rule.field!==user_condition.field ||
+                                                          user_rule.comparator!==user_condition.comparator ||
+                                                          user_rule.value!==user_condition.value; });
             }
             load();
             return ctrl;
         },
         view: function view(ctrl){
-
-            function check_sets(sets){
-                return sets.map(function (sub_set){ return check_rules(sub_set); }).filter(function (sub_set){ return sub_set; }).length>0;
-            }
-
             function check_rules(set){
-                var check = set.rules.filter(function (rule){ return rule.expression==='' || rule.expression==='' || rule.value===''; }).length>0;
+                var check = set.data.filter(function (rule){ return rule.comparator==='' || rule.comparator==='' || rule.value===''; }).length>0;
                 var nested_check = set.sub_sets.map(function (sub_set){ return check_rules(sub_set); }).filter(function (sub_set){ return sub_set; }).length>0;
                 return check || nested_check;
             }
 
-            function check_names(){
-                return ctrl.sets.filter(function (set){ return set.name===''; }).length>0;
-            }
-            function print_rules(set){
-                var clean_rules = set.rules.map(function (rule){ return (rule.condition==='' ? '_' : rule.condition_text) + ' ' + (rule.expression==='' ? '_' : rule.expression_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
-                var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
-
-                var print_both = set.rules.length>0 && set.sub_sets.length>0 ? ', ' : '';
-                var set_name = !set.name ? '' : set.name + ': ';
-                return set_name + set.type + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
+            function check_set_name(){
+                return ctrl.new_set().name==='';
             }
 
             function show_set(set, parent){
                 if ( parent === void 0 ) parent = false;
 
-                return m('.rules_frame', [
-
-                    m('.row',
-                        [
+                return m('.rules_frame.rules_border', [
+                    m('.row', [
                             parent ? '' :
                                 m('.col-sm-2.space',
                                     m('input.form-control.space', {value: set.name, onchange: function (e) {ctrl.update_set_name(set, e.target.value);}, onkeyup: function (e) {ctrl.update_set_name(set, e.target.value);}, placeholder:'Set name'})
                                 ),
-
                             m('.col-sm-2.space',
-                                m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_set_type(set, e.target.value);}}, [
-                                    m('option', {value:'All', selected:set.type==='All'}, 'All'),
-                                    m('option', {value:'Any', selected:set.type==='Any'}, 'Any')
+                                m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                    m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
+                                    m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
                                 ])
                             ),
                             m('.col-sm-2.space',
-                                m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_sub_set(set, parent); }}, m('i.fa.fa-minus-circle.space', parent ? ' Remove group' : ' Remove set'))
+                                !parent ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_sub_set(set, parent); }}, m('i.fa.fa-minus-circle.space', ' Remove group' ))
                             ),
                         ]
                     ),
-                    !set.rules.length ?
+                    !set.data.length ?
                         m('.row',
                             m('.col-sm-10.space', ''),
                             m('.col-sm-2.space',
@@ -25375,14 +25583,14 @@
                             )
                         )
                     :
-                    set.rules.map(function (user_rule){
-                        var condition_data = user_rule.condition === '' ? '' : ctrl.all_rules.find(function (rule){ return rule.nameXML===user_rule.condition; });
+                    set.data.map(function (user_rule){
+                        var condition_data = user_rule.field === '' ? '' : ctrl.all_rules.find(function (rule){ return rule.nameXML===user_rule.field; });
                         return m('.row',
                             m('.col-sm-4.space',
                                 m('.input-set.space', [
-                                    m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_condition(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                        m('option', {value:'', selected:user_rule.condition==='', disabled:true}, 'Condition'),
-                                        ctrl.all_rules.map(function (rule){ return m('option', {value:rule.nameXML, selected:user_rule.condition===rule.name}, rule.name); })
+                                    m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                        m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
+                                        ctrl.all_rules.map(function (rule){ return m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name); })
                                     ])
                                 ])
                             ),
@@ -25390,47 +25598,40 @@
                             m('.col-sm-2.space',
                                 m('.input-set.space', [
                                     !condition_data ? '' :
-                                        !condition_data.equal.length ? ctrl.set_expression(user_rule, ' ', ' ') :
+                                        !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
                                         condition_data.equal.length === 1 ?
-                                            [ctrl.set_expression(user_rule, ' ', ' '),
-                                                m('select.c-select.form-control.space', {disabled:true, onchange: function (e) {ctrl.set_expression(user_rule, e.target.value, e.target.value);}}, [
+                                            [ctrl.set_comparator(user_rule, ' ', ' '),
+                                                m('select.c-select.form-control.space', {disabled:true, onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
                                                     m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
                                                 ])]
 
                                             :
-                                            m('select.c-select.form-control.space', {onchange: function (e) {ctrl.set_expression(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                                m('option', {value:'', selected:user_rule.expression==='', disabled:true}, 'Expression'),
-                                                condition_data.equal.map(function (expression, expression_id){ return m('option', {selected:user_rule.expression===condition_data.equalXML[expression_id], value:condition_data.equalXML[expression_id]}, expression); })
+                                            m('select.c-select.form-control.space', {onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                                m('option', {value:'', selected:user_rule.comparator==='', disabled:true}, 'Comparator'),
+                                                condition_data.equal.map(function (comparator, comparator_id){ return m('option', {selected:user_rule.comparator===condition_data.equalXML[comparator_id], value:condition_data.equalXML[comparator_id]}, comparator); })
                                             ])
                                 ])
                             ),
-
                             m('.col-sm-4.space',
                                 m('.input-set.space', [
                                     !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
-                                        condition_data.values.length === 1 ?
-                                            m('input.form-control.space', {value: user_rule.value, onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
-                                            :
                                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
                                                 m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
                                                 condition_data.values.map(function (value, val_id){ return typeof value === "object"
                                                     ?
-
-                                                     m('optset.rule_optset', {disabled:true, selected:user_rule.value===value, label:value.type}, value.type)
-                                                            :
-                                                     m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value); }
-
+                                                    m('optset.rule_optset', {disabled:true, selected:user_rule.value===value, label:value.comparator_str}, value.comparator_str)
+                                                    :
+                                                    m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value); }
                                                 )
                                             ])
                                 ])
                             ),
                             m('.col-sm-2.space',
-                                m('.btn-set.btn-set-sm.space', [
-                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_rule(set); }}, m('i.fa.fa-plus-circle.space')),
-                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set, user_rule); }}, m('i.fa.fa-minus-circle.space'))
+                                m('.btn-set.btn-set-sm.double_space', [
+                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_rule(set); }}, m('i.fa.fa-plus-circle')),
+                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set, user_rule); }}, m('i.fa.fa-minus-circle'))
                                 ])
                             )
-
                         );
                     }),
 
@@ -25450,38 +25651,101 @@
                 ?
                 m('.loader')
                 :
-                m('.container.sharing-page', [
-
+                m('.container', [
                     m('div', ctrl.notifications.view()),
-                    m('.row',[
 
+                    m('.row',[
                         m('.col-sm-12', [
-                            m('h3', [ctrl.study_name(), ': Rules Generator'])
+                            m('h3', ' Rules Generator')
                         ]),
                         m('.col-sm-12', [
                             m('strong', 'How to Use:'),
                             m('','Create a sets of conditions that define who can take your study. Make sure that all the conditions that are listed in an “All” must be true and that at least one of the conditions listed in an “Any” must be true. The  box below shows the conditions in plain words. A red “Rule is not ready” will appear whenever the rules are not ready to use. Once finished, press the \'Save\' button and the rule will be saved to the study\'s properties.')
                         ])
                     ]),
-                    m('.card-text',
-                    m('button.btn.btn-primary', {disabled:check_sets(ctrl.sets)||check_names(), onclick: function (){ return ctrl.save(); }}, 'save')),
-                        m('.rules_string', [
-                        m('strong', 'Summary of Rule Logic:'),
-                        m('', ctrl.sets.map(function (set){ return m('.double_space', print_rules(set)); })),
-                        m('.warning_text', check_sets(ctrl.sets) ? 'Rule is not ready' : ''),
-                        m('.warning_text', check_names() ? 'Set names cannot be empty' : ''),
-                        m('.success_text', !check_sets(ctrl.sets) && !check_names() ? 'Rule is ready' : '')
+
+                    m('.row.space',[
+                        m('.col-sm-5', [
+                            m('h3', 'Existing Sets')
+                        ])
                     ]),
-                    m('.row.space', [
-                        m('.col-sm-3.space',
-                            m('.text-xs-left.btn-toolbar.btn-set.btn-set-sm', [
-                                m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_set(ctrl.sets); }}, m('i.fa.fa-plus-circle.space', ' Add set'))
-                            ])
+                    m('.row',[
+                        m('.col-sm-2',
+                            m('strong', 'Set name')
+                        ),
+                        m('.col-sm-7',
+                            m('strong', 'Summary of Rule Logic')
+                        ),
+                        m('.col-sm-3',
+                            m('strong', 'Actions')
                         )
                     ]),
-                    ctrl.sets.map(function (set){ return show_set(set); })
+                    ctrl.sets().length===0 ? '' :
+                    m('.row',[
+                        m('.col-sm-2.space',
+                            m('input.form-control.space', {onchange: function (e) {ctrl.filter_sets(e.target.value);}, onkeyup: function (e) {ctrl.filter_sets(e.target.value);}, placeholder:'Search...'})
+                        )
+                    ]),
+                    ctrl.sets2show().map(function (set){ return m('.row.list-group-item.rules_frame',[
+                            m('.col-sm-2', [
+                                m('', set.name)
+                            ]),
+                            m('.col-sm-7',
+                                ctrl.print_rules(set)
+                            ),
+                            m('.col-sm-3', [
+                                m('btn-group', [
 
+                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.edit_set(set); }}, [
+                                        m('i.fa.fa-edit'),
+                                        ' Edit'
+                                    ]),
+                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.download_set(set); }}, [
+                                        m('i.fa.fa-download'),
+                                        ' Export'
+                                    ]),
+                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.remove(set.id); }}, [
+                                        m('i.fa.fa-remove'),
+                                        ' Remove'
+                                    ])
+                                ])
+                            ])
+                        ]); }
+                    ),
+                    ctrl.new_set()!==''  ? '' : m('.row.double_space',[
+                        m('.col-sm-12', [
+                            m('button.btn.btn-primary.pull-right', {onclick: function (){ return ctrl.add_new_set(); }}, [
+                                m('i.fa.fa-plus'), '  Create a new set of rules '
+                            ])
+                        ])
+                    ]),
 
+                    !ctrl.new_set() ? '' : [
+                        m('.rules_string.rules_border', [
+                            m('strong', 'Summary of Rule Logic:'),
+                            m('', ctrl.print_rules(ctrl.new_set())),
+                            m('.warning_text', check_set_name() ? 'Set name cannot be empty' : ''),
+                            m('.warning_text', check_rules(ctrl.new_set()) ? 'Rule is not ready' : ''),
+                            m('.success_text', !check_rules(ctrl.new_set()) && !check_set_name() ? 'Rule is ready' : '')
+                        ]),
+                         show_set(ctrl.new_set()),
+
+                        m('.row.double_space',[
+                            m('.col-sm-12', [
+                                !ctrl.new_set().edit ? '' :
+                                    m('button.btn.btn-secondary.pull-right', {disabled:check_rules(ctrl.new_set())||check_set_name(), onclick: function (){ return ctrl.save(true); }}, [
+                                        m('i.fa.fa-save'), ' Save new'
+                                    ]),
+
+                                m('button.btn.btn-secondary.pull-right', {disabled:check_rules(ctrl.new_set())||check_set_name(), onclick: function (){ return ctrl.save(); }}, [
+                                    m('i.fa.fa-save'), ' Save '
+                                ]),
+                                m('button.btn.btn-secondary.pull-right', {onclick: function (){ return ctrl.cancel(); }}, [
+                                    ' Cancel '
+                                ])
+                            ])
+                        ])
+                    ],
                 ]);
         }
     };
@@ -25960,8 +26224,8 @@
         '/homepage':  homepageComponent,
         '/massMail':  massMailComponent,
 
-        '/changeRequest/:studyId':  changeRequestDialog,
-        '/studyRemoval/:studyId':  removalDialog,
+        '/changeRequest/:studyId':  changeRequestComponent,
+        '/studyRemoval/:studyId':  removalComponent,
         '/deploy/:studyId': deployDialog,
         '/login': loginComponent,
         '/studies' : mainComponent,
@@ -25984,7 +26248,7 @@
         '/downloadsAccess': downloadsAccessComponent,
         '/sharing/:studyId': sharing_dialog,
         '/properties/:studyId': collaborationComponent$1,
-        '/ruletable/:studyId': ruletableComponent,
+        '/ruletable': ruletableComponent,
 
     };
 
@@ -26079,6 +26343,7 @@
                     // 'data':['downloads', 'downloadsAccess', 'statistics'],
                     // 'pool':[],
                     'tags':[]
+                    ,'rules':[]
                     ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
                 };
 
@@ -26093,6 +26358,7 @@
                         }},
                     'pool':{text: 'Pool', href:'/pool', sub:[]},
                     'tags':{text: 'Tags', href:'/tags', sub:[]},
+                    'rules':{text: 'Rules', href:'/ruletable', sub:[]},
                     'admin':{text: 'Admin', href:false,
                         su:true,
                         subs:{'deployList': {text:'Deploy List', href: '/deployList'},

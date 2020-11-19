@@ -9,6 +9,7 @@ const urlPrefix = '..';//location.pathname.match(/^(?=\/)(.+?\/|$)/)[1]; // firs
 // console.log(location.href);
 export const baseUrl            = `${urlPrefix}`;
 export const studyUrl           = `${urlPrefix}/studies`;
+export const PIUrl              = `${urlPrefix}/PI`;
 export const launchUrl          = `${urlPrefix}/launch`;
 export const templatesUrl       = `${urlPrefix}/templates`;
 export const tagsUrl            = `${urlPrefix}/tags`;

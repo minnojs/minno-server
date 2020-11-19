@@ -19,6 +19,15 @@ h1 small, h2 small, h3 small, h4 small, h5 small {font-weight: 200; color: #818a
     padding-top: 1em;
 }
 
+select.input_error{
+  border: 1px solid red;
+}
+
+input.input_error{
+  border: 1px solid red;
+}
+
+
 .link {cursor: pointer;}
 
 .generetor{
@@ -349,14 +358,16 @@ input.input_switch:checked + .slider:before {
 
 
 .rules_frame {
-  border: 1px solid #2882b5;
   padding: 5px 0px 15px 15px;
   margin: 5px 0px 5px 0px;
 }
 
+.rules_border {
+  border: 1px solid #2882b5;
+}
+
 
 .rules_string {
-  border: 1px solid #2882b5;
   padding: 15px 15px 15px 15px;
   margin: 5px 0px 5px 0px;
 }

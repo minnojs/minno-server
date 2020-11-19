@@ -1,4 +1,6 @@
-export default conditions;
+import {load_studies} from "../study/studyModel";
+
+export default get_all_rules;
 
 function generate_years() {
     const end = new Date().getFullYear();
@@ -7,9 +9,31 @@ function generate_years() {
         .fill(start)
         .map((year, index) => year + index);
 }
+function sort_studies_by_name(study1, study2){
+    return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
+}
 
+function get_all_rules()
+{
+    return load_studies()
+        .then(response =>
+        {
+            const studies = response.studies.filter(study=>study.has_data_permission).sort(sort_studies_by_name);
+            let full_rules = JSON.parse(JSON.stringify(rules));
+            full_rules.push({
+                    name:'Did not Start or Complete Study',
+                    nameXML:'study',
+                    equal:['Study name'],
+                    equalXML:['Study name'],
+                    values:studies.map(study=>study.name),
+                    valuesXML:studies.map(study=>study.id),
+                    data:{represent:'dropdown'},
+            })
+            return full_rules;
+        });
+}
 
-const conditions = [
+let rules = [
     {
         name:'Sex',
         nameXML:'sex',
@@ -738,16 +762,16 @@ const conditions = [
             'zw'
         ],
         cType:'dropdown'},
-    {
-        name:'Did not Start or Complete Study',
-        nameXML:'study',
-        equal:['Study ID'],
-        equalXML:[],
-        values:['Study ID'],
-        valuesXML:[],
-        data:{represent:'string'},
-        cType:'label'
-    },
+    // {
+    //     name:'Did not Start or Complete Study',
+    //     nameXML:'study',
+    //     equal:['Study ID'],
+    //     equalXML:[],
+    //     values:['Study ID'],
+    //     valuesXML:[],
+    //     data:{represent:'string'},
+    //     cType:'label'
+    // },
     {
         name:'Number of Studies Started',
         nameXML:'started_studies',

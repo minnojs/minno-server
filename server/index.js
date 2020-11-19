@@ -21,6 +21,7 @@ const users_router          = require('./routes/users_router');
 const config_router         = require('./routes/config_router');
 const dropbox_router        = require('./routes/dropbox_router');
 const collaboration_router  = require('./routes/collaboration_router');
+const PI_router             = require('./routes/PI_router');
 const Server				= require('./server.js');
 const Fingerprint 			= require('express-fingerprint');
 const configDb = require('./config_db');
@@ -131,6 +132,7 @@ basePathRouter.use('/collaboration', collaboration_router);
 basePathRouter.use('/users', users_router);
 basePathRouter.use('/config', config_router);
 basePathRouter.use('/dropbox', dropbox_router);
+basePathRouter.use('/PI', PI_router);
 
 let sess;
 

@@ -2,6 +2,7 @@ import messages from 'utils/messagesComponent';
 import studyFactory from '../files/fileCollectionModel';
 import {delete_study, publish_study, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
+import {print_rules} from '../../ruletable/ruletableActions'
 
 import deployDialog from '../../deploy/deployComponent';
 import changeRequestDialog from '../../deploy/changeRequestComponent';
@@ -11,6 +12,7 @@ import removalDialog from '../../deploy/removalComponent';
 import sharing_dialog from '../sharing/sharingComponent';
 
 import {createNotifications} from 'utils/notifyComponent';
+import oldDeploysComponent from "../../deploy/oldDeploysComponent";
 
 export default collaborationComponent;
 const notifications= createNotifications();
@@ -33,8 +35,8 @@ let collaborationComponent = {
             share_error:m.prop(''),
             study,
             show_deploy,
-            show_change,
-            show_removal,
+            deploy2show:m.prop(''),
+            present_deploys,
             save,
             lock,
             show_sharing,
@@ -75,6 +77,14 @@ let collaborationComponent = {
                     ;
                 });
         }
+
+        function show_sharing() {
+            let study_id = ctrl.study.id;
+            let close = messages.close;
+            messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id, close})})
+                .then(m.redraw);
+        }
+
 
         function show_sharing() {
             let study_id = ctrl.study.id;
@@ -133,18 +143,16 @@ let collaborationComponent = {
             messages.custom({header:'Deploy', preventEnterSubmits: true, wide: true, content: deployDialog({study, close})})
                 .then(m.redraw);
         }
-        function show_change(){
-            let study_id = ctrl.study.id;
-            let close = messages.close;
-            messages.custom({header:'Change request', preventEnterSubmits: true, wide: true, content: changeRequestDialog({study_id, close})})
-                .then(m.redraw);
-        }
-        function show_removal(){
-            let study_id = ctrl.study.id;
-            let close = messages.close;
-            messages.custom({header:'Removal request', wide: true, content: removalDialog({study_id, close})})
-                .then(m.redraw);
 
+        function present_deploys(deploy2show){
+            console.log(deploy2show[0].sets[0].rules);
+            let study = ctrl.study;
+            let close = messages.close;
+            return messages.custom({header:'Old deploys',
+                                    preventEnterSubmits: true,
+                                    wide: true,
+                                    content: oldDeploysComponent({deploy2show, close})})
+                .then(m.redraw);
         }
 
         function show_duplicate(){
@@ -174,8 +182,6 @@ let collaborationComponent = {
             ctrl.study = studyFactory(m.route.param('studyId'));
             return ctrl.study.get()
                 .then(()=>{
-                    console.log(ctrl.study);
-
                     ctrl.study_name(ctrl.study.name);
                     ctrl.description(ctrl.study.description);
                     ctrl.loaded(true);
@@ -212,7 +218,6 @@ let collaborationComponent = {
                         m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                 ),
 
-
                 m('.row.space',
                     m('.col-sm-12.space',
                         m('.text-xs-right.btn-toolbar',
@@ -223,11 +228,21 @@ let collaborationComponent = {
                 m('.row.space',
                     m('.col-sm-12.space',  m('h4', 'Versions'))
                 ),
+
                 ctrl.study.versions .map((version, id)=>
                     m('.row', [
                         m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
                         m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
-                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive'))
+                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
+                        m('.col-xs-2.space',
+                            !version.deploys ? '' :
+                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys)}, 'Old deploy requests')
+                        ),
+
+                            m('.col-xs-3.space',
+                            !version.deploy2show ? '' :
+                                version.deploy2show
+                            )
                     ])
                 ),
 
@@ -261,41 +276,21 @@ let collaborationComponent = {
                         m('.row',
                             m('.col-sm-12', [
                                 m('.row',
-                                    m('.col-sm-10.space',[
+                                    m('.col-sm-9.space',[
                                         m('strong', 'Request deploy'),
                                         m('.small', 'This will allows you to...')
                                     ]),
-                                    m('.col-sm-2.space.text-sm-right',
-                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_deploy}, 'Deploy')
-                                    )
-                                ),
-                                m('.row.',
-                                    m('.col-sm-10.space',[
-                                        m('strong', 'Request change'),
-                                        m('.small', 'This will allows you to...')
-                                    ]),
-                                    m('.col-sm-2.space.text-sm-right',
-                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_change}, 'Change')
-                                    )
-                                ),
-                                m('.row.',
-                                    m('.col-sm-10.space',[
-                                        m('strong', 'Request removal'),
-                                        m('.small', 'This will allows you to...')
-                                    ]),
-                                    m('.col-sm-2.space.text-sm-right',
-                                        m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_removal}, 'Removal')
-                                    )
-                                ),
+                                    m('.col-sm-3.space.text-sm-right',[
+                                        m('button.btn.btn-primary.btn-sm', {disabled: ctrl.study.versions.filter(version=>version.state === 'Published').length===0, onclick:ctrl.show_deploy}, 'Deploy'),
+                                        ctrl.study.versions.filter(version=>version.state === 'Published').length>0 ? '' : m('p.small.text-muted', 'There are no published versions yet')
+                                    ])
+                                )
                             ])
                         ),
 
 
                     ])
                 ),
-
-
-
 
                 m('.row.space',
                     m('.col-sm-12',  m('h4', 'Danger zone'))

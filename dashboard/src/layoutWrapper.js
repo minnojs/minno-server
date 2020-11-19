@@ -96,6 +96,7 @@ let layout = route => {
                 // 'data':['downloads', 'downloadsAccess', 'statistics'],
                 // 'pool':[],
                 'tags':[]
+                ,'rules':[]
                 ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
             };
 
@@ -110,6 +111,7 @@ let layout = route => {
                     }},
                 'pool':{text: 'Pool', href:'/pool', sub:[]},
                 'tags':{text: 'Tags', href:'/tags', sub:[]},
+                'rules':{text: 'Rules', href:'/ruletable', sub:[]},
                 'admin':{text: 'Admin', href:false,
                     su:true,
                     subs:{'deployList': {text:'Deploy List', href: '/deployList'},

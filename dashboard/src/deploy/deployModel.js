@@ -1,9 +1,10 @@
 import {fetchJson} from 'utils/modelHelpers';
-import {studyUrl as baseUrl} from 'modelUrls';
+import {PIUrl} from 'modelUrls';
+
 
 function deploy_url(study_id)
 {
-    return `${baseUrl}/${encodeURIComponent(study_id)}/deploy`;
+    return `${PIUrl}/deploy/${encodeURIComponent(study_id)}`;
 }
 
 export let get_study_prop = (study_id) => fetchJson(deploy_url(study_id), {
@@ -17,7 +18,7 @@ export let study_removal = (study_id, ctrl) => fetchJson(deploy_url(study_id), {
 
 export let deploy = (study_id, ctrl) => fetchJson(deploy_url(study_id), {
     method: 'post',
-    body: {target_number: ctrl.target_number, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, experiment_file: ctrl.experiment_file, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments, rulesValue: ctrl.rulesValue}
+    body: {props:{sets: ctrl.sets, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
 });
 
 export let Study_change_request = (study_id, ctrl) => fetchJson(deploy_url(study_id), {
