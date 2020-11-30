@@ -13,6 +13,33 @@ PIRouter
     });
 
 
+PIRouter.route('/deploy_list')
+    .get(
+        function(req, res){
+            return PI.get_all_deploys()
+                .then(deploys=>res.json(deploys))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
+    .post(
+        function(req, res){
+            return PI.insert_new_set(req.user_id, req.body.rules)
+                .then(set_data => res.json(set_data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
+    .put(function(req, res){
+        return PI.update_set(req.user_id, req.body.rules)
+            .then(()=>res.json({}))
+            .catch(err=>res.status(err.status || 500).json({message:err.message}));
+    });
+
+PIRouter.route('/deploy_list/:deploy_id')
+    .put(function(req, res){
+        return PI.update_deploy(req.params.deploy_id, req.body.priority, req.body.status)
+            .then(data=>res.json(data))
+            .catch(err=>res.status(err.status || 500).json({message:err.message}));
+    });
+
+
 PIRouter.route('/rules')
     .get(
         function(req, res){

@@ -21172,10 +21172,38 @@
     var focus_it$3 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    var deploy_url = baseUrl + "/deploy_list";
+    function deploy_url()
+    {
+        return (PIUrl + "/deploy_list");
+    }
 
-    function get_study_list(){
-        return fetchJson(deploy_url);
+    function update_url(deploy_id)
+    {
+        return (PIUrl + "/deploy_list/" + deploy_id);
+    }
+
+    function update_deploy(deploy_id, priority, status)
+    {
+        return fetchJson(update_url(deploy_id), {
+            method: 'put',
+            body:{priority: priority, status: status}
+        });
+    }
+
+    function get_deploys(){
+        return fetchJson(deploy_url());
+    }
+
+    var print_rules = function (set) {
+        var clean_rules   = set.data.map(function (rule){ return (rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
+        var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
+
+        var print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
+        return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
+    };
+
+    function formatDate$1(date_str){
+        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
     }
 
     var thConfig$4 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
@@ -21184,10 +21212,43 @@
         controller: function controller(){
             var ctrl = {
                 list: m.prop(''),
-                sortBy: m.prop('CREATION_DATE')
+                sortBy: m.prop('creation_date'),
+                view_rules: view_rules,
+                accept: accept,
+                update: update,
+                update_priority: update_priority,
+                print_rules: print_rules
             };
-            get_study_list()
-                .then(function (response) {ctrl.list(response.requests);
+
+            function view_rules(e, rules){
+                e.preventDefault();
+                return  messages.alert({
+                    header:'Summary of Rule Logic',
+                    content: m('.space', [
+                        ctrl.print_rules(rules),
+                    ])
+                });
+            }
+
+            function accept(deploy_id, priority){
+                accept_deploy(deploy_id)
+                .then(function (response) { return ctrl.list(response); })
+                .then(m.redraw);
+
+            }
+
+            function update(request, status){
+                update_deploy(request._id, request.priority, status)
+                .then(function (response) { return ctrl.list(response); })
+                .then(m.redraw);
+            }
+
+            function update_priority(request, priority){
+                request.priority = priority;
+                m.redraw();
+            }
+            get_deploys()
+                .then(function (response) {ctrl.list(response);
                 })
                 .catch(function (error) {
                     throw error;
@@ -21203,36 +21264,85 @@
                 ?
                 m('.loader')
                 :
-                m('table', {class:'table table-nowrap table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
-                    m('thead', [
-                        m('tr', [
-                            m('th', thConfig$4('CREATION_DATE',ctrl.sortBy), 'Creation date'),
-                            m('th', thConfig$4('FOLDER_LOCATION',ctrl.sortBy), 'Folder location'),
-                            m('th', thConfig$4('RULE_FILE',ctrl.sortBy), 'Rule file'),
-                            m('th', thConfig$4('RESEARCHER_EMAIL',ctrl.sortBy), 'Researcher email'),
-                            m('th', thConfig$4('RESEARCHER_NAME',ctrl.sortBy), 'Researcher name'),
-                            m('th', thConfig$4('TARGET_NUMBER',ctrl.sortBy), 'Target number'),
-                            m('th', thConfig$4('APPROVED_BY_A_REVIEWER',ctrl.sortBy), 'Approved by a reviewer'),
-                            m('th', thConfig$4('EXPERIMENT_FILE',ctrl.sortBy), 'Experiment file'),
-                            m('th', thConfig$4('LAUNCH_CONFIRMATION',ctrl.sortBy), 'Launch confirmation'),
-                            m('th', thConfig$4('COMMENTS',ctrl.sortBy), 'Comments')
-                        ])
-                    ]),
-                    m('tbody', [
-                        ctrl.list().map(function (study) { return m('tr', [
-                            m('td', study.CREATION_DATE),
-                            m('td', m('a', {href:study.FOLDER_LOCATION}, study.FOLDER_LOCATION)),
-                            m('td', study.RULE_FILE),
-                            m('td', m('a', {href:'mailto:' + study.RESEARCHER_EMAIL}, study.RESEARCHER_EMAIL)),
-                            m('td', study.RESEARCHER_NAME),
-                            m('td', study.TARGET_NUMBER),
-                            m('td', study.APPROVED_BY_A_REVIEWER),
-                            m('td', study.EXPERIMENT_FILE),
-                            m('td', study.LAUNCH_CONFIRMATION),
-                            m('td', study.COMMENTS)
-                        ]); })
+                m('', [
+                    m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
+                        m('thead',[
+                            m('tr', [
+                                m('th', thConfig$4('creation_date', ctrl.sortBy), 'Creation date'),
+                                m('th', thConfig$4('experiment_file', ctrl.sortBy), 'Study details'),
+                                m('th', 'Rules'),
+                                m('th', thConfig$4('user_name', ctrl.sortBy), 'Researcher name'),
+                                m('th', thConfig$4('target_number', ctrl.sortBy), 'Target number'),
+                                m('th', thConfig$4('priority', ctrl.sortBy), 'Priority'),
+                                m('th', thConfig$4('approved_by_a_reviewer', ctrl.sortBy), 'Approved by a reviewer'),
+                                m('th', thConfig$4('launch_confirmation', ctrl.sortBy), 'Launch confirmation'),
+                                m('th', thConfig$4('comments', ctrl.sortBy), 'Comments'),
+                                m('th', thConfig$4('status', ctrl.sortBy), 'Actions')
+                            ])
+                        ]),
+
+                        m('tbody',
+                            list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
+                                    m('td', formatDate$1(request.creation_date)),
+                                    m('td', request.study_name + ' (' + request.experiment_file +')'),
+                                    m('td', request.rules ==='' ? 'None' : m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.rules); }}, 'View')),
+                                    m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
+                                    m('td', request.target_number),
+                                    m('td',
+                                        request.status ? request.priority :
+                                            m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: function (e){ return ctrl.update_priority(request, e.target.value); }, onchange: function (e){ return ctrl.update_priority(request, e.target.value); }})
+                                    ),
+                                    m('td', request.approved_by_a_reviewer),
+                                    m('td', request.launch_confirmation),
+                                    m('td', request.comments),
+                                    m('td',
+                                        m('.btn-group', [
+
+                                            request.status ? '' : m('.btn.btn-primary', {onclick: function (e){ return ctrl.update(request, 'accept'); }},  [
+                                                m('i.fa.fa-check'),
+                                            ]),
+                                            request.status ? '' : m('.btn.btn-danger', {onclick: function (e){ return ctrl.update(request, 'reject'); }},  [
+                                                m('i.fa.fa-times'),
+                                            ])
+                                        ])
+                                    )
+                                ]); }
+                            )
+                        )
                     ])
                 ]);
+
+
+                    // m('table', {class:'table table-nowrap table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
+                    // m('thead', [
+                    //     m('tr', [
+                    //         m('th', thConfig('CREATION_DATE',ctrl.sortBy), 'Creation date'),
+                    //         m('th', thConfig('FOLDER_LOCATION',ctrl.sortBy), 'Folder location'),
+                    //         m('th', thConfig('RULE_FILE',ctrl.sortBy), 'Rule file'),
+                    //         m('th', thConfig('RESEARCHER_EMAIL',ctrl.sortBy), 'Researcher email'),
+                    //         m('th', thConfig('RESEARCHER_NAME',ctrl.sortBy), 'Researcher name'),
+                    //         m('th', thConfig('TARGET_NUMBER',ctrl.sortBy), 'Target number'),
+                    //         m('th', thConfig('APPROVED_BY_A_REVIEWER',ctrl.sortBy), 'Approved by a reviewer'),
+                    //         m('th', thConfig('EXPERIMENT_FILE',ctrl.sortBy), 'Experiment file'),
+                    //         m('th', thConfig('LAUNCH_CONFIRMATION',ctrl.sortBy), 'Launch confirmation'),
+                    //         m('th', thConfig('COMMENTS',ctrl.sortBy), 'Comments')
+                    //     ])
+                    // ]),
+                    // m('tbody', [
+                    //     ctrl.list().map(study => m('tr', [
+                    //         m('td', study.CREATION_DATE),
+                    //         m('td', m('a', {href:study.FOLDER_LOCATION}, study.FOLDER_LOCATION)),
+                    //         m('td', study.RULE_FILE),
+                    //         m('td', m('a', {href:'mailto:' + study.RESEARCHER_EMAIL}, study.RESEARCHER_EMAIL)),
+                    //         m('td', study.RESEARCHER_NAME),
+                    //         m('td', study.TARGET_NUMBER),
+                    //         m('td', study.APPROVED_BY_A_REVIEWER),
+                    //         m('td', study.EXPERIMENT_FILE),
+                    //         m('td', study.LAUNCH_CONFIRMATION),
+                    //         m('td', study.COMMENTS)
+                    //     ]))
+                    // ])
+                // ]);
         }
     };
 
@@ -21355,14 +21465,6 @@
                     ])
                 ]);
         }
-    };
-
-    var print_rules = function (set) {
-        var clean_rules   = set.data.map(function (rule){ return (rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
-        var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
-
-        var print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
-        return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
     };
 
     function deploy_url$1(study_id)
@@ -21522,7 +21624,6 @@
             if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
                 m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
-                ctrl.rule_file() !='' ? m('h5', ['Rule File: ', m('a', {href: ("/editor/" + (m.route.param('studyId')) + "/file/" + (ctrl.rule_file()) + ".xml"), config: m.route}, ctrl.rule_file())]) : ''
             ]);
             var exps = ctrl.study.files().filter(function (file){ return file.exp_data; });
             return !ctrl.loaded()
@@ -23631,29 +23732,18 @@
         };
     }
 
-    function formatDate$1(date_str){
-        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
-    }
-
     function oldDeploysComponent (args) { return m.component(oldDeploysDialog, args); }
-    var ASTERISK$3 = m('span.text-danger.font-weight-bold', '* ');
-
     var oldDeploysDialog = {
         controller: function controller(ref){
             var deploy2show = ref.deploy2show;
             var close = ref.close;
-
             return {deploy2show: deploy2show, close: close};
-
-
         },
         view: function view(ref){
             var deploy2show = ref.deploy2show;
             var close = ref.close;
 
-
             return m('.deploy.container', [
-
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [
@@ -23661,59 +23751,74 @@
                         ]),
                     ])
                 ]),
-                m('.row.space',[
-                    m('.col-sm-2',[
-                        m('strong.space', 'Creation date')
-                    ]),
-                    m('.col-sm-2',[
-                        m('strong.space', 'Experiment File')
-                    ]),
-                    m('.col-sm-1',[
-                        m('strong.space', 'Target Number'),
-                    ]),
-                    m('.col-sm-1',[
-                        m('strong.space', 'Priority')
-                    ]),
-
-                    m('.col-sm-1',[
-                        m('strong.space', 'Approved')
-                    ]),
-                    m('.col-sm-1',[
-                        m('strong.space', 'Another researcher')
-                    ]),
-                    m('.col-sm-4',[
-                        m('strong.space', 'Summary of Rule Logic')
-                    ])
-                ]),
-                deploy2show.map(function (deploy$$1){ return deploy$$1.sets.map(function (set){ return m('.row',[
-
-                            m('.col-sm-2',[
-                                deploy$$1.creation_date
+                m('table.table.table-sm.table-striped.table-hover',[
+                    m('thead',[
+                        m('tr', [
+                            m('td',[
+                                m('strong.space', 'Creation date')
                             ]),
-                            m('.col-sm-2',[
-                                set.experiment_file
+                            m('td',[
+                                m('strong.space', 'Experiment File')
                             ]),
-
-                            m('.col-sm-1',[
-                                set.target_number
+                            m('td',[
+                                m('strong.space', 'Target Number'),
                             ]),
-                            m('.col-sm-1',[
-                                set.priority
+                            m('td',[
+                                m('strong.space', 'Priority')
                             ]),
-
-                            m('.col-sm-1',[
-                                deploy$$1.approved_by_a_reviewer==='Yes' ? 'Yes' : 'No'
+                            m('td',[
+                                m('strong.space', 'Approved by a reviewer')
                             ]),
-                            m('.col-sm-1',[
-                                deploy$$1.launch_confirmation==='Yes' ? 'Yes' : 'No'
+                            m('td',[
+                                m('strong.space', 'Launch confirmation')
                             ]),
-
-                            m('.col-sm-4',[
-                                set.rules === '' ? 'None' : print_rules(set.rules)
+                            m('td',[
+                                m('strong.space', 'Summary of Rule Logic')
+                            ]),
+                            m('td',[
+                                m('strong.space', 'Comments')
                             ])
-                        ]); }
-                    ); }
-                ),
+                        ])
+                    ]),
+                    m('tbody', [
+                        deploy2show.map(function (deploy){ return deploy.sets.map(function (set){ return m('tr', {class:[set.status==='reject' ?  'table-danger' : set.status==='accept' ? 'table-success' : '']}, [
+
+                                    m('td',[
+                                        formatDate$1(deploy.creation_date)
+
+                                    ]),
+                                    m('td',[
+                                        set.experiment_file
+                                    ]),
+
+                                    m('td',[
+                                        set.target_number
+                                    ]),
+                                    m('td',[
+                                        set.priority
+                                    ]),
+
+                                    m('td',[
+                                        deploy.approved_by_a_reviewer==='Yes' ? 'Yes' : 'No'
+                                    ]),
+                                    m('td',[
+                                        deploy.launch_confirmation==='Yes' ? 'Yes' : 'No'
+                                    ]),
+
+                                    m('td',[
+                                        set.rules === '' ? 'None' : print_rules(set.rules)
+                                    ]),
+
+                                    m('td',[
+                                        deploy.comments
+                                    ])
+                                ]); }
+                            ); }
+                        )
+                    ])
+
+                ]),
+
 
 
                 m('.row.space',[
@@ -23855,7 +23960,6 @@
             }
 
             function present_deploys(deploy2show){
-                console.log(deploy2show[0].sets[0].rules);
                 var close = messages.close;
                 return messages.custom({header:'Old deploys',
                                         preventEnterSubmits: true,
@@ -24065,8 +24169,7 @@
                         equal:['Study name'],
                         equalXML:['Study name'],
                         values:studies.map(function (study){ return study.name; }),
-                        valuesXML:studies.map(function (study){ return study.id; }),
-                        data:{represent:'dropdown'},
+                        valuesXML:studies.map(function (study){ return study.id; })
                 });
                 return full_rules;
             });
@@ -24079,8 +24182,7 @@
             equal:['Is','Is Not'],
             equalXML:['eq','neq'],
             values:['Male','Female'],
-            valuesXML:['m','f'],
-            cType:'dropdown'
+            valuesXML:['m','f']
         },
         {
             name:'Month of birth',
@@ -24088,9 +24190,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:['January','February','March','April','May','June','July','August','September','October','November','December'],
-            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12'],
-            data:{represent:'string'},
-            cType:'dropdown'
+            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12']
         },
 
         {
@@ -24099,9 +24199,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:generate_years(),
-            valuesXML:[],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:[]
         },
         {
             name:'Education',
@@ -24109,9 +24207,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:['elementary school','junior high','some high school','high school graduate','some college','associates degree','bachelors degree','some graduate school','masters degree','JD','MD','PhD','other advanced degree','MBA'],
-            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13','14'],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13','14']
         },
 
         {
@@ -24134,9 +24230,7 @@
                 'Visual or performing arts',
                 'Other'
             ],
-            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13'],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13']
         },
 
         {
@@ -24145,9 +24239,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:['Strongly conservative','Moderately conservative','Slightly conservative','moderate/neutral','Slightly liberal','Moderately liberal','Strongly liberal'],
-            valuesXML:['-3','-2','-1','0','1','2','3'],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:['-3','-2','-1','0','1','2','3']
         },
 
         {
@@ -24156,9 +24248,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:['Very Religious','Moderately Religious','Somewhat Religious','Not at all Religious'],
-            valuesXML:['4','3','2','1'],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:['4','3','2','1']
         },
 
         {
@@ -24167,9 +24257,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:['Code'],
-            valuesXML:[],
-            data:{represent:'int'},
-            cType:'label'
+            valuesXML:[]
         },
         {
             name:'Race',
@@ -24178,9 +24266,7 @@
             equalXML:['eq','neq'],
             values:['American Indian/Alaska Native','East Asian','South Asian','Native Hawaiian or other Pacific Islander',
                 'Black or African American','White','More than one race - Black/White','More than one race - Other','Other or Unknown'],
-            valuesXML:['1','2','3','4','5','6','7','8','9'],
-            data:{represent:'string'},
-            cType:'dropdown'
+            valuesXML:['1','2','3','4','5','6','7','8','9']
         },
 
         {
@@ -24188,9 +24274,7 @@
             nameXML:'ethnicityomb',
             equal:['Is','Is Not'],
             equalXML:['eq','neq'],
-            values:['Hispanic or Latino','Not Hispanic or Latino','Unknown'],
-            valuesXML:['1','2','3'],
-            cType:'dropdown'
+            values:['Hispanic or Latino','Not Hispanic or Latino','Unknown']
         },
         {
             name:'General Occupation',
@@ -24227,8 +24311,7 @@
             valuesXML:[
                 '43','27','13','15','47','25','17','45','2931','00-0000','23','37','11','55',
                 '51','33','49','99-0001','41','19','39','25-9999','21','53','99-9999'
-            ],
-            cType:'dropdown'
+            ]
         },
 
         {
@@ -24454,8 +24537,7 @@
                 '21-1000','21-2000','21-9999',{type:''},//social
                 '53-1000','53-2000','53-3000','53-4000','53-5000','53-7000','53-6000',{type:''},//transportation
                 '99-9999',{type:''},//unemployed
-            ],
-            cType:'dropdown'
+            ]
         },
 
         {
@@ -24545,9 +24627,7 @@
                 'Yemen','Yugoslavia','Zambia',
                 'Zimbabwe'
             ],
-
             valuesXML:[
-
                 'us','af','al',
                 'dz','as','ad',
                 'ao','ai','aq',
@@ -24628,10 +24708,8 @@
                 'vg','vi','wf',
                 'ye','yu','zm',
                 'zw'
-            ],
-            cType:'dropdown'
+            ]
         },
-
         {
             name:'Residence',
             nameXML:'residence',
@@ -24799,27 +24877,15 @@
                 'vg','vi','wf',
                 'ye','yu','zm',
                 'zw'
-            ],
-            cType:'dropdown'},
-        // {
-        //     name:'Did not Start or Complete Study',
-        //     nameXML:'study',
-        //     equal:['Study ID'],
-        //     equalXML:[],
-        //     values:['Study ID'],
-        //     valuesXML:[],
-        //     data:{represent:'string'},
-        //     cType:'label'
-        // },
+            ]
+        },
         {
             name:'Number of Studies Started',
             nameXML:'started_studies',
             equal:['>','<','=','>=','<='],
             equalXML:['gt','lt','eq','gte','lte',],
             values:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-            valuesXML:[],
-            data:{represent:'int'},
-            cType:'dropdown'
+            valuesXML:[]
         },
         {
             name:'Did not Take a Study in the Last 15min',
@@ -24827,9 +24893,7 @@
             equal:[],
             equalXML:[],
             values:[],
-            valuesXML:[],
-            data:{represent:'string'},
-            cType:'none'
+            valuesXML:[]
         },
 
         {
@@ -24838,9 +24902,7 @@
             equal:['Is','Is Not'],
             equalXML:['eq','neq'],
             values:['Buddhist/Confucian/Shinto','Christian: Catholic or Orthodox','Christian: Protestant or Other','Hindu','Jewish','Muslim/Islamic','Not Religious','Other Religion'],
-            valuesXML:['buddhist','catholic','protestant','hindu','jewish','muslim','none','otherrelig'],
-            data:{represent:'string'},
-            cType:'dropdown'
+            valuesXML:['buddhist','catholic','protestant','hindu','jewish','muslim','none','otherrelig']
         },
         {
             name:'Specific Religious Affiliation',
@@ -25040,9 +25102,7 @@
                 'sunni',
                 'shiite',
                 'other muslim',
-            ],
-            data:{represent:'string'},
-            cType:'dropdown'
+            ]
         },
         {
             name:'Specific Religious Denomination',
@@ -25372,9 +25432,7 @@
                 'reformed united church of christ',
                 'other reformed church',
                 'reformed: don\'t know which'
-            ],
-            data:{represent:'string'},
-            cType:'dropdown'
+            ]
         }
     ];
 
@@ -25618,8 +25676,9 @@
                                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
                                                 m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
                                                 condition_data.values.map(function (value, val_id){ return typeof value === "object"
-                                                    ?
-                                                    m('optset.rule_optset', {disabled:true, selected:user_rule.value===value, label:value.comparator_str}, value.comparator_str)
+                                                    ?[
+                                                    m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
+                                                        ]
                                                     :
                                                     m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value); }
                                                 )

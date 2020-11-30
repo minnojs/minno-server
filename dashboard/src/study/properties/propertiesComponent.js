@@ -145,7 +145,6 @@ let collaborationComponent = {
         }
 
         function present_deploys(deploy2show){
-            console.log(deploy2show[0].sets[0].rules);
             let study = ctrl.study;
             let close = messages.close;
             return messages.custom({header:'Old deploys',

@@ -247,8 +247,9 @@ let ruletableComponent = {
                                             m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
                                             condition_data.values.map((value, val_id)=>
                                                 typeof value === "object"
-                                                ?
-                                                m('optset.rule_optset', {disabled:true, selected:user_rule.value===value, label:value.comparator_str}, value.comparator_str)
+                                                ?[
+                                                m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
+                                                    ]
                                                 :
                                                 m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value)
                                             )

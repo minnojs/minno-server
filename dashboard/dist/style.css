@@ -152,7 +152,8 @@ blockquote {
   color: green; }
 
 optgroup.rule_optgroup {
-  background-color: #c8dadf; }
+  background-color: #dddddd;
+  text-align: center; }
 
 #ruleGenerator {
   background-color: #bcdae2;

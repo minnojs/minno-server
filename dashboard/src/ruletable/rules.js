@@ -26,8 +26,7 @@ function get_all_rules()
                     equal:['Study name'],
                     equalXML:['Study name'],
                     values:studies.map(study=>study.name),
-                    valuesXML:studies.map(study=>study.id),
-                    data:{represent:'dropdown'},
+                    valuesXML:studies.map(study=>study.id)
             })
             return full_rules;
         });
@@ -40,8 +39,7 @@ let rules = [
         equal:['Is','Is Not'],
         equalXML:['eq','neq'],
         values:['Male','Female'],
-        valuesXML:['m','f'],
-        cType:'dropdown'
+        valuesXML:['m','f']
     },
     {
         name:'Month of birth',
@@ -49,9 +47,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:['January','February','March','April','May','June','July','August','September','October','November','December'],
-        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12'],
-        data:{represent:'string'},
-        cType:'dropdown'
+        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12']
     },
 
     {
@@ -60,9 +56,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:generate_years(),
-        valuesXML:[],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:[]
     },
     {
         name:'Education',
@@ -70,9 +64,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:['elementary school','junior high','some high school','high school graduate','some college','associates degree','bachelors degree','some graduate school','masters degree','JD','MD','PhD','other advanced degree','MBA'],
-        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13','14'],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13','14']
     },
 
     {
@@ -95,9 +87,7 @@ let rules = [
             'Visual or performing arts',
             'Other'
         ],
-        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13'],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13']
     },
 
     {
@@ -106,9 +96,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:['Strongly conservative','Moderately conservative','Slightly conservative','moderate/neutral','Slightly liberal','Moderately liberal','Strongly liberal'],
-        valuesXML:['-3','-2','-1','0','1','2','3'],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:['-3','-2','-1','0','1','2','3']
     },
 
     {
@@ -117,9 +105,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:['Very Religious','Moderately Religious','Somewhat Religious','Not at all Religious'],
-        valuesXML:['4','3','2','1'],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:['4','3','2','1']
     },
 
     {
@@ -128,9 +114,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:['Code'],
-        valuesXML:[],
-        data:{represent:'int'},
-        cType:'label'
+        valuesXML:[]
     },
     {
         name:'Race',
@@ -139,9 +123,7 @@ let rules = [
         equalXML:['eq','neq'],
         values:['American Indian/Alaska Native','East Asian','South Asian','Native Hawaiian or other Pacific Islander',
             'Black or African American','White','More than one race - Black/White','More than one race - Other','Other or Unknown'],
-        valuesXML:['1','2','3','4','5','6','7','8','9'],
-        data:{represent:'string'},
-        cType:'dropdown'
+        valuesXML:['1','2','3','4','5','6','7','8','9']
     },
 
     {
@@ -149,9 +131,7 @@ let rules = [
         nameXML:'ethnicityomb',
         equal:['Is','Is Not'],
         equalXML:['eq','neq'],
-        values:['Hispanic or Latino','Not Hispanic or Latino','Unknown'],
-        valuesXML:['1','2','3'],
-        cType:'dropdown'
+        values:['Hispanic or Latino','Not Hispanic or Latino','Unknown']
     },
     {
         name:'General Occupation',
@@ -188,8 +168,7 @@ let rules = [
         valuesXML:[
             '43','27','13','15','47','25','17','45','2931','00-0000','23','37','11','55',
             '51','33','49','99-0001','41','19','39','25-9999','21','53','99-9999'
-        ],
-        cType:'dropdown'
+        ]
     },
 
     {
@@ -415,8 +394,7 @@ let rules = [
             '21-1000','21-2000','21-9999',{type:''},//social
             '53-1000','53-2000','53-3000','53-4000','53-5000','53-7000','53-6000',{type:''},//transportation
             '99-9999',{type:''},//unemployed
-        ],
-        cType:'dropdown'
+        ]
     },
 
     {
@@ -506,9 +484,7 @@ let rules = [
             'Yemen','Yugoslavia','Zambia',
             'Zimbabwe'
         ],
-
         valuesXML:[
-
             'us','af','al',
             'dz','as','ad',
             'ao','ai','aq',
@@ -589,10 +565,8 @@ let rules = [
             'vg','vi','wf',
             'ye','yu','zm',
             'zw'
-        ],
-        cType:'dropdown'
+        ]
     },
-
     {
         name:'Residence',
         nameXML:'residence',
@@ -760,27 +734,15 @@ let rules = [
             'vg','vi','wf',
             'ye','yu','zm',
             'zw'
-        ],
-        cType:'dropdown'},
-    // {
-    //     name:'Did not Start or Complete Study',
-    //     nameXML:'study',
-    //     equal:['Study ID'],
-    //     equalXML:[],
-    //     values:['Study ID'],
-    //     valuesXML:[],
-    //     data:{represent:'string'},
-    //     cType:'label'
-    // },
+        ]
+    },
     {
         name:'Number of Studies Started',
         nameXML:'started_studies',
         equal:['>','<','=','>=','<='],
         equalXML:['gt','lt','eq','gte','lte',],
         values:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-        valuesXML:[],
-        data:{represent:'int'},
-        cType:'dropdown'
+        valuesXML:[]
     },
     {
         name:'Did not Take a Study in the Last 15min',
@@ -788,9 +750,7 @@ let rules = [
         equal:[],
         equalXML:[],
         values:[],
-        valuesXML:[],
-        data:{represent:'string'},
-        cType:'none'
+        valuesXML:[]
     },
 
     {
@@ -799,9 +759,7 @@ let rules = [
         equal:['Is','Is Not'],
         equalXML:['eq','neq'],
         values:['Buddhist/Confucian/Shinto','Christian: Catholic or Orthodox','Christian: Protestant or Other','Hindu','Jewish','Muslim/Islamic','Not Religious','Other Religion'],
-        valuesXML:['buddhist','catholic','protestant','hindu','jewish','muslim','none','otherrelig'],
-        data:{represent:'string'},
-        cType:'dropdown'
+        valuesXML:['buddhist','catholic','protestant','hindu','jewish','muslim','none','otherrelig']
     },
     {
         name:'Specific Religious Affiliation',
@@ -1001,9 +959,7 @@ let rules = [
             'sunni',
             'shiite',
             'other muslim',
-        ],
-        data:{represent:'string'},
-        cType:'dropdown'
+        ]
     },
     {
         name:'Specific Religious Denomination',
@@ -1333,8 +1289,6 @@ let rules = [
             'reformed united church of christ',
             'other reformed church',
             'reformed: don\'t know which'
-        ],
-        data:{represent:'string'},
-        cType:'dropdown'
+        ]
     }
 ];
