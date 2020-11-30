@@ -370,6 +370,9 @@ function get_user_study(user_id, study_id){
         .then(function([user_data, study_data]){
             if (!user_data) return Promise.reject({status:403, message:'Error: User not found'});
             if (!study_data) return Promise.reject({status:403, message:'Error: Study not found'});
+            if (user_data.role==='su')
+                return {user_data, study_data, can_read:true, can_write:true, can_read_data:true};
+
             if (study_data.users.find(user=>user.user_id===user_id))
             {
                 const can_write     = study_data.users.find(user=>user.user_id===user_id).permission !=='read only';
