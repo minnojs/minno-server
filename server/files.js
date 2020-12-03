@@ -51,6 +51,33 @@ function walk(server_url, folder_path, exps, base_path = folder_path){
     }
 }
 
+function view_study_file(link, server_url, file_id, version_id = ''){
+    return studies_comp.get_id_with_link(link)
+        .then(function (study) {
+            if(!study)
+                return Promise.reject({status:400, message: 'Error: code doesn\'t exist!'});
+
+            const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
+            return get_file_content(owner_id, study._id, file_id, version_id);
+        });
+}
+
+function view_study_files(link, server_url, version_id = ''){
+    return studies_comp.get_id_with_link(link)
+        .then(function(study){
+            if(!study)
+                return res.status(400).json('Error: code doesn\'t exist');
+            const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
+            return get_study_files(owner_id, parseInt(study._id), server_url, parseInt(version_id))
+                .then(function(response){
+                    response.is_readonly = true;
+                    response.permission  = 'read only';
+                    response.has_data_permission =  false;
+                    return response;
+                });
+        });
+}
+
 function get_study_files(user_id, study_id, server_url, version_id='') {
     return has_read_permission(user_id, study_id)
     .then(function({study_data, can_write}){
@@ -333,4 +360,4 @@ function upload(user_id, study_id, req) {
     });
 }
 
-module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, download_data, rename_file, copy_file, duplicate_file, upload};
+module.exports = {get_study_files, create_folder, update_file, get_file_content, delete_files, download_files, download_zip, download_data, rename_file, copy_file, duplicate_file, upload, view_study_files, view_study_file};

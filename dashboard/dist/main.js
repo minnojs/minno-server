@@ -12393,8 +12393,13 @@
 
     var filePrototype = {
         apiUrl: function apiUrl(){
-            if(this.viewStudy)
+            console.log(this);
+            console.log(!!this.version_id);
+            if(this.viewStudy && !this.version_id)
                 return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
+            if(this.viewStudy && !!this.version_id)
+                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+
             if (this.version_id)
                 return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
             return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
@@ -18646,7 +18651,10 @@
         e.stopPropagation();
         e.preventDefault();
         if (study.version)
-            m.route(("/editor/" + (file.studyId) + "/" + (study.version.id) + "/file/" + (encodeURIComponent(file.id))));
+            if (file.viewStudy)
+                m.route(("/view/" + (m.route.param('code')) + "/version/" + (study.version_id) + "/file/" + (encodeURIComponent(file.id))));
+            else
+                m.route(("/editor/" + (file.studyId) + "/" + (study.version.id) + "/file/" + (encodeURIComponent(file.id))));
         else {
             if (file.viewStudy)
                 m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
@@ -18958,11 +18966,72 @@
         return localStorage.fileSidebarWidth;
     }
 
+    function flattenFiles(files){
+        if (!files) return [];
+        return files
+            .map(spreadFile)
+            .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
+    }
+
+    function assignStudyId(id){
+        return function (f) { return Object.assign(f, {studyId: id}); };
+    }
+    function assignVersionId(version_id){
+        return function (f) { return Object.assign(f, {version_id: version_id}); };
+    }
+
+    function assignViewStudy(){
+        return function (f) { return Object.assign(f, {viewStudy: true}); };
+    }
+
+    // create an array including file and all its children
+    function spreadFile(file){
+        return [file].concat(flattenFiles(file.files));
+    }
+
     var studyPrototype$1 = {
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
             return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
+        },
+
+        apiVersionURL: function apiVersionURL(version){
+            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
+        },
+
+        get4version: function get4version(version){
+            var this$1 = this;
+
+            return fetchJson(this.apiVersionURL(version))
+                .then(function (study) {
+                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
+                    var files = flattenFiles(study.files)
+                        .map(assignStudyId(this$1.id))
+                        .map(assignViewStudy())
+                        .map(assignVersionId(version))
+                        .map(fileFactory);
+                    this$1.loaded = true;
+                    this$1.isReadonly = true;
+                    this$1.istemplate = study.is_template;
+                    this$1.is_locked = true;
+                    this$1.is_published = study.is_published;
+                    this$1.is_public = study.is_public;
+                    this$1.has_data_permission = false;
+                    this$1.description = study.description;
+                    this$1.version_id = version;
+                    this$1.name = study.study_name;
+                    this$1.type = study.type || 'minno02';
+                    this$1.base_url = study.base_url;
+                    this$1.versions = study.versions ? study.versions : [];
+
+                    this$1.files(files);
+                    this$1.sort();
+                })
+                .catch(function (reason) {
+                    this$1.error = true;
+                    return Promise.reject(reason); // do not swallow error
+                });
         },
 
         get: function get(){
@@ -19002,25 +19071,6 @@
                     // return Promise.reject(reason); // do not swallow error
                 });
 
-            function flattenFiles(files){
-                if (!files) return [];
-                return files
-                    .map(spreadFile)
-                    .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
-            }
-
-            function assignStudyId(id){
-                return function (f) { return Object.assign(f, {studyId: id}); };
-            }
-
-            function assignViewStudy(){
-                return function (f) { return Object.assign(f, {viewStudy: true}); };
-            }
-
-            // create an array including file and all its children
-            function spreadFile(file){
-                return [file].concat(flattenFiles(file.files));
-            }
         },
 
         getFile: function getFile(id){
@@ -19181,16 +19231,20 @@
         controller: function (){
 
             var code = m.route.param('code');
+            var version_id = m.route.param('version_id');
             if (!study$1 || (study$1.code !== code)){
                 study$1 = studyFactory$1(code);
-
-                study$1
-                    .get()
-                    .catch(function (reason) {
-                        if(reason.status==403)
-                            m.route('/');
-                    })
-                    .then(m.redraw);
+                !version_id
+                    ?
+                    study$1
+                        .get()
+                        .catch(function (err){ return study$1.err = err.message; })
+                        .then(m.redraw)
+                    :
+                    study$1
+                        .get4version(version_id)
+                        .catch(function (err){ return study$1.err = err.message; })
+                        .then(m.redraw);
             }
 
             var ctrl = {study: study$1, onunload: onunload};
@@ -24273,7 +24327,10 @@
         '/studies/statistics' : statisticsComponent,
 
         '/view/:code': editorLayoutComponent$1,
-        '/view/:code/:resource/:fileId': editorLayoutComponent$1,
+        '/view/:code/version/:version_id': editorLayoutComponent$1,
+
+        '/view/:code/file/:fileId': editorLayoutComponent$1,
+        '/view/:code/version/:version_id/file/:fileId': editorLayoutComponent$1,
 
 
 
@@ -24318,7 +24375,7 @@
                         isloggedin = ctrl.isloggedin = response.isloggedin;
                         ctrl.present_templates(response.present_templates);
                         ctrl.first_admin_login(response.first_admin_login);
-                        var is_view = (m.route() === ("/view/" + (m.route.param('code'))) || m.route() === ("/view/" + (m.route.param('code')) + "/" + (m.route.param('resource')) + "/" + (encodeURIComponent(m.route.param('fileId')))));
+                        var is_view = (m.route() === ("/view/" + (m.route.param('code'))) || m.route() === ("/view/" + (m.route.param('code')) + "/version/" + (m.route.param('version_id'))) || m.route() === ("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(m.route.param('fileId')))) ||  m.route() === ("/view/" + (m.route.param('code')) + "/version/" + (m.route.param('version_id')) + "/file/" + (encodeURIComponent(m.route.param('fileId')))));
 
                         if(ctrl.role()==='ro' && !is_view)
                             return doLogout();

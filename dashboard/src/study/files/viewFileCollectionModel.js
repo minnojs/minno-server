@@ -3,9 +3,69 @@ import fileFactory from './fileModel';
 export default studyFactory;
 import {baseUrl} from 'modelUrls';
 
+
+function flattenFiles(files){
+    if (!files) return [];
+    return files
+        .map(spreadFile)
+        .reduce((result, fileArr) => result.concat(fileArr),[]);
+}
+
+function assignStudyId(id){
+    return f => Object.assign(f, {studyId: id});
+}
+function assignVersionId(version_id){
+    return f => Object.assign(f, {version_id: version_id});
+}
+
+function assignViewStudy(){
+    return f => Object.assign(f, {viewStudy: true});
+}
+
+// create an array including file and all its children
+function spreadFile(file){
+    return [file].concat(flattenFiles(file.files));
+}
+
 let studyPrototype = {
     apiURL(path = ''){
         return `${baseUrl}/view_files/${encodeURIComponent(this.code)}${path}`;
+    },
+
+    apiVersionURL(version){
+        return `${baseUrl}/view_files/${encodeURIComponent(this.code)}/version/${encodeURIComponent(version)}`;
+    },
+
+    get4version(version){
+        return fetchJson(this.apiVersionURL(version))
+            .then(study => {
+                this.version = study.versions.filter(version_obj=>version_obj.id === parseInt(version))[0];
+                let files = flattenFiles(study.files)
+                    .map(assignStudyId(this.id))
+                    .map(assignViewStudy())
+                    .map(assignVersionId(version))
+                    .map(fileFactory);
+                this.loaded = true;
+                this.isReadonly = true;
+                this.istemplate = study.is_template;
+                this.is_locked = true;
+                this.is_published = study.is_published;
+                this.is_public = study.is_public;
+                this.has_data_permission = false;
+                this.description = study.description;
+                this.version_id = version;
+                this.name = study.study_name;
+                this.type = study.type || 'minno02';
+                this.base_url = study.base_url;
+                this.versions = study.versions ? study.versions : [];
+
+                this.files(files);
+                this.sort();
+            })
+            .catch(reason => {
+                this.error = true;
+                return Promise.reject(reason); // do not swallow error
+            });
     },
 
     get(){
@@ -43,25 +103,6 @@ let studyPrototype = {
                 // return Promise.reject(reason); // do not swallow error
             });
 
-        function flattenFiles(files){
-            if (!files) return [];
-            return files
-                .map(spreadFile)
-                .reduce((result, fileArr) => result.concat(fileArr),[]);
-        }
-
-        function assignStudyId(id){
-            return f => Object.assign(f, {studyId: id});
-        }
-
-        function assignViewStudy(){
-            return f => Object.assign(f, {viewStudy: true});
-        }
-
-        // create an array including file and all its children
-        function spreadFile(file){
-            return [file].concat(flattenFiles(file.files));
-        }
     },
 
     getFile(id){

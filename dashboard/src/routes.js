@@ -75,7 +75,10 @@ let routes = {
     '/studies/statistics' : statisticsComponent,
 
     '/view/:code': viewFilesComponent,
-    '/view/:code/:resource/:fileId': viewFilesComponent,
+    '/view/:code/version/:version_id': viewFilesComponent,
+
+    '/view/:code/file/:fileId': viewFilesComponent,
+    '/view/:code/version/:version_id/file/:fileId': viewFilesComponent,
 
 
 

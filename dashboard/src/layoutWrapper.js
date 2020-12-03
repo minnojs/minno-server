@@ -32,7 +32,7 @@ let layout = route => {
                     isloggedin = ctrl.isloggedin = response.isloggedin;
                     ctrl.present_templates(response.present_templates);
                     ctrl.first_admin_login(response.first_admin_login);
-                    let is_view = (m.route() === `/view/${m.route.param('code')}` || m.route() === `/view/${m.route.param('code')}/${m.route.param('resource')}/${encodeURIComponent(m.route.param('fileId'))}`);
+                    let is_view = (m.route() === `/view/${m.route.param('code')}` || m.route() === `/view/${m.route.param('code')}/version/${m.route.param('version_id')}` || m.route() === `/view/${m.route.param('code')}/file/${encodeURIComponent(m.route.param('fileId'))}` ||  m.route() === `/view/${m.route.param('code')}/version/${m.route.param('version_id')}/file/${encodeURIComponent(m.route.param('fileId'))}`);
 
                     if(ctrl.role()==='ro' && !is_view)
                         return doLogout();

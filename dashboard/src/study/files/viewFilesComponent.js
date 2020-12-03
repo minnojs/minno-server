@@ -12,16 +12,20 @@ let editorLayoutComponent = {
     controller: ()=>{
 
         let code = m.route.param('code');
+        let version_id = m.route.param('version_id');
         if (!study || (study.code !== code)){
             study = studyFactory(code);
-
-            study
-                .get()
-                .catch(reason => {
-                    if(reason.status==403)
-                        m.route('/');
-                })
-                .then(m.redraw);
+            !version_id
+                ?
+                study
+                    .get()
+                    .catch(err=>study.err = err.message)
+                    .then(m.redraw)
+                :
+                study
+                    .get4version(version_id)
+                    .catch(err=>study.err = err.message)
+                    .then(m.redraw);
         }
 
         let ctrl = {study, onunload};
