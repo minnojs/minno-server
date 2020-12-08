@@ -111,6 +111,7 @@ let usersComponent = {
                             m('td',
                                 m('select.form-control', {value:user.role, onchange : function(){ ctrl.update(user.id, this.value); }}, [
                                     m('option',{value:'u', selected: user.role !== 'su'},  'Simple user'),
+                                    m('option',{value:'du', selected: user.role !== 'du'},  'Deployer'),
                                     m('option',{value:'su', selected: user.role === 'su'}, 'Super user')
                                 ])
                             ),

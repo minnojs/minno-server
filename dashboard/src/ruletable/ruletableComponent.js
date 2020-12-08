@@ -45,7 +45,7 @@ let ruletableComponent = {
             get_rules()
                 .then(response => {
                     ctrl.loaded(true);
-                    ctrl.sets(response.sets);
+                    ctrl.sets(response.sets ? response.sets : []);
                     ctrl.sets2show(ctrl.sets());
                     get_all_rules()
                     .then(all_rules => ctrl.all_rules = all_rules)

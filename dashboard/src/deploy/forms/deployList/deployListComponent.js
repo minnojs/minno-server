@@ -13,14 +13,23 @@ let deployComponent = {
     controller(){
         let ctrl = {
             list: m.prop(''),
+            list2show: m.prop(''),
             sortBy: m.prop('creation_date'),
+            filter_by:m.prop('pending'),
+            loaded:m.prop(false),
+            filter_requests,
             view_rules,
-            accept,
             update,
             update_priority,
             print_rules
         };
 
+        function filter_requests(status){
+            ctrl.filter_by(status);
+            if(status==='all')
+                return ctrl.list2show(ctrl.list());
+            ctrl.list2show(ctrl.list().filter(request=>request.status===status));
+        }
         function view_rules(e, rules){
             e.preventDefault();
             return  messages.alert({
@@ -31,16 +40,12 @@ let deployComponent = {
             });
         }
 
-        function accept(deploy_id, priority){
-            accept_deploy(deploy_id)
-            .then(response =>ctrl.list(response))
-            .then(m.redraw);
-
-        }
 
         function update(request, status){
             update_deploy(request._id, request.priority, status)
             .then(response =>ctrl.list(response))
+            .then(()=>ctrl.list2show(ctrl.list()))
+            .then(()=>filter_requests(ctrl.filter_by()))
             .then(m.redraw);
         }
 
@@ -49,8 +54,10 @@ let deployComponent = {
             m.redraw();
         }
         get_deploys()
-            .then(response =>{ctrl.list(response);
-            })
+            .then(response => ctrl.list(response))
+            .then(()=>ctrl.list2show(ctrl.list()))
+            .then(()=>filter_requests(ctrl.filter_by()))
+            .then(()=>ctrl.loaded(true))
             .catch(error => {
                 throw error;
             })
@@ -58,12 +65,26 @@ let deployComponent = {
         return {ctrl};
     },
     view({ctrl}){
-        let list = ctrl.list;
-        return ctrl.list().length === 0
+        let list = ctrl.list2show;
+        return !ctrl.loaded()
             ?
             m('.loader')
             :
             m('', [
+                m('.row.space', [
+                    m('.col-xs-1.space',
+                        m('strong', 'Show only')
+                    ),
+                    m('.col-xs-1',
+
+                        m('select.c-select.form-control.space',{onchange: e => {ctrl.filter_requests(e.target.value)}}, [
+                            m('option', {value:'pending', selected:ctrl.filter_by()==='pending'}, 'Pending'),
+                            m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
+                            m('option', {value:'reject', selected:ctrl.filter_by()==='reject'}, 'Rejected'),
+                            m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
+                        ])
+                    ),
+                ]),
                 m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
                     m('thead',[
                         m('tr', [
@@ -98,12 +119,12 @@ let deployComponent = {
                                 m('td',
                                     m('.btn-group', [
 
-                                        request.status ? '' : m('.btn.btn-primary', {onclick: e=>ctrl.update(request, 'accept')},  [
+                                        request.status !== 'pending' ? '' : m('.btn.btn-primary.btn-sm', {title:'Accept', onclick: e=>ctrl.update(request, 'accept')},  [
                                             m('i.fa.fa-check'),
                                         ]),
-                                        request.status ? '' : m('.btn.btn-danger', {onclick: e=>ctrl.update(request, 'reject')},  [
+                                        request.status !== 'pending' ? '' : m('.btn.btn-danger.btn-sm', {title:'Reject', onclick: e=>ctrl.update(request, 'reject')},  [
                                             m('i.fa.fa-times'),
-                                        ])
+                                        ]),
                                     ])
                                 )
                             ])

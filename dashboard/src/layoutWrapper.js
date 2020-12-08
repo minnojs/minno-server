@@ -32,7 +32,7 @@ let layout = route => {
                     isloggedin = ctrl.isloggedin = response.isloggedin;
                     ctrl.present_templates(response.present_templates);
                     ctrl.first_admin_login(response.first_admin_login);
-                    let is_view = (m.route() === `/view/${m.route.param('code')}` || m.route() === `/view/${m.route.param('code')}/${m.route.param('resource')}/${encodeURIComponent(m.route.param('fileId'))}`);
+                    let is_view = (m.route() === `/view/${m.route.param('code')}` || m.route() === `/view/${m.route.param('code')}/version/${m.route.param('version_id')}` || m.route() === `/view/${m.route.param('code')}/file/${encodeURIComponent(m.route.param('fileId'))}` ||  m.route() === `/view/${m.route.param('code')}/version/${m.route.param('version_id')}/file/${encodeURIComponent(m.route.param('fileId'))}`);
 
                     if(ctrl.role()==='ro' && !is_view)
                         return doLogout();
@@ -40,6 +40,12 @@ let layout = route => {
 
                     if(ctrl.role()!=='su' && is4su)
                         m.route('./');
+
+                    if(ctrl.role()==='du' && m.route() !== '/deployList')
+                        return m.route('/deployList');
+
+                    if(ctrl.role()!=='du' && ctrl.role()!=='su'  && m.route() === '/deployList')
+                        return m.route('./');
 
                     if (!is_view &&  !ctrl.isloggedin  && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
                         let url = m.route();
@@ -135,7 +141,7 @@ let layout = route => {
                     m('nav.navbar.navbar-dark', [
                         m('a.navbar-brand', {href:'', config:m.route}, 'Dashboard'),
                         m('ul.nav.navbar-nav',[
-
+                            ctrl.role()==='du' ? '' :
                             Object.keys(settings).map(comp=>
                                 settings_hash[comp].su && ctrl.role() !=='su' ? '' :
                                     settings[comp].length==0 ?
@@ -151,7 +157,6 @@ let layout = route => {
                                                     settings[comp].map(sub_comp=>
                                                         m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text)
                                                     )
-
                                                 ])
                                             ])
                                         ])

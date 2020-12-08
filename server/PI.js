@@ -120,6 +120,7 @@ function request_deploy(user_id, study_id, props) {
                         study_id,
                         study_name:study_data.name,
                         version_id:last_version.id,
+                        status:'pending',
                         link:'link',
                         creation_date:props.creation_date,
                         email:user_data.email,

@@ -365,6 +365,7 @@ function has_write_permission(user_id, study_id){
         .then(result => result.can_write ? result : Promise.reject({status:403, message:'Permission denied'}));
 }
 
+
 function get_user_study(user_id, study_id){
     return connection.then(function (db) {
         const users = db.collection('users');

@@ -12364,8 +12364,13 @@
 
     var filePrototype = {
         apiUrl: function apiUrl(){
-            if(this.viewStudy)
+            console.log(this);
+            console.log(!!this.version_id);
+            if(this.viewStudy && !this.version_id)
                 return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
+            if(this.viewStudy && !!this.version_id)
+                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+
             if (this.version_id)
                 return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
             return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
@@ -18617,7 +18622,10 @@
         e.stopPropagation();
         e.preventDefault();
         if (study.version)
-            m.route(("/editor/" + (file.studyId) + "/" + (study.version.id) + "/file/" + (encodeURIComponent(file.id))));
+            if (file.viewStudy)
+                m.route(("/view/" + (m.route.param('code')) + "/version/" + (study.version_id) + "/file/" + (encodeURIComponent(file.id))));
+            else
+                m.route(("/editor/" + (file.studyId) + "/" + (study.version.id) + "/file/" + (encodeURIComponent(file.id))));
         else {
             if (file.viewStudy)
                 m.route(("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(file.id))));
@@ -18929,11 +18937,72 @@
         return localStorage.fileSidebarWidth;
     }
 
+    function flattenFiles(files){
+        if (!files) return [];
+        return files
+            .map(spreadFile)
+            .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
+    }
+
+    function assignStudyId(id){
+        return function (f) { return Object.assign(f, {studyId: id}); };
+    }
+    function assignVersionId(version_id){
+        return function (f) { return Object.assign(f, {version_id: version_id}); };
+    }
+
+    function assignViewStudy(){
+        return function (f) { return Object.assign(f, {viewStudy: true}); };
+    }
+
+    // create an array including file and all its children
+    function spreadFile(file){
+        return [file].concat(flattenFiles(file.files));
+    }
+
     var studyPrototype$1 = {
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
             return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
+        },
+
+        apiVersionURL: function apiVersionURL(version){
+            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
+        },
+
+        get4version: function get4version(version){
+            var this$1 = this;
+
+            return fetchJson(this.apiVersionURL(version))
+                .then(function (study) {
+                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
+                    var files = flattenFiles(study.files)
+                        .map(assignStudyId(this$1.id))
+                        .map(assignViewStudy())
+                        .map(assignVersionId(version))
+                        .map(fileFactory);
+                    this$1.loaded = true;
+                    this$1.isReadonly = true;
+                    this$1.istemplate = study.is_template;
+                    this$1.is_locked = true;
+                    this$1.is_published = study.is_published;
+                    this$1.is_public = study.is_public;
+                    this$1.has_data_permission = false;
+                    this$1.description = study.description;
+                    this$1.version_id = version;
+                    this$1.name = study.study_name;
+                    this$1.type = study.type || 'minno02';
+                    this$1.base_url = study.base_url;
+                    this$1.versions = study.versions ? study.versions : [];
+
+                    this$1.files(files);
+                    this$1.sort();
+                })
+                .catch(function (reason) {
+                    this$1.error = true;
+                    return Promise.reject(reason); // do not swallow error
+                });
         },
 
         get: function get(){
@@ -18973,25 +19042,6 @@
                     // return Promise.reject(reason); // do not swallow error
                 });
 
-            function flattenFiles(files){
-                if (!files) return [];
-                return files
-                    .map(spreadFile)
-                    .reduce(function (result, fileArr) { return result.concat(fileArr); },[]);
-            }
-
-            function assignStudyId(id){
-                return function (f) { return Object.assign(f, {studyId: id}); };
-            }
-
-            function assignViewStudy(){
-                return function (f) { return Object.assign(f, {viewStudy: true}); };
-            }
-
-            // create an array including file and all its children
-            function spreadFile(file){
-                return [file].concat(flattenFiles(file.files));
-            }
         },
 
         getFile: function getFile(id){
@@ -19152,16 +19202,20 @@
         controller: function (){
 
             var code = m.route.param('code');
+            var version_id = m.route.param('version_id');
             if (!study$1 || (study$1.code !== code)){
                 study$1 = studyFactory$1(code);
-
-                study$1
-                    .get()
-                    .catch(function (reason) {
-                        if(reason.status==403)
-                            m.route('/');
-                    })
-                    .then(m.redraw);
+                !version_id
+                    ?
+                    study$1
+                        .get()
+                        .catch(function (err){ return study$1.err = err.message; })
+                        .then(m.redraw)
+                    :
+                    study$1
+                        .get4version(version_id)
+                        .catch(function (err){ return study$1.err = err.message; })
+                        .then(m.redraw);
             }
 
             var ctrl = {study: study$1, onunload: onunload};
@@ -21212,14 +21266,23 @@
         controller: function controller(){
             var ctrl = {
                 list: m.prop(''),
+                list2show: m.prop(''),
                 sortBy: m.prop('creation_date'),
+                filter_by:m.prop('pending'),
+                loaded:m.prop(false),
+                filter_requests: filter_requests,
                 view_rules: view_rules,
-                accept: accept,
                 update: update,
                 update_priority: update_priority,
                 print_rules: print_rules
             };
 
+            function filter_requests(status){
+                ctrl.filter_by(status);
+                if(status==='all')
+                    return ctrl.list2show(ctrl.list());
+                ctrl.list2show(ctrl.list().filter(function (request){ return request.status===status; }));
+            }
             function view_rules(e, rules){
                 e.preventDefault();
                 return  messages.alert({
@@ -21230,16 +21293,12 @@
                 });
             }
 
-            function accept(deploy_id, priority){
-                accept_deploy(deploy_id)
-                .then(function (response) { return ctrl.list(response); })
-                .then(m.redraw);
-
-            }
 
             function update(request, status){
                 update_deploy(request._id, request.priority, status)
                 .then(function (response) { return ctrl.list(response); })
+                .then(function (){ return ctrl.list2show(ctrl.list()); })
+                .then(function (){ return filter_requests(ctrl.filter_by()); })
                 .then(m.redraw);
             }
 
@@ -21248,8 +21307,10 @@
                 m.redraw();
             }
             get_deploys()
-                .then(function (response) {ctrl.list(response);
-                })
+                .then(function (response) { return ctrl.list(response); })
+                .then(function (){ return ctrl.list2show(ctrl.list()); })
+                .then(function (){ return filter_requests(ctrl.filter_by()); })
+                .then(function (){ return ctrl.loaded(true); })
                 .catch(function (error) {
                     throw error;
                 })
@@ -21259,12 +21320,26 @@
         view: function view(ref){
             var ctrl = ref.ctrl;
 
-            var list = ctrl.list;
-            return ctrl.list().length === 0
+            var list = ctrl.list2show;
+            return !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('', [
+                    m('.row.space', [
+                        m('.col-xs-1.space',
+                            m('strong', 'Show only')
+                        ),
+                        m('.col-xs-1',
+
+                            m('select.c-select.form-control.space',{onchange: function (e) {ctrl.filter_requests(e.target.value);}}, [
+                                m('option', {value:'pending', selected:ctrl.filter_by()==='pending'}, 'Pending'),
+                                m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
+                                m('option', {value:'reject', selected:ctrl.filter_by()==='reject'}, 'Rejected'),
+                                m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
+                            ])
+                        ),
+                    ]),
                     m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
                         m('thead',[
                             m('tr', [
@@ -21298,12 +21373,12 @@
                                     m('td',
                                         m('.btn-group', [
 
-                                            request.status ? '' : m('.btn.btn-primary', {onclick: function (e){ return ctrl.update(request, 'accept'); }},  [
+                                            request.status !== 'pending' ? '' : m('.btn.btn-primary.btn-sm', {title:'Accept', onclick: function (e){ return ctrl.update(request, 'accept'); }},  [
                                                 m('i.fa.fa-check'),
                                             ]),
-                                            request.status ? '' : m('.btn.btn-danger', {onclick: function (e){ return ctrl.update(request, 'reject'); }},  [
+                                            request.status !== 'pending' ? '' : m('.btn.btn-danger.btn-sm', {title:'Reject', onclick: function (e){ return ctrl.update(request, 'reject'); }},  [
                                                 m('i.fa.fa-times'),
-                                            ])
+                                            ]),
                                         ])
                                     )
                                 ]); }
@@ -22319,6 +22394,7 @@
                                 m('td',
                                     m('select.form-control', {value:user.role, onchange : function(){ ctrl.update(user.id, this.value); }}, [
                                         m('option',{value:'u', selected: user.role !== 'su'},  'Simple user'),
+                                        m('option',{value:'du', selected: user.role !== 'du'},  'Deployer'),
                                         m('option',{value:'su', selected: user.role === 'su'}, 'Super user')
                                     ])
                                 ),
@@ -25473,7 +25549,7 @@
                 get_rules()
                     .then(function (response) {
                         ctrl.loaded(true);
-                        ctrl.sets(response.sets);
+                        ctrl.sets(response.sets ? response.sets : []);
                         ctrl.sets2show(ctrl.sets());
                         get_all_rules()
                         .then(function (all_rules) { return ctrl.all_rules = all_rules; });
@@ -26292,7 +26368,10 @@
         '/studies/statistics' : statisticsComponent,
 
         '/view/:code': editorLayoutComponent$1,
-        '/view/:code/:resource/:fileId': editorLayoutComponent$1,
+        '/view/:code/version/:version_id': editorLayoutComponent$1,
+
+        '/view/:code/file/:fileId': editorLayoutComponent$1,
+        '/view/:code/version/:version_id/file/:fileId': editorLayoutComponent$1,
 
 
 
@@ -26338,7 +26417,7 @@
                         isloggedin = ctrl.isloggedin = response.isloggedin;
                         ctrl.present_templates(response.present_templates);
                         ctrl.first_admin_login(response.first_admin_login);
-                        var is_view = (m.route() === ("/view/" + (m.route.param('code'))) || m.route() === ("/view/" + (m.route.param('code')) + "/" + (m.route.param('resource')) + "/" + (encodeURIComponent(m.route.param('fileId')))));
+                        var is_view = (m.route() === ("/view/" + (m.route.param('code'))) || m.route() === ("/view/" + (m.route.param('code')) + "/version/" + (m.route.param('version_id'))) || m.route() === ("/view/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(m.route.param('fileId')))) ||  m.route() === ("/view/" + (m.route.param('code')) + "/version/" + (m.route.param('version_id')) + "/file/" + (encodeURIComponent(m.route.param('fileId')))));
 
                         if(ctrl.role()==='ro' && !is_view)
                             return doLogout();
@@ -26346,6 +26425,12 @@
 
                         if(ctrl.role()!=='su' && is4su)
                             m.route('./');
+
+                        if(ctrl.role()==='du' && m.route() !== '/deployList')
+                            return m.route('/deployList');
+
+                        if(ctrl.role()!=='du' && ctrl.role()!=='su'  && m.route() === '/deployList')
+                            return m.route('./');
 
                         if (!is_view &&  !ctrl.isloggedin  && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
                             var url = m.route();
@@ -26441,7 +26526,7 @@
                         m('nav.navbar.navbar-dark', [
                             m('a.navbar-brand', {href:'', config:m.route}, 'Dashboard'),
                             m('ul.nav.navbar-nav',[
-
+                                ctrl.role()==='du' ? '' :
                                 Object.keys(settings).map(function (comp){ return settings_hash[comp].su && ctrl.role() !=='su' ? '' :
                                         settings[comp].length==0 ?
                                             m('li.nav-item',[
@@ -26455,7 +26540,6 @@
                                                     m('.dropdown-menu', [
                                                         settings[comp].map(function (sub_comp){ return m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text); }
                                                         )
-
                                                     ])
                                                 ])
                                             ]); }

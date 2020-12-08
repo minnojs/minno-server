@@ -5,8 +5,13 @@ export default fileFactory;
 
 const filePrototype = {
     apiUrl(){
-        if(this.viewStudy)
+        console.log(this);
+        console.log(!!this.version_id);
+        if(this.viewStudy && !this.version_id)
             return `${baseUrl}/view_files/${m.route.param('code')}/file/${encodeURIComponent(this.id)}`;
+        if(this.viewStudy && !!this.version_id)
+            return `${baseUrl}/view_files/${m.route.param('code')}/version/${this.version_id}/file/${encodeURIComponent(this.id)}`;
+
         if (this.version_id)
             return `${baseUrl}/files/${encodeURIComponent(this.studyId)}/version/${this.version_id}/file/${encodeURIComponent(this.id)}`;
         return `${baseUrl}/files/${encodeURIComponent(this.studyId)}/file/${encodeURIComponent(this.id)}`;
