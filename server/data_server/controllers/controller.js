@@ -1,9 +1,12 @@
 'use strict';
 const config = require.main.require('../config'),
     mongoose = require('mongoose'),
+    Data2 = require('../models/dataSchema'),
+    DataRequest2 = require('../models/dataRequestSchema'),
     Study = require('../models/studySchema'), //created model loading here
     DataRequest = mongoose.model('DataRequest'),
     Data = mongoose.model('Data'),
+    experimentSessionSchema2=require('../models/experimentSessionSchema'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
 const logger = require('../../logger');	
