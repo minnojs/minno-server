@@ -37,12 +37,13 @@ function get_play_url (user_id, study_id, file_id, version_id='') {
         });
 }
 
-function get_experiment_url (req) {
+function get_experiment_url (req, test=false) {
     return connection.then(function (db) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
-        return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id, availability:true} }})
+        return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id} }})
             .then(function(study_data){
+
                 if(!study_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
                 const version_data = study_data.versions.filter(version=>version.hash === req.params.version_id)[0];
@@ -55,7 +56,16 @@ function get_experiment_url (req) {
                 const url       = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
                 const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
                 const file_path = join(config.user_folder,  version_folder, exp_data.file_id);
-
+                if (test)
+                    return {
+                        exp_id: -1,
+                        descriptive_id: '',
+                        session_id:-1,
+                        type: study_data.type,
+                        url,
+                        path: file_path,
+                        base_url
+                    };
                 return counters.findOneAndUpdate({_id:'session_id'},
                     {'$inc': {'seq': 1}},
                     {upsert: true, new: true, returnOriginal: false})

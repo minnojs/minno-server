@@ -12393,8 +12393,6 @@
 
     var filePrototype = {
         apiUrl: function apiUrl(){
-            console.log(this);
-            console.log(!!this.version_id);
             if(this.viewStudy && !this.version_id)
                 return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
             if(this.viewStudy && !!this.version_id)
@@ -13062,8 +13060,6 @@
     var load_templates = function () { return fetchJson(templatesUrl); };
 
     var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
-
-    var get_exps = function (study_id) { return fetchJson(get_exps_url(study_id)); };
 
 
     var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
@@ -19501,6 +19497,10 @@
     var focus_it = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
+    function formatDate$1(date_str){
+        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
+    }
+
     function data_dialog (args) { return m.component(data_dialog$1, args); }
     var data_dialog$1 = {
         controller: function controller(ref){
@@ -19509,6 +19509,17 @@
             var versions = ref.versions;
             var close = ref.close;
 
+
+            function update_experiment(exp_id){
+                ctrl.exp_id(Array.isArray(exp_id) ?  exp_id : exp_id.split(',') );
+            }
+
+            function update_version(version_id){
+                ctrl.version_id(Array.isArray(version_id) ?  version_id : version_id.split(',') );
+                update_exps(ctrl);
+            }
+
+
             var ctrl = {
                 data_study_id: m.prop(''),
                 exp_id: m.prop(''),
@@ -19516,6 +19527,8 @@
                 exps: exps,
                 versions: versions,
                 ask_delete_request: ask_delete_request,
+                update_version: update_version,
+                update_experiment: update_experiment,
                 requests: m.prop([]),
                 studies: m.prop([]),
                 version_id: m.prop(''),
@@ -19533,6 +19546,7 @@
                     endDate: m.prop(daysAgo$1(0))
                 }
             };
+
 
             load_studies()
                 .then(function (response) {
@@ -19552,23 +19566,25 @@
             m('.card-block', [
                 m('.input-group', [m('strong', 'Study name'),
                     m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
-                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
+                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                     ])
                 ]),
                 m('.row', [
                     m('.col-sm-4', [
                         m('.input-group', [m('strong', 'Experimant id'),
-                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.exp_id(e.target.value); }}, [
-                                ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
-                                ctrl.exps().map(function (exp){ return m('option', {value:exp.ids} , exp.descriptive_id); })
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_experiment(e.target.value); }}, [
+                                ctrl.version_id() === '' ? '' :
+                                    ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
+                                ctrl.version_id() === '' ? '' :
+                                    ctrl.exps().map(function (exp){ return m('option', {value:exp.id} , exp.descriptive_id); })
                             ])
                         ])
                     ]),
                     m('.col-sm-5', [
                         m('.input-group', [m('strong', 'Version id'),
-                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate$1(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ]),
@@ -19627,12 +19643,6 @@
         if(ctrl.exp_id() ==='')
             return ctrl.error('Please select experiment id');
 
-        if(!Array.isArray(ctrl.exp_id()))
-            ctrl.exp_id(ctrl.exp_id().split(','));
-
-        if(!Array.isArray(ctrl.version_id()))
-            ctrl.version_id(ctrl.version_id().split(','));
-        
         ctrl.downloaded(false);
 
 
@@ -19699,32 +19709,24 @@
         ctrl.versions = new_study.versions;
         load_exps(ctrl);
         load_requests(ctrl);
-
+    }
+    function update_exps(ctrl){
+        var experiments2show =  [];
+        ctrl.version_id().map(function (id){
+            var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
+            version2show.experiments.map(function (exp){ return experiments2show.push(exp); });
+        });
+        ctrl.exps(experiments2show);
+        ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
+        ctrl.exp_id(ctrl.all_exp_ids());
+        m.redraw();
     }
 
     function load_exps(ctrl){
-        get_exps(ctrl.study_id())
-            .then(function (response) {
-                ctrl.exps(response.experiments);
-                ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
-                ctrl.exp_id(ctrl.all_exp_ids());
-                var tmp_exps = [];
-                ctrl.exps().forEach(function (exp){
-                    !tmp_exps.find(function (exp2find){ return exp2find.descriptive_id === exp.descriptive_id; })
-                        ?
-                        tmp_exps.push({ids:[exp.id], descriptive_id:exp.descriptive_id})
-                        :
-                        tmp_exps.map(function (exp2update){ return exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update; });
-                    ctrl.exps(tmp_exps);
-                });
-            })
-            .then(function (){
-                ctrl.all_versions(ctrl.versions.map(function (version){ return version.id; }));
-
-                ctrl.version_id(ctrl.all_versions().slice(-1)[0]);
-            })
-            .catch(ctrl.error)
-            .then(m.redraw);
+        ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
+        ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
+        update_exps(ctrl);
+        m.redraw();
     }
 
     function load_requests(ctrl){
@@ -19808,14 +19810,15 @@
                                         m('.col-xs-3',
                                             m('strong', 'Experimant Id: ')
                                         ),
-                                        m('.col-xs-3',
-                                            download.exp_id.length>1 ? 'All' : ctrl.exps().filter(function (exp){ return exp.ids==download.exp_id[0]; })[0].descriptive_id
+                                        m('.col-xs-3', ''
+                                            // download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
                                         ),
                                         m('.col-xs-3',
                                             m('strong', 'Version Id: ')
                                         ),
-                                        m('.col-xs-2',
-                                            download.version_id.length>1 ? 'All' : ctrl.versions.filter(function (version){ return version.id==download.version_id[0]; })[0].version                                     )
+                                        m('.col-xs-2', ''
+                                            // download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version
+                                        )
                                     ])
                                 ])
                             ])
@@ -19866,6 +19869,8 @@
             var close = ref.close;
 
             var ctrl = {
+                update_version: update_version,
+                update_experiment: update_experiment,
                 displayHelp: m.prop(false),
                 data_study_id: m.prop(''),
                 study_id:m.prop(study_id),
@@ -19891,6 +19896,16 @@
                     endDate: m.prop(daysAgo$2(0))
                 }
             };
+
+
+            function update_experiment(exp_id){
+                ctrl.exp_id(Array.isArray(exp_id) ?  exp_id : exp_id.split(',') );
+            }
+
+            function update_version(version_id){
+                ctrl.version_id(Array.isArray(version_id) ?  version_id : version_id.split(',') );
+                update_exps$1(ctrl);
+            }
 
             load_studies()
                 .then(function (response) {
@@ -19918,21 +19933,22 @@
                     ])
                 ]),
 
-
                 m('.row', [
                     m('.col-sm-6', [
-                        m('.input-group', [m('strong', 'Experiment name'),
-                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.exp_id(e.target.value); }}, [
-                                ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
-                                ctrl.exps().map(function (exp){ return m('option', {value:exp.ids} , exp.descriptive_id); })
+                        m('.input-group', [m('strong', 'Experimant id'),
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_experiment(e.target.value); }}, [
+                                ctrl.version_id() === '' ? '' :
+                                    ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
+                                ctrl.version_id() === '' ? '' :
+                                    ctrl.exps().map(function (exp){ return m('option', {value:exp.id} , exp.descriptive_id); })
                             ])
                         ])
                     ]),
                     m('.col-sm-6', [
-                        m('.input-group', [m('strong', 'Version'),
-                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
-                                ctrl.versions.length<=1 ? '' : m('option', {selected:true, value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
+                        m('.input-group', [m('strong', 'Version id'),
+                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
+                                ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
+                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate$1(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ])
@@ -19991,30 +20007,25 @@
     };
 
 
+    function update_exps$1(ctrl){
+        var experiments2show =  [];
+        ctrl.version_id().map(function (id){
+            var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
+            version2show.experiments.map(function (exp){ return experiments2show.push(exp); });
+        });
+        ctrl.exps(experiments2show);
+        ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
+        ctrl.exp_id(ctrl.all_exp_ids());
+        m.redraw();
+    }
 
     function load_exps$1(ctrl){
-        get_exps(ctrl.study_id())
-            .then(function (response) {
-                ctrl.exps(response.experiments);
-                ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
-                ctrl.exp_id(ctrl.all_exp_ids());
-                var tmp_exps = [];
-                ctrl.exps().forEach(function (exp){
-                    !tmp_exps.find(function (exp2find){ return exp2find.descriptive_id === exp.descriptive_id; })
-                        ?
-                        tmp_exps.push({ids:[exp.id], descriptive_id:exp.descriptive_id})
-                        :
-                        tmp_exps.map(function (exp2update){ return exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update; });
-                    ctrl.exps(tmp_exps);
-                });
-            })
-            .then(function (){
-                ctrl.all_versions(ctrl.versions.map(function (version){ return version.id; }));
-                ctrl.version_id(ctrl.all_versions());
-            })
-            .catch(ctrl.error)
-            .then(m.redraw);
+        ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
+        ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
+        update_exps$1(ctrl);
+        m.redraw();
     }
+
 
 
     function ask_get_stat(ctrl){
@@ -20099,9 +20110,7 @@
         var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
         ctrl.versions = new_study.versions;
         load_exps$1(ctrl);
-
     }
-
 
     function show_stat(ctrl){
         var stat2show = !ctrl.show_empty() ? ctrl.stat_data() : ctrl.stat_data().filter(function (data) { return data['#totalsessions'] !==0; });
@@ -20109,7 +20118,6 @@
             ?
             ''
             :
-
             [stat2show.length<1 ? m('.alert.alert-info', 'There is no data')
                 :
                 m('table', {class:'table table-striped table-hover'}, [
@@ -20129,8 +20137,6 @@
                             m('td',formatDate(new Date(data['#earliest_session']))),
                             m('td',formatDate(new Date(data['#latest_session']))),
                             m('td', data['#totalsessions'])
-
-
                         ]); })
                     )])
             ];
@@ -23580,10 +23586,6 @@
         };
     }
 
-    function formatDate$1(date_str){
-        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
-    }
-
     var notifications$1= createNotifications();
 
     var collaborationComponent$1 = {
@@ -23605,6 +23607,8 @@
                 study: study,
                 save: save,
                 lock: lock,
+                show_data: show_data,
+                show_statistics: show_statistics,
                 show_sharing: show_sharing,
                 show_duplicate: show_duplicate,
                 show_publish: show_publish,
@@ -23648,6 +23652,24 @@
                 var study_id = ctrl.study.id;
                 var close = messages.close;
                 messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
+                    .then(m.redraw);
+            }
+
+            function show_data() {
+                var study_id = ctrl.study.id;
+                var versions = ctrl.study.versions;
+                var exps  = m.prop([]);
+
+                var close = messages.close;
+                messages.custom({header:'Data download', content: data_dialog({exps: exps, study_id: study_id, versions: versions, close: close})})
+                    .then(m.redraw);
+            }
+
+            function show_statistics() {
+                var study_id = ctrl.study.id;
+                var versions = ctrl.study.versions;
+                var close = messages.close;
+                messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id: study_id, versions: versions, close: close})})
                     .then(m.redraw);
             }
 
@@ -23798,7 +23820,24 @@
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                                 )
                             ),
-
+                            m('.row.',
+                                m('.col-sm-10.space',[
+                                    m('strong', 'Data'),
+                                    m('.small', 'This will allows you to...')
+                                ]),
+                                m('.col-sm-2.space.text-sm-right',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data}, 'Data')
+                                )
+                            ),
+                            m('.row.',
+                                m('.col-sm-10.space',[
+                                    m('strong', 'Statistics'),
+                                    m('.small', 'This will allows you to...')
+                                ]),
+                                m('.col-sm-2.space.text-sm-right',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics}, 'Statistics')
+                                )
+                            ),
                         ])
                     ),
 

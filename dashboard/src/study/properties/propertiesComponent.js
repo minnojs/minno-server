@@ -6,6 +6,8 @@ import formatDate from 'utils/formatDate_str';
 
 import sharing_dialog from '../sharing/sharingComponent';
 import {createNotifications} from 'utils/notifyComponent';
+import data_dialog from '../../downloads/dataComp';
+import stat_dialog from '../open_statistics/statComp';
 
 export default collaborationComponent;
 const notifications= createNotifications();
@@ -29,6 +31,8 @@ let collaborationComponent = {
             study,
             save,
             lock,
+            show_data,
+            show_statistics,
             show_sharing,
             show_duplicate,
             show_publish,
@@ -72,6 +76,24 @@ let collaborationComponent = {
             let study_id = ctrl.study.id;
             let close = messages.close;
             messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id, close})})
+                .then(m.redraw);
+        }
+
+        function show_data() {
+            let study_id = ctrl.study.id;
+            let versions = ctrl.study.versions;
+            let exps  = m.prop([]);
+
+            let close = messages.close;
+            messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
+                .then(m.redraw);
+        }
+
+        function show_statistics() {
+            let study_id = ctrl.study.id;
+            let versions = ctrl.study.versions;
+            let close = messages.close;
+            messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id, versions, close})})
                 .then(m.redraw);
         }
 
@@ -223,7 +245,24 @@ let collaborationComponent = {
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
                             )
                         ),
-
+                        m('.row.',
+                            m('.col-sm-10.space',[
+                                m('strong', 'Data'),
+                                m('.small', 'This will allows you to...')
+                            ]),
+                            m('.col-sm-2.space.text-sm-right',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data}, 'Data')
+                            )
+                        ),
+                        m('.row.',
+                            m('.col-sm-10.space',[
+                                m('strong', 'Statistics'),
+                                m('.small', 'This will allows you to...')
+                            ]),
+                            m('.col-sm-2.space.text-sm-right',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics}, 'Statistics')
+                            )
+                        ),
                     ])
                 ),
 

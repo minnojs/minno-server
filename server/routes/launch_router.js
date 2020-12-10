@@ -20,6 +20,14 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
         .catch(displayErrorPage(res));
 });
 
+
+router.get('/test/:exp_id/:version_id',function(req, res){
+    return experiments
+        .get_experiment_url(req, true)
+        .then(displayExperiment(req.query, res,req.fingerprint))
+        .catch(displayErrorPage(res));
+});
+
 router.get('/view_play/:link_id/:file_id',function(req, res){
     const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
@@ -83,7 +91,7 @@ function displayExperiment(params, res, fingerprint){
                 const postAlways = {
                     sessionId:exp_data.session_id,
                     studyId:exp_data.exp_id,
-                    versionId:version_data.id
+                    versionId:version_data.hash
                 };
                 const postOnce = Object.assign({}, params, {
                     descriptiveId: exp_data.descriptive_id,
@@ -98,7 +106,7 @@ function displayExperiment(params, res, fingerprint){
                     sessionId:exp_data.session_id,
                     taskName:'_session_data',
                     studyId:exp_data.exp_id,
-                    versionId:version_data.id,
+                    versionId:version_data.hash,
                     data:[fingerprint]
                 };
                 data_server.insertExperimentSession(experimentSessionData);
