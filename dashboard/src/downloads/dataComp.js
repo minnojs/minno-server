@@ -1,11 +1,24 @@
+import formatDate_str from '../utils/formatDate_str';
+
 export default args => m.component(data_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
-import {get_exps, get_data, load_studies, get_requests, delete_request} from '../study/studyModel';
+import {get_data, load_studies, get_requests, delete_request} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
 
 let data_dialog = {
     controller({exps, study_id, versions, close}){
+
+        function update_experiment(exp_id){
+            ctrl.exp_id(Array.isArray(exp_id) ?  exp_id : exp_id.split(',') );
+        }
+
+        function update_version(version_id){
+            ctrl.version_id(Array.isArray(version_id) ?  version_id : version_id.split(',') );
+            update_exps(ctrl);
+        }
+
+
         const ctrl = {
             data_study_id: m.prop(''),
             exp_id: m.prop(''),
@@ -13,6 +26,8 @@ let data_dialog = {
             exps,
             versions,
             ask_delete_request,
+            update_version,
+            update_experiment,
             requests: m.prop([]),
             studies: m.prop([]),
             version_id: m.prop(''),
@@ -31,6 +46,7 @@ let data_dialog = {
             }
         };
 
+
         load_studies()
             .then(response =>
             {
@@ -46,23 +62,25 @@ let data_dialog = {
         m('.card-block', [
             m('.input-group', [m('strong', 'Study name'),
                 m('select.c-select.form-control',{onchange: e => select_study(ctrl, e.target.value)}, [
-                    ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , `${study.name} ${study.permission!=='deleted' ? '' : '(deleted study)' }`))
+                    ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id===ctrl.study_id()} , `${study.name} ${study.permission!=='deleted' ? '' : '(deleted study)' }`))
                 ])
             ]),
             m('.row', [
                 m('.col-sm-4', [
                     m('.input-group', [m('strong', 'Experimant id'),
-                        m('select.c-select.form-control',{onchange: e => ctrl.exp_id(e.target.value)}, [
-                            ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
-                            ctrl.exps().map(exp=> m('option', {value:exp.ids} , exp.descriptive_id))
+                        m('select.c-select.form-control',{onchange: e => ctrl.update_experiment(e.target.value)}, [
+                            ctrl.version_id() === '' ? '' :
+                                ctrl.exps().length<=1 ? '' : m('option', {selected:true, value:ctrl.all_exp_ids()}, 'All experiments'),
+                            ctrl.version_id() === '' ? '' :
+                                ctrl.exps().map(exp=> m('option', {value:exp.id} , exp.descriptive_id))
                         ])
                     ])
                 ]),
                 m('.col-sm-5', [
                     m('.input-group', [m('strong', 'Version id'),
-                        m('select.c-select.form-control',{onchange: e => ctrl.version_id(e.target.value)}, [
+                        m('select.c-select.form-control',{onchange: e => ctrl.update_version(e.target.value)}, [
                             ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                            ctrl.versions.map(version=> m('option', {selected:true, value:version.id}, `${version.version} (${version.state})`))
+                            ctrl.versions.map(version=> m('option', {selected:true, value:version.hash}, `V${version.id} - ${formatDate_str(version.creation_date)} (${version.state})`))
                         ])
                     ])
                 ]),
@@ -120,12 +138,6 @@ function ask_get_data(ctrl){
     if(ctrl.exp_id() ==='')
         return ctrl.error('Please select experiment id');
 
-    if(!Array.isArray(ctrl.exp_id()))
-        ctrl.exp_id(ctrl.exp_id().split(','));
-
-    if(!Array.isArray(ctrl.version_id()))
-        ctrl.version_id(ctrl.version_id().split(','));
-    
     ctrl.downloaded(false);
 
 
@@ -187,32 +199,24 @@ function select_study(ctrl, study_id){
     ctrl.versions = new_study.versions;
     load_exps(ctrl);
     load_requests(ctrl);
-
+}
+function update_exps(ctrl){
+    let experiments2show =  [];
+    ctrl.version_id().map(id=>{
+        const version2show = ctrl.versions.find(version=>version.hash===id);
+        version2show.experiments.map(exp=>experiments2show.push(exp));
+    });
+    ctrl.exps(experiments2show);
+    ctrl.all_exp_ids(ctrl.exps().map(exp=>exp.id));
+    ctrl.exp_id(ctrl.all_exp_ids());
+    m.redraw();
 }
 
 function load_exps(ctrl){
-    get_exps(ctrl.study_id())
-        .then(response => {
-            ctrl.exps(response.experiments);
-            ctrl.all_exp_ids(ctrl.exps().map(exp=>exp.id));
-            ctrl.exp_id(ctrl.all_exp_ids());
-            let tmp_exps = [];
-            ctrl.exps().forEach(exp=>{
-                !tmp_exps.find(exp2find=>exp2find.descriptive_id === exp.descriptive_id)
-                    ?
-                    tmp_exps.push({ids:[exp.id], descriptive_id:exp.descriptive_id})
-                    :
-                    tmp_exps.map(exp2update=>exp2update.descriptive_id === exp.descriptive_id ? exp2update.ids.push(exp.id) : exp2update);
-                ctrl.exps(tmp_exps);
-            });
-        })
-        .then(()=> {
-            ctrl.all_versions(ctrl.versions.map(version=>version.id));
-
-            ctrl.version_id(ctrl.all_versions().slice(-1)[0]);
-        })
-        .catch(ctrl.error)
-        .then(m.redraw);
+    ctrl.all_versions(ctrl.versions.map(version=>version.hash));
+    ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
+    update_exps(ctrl);
+    m.redraw();
 }
 
 function load_requests(ctrl){
@@ -296,14 +300,15 @@ function show_requests(ctrl){
                                     m('.col-xs-3',
                                         m('strong', 'Experimant Id: ')
                                     ),
-                                    m('.col-xs-3',
-                                        download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
+                                    m('.col-xs-3', ''
+                                        // download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
                                     ),
                                     m('.col-xs-3',
                                         m('strong', 'Version Id: ')
                                     ),
-                                    m('.col-xs-2',
-                                        download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version                                     )
+                                    m('.col-xs-2', ''
+                                        // download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version
+                                    )
                                 ])
                             ])
                         ])

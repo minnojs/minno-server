@@ -455,9 +455,9 @@ function insert_obj(user_id, study_props) {
             );
         })
         .then(function(){
-            const dir = path.join(config.user_folder, study_obj.folder_name);
-            const version_id = study_obj.versions[0].version;
-            const study_id = study_obj._id;
+            // const dir = path.join(config.user_folder, study_obj.folder_name);
+            // const version_id = study_obj.versions[0].version;
+            // const study_id = study_obj._id;
             return study_obj;
         });
     });
