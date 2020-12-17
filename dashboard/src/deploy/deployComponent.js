@@ -11,7 +11,7 @@ let deployDialog = {
     controller({study, close}){
         let ctrl = {
             study,
-            latest_version:0,
+            latest_version:{},
             sent:false,
             error: m.prop(''),
             target_number: m.prop(''),
@@ -58,7 +58,7 @@ let deployDialog = {
             ctrl.sets()[set_id].rules = rule_id==='' ? '' : ctrl.all_rules().find(rule=>rule.id===rule_id);
         }
         function update_experiment_file(set_id, experiment_file){
-            ctrl.sets()[set_id].experiment_file = experiment_file;
+            ctrl.sets()[set_id].experiment_file = ctrl.latest_version.experiments.find(exp=>exp.id===experiment_file);
         }
 
         function update_priority(set_id, priority){
@@ -82,8 +82,7 @@ let deployDialog = {
                 .then(response => {
                     ctrl.loaded(true);
                     ctrl.all_rules(response.sets);
-                    console.log(ctrl.study.versions);
-                    ctrl.latest_version = ctrl.study.versions.filter(version=>version.state === 'Published').reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+                    ctrl.latest_version = ctrl.study.versions.filter(version=>version.state === 'Published').reduce((prev, current) => (prev.id > current.id) ? prev : current);
                 }).then(m.redraw);
         }
 
@@ -92,7 +91,6 @@ let deployDialog = {
 
         function submit(){
             return check_form_validity() ? false :
-
             deploy(study.id, ctrl)
                 .then((response) => {
                     ctrl.sent = true;
@@ -108,7 +106,8 @@ let deployDialog = {
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
             m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
         ]);
-        const exps = ctrl.study.files().filter(file=>file.exp_data);
+        const exps = ctrl.latest_version.experiments;
+        console.log(exps);
         return !ctrl.loaded()
             ?
             m('.loader')
@@ -119,7 +118,7 @@ let deployDialog = {
                 m('.col-sm-12', [
                     m('h3', [
                         'Request Deploy ',
-                        m('small', `${ctrl.study.name} (v${ctrl.latest_version})`)
+                        m('small', `${ctrl.study.name} (v${ctrl.latest_version.id})`)
                     ]),
                 ])
             ]),
@@ -159,9 +158,9 @@ let deployDialog = {
                     m('.col-sm-2',[
                         m('select.c-select.form-control.space',{ onchange: e => {ctrl.update_experiment_file(set_id, e.target.value)}}, [
                             exps.length===1 ? ctrl.update_experiment_file(set_id, exps[0].name) && exps[0].name :
-                                m('option', {value:'', selected:set.experiment_file==='', disabled:true}, 'Select experiment file'),
+                                m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
                             exps.map(file=>
-                                m('option', {value:file.name, selected:set.experiment_file===file.name}, file.name)
+                                m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id)
                             )
                         ])
                     ]),

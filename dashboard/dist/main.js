@@ -9201,6 +9201,7 @@
     var studyUrl           = urlPrefix + "/studies";
     var PIUrl              = urlPrefix + "/PI";
     var launchUrl          = urlPrefix + "/launch";
+    var testUrl            = urlPrefix + "/test";
     var templatesUrl       = urlPrefix + "/templates";
     var tagsUrl            = urlPrefix + "/tags";
     var translateUrl       = urlPrefix + "/translate";
@@ -21272,6 +21273,7 @@
                 sortBy: m.prop('creation_date'),
                 filter_by:m.prop('pending'),
                 loaded:m.prop(false),
+                testUrl: testUrl,
                 filter_requests: filter_requests,
                 view_rules: view_rules,
                 update: update,
@@ -21361,9 +21363,17 @@
                         m('tbody',
                             list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
                                     m('td', formatDate$1(request.creation_date)),
-                                    m('td', request.study_name + ' (' + request.experiment_file +')'),
+                                    m('td',
+                                        m('', [
+                                            request.study_name,  ' (' ,
+                                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (request.experiment_file.id) + "/" + (request.version_hash))}, request.experiment_file.descriptive_id),
+                                            ')'
+                                        ])
+
+                                    ),
                                     m('td', request.rules ==='' ? 'None' : m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.rules); }}, 'View')),
                                     m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
+
                                     m('td', request.target_number),
                                     m('td',
                                         request.status ? request.priority :
@@ -21602,7 +21612,7 @@
 
             var ctrl = {
                 study: study,
-                latest_version:0,
+                latest_version:{},
                 sent:false,
                 error: m.prop(''),
                 target_number: m.prop(''),
@@ -21649,7 +21659,7 @@
                 ctrl.sets()[set_id].rules = rule_id==='' ? '' : ctrl.all_rules().find(function (rule){ return rule.id===rule_id; });
             }
             function update_experiment_file(set_id, experiment_file){
-                ctrl.sets()[set_id].experiment_file = experiment_file;
+                ctrl.sets()[set_id].experiment_file = ctrl.latest_version.experiments.find(function (exp){ return exp.id===experiment_file; });
             }
 
             function update_priority(set_id, priority){
@@ -21673,8 +21683,7 @@
                     .then(function (response) {
                         ctrl.loaded(true);
                         ctrl.all_rules(response.sets);
-                        console.log(ctrl.study.versions);
-                        ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; }).id;
+                        ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; });
                     }).then(m.redraw);
             }
 
@@ -21683,7 +21692,6 @@
 
             function submit(){
                 return check_form_validity() ? false :
-
                 deploy(study.id, ctrl)
                     .then(function (response) {
                         ctrl.sent = true;
@@ -21702,7 +21710,8 @@
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
                 m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
             ]);
-            var exps = ctrl.study.files().filter(function (file){ return file.exp_data; });
+            var exps = ctrl.latest_version.experiments;
+            console.log(exps);
             return !ctrl.loaded()
                 ?
                 m('.loader')
@@ -21713,7 +21722,7 @@
                     m('.col-sm-12', [
                         m('h3', [
                             'Request Deploy ',
-                            m('small', ((ctrl.study.name) + " (v" + (ctrl.latest_version) + ")"))
+                            m('small', ((ctrl.study.name) + " (v" + (ctrl.latest_version.id) + ")"))
                         ]),
                     ])
                 ]),
@@ -21752,8 +21761,8 @@
                         m('.col-sm-2',[
                             m('select.c-select.form-control.space',{ onchange: function (e) {ctrl.update_experiment_file(set_id, e.target.value);}}, [
                                 exps.length===1 ? ctrl.update_experiment_file(set_id, exps[0].name) && exps[0].name :
-                                    m('option', {value:'', selected:set.experiment_file==='', disabled:true}, 'Select experiment file'),
-                                exps.map(function (file){ return m('option', {value:file.name, selected:set.experiment_file===file.name}, file.name); }
+                                    m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
+                                exps.map(function (file){ return m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id); }
                                 )
                             ])
                         ]),

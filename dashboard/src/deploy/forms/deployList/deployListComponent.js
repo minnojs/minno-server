@@ -4,6 +4,7 @@ import {duplicate_study, rename_study, update_study} from "../../../study/studyM
 import messages from 'utils/messagesComponent';
 import {print_rules} from '../../../ruletable/ruletableActions'
 import formatDate from 'utils/formatDate_str';
+import {testUrl} from 'modelUrls';
 
 
 export default deployComponent;
@@ -17,6 +18,7 @@ let deployComponent = {
             sortBy: m.prop('creation_date'),
             filter_by:m.prop('pending'),
             loaded:m.prop(false),
+            testUrl,
             filter_requests,
             view_rules,
             update,
@@ -105,9 +107,17 @@ let deployComponent = {
                         list().map(request=>
                             m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
                                 m('td', formatDate(request.creation_date)),
-                                m('td', request.study_name + ' (' + request.experiment_file +')'),
+                                m('td',
+                                    m('', [
+                                        request.study_name,  ' (' ,
+                                        m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${request.experiment_file.id}/${request.version_hash}`}, request.experiment_file.descriptive_id),
+                                        ')'
+                                    ])
+
+                                ),
                                 m('td', request.rules ==='' ? 'None' : m('a',{href:'', onclick:(e)=>ctrl.view_rules(e, request.rules)}, 'View')),
                                 m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
+
                                 m('td', request.target_number),
                                 m('td',
                                     request.status ? request.priority :

@@ -11,6 +11,7 @@ export const baseUrl            = `${urlPrefix}`;
 export const studyUrl           = `${urlPrefix}/studies`;
 export const PIUrl              = `${urlPrefix}/PI`;
 export const launchUrl          = `${urlPrefix}/launch`;
+export const testUrl            = `${urlPrefix}/test`;
 export const templatesUrl       = `${urlPrefix}/templates`;
 export const tagsUrl            = `${urlPrefix}/tags`;
 export const translateUrl       = `${urlPrefix}/translate`;
