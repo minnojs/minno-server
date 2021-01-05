@@ -159,13 +159,12 @@ let collaborationComponent = {
                 .then(m.redraw);
         }
 
-        function present_deploys(deploy2show){
-            let study = ctrl.study;
+        function present_deploys(deploy2show, version_id){
             let close = messages.close;
             return messages.custom({header:'Old deploys',
                                     preventEnterSubmits: true,
                                     wide: true,
-                                    content: oldDeploysComponent({deploy2show, close})})
+                                    content: oldDeploysComponent({deploy2show, version_id, close})})
                 .then(m.redraw);
         }
 
@@ -250,7 +249,7 @@ let collaborationComponent = {
                         m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
                         m('.col-xs-2.space',
                             !version.deploys ? '' :
-                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys)}, 'Old deploy requests')
+                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys, version.id)}, 'Old deploy requests')
                         ),
 
                             m('.col-xs-3.space',

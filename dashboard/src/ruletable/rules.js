@@ -13,12 +13,15 @@ function sort_studies_by_name(study1, study2){
     return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
 }
 
-function get_all_rules()
+
+function get_all_rules(deployer=false)
 {
     return load_studies()
         .then(response =>
         {
             const studies = response.studies.filter(study=>study.has_data_permission).sort(sort_studies_by_name);
+            if (deployer)
+                return JSON.parse(JSON.stringify(autupause_rules));
             let full_rules = JSON.parse(JSON.stringify(rules));
             full_rules.push({
                     name:'Did not Start or Complete Study',
@@ -32,7 +35,28 @@ function get_all_rules()
         });
 }
 
+
+let autupause_rules = [
+    {
+        name:'Started sessions',
+        nameXML:'startedSessions',
+        equal:['>','<','=','>=','<=','!='],
+        equalXML:['gt','lt','eq','gte','lte','neq'],
+        values:['Started sessions'],
+        valuesXML:[]
+    },
+    {
+        name:'Completion rate',
+        nameXML:'completionRate',
+        equal:['>','<','=','>=','<=','!='],
+        equalXML:['gt','lt','eq','gte','lte','neq'],
+        values:['Completion rate'],
+        valuesXML:[]
+    }
+];
+
 let rules = [
+
     {
         name:'Sex',
         nameXML:'sex',
@@ -56,7 +80,7 @@ let rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['gt','lt','eq','gte','lte','neq'],
         values:generate_years(),
-        valuesXML:[]
+        valuesXML:generate_years()
     },
     {
         name:'Education',

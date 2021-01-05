@@ -1,9 +1,17 @@
 import {fetchJson} from 'utils/modelHelpers';
 import {poolUrl as url} from 'modelUrls';
+import {PIUrl} from 'modelUrls';
 
 export const STATUS_RUNNING = 'R';
 export const STATUS_PAUSED = 'P';
 export const STATUS_STOP = 'S';
+
+
+function pool_url()
+{
+    return `${PIUrl}/research_pool`;
+}
+
 
 export function createStudy(study){
     let body = Object.assign({
@@ -35,12 +43,12 @@ export function updateStatus(study, status){
 }
 
 export function getAllPoolStudies(){
-    return fetchJson(url, {method:'post', body: {action:'getAllPoolStudies'}})
+    return fetchJson(pool_url(), {method:'post', body: {action:'getAllPoolStudies'}})
         .then(interceptErrors);
 }
 
 export function getLast100PoolUpdates(){
-    return fetchJson(url, {method:'post', body: {action:'getLast100PoolUpdates'}})
+    return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
         .then(interceptErrors);
 }
 

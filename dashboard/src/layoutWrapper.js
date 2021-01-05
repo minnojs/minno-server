@@ -41,7 +41,7 @@ let layout = route => {
                     if(ctrl.role()!=='su' && is4su)
                         m.route('./');
 
-                    if(ctrl.role()==='du' && m.route() !== '/deployList')
+                    if(ctrl.role()==='du' && m.route() !== '/deployList' && m.route() !== '/autupauseruletable' )
                         return m.route('/deployList');
 
                     if(ctrl.role()!=='du' && ctrl.role()!=='su'  && m.route() === '/deployList')
@@ -101,11 +101,10 @@ let layout = route => {
                 'studies':[],
                 // 'data':['downloads', 'downloadsAccess', 'statistics'],
                 // 'pool':[],
-                'tags':[]
-                ,'rules':[]
-                ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                'tags':[],
+                'pi':['rules', 'pool'],
+                'admin':['deployList', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
             };
-
 
             const settings_hash = {
                 'studies':{text: 'Studies', href:'/studies', sub:[]},
@@ -115,13 +114,20 @@ let layout = route => {
                         'downloadsAccess': {text: 'Downloads Access', href: '/downloadsAccess'},
                         'statistics': {text: 'Statistics', href: '/statistics'}
                     }},
+
+
                 'pool':{text: 'Pool', href:'/pool', sub:[]},
                 'tags':{text: 'Tags', href:'/tags', sub:[]},
-                'rules':{text: 'Rules', href:'/ruletable', sub:[]},
+                'pi':{text: 'PI', href:false,
+                    subs: {
+
+                        'pool': {text: m('i.fa.fa-calendar', ' Research Pool'), href: '/pool'},
+                        'rules': {text: m('i.fa.fa-gavel', ' Rules'), href: '/ruletable'}
+                    }},
                 'admin':{text: 'Admin', href:false,
                     su:true,
-                    subs:{'deployList': {text:'Deploy List', href: '/deployList'},
-                        'removalList': {text:'Removal List', href:'/removalList'},
+                    subs:{'deployList': {text: m('i.fa.fa-list', ' Deploy List'), href: '/deployList'},
+                        'removalList': {text: 'Removal List', href:'/removalList'},
                         'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
                         'addUser': {text:'Add User', href: '/addUser'},
                         'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},

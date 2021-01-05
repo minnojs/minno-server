@@ -12,6 +12,7 @@ let deployDialog = {
         let ctrl = {
             study,
             latest_version:{},
+            exps : [],
             sent:false,
             error: m.prop(''),
             target_number: m.prop(''),
@@ -34,7 +35,7 @@ let deployDialog = {
             completed_checklist: m.prop(false),
             real_start: m.prop(false),
 
-            approved_by_a_reviewer: m.prop(''),
+            approved_by_a_reviewer: m.prop(false),
             launch_confirmation: m.prop(''),
             comments: m.prop('')   
             
@@ -50,7 +51,7 @@ let deployDialog = {
                     !ctrl.completed_checklist() ||
                     !ctrl.approved_by_irb() ||
                     !ctrl.real_start() ||
-                    ctrl.approved_by_a_reviewer()==='' ||
+                    !ctrl.approved_by_a_reviewer() ||
                     ctrl.launch_confirmation()==='';
         }
 
@@ -79,18 +80,18 @@ let deployDialog = {
 
         function load() {
             get_rules()
-                .then(response => {
-                    ctrl.loaded(true);
-                    ctrl.all_rules(response.sets);
-                    ctrl.latest_version = ctrl.study.versions.filter(version=>version.state === 'Published').reduce((prev, current) => (prev.id > current.id) ? prev : current);
-                }).then(m.redraw);
+                .then(response => ctrl.all_rules(response.sets))
+                .then(()=> ctrl.latest_version = ctrl.study.versions.filter(version=>version.state === 'Published').reduce((prev, current) => (prev.id > current.id) ? prev : current))
+                .then(()=>ctrl.exps = ctrl.latest_version.experiments)
+                .then(()=>ctrl.loaded(true))
+                .then(m.redraw);
         }
-
         load();
         return {ctrl, submit};
 
         function submit(){
             return check_form_validity() ? false :
+
             deploy(study.id, ctrl)
                 .then((response) => {
                     ctrl.sent = true;
@@ -106,14 +107,11 @@ let deployDialog = {
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
             m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
         ]);
-        const exps = ctrl.latest_version.experiments;
-        console.log(exps);
         return !ctrl.loaded()
             ?
             m('.loader')
             :
             m('.deploy.container', [
-
             m('.row',[
                 m('.col-sm-12', [
                     m('h3', [
@@ -147,7 +145,6 @@ let deployDialog = {
                     m('strong.space', 'Summary of Rule Logic')
                 ]),
             ]),
-
             ctrl.sets().map((set, set_id) =>
                 m('.row.space',[
                     m('.col-sm-1',
@@ -157,10 +154,10 @@ let deployDialog = {
                     ),
                     m('.col-sm-2',[
                         m('select.c-select.form-control.space',{ onchange: e => {ctrl.update_experiment_file(set_id, e.target.value)}}, [
-                            exps.length===1 ? ctrl.update_experiment_file(set_id, exps[0].name) && exps[0].name :
+                            ctrl.exps.length===1 ? ctrl.update_experiment_file(set_id, ctrl.exps[0].id) :
                                 m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
-                            exps.map(file=>
-                                m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id)
+                            ctrl.exps.map(file=>
+                                  m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id)
                             )
                         ])
                     ]),
@@ -237,22 +234,31 @@ let deployDialog = {
                 ])
             ]),
 
+                m('.row.space',[
+                    m('.col-sm-12',{onclick: () => ctrl.approved_by_a_reviewer(!ctrl.approved_by_a_reviewer())},[
+                        ASTERISK, m('i.fa.fa-fw', {
+                            class: classNames({'fa-square-o' : !ctrl.approved_by_a_reviewer(), 'fa-check-square-o' : ctrl.approved_by_a_reviewer()})
+                        }), 'Study has been approved by a *User Experience* Reviewer (Calvin Lai)'
 
-            m('.row.space',[
-                m('.col-sm-12',[
-                    ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
-                ])
-            ]),
-
-            m('.row',[
-                m('.col-sm-5',[
-                    m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
-                        m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
-                        m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
-                        m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
                     ])
-                ])
-            ]),
+                ]),
+
+
+            // m('.row.space',[
+            //     m('.col-sm-12',[
+            //         ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
+            //     ])
+            // ]),
+            //
+            // m('.row',[
+            //     m('.col-sm-5',[
+            //         m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
+            //             m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
+            //             m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
+            //             m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
+            //         ])
+            //     ])
+            // ]),
 
 
             m('.row.space',[

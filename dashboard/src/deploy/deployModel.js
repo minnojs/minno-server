@@ -18,7 +18,12 @@ export let study_removal = (study_id, ctrl) => fetchJson(deploy_url(study_id), {
 
 export let deploy = (study_id, ctrl) => fetchJson(deploy_url(study_id), {
     method: 'post',
-    body: {props:{sets: ctrl.sets, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
+    body: {props:{sets: ctrl.sets, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
+});
+
+export let update_deploy = (study_id, version_id, {deploy_id, priority, target_number, comments}) => fetchJson(deploy_url(study_id), {
+    method: 'put',
+    body: {props: {deploy_id, version_id, priority, target_number, comments}}
 });
 
 export let Study_change_request = (study_id, ctrl) => fetchJson(deploy_url(study_id), {

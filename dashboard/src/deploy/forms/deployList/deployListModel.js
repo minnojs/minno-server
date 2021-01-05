@@ -12,11 +12,11 @@ function update_url(deploy_id)
     return `${PIUrl}/deploy_list/${deploy_id}`;
 }
 
-export function update_deploy(deploy_id, priority, status)
+export function update_deploy(deploy_id, priority, pause_rules, status)
 {
     return fetchJson(update_url(deploy_id), {
         method: 'put',
-        body:{priority, status}
+        body:{priority, pause_rules, status}
     });
 }
 

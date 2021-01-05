@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2020)
+ * @license Apache-2.0 (2021)
  */
 
 (function () {
@@ -10269,6 +10269,13 @@
     var STATUS_PAUSED = 'P';
     var STATUS_STOP = 'S';
 
+
+    function pool_url()
+    {
+        return (PIUrl + "/research_pool");
+    }
+
+
     function createStudy(study){
         var body = Object.assign({
             action:'insertRulesTable',
@@ -10299,12 +10306,12 @@
     }
 
     function getAllPoolStudies(){
-        return fetchJson(poolUrl, {method:'post', body: {action:'getAllPoolStudies'}})
+        return fetchJson(pool_url(), {method:'post', body: {action:'getAllPoolStudies'}})
             .then(interceptErrors);
     }
 
     function getLast100PoolUpdates(){
-        return fetchJson(poolUrl, {method:'post', body: {action:'getLast100PoolUpdates'}})
+        return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
             .then(interceptErrors);
     }
 
@@ -21243,11 +21250,11 @@
         return (PIUrl + "/deploy_list/" + deploy_id);
     }
 
-    function update_deploy(deploy_id, priority, status)
+    function update_deploy(deploy_id, priority, pause_rules, status)
     {
         return fetchJson(update_url(deploy_id), {
             method: 'put',
-            body:{priority: priority, status: status}
+            body:{priority: priority, pause_rules: pause_rules, status: status}
         });
     }
 
@@ -21263,6 +21270,62 @@
         return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
     };
 
+    function rules_url(id) {
+        if ( id === void 0 ) id = '';
+
+        if (id==='')
+            return (PIUrl + "/rules");
+        return (PIUrl + "/rules/" + id);
+
+    }
+    function deployer_rules_url(id) {
+        if ( id === void 0 ) id = '';
+
+        if (id==='')
+            return (PIUrl + "/deployer_rules");
+        return (PIUrl + "/deployer_rules/" + id);
+
+    }
+
+
+
+    var get_rules = function () { return fetchJson(rules_url(), {
+        method: 'get'
+    }); };
+
+
+    var get_deployer_rules = function () { return fetchJson(deployer_rules_url(), {
+        method: 'get'
+    }); };
+
+    var save_new_set = function (rules, deployer) {
+            if ( deployer === void 0 ) deployer = false;
+
+            return fetchJson(deployer ? deployer_rules_url()  : rules_url(), {
+            method: 'post',
+            body: {rules: rules}
+        });
+    };
+
+
+    var update_set = function (rules, deployer) {
+            if ( deployer === void 0 ) deployer = false;
+
+            return fetchJson(deployer ? deployer_rules_url()  : rules_url(), {
+            method: 'put',
+            body: {rules: rules}
+        });
+    };
+
+
+    var remove_set = function (set_id, deployer) {
+            if ( deployer === void 0 ) deployer = false;
+
+            return fetchJson(deployer ? deployer_rules_url(set_id)  : rules_url(set_id), {
+            method: 'delete',
+        });
+    };
+
     var thConfig$4 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
     var deployComponent = {
@@ -21270,6 +21333,7 @@
             var ctrl = {
                 list: m.prop(''),
                 list2show: m.prop(''),
+                deployer_rules: m.prop([]),
                 sortBy: m.prop('creation_date'),
                 filter_by:m.prop('pending'),
                 loaded:m.prop(false),
@@ -21278,6 +21342,7 @@
                 view_rules: view_rules,
                 update: update,
                 update_priority: update_priority,
+                update_pause_rules: update_pause_rules,
                 print_rules: print_rules
             };
 
@@ -21299,7 +21364,7 @@
 
 
             function update(request, status){
-                update_deploy(request._id, request.priority, status)
+                update_deploy(request._id, request.priority, request.pause_rules, status)
                 .then(function (response) { return ctrl.list(response); })
                 .then(function (){ return ctrl.list2show(ctrl.list()); })
                 .then(function (){ return filter_requests(ctrl.filter_by()); })
@@ -21310,10 +21375,17 @@
                 request.priority = priority;
                 m.redraw();
             }
+
+            function update_pause_rules(request, rule_id){
+                request.pause_rules =  ctrl.deployer_rules().find(function (rule){ return rule.id===rule_id; });
+                m.redraw();
+            }
             get_deploys()
                 .then(function (response) { return ctrl.list(response); })
                 .then(function (){ return ctrl.list2show(ctrl.list()); })
                 .then(function (){ return filter_requests(ctrl.filter_by()); })
+                .then(function (){ return get_deployer_rules(); })
+                .then(function (results){ return ctrl.deployer_rules(results.sets); })
                 .then(function (){ return ctrl.loaded(true); })
                 .catch(function (error) {
                     throw error;
@@ -21335,12 +21407,16 @@
                             m('strong', 'Show only')
                         ),
                         m('.col-xs-1',
-
                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.filter_requests(e.target.value);}}, [
                                 m('option', {value:'pending', selected:ctrl.filter_by()==='pending'}, 'Pending'),
                                 m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
                                 m('option', {value:'reject', selected:ctrl.filter_by()==='reject'}, 'Rejected'),
                                 m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
+                            ])
+                        ),
+                        m('.col-xs-10',
+                            m('.text-xs-right',[
+                                m('a.btn.btn-primary.btn-xs', {href: '/autupauseruletable', config: m.route}, 'AutoPause rules')
                             ])
                         ),
                     ]),
@@ -21353,7 +21429,6 @@
                                 m('th', thConfig$4('user_name', ctrl.sortBy), 'Researcher name'),
                                 m('th', thConfig$4('target_number', ctrl.sortBy), 'Target number'),
                                 m('th', thConfig$4('priority', ctrl.sortBy), 'Priority'),
-                                m('th', thConfig$4('approved_by_a_reviewer', ctrl.sortBy), 'Approved by a reviewer'),
                                 m('th', thConfig$4('launch_confirmation', ctrl.sortBy), 'Launch confirmation'),
                                 m('th', thConfig$4('comments', ctrl.sortBy), 'Comments'),
                                 m('th', thConfig$4('status', ctrl.sortBy), 'Actions')
@@ -21371,7 +21446,16 @@
                                         ])
 
                                     ),
-                                    m('td', request.rules ==='' ? 'None' : m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.rules); }}, 'View')),
+                                    m('td', [
+                                        request.status === 'pending'  && !request.pause_rules ? ctrl.update_pause_rules(request, ctrl.deployer_rules()[0].id) : '',
+                                        request.rules ==='' ? 'None' : m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.rules); }}, 'View'),
+                                        request.status !== 'pending' ? m('', m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.pause_rules); }}, request.pause_rules ? request.pause_rules.name : '')) :
+
+                                        m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_pause_rules(request, e.target.value);}}, [
+                                            ctrl.deployer_rules().map(function (rule){ return m('option', {value:rule.id, selected:request.pause_rules && request.pause_rules.name===rule.name}, rule.name); }
+                                            )
+                                        ])
+                                    ]),
                                     m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
 
                                     m('td', request.target_number),
@@ -21379,7 +21463,6 @@
                                         request.status ? request.priority :
                                             m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: function (e){ return ctrl.update_priority(request, e.target.value); }, onchange: function (e){ return ctrl.update_priority(request, e.target.value); }})
                                     ),
-                                    m('td', request.approved_by_a_reviewer),
                                     m('td', request.launch_confirmation),
                                     m('td', request.comments),
                                     m('td',
@@ -21398,38 +21481,6 @@
                         )
                     ])
                 ]);
-
-
-                    // m('table', {class:'table table-nowrap table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
-                    // m('thead', [
-                    //     m('tr', [
-                    //         m('th', thConfig('CREATION_DATE',ctrl.sortBy), 'Creation date'),
-                    //         m('th', thConfig('FOLDER_LOCATION',ctrl.sortBy), 'Folder location'),
-                    //         m('th', thConfig('RULE_FILE',ctrl.sortBy), 'Rule file'),
-                    //         m('th', thConfig('RESEARCHER_EMAIL',ctrl.sortBy), 'Researcher email'),
-                    //         m('th', thConfig('RESEARCHER_NAME',ctrl.sortBy), 'Researcher name'),
-                    //         m('th', thConfig('TARGET_NUMBER',ctrl.sortBy), 'Target number'),
-                    //         m('th', thConfig('APPROVED_BY_A_REVIEWER',ctrl.sortBy), 'Approved by a reviewer'),
-                    //         m('th', thConfig('EXPERIMENT_FILE',ctrl.sortBy), 'Experiment file'),
-                    //         m('th', thConfig('LAUNCH_CONFIRMATION',ctrl.sortBy), 'Launch confirmation'),
-                    //         m('th', thConfig('COMMENTS',ctrl.sortBy), 'Comments')
-                    //     ])
-                    // ]),
-                    // m('tbody', [
-                    //     ctrl.list().map(study => m('tr', [
-                    //         m('td', study.CREATION_DATE),
-                    //         m('td', m('a', {href:study.FOLDER_LOCATION}, study.FOLDER_LOCATION)),
-                    //         m('td', study.RULE_FILE),
-                    //         m('td', m('a', {href:'mailto:' + study.RESEARCHER_EMAIL}, study.RESEARCHER_EMAIL)),
-                    //         m('td', study.RESEARCHER_NAME),
-                    //         m('td', study.TARGET_NUMBER),
-                    //         m('td', study.APPROVED_BY_A_REVIEWER),
-                    //         m('td', study.EXPERIMENT_FILE),
-                    //         m('td', study.LAUNCH_CONFIRMATION),
-                    //         m('td', study.COMMENTS)
-                    //     ]))
-                    // ])
-                // ]);
         }
     };
 
@@ -21566,41 +21617,25 @@
 
     var deploy = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
         method: 'post',
-        body: {props:{sets: ctrl.sets, approved_by_a_reviewer: ctrl.approved_by_a_reviewer, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
+        body: {props:{sets: ctrl.sets, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
     }); };
+
+    var update_deploy$1 = function (study_id, version_id, ref) {
+        var deploy_id = ref.deploy_id;
+        var priority = ref.priority;
+        var target_number = ref.target_number;
+        var comments = ref.comments;
+
+        return fetchJson(deploy_url$1(study_id), {
+        method: 'put',
+        body: {props: {deploy_id: deploy_id, version_id: version_id, priority: priority, target_number: target_number, comments: comments}}
+    });
+    };
 
     var Study_change_request = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
         method: 'put',
         body: {file_names: ctrl.file_names, target_sessions: ctrl.target_sessions, status: ctrl.status, comments: ctrl.comments}
     }); };
-
-    function rules_url() {
-        return (PIUrl + "/rules");
-    }
-
-    function rule_url(set_name) {
-        return (PIUrl + "/rules/" + set_name);
-    }
-
-    var get_rules = function () { return fetchJson(rules_url(), {
-        method: 'get'
-    }); };
-
-    var save_new_set = function (rules) { return fetchJson(rules_url(), {
-            method: 'post',
-            body: {rules: rules}
-        }); };
-
-
-    var update_set = function (rules) { return fetchJson(rules_url(), {
-            method: 'put',
-            body: {rules: rules}
-        }); };
-
-
-    var remove_set = function (set_id) { return fetchJson(rule_url(set_id), {
-            method: 'delete',
-        }); };
 
     function deployDialog (args) { return m.component(deployDialog$1, args); }
     var ASTERISK = m('span.text-danger.font-weight-bold', '* ');
@@ -21613,6 +21648,7 @@
             var ctrl = {
                 study: study,
                 latest_version:{},
+                exps : [],
                 sent:false,
                 error: m.prop(''),
                 target_number: m.prop(''),
@@ -21635,7 +21671,7 @@
                 completed_checklist: m.prop(false),
                 real_start: m.prop(false),
 
-                approved_by_a_reviewer: m.prop(''),
+                approved_by_a_reviewer: m.prop(false),
                 launch_confirmation: m.prop(''),
                 comments: m.prop('')   
                 
@@ -21651,7 +21687,7 @@
                         !ctrl.completed_checklist() ||
                         !ctrl.approved_by_irb() ||
                         !ctrl.real_start() ||
-                        ctrl.approved_by_a_reviewer()==='' ||
+                        !ctrl.approved_by_a_reviewer() ||
                         ctrl.launch_confirmation()==='';
             }
 
@@ -21680,18 +21716,18 @@
 
             function load() {
                 get_rules()
-                    .then(function (response) {
-                        ctrl.loaded(true);
-                        ctrl.all_rules(response.sets);
-                        ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; });
-                    }).then(m.redraw);
+                    .then(function (response) { return ctrl.all_rules(response.sets); })
+                    .then(function (){ return ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; }); })
+                    .then(function (){ return ctrl.exps = ctrl.latest_version.experiments; })
+                    .then(function (){ return ctrl.loaded(true); })
+                    .then(m.redraw);
             }
-
             load();
             return {ctrl: ctrl, submit: submit};
 
             function submit(){
                 return check_form_validity() ? false :
+
                 deploy(study.id, ctrl)
                     .then(function (response) {
                         ctrl.sent = true;
@@ -21710,14 +21746,11 @@
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
                 m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
             ]);
-            var exps = ctrl.latest_version.experiments;
-            console.log(exps);
             return !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('.deploy.container', [
-
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [
@@ -21751,7 +21784,6 @@
                         m('strong.space', 'Summary of Rule Logic')
                     ]),
                 ]),
-
                 ctrl.sets().map(function (set, set_id) { return m('.row.space',[
                         m('.col-sm-1',
                             m('',
@@ -21760,9 +21792,9 @@
                         ),
                         m('.col-sm-2',[
                             m('select.c-select.form-control.space',{ onchange: function (e) {ctrl.update_experiment_file(set_id, e.target.value);}}, [
-                                exps.length===1 ? ctrl.update_experiment_file(set_id, exps[0].name) && exps[0].name :
+                                ctrl.exps.length===1 ? ctrl.update_experiment_file(set_id, ctrl.exps[0].id) :
                                     m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
-                                exps.map(function (file){ return m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id); }
+                                ctrl.exps.map(function (file){ return m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id); }
                                 )
                             ])
                         ]),
@@ -21839,22 +21871,31 @@
                     ])
                 ]),
 
+                    m('.row.space',[
+                        m('.col-sm-12',{onclick: function () { return ctrl.approved_by_a_reviewer(!ctrl.approved_by_a_reviewer()); }},[
+                            ASTERISK, m('i.fa.fa-fw', {
+                                class: classNames({'fa-square-o' : !ctrl.approved_by_a_reviewer(), 'fa-check-square-o' : ctrl.approved_by_a_reviewer()})
+                            }), 'Study has been approved by a *User Experience* Reviewer (Calvin Lai)'
 
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-5',[
-                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
-                            m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
-                            m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
-                            m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
                         ])
-                    ])
-                ]),
+                    ]),
+
+
+                // m('.row.space',[
+                //     m('.col-sm-12',[
+                //         ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
+                //     ])
+                // ]),
+                //
+                // m('.row',[
+                //     m('.col-sm-5',[
+                //         m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
+                //             m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
+                //             m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
+                //             m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
+                //         ])
+                //     ])
+                // ]),
 
 
                 m('.row.space',[
@@ -23823,11 +23864,50 @@
     var oldDeploysDialog = {
         controller: function controller(ref){
             var deploy2show = ref.deploy2show;
+            var version_id = ref.version_id;
             var close = ref.close;
-            return {deploy2show: deploy2show, close: close};
+
+            var ctrl = {
+                deploy2show: deploy2show,
+                edit_deploy: edit_deploy,
+                update_deploy_param: update_deploy_param,
+                cancel_deploy: cancel_deploy,
+                was_changed: was_changed,
+                save_deploy: save_deploy
+            };
+            function cancel_deploy(deploy$$1){
+                deploy$$1.edit = false;
+                m.redraw();
+            }
+
+            function edit_deploy(deploy$$1){
+                deploy$$1.edit = true;
+                deploy$$1.new_comments = '';
+                deploy$$1.new_priority = deploy$$1.priority;
+                deploy$$1.new_target_number = deploy$$1.target_number;
+                m.redraw();
+            }
+            function was_changed(deploy$$1){
+                return parseInt(deploy$$1.new_priority) !== deploy$$1.priority || deploy$$1.new_target_number !== deploy$$1.target_number;
+            }
+
+            function save_deploy(deploy$$1){
+                if (!was_changed(deploy$$1))
+                    return;
+                update_deploy$1(m.route.param('studyId'), version_id, {deploy_id:deploy$$1._id, priority:deploy$$1.new_priority, target_number:deploy$$1.new_target_number, comments:deploy$$1.new_comments});
+                m.redraw();
+            }
+
+            function update_deploy_param(deploy$$1, param, val){
+                deploy$$1['new_'+param] = val;
+                m.redraw();
+            }
+
+            return {deploy2show: deploy2show, ctrl: ctrl, close: close};
         },
         view: function view(ref){
             var deploy2show = ref.deploy2show;
+            var ctrl = ref.ctrl;
             var close = ref.close;
 
             return m('.deploy.container', [
@@ -23854,9 +23934,6 @@
                                 m('strong.space', 'Priority')
                             ]),
                             m('td',[
-                                m('strong.space', 'Approved by a reviewer')
-                            ]),
-                            m('td',[
                                 m('strong.space', 'Launch confirmation')
                             ]),
                             m('td',[
@@ -23864,32 +23941,36 @@
                             ]),
                             m('td',[
                                 m('strong.space', 'Comments')
+                            ]),
+                            m('td',[
+                                m('strong.space', 'Change')
                             ])
                         ])
                     ]),
                     m('tbody', [
-                        deploy2show.map(function (deploy){ return deploy.sets.map(function (set){ return m('tr', {class:[set.status==='reject' ?  'table-danger' : set.status==='accept' ? 'table-success' : '']}, [
-
+                        deploy2show.map(function (deploy$$1){ return deploy$$1.sets.map(function (set){ return m('tr', {class:[set.status==='reject' ?  'table-danger' : set.status==='accept' ? 'table-success' : '']}, [
                                     m('td',[
-                                        formatDate$1(deploy.creation_date)
-
+                                        formatDate$1(deploy$$1.creation_date)
                                     ]),
                                     m('td',[
-                                        set.experiment_file
+                                        set.experiment_file ? set.experiment_file.descriptive_id : ''
                                     ]),
 
-                                    m('td',[
+                                    m('td', {style:{width:'10%'}}, [
+                                        set.edit ?
+                                            m('input.form-control', {placeholder: 'Target Number' ,value:set.new_target_number, oninput:(function (e){ return ctrl.update_deploy_param(set, 'target_number', e.target.value); })})
+                                        :
                                         set.target_number
                                     ]),
-                                    m('td',[
-                                        set.priority
+                                    m('td',{style:{width:'10%'}},[
+                                        set.edit ?
+                                            m('input.form-control', {width:'100%', placeholder: 'Priority' , type:'number', min:'0', max:'26', value:set.new_priority, oninput:(function (e){ return ctrl.update_deploy_param(set, 'priority', e.target.value); })})
+                                            :
+                                            set.priority
                                     ]),
 
                                     m('td',[
-                                        deploy.approved_by_a_reviewer==='Yes' ? 'Yes' : 'No'
-                                    ]),
-                                    m('td',[
-                                        deploy.launch_confirmation==='Yes' ? 'Yes' : 'No'
+                                        deploy$$1.launch_confirmation==='Yes' ? 'Yes' : 'No'
                                     ]),
 
                                     m('td',[
@@ -23897,16 +23978,33 @@
                                     ]),
 
                                     m('td',[
-                                        deploy.comments
+                                        set.edit ?
+                                            m('textarea.form-control.fixed_textarea', {cols: 100, placeholder: 'comments', value: set.new_comments,  oninput:(function (e){ return ctrl.update_deploy_param(set, 'comments', e.target.value); })})
+                                            :
+                                            deploy$$1.comments
+                                    ]),
+                                    m('td',[
+                                        m('.btn-toolbar.btn-group', [
+                                            !set.edit ?
+                                            m('button.btn.btn-primary.btn-sm', {title:'Edit', onclick: function (e){ return ctrl.edit_deploy(set); }},  [
+                                                m('i.fa.fa-edit')
+                                            ])
+                                            :
+                                            [
+                                                m('button.btn.btn-danger.btn-sm', {disabled: !ctrl.was_changed(set), title:'Update', onclick: function (e){ return ctrl.save_deploy(set); }},  [
+                                                    m('i.fa.fa-save')
+                                                ]),
+                                                m('button.btn.btn-secondary.btn-sm', {title:'Cancel', onclick: function (e){ return ctrl.cancel_deploy(set); }},  [
+                                                    m('i.fa.fa-times')
+                                                ])
+                                            ]
+                                        ]),
                                     ])
                                 ]); }
                             ); }
                         )
                     ])
-
                 ]),
-
-
 
                 m('.row.space',[
                     m('.col-sm-12.text-sm-right',
@@ -24058,12 +24156,12 @@
                     .then(m.redraw);
             }
 
-            function present_deploys(deploy2show){
+            function present_deploys(deploy2show, version_id){
                 var close = messages.close;
                 return messages.custom({header:'Old deploys',
                                         preventEnterSubmits: true,
                                         wide: true,
-                                        content: oldDeploysComponent({deploy2show: deploy2show, close: close})})
+                                        content: oldDeploysComponent({deploy2show: deploy2show, version_id: version_id, close: close})})
                     .then(m.redraw);
             }
 
@@ -24147,7 +24245,7 @@
                             m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
                             m('.col-xs-2.space',
                                 !version.deploys ? '' :
-                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys); }}, 'Old deploy requests')
+                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Old deploy requests')
                             ),
 
                                 m('.col-xs-3.space',
@@ -24273,11 +24371,16 @@
         return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
     }
 
-    function get_all_rules()
+
+    function get_all_rules(deployer)
     {
+        if ( deployer === void 0 ) deployer=false;
+
         return load_studies()
             .then(function (response) {
                 var studies = response.studies.filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$2);
+                if (deployer)
+                    return JSON.parse(JSON.stringify(autupause_rules));
                 var full_rules = JSON.parse(JSON.stringify(rules$1));
                 full_rules.push({
                         name:'Did not Start or Complete Study',
@@ -24291,7 +24394,28 @@
             });
     }
 
+
+    var autupause_rules = [
+        {
+            name:'Started sessions',
+            nameXML:'startedSessions',
+            equal:['>','<','=','>=','<=','!='],
+            equalXML:['gt','lt','eq','gte','lte','neq'],
+            values:['Started sessions'],
+            valuesXML:[]
+        },
+        {
+            name:'Completion rate',
+            nameXML:'completionRate',
+            equal:['>','<','=','>=','<=','!='],
+            equalXML:['gt','lt','eq','gte','lte','neq'],
+            values:['Completion rate'],
+            valuesXML:[]
+        }
+    ];
+
     var rules$1 = [
+
         {
             name:'Sex',
             nameXML:'sex',
@@ -24315,7 +24439,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['gt','lt','eq','gte','lte','neq'],
             values:generate_years(),
-            valuesXML:[]
+            valuesXML:generate_years()
         },
         {
             name:'Education',
@@ -25585,7 +25709,23 @@
                 cancel: cancel,
                 print_rules: print_rules
             };
+            var deployer = m.route() === '/autupauseruletable';
             function load() {
+                deployer ?
+                    get_deployer_rules()
+                        .then(function (response) {
+                            ctrl.loaded(true);
+                            ctrl.sets(response.sets ? response.sets : []);
+                            ctrl.sets2show(ctrl.sets());
+                            get_all_rules(true)
+                                .then(function (all_rules) { return ctrl.all_rules = all_rules; });
+
+                            m.redraw();
+                        })
+                        .catch(function (error) {
+                            ctrl.error(error.message);
+                        }).then(m.redraw)
+                    :
                 get_rules()
                     .then(function (response) {
                         ctrl.loaded(true);
@@ -25593,6 +25733,7 @@
                         ctrl.sets2show(ctrl.sets());
                         get_all_rules()
                         .then(function (all_rules) { return ctrl.all_rules = all_rules; });
+
                         m.redraw();
                     })
                     .catch(function (error) {
@@ -25603,7 +25744,7 @@
 
             function save(save_new){
                 if (!ctrl.new_set().edit)
-                    return ctrl.save_new_set(ctrl.new_set())
+                    return ctrl.save_new_set(ctrl.new_set(), deployer)
                         .then(function (new_set){ return ctrl.sets().push(new_set.rules); })
                         .then(ctrl.sets2show(ctrl.sets()))
                         .then(ctrl.new_set(''))
@@ -25611,19 +25752,19 @@
 
                 delete ctrl.new_set().edit;
                 if (save_new)
-                    return ctrl.save_new_set(ctrl.new_set())
+                    return ctrl.save_new_set(ctrl.new_set(), deployer)
                         .then(function (new_set){ return ctrl.sets().push(new_set.rules); })
                         .then(ctrl.sets2show(ctrl.sets()))
                         .then(ctrl.new_set(''))
                         .then(m.redraw);
-                return ctrl.update_set(ctrl.new_set())
+                return ctrl.update_set(ctrl.new_set(), deployer)
                     .then(ctrl.sets(ctrl.sets().map(function (set){ return set.id===ctrl.new_set().id ? ctrl.new_set() : set; })))
                     .then(ctrl.sets2show(ctrl.sets()))
                     .then(function (){ return ctrl.new_set(''); })
                     .then(m.redraw);
             }
             function remove(set_id){
-                ctrl.remove_set(set_id)
+                ctrl.remove_set(set_id, deployer)
                     .then(ctrl.sets(ctrl.sets().filter(function (set){ return set.id!==set_id; })))
                     .then(ctrl.sets2show(ctrl.sets()))
                     .then(m.redraw);
@@ -25789,6 +25930,10 @@
                             m('.col-sm-4.space',
                                 m('.input-set.space', [
                                     !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
+                                        condition_data.values.length === 1 ?
+                                            m('input.form-control.space', {value:user_rule.value, onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
+                                            :
+
                                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
                                                 m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
                                                 condition_data.values.map(function (value, val_id){ return typeof value === "object"
@@ -26427,6 +26572,7 @@
         '/sharing/:studyId': sharing_dialog,
         '/properties/:studyId': collaborationComponent$1,
         '/ruletable': ruletableComponent,
+        '/autupauseruletable': ruletableComponent
 
     };
 
@@ -26466,7 +26612,7 @@
                         if(ctrl.role()!=='su' && is4su)
                             m.route('./');
 
-                        if(ctrl.role()==='du' && m.route() !== '/deployList')
+                        if(ctrl.role()==='du' && m.route() !== '/deployList' && m.route() !== '/autupauseruletable' )
                             return m.route('/deployList');
 
                         if(ctrl.role()!=='du' && ctrl.role()!=='su'  && m.route() === '/deployList')
@@ -26526,11 +26672,10 @@
                     'studies':[],
                     // 'data':['downloads', 'downloadsAccess', 'statistics'],
                     // 'pool':[],
-                    'tags':[]
-                    ,'rules':[]
-                    ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                    'tags':[],
+                    'pi':['rules', 'pool'],
+                    'admin':['deployList', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
                 };
-
 
                 var settings_hash = {
                     'studies':{text: 'Studies', href:'/studies', sub:[]},
@@ -26540,13 +26685,20 @@
                             'downloadsAccess': {text: 'Downloads Access', href: '/downloadsAccess'},
                             'statistics': {text: 'Statistics', href: '/statistics'}
                         }},
+
+
                     'pool':{text: 'Pool', href:'/pool', sub:[]},
                     'tags':{text: 'Tags', href:'/tags', sub:[]},
-                    'rules':{text: 'Rules', href:'/ruletable', sub:[]},
+                    'pi':{text: 'PI', href:false,
+                        subs: {
+
+                            'pool': {text: m('i.fa.fa-calendar', ' Research Pool'), href: '/pool'},
+                            'rules': {text: m('i.fa.fa-gavel', ' Rules'), href: '/ruletable'}
+                        }},
                     'admin':{text: 'Admin', href:false,
                         su:true,
-                        subs:{'deployList': {text:'Deploy List', href: '/deployList'},
-                            'removalList': {text:'Removal List', href:'/removalList'},
+                        subs:{'deployList': {text: m('i.fa.fa-list', ' Deploy List'), href: '/deployList'},
+                            'removalList': {text: 'Removal List', href:'/removalList'},
                             'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
                             'addUser': {text:'Add User', href: '/addUser'},
                             'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},

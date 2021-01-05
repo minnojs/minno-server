@@ -95,6 +95,7 @@ let routes = {
     '/sharing/:studyId': sharingComponent,
     '/properties/:studyId': propertiesComponent,
     '/ruletable': ruletableComponent,
+    '/autupauseruletable': ruletableComponent
 
 };
 

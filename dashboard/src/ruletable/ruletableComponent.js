@@ -1,10 +1,11 @@
 import studyFactory from '../study/files/fileCollectionModel';
 import {createNotifications} from 'utils/notifyComponent';
-import {save_new_set, remove_set, update_set, get_rules} from './ruletableModel';
+import {save_new_set, remove_set, update_set, get_rules, get_deployer_rules} from './ruletableModel';
 import {print_rules} from './ruletableActions'
 
 export default ruletableComponent;
 const notifications= createNotifications();
+
 
 
 import get_all_rules  from './rules';
@@ -41,7 +42,23 @@ let ruletableComponent = {
             cancel,
             print_rules
         };
+        const deployer = m.route() === '/autupauseruletable';
         function load() {
+            deployer ?
+                get_deployer_rules()
+                    .then(response => {
+                        ctrl.loaded(true);
+                        ctrl.sets(response.sets ? response.sets : []);
+                        ctrl.sets2show(ctrl.sets());
+                        get_all_rules(true)
+                            .then(all_rules => ctrl.all_rules = all_rules)
+
+                        m.redraw();
+                    })
+                    .catch(error => {
+                        ctrl.error(error.message);
+                    }).then(m.redraw)
+                :
             get_rules()
                 .then(response => {
                     ctrl.loaded(true);
@@ -49,6 +66,7 @@ let ruletableComponent = {
                     ctrl.sets2show(ctrl.sets());
                     get_all_rules()
                     .then(all_rules => ctrl.all_rules = all_rules)
+
                     m.redraw();
                 })
                 .catch(error => {
@@ -59,7 +77,7 @@ let ruletableComponent = {
 
         function save(save_new){
             if (!ctrl.new_set().edit)
-                return ctrl.save_new_set(ctrl.new_set())
+                return ctrl.save_new_set(ctrl.new_set(), deployer)
                     .then(new_set=>ctrl.sets().push(new_set.rules))
                     .then(ctrl.sets2show(ctrl.sets()))
                     .then(ctrl.new_set(''))
@@ -67,19 +85,19 @@ let ruletableComponent = {
 
             delete ctrl.new_set().edit;
             if (save_new)
-                return ctrl.save_new_set(ctrl.new_set())
+                return ctrl.save_new_set(ctrl.new_set(), deployer)
                     .then(new_set=>ctrl.sets().push(new_set.rules))
                     .then(ctrl.sets2show(ctrl.sets()))
                     .then(ctrl.new_set(''))
                     .then(m.redraw);
-            return ctrl.update_set(ctrl.new_set())
+            return ctrl.update_set(ctrl.new_set(), deployer)
                 .then(ctrl.sets(ctrl.sets().map(set=> set.id===ctrl.new_set().id ? ctrl.new_set() : set)))
                 .then(ctrl.sets2show(ctrl.sets()))
                 .then(()=>ctrl.new_set(''))
                 .then(m.redraw);
         }
         function remove(set_id){
-            ctrl.remove_set(set_id)
+            ctrl.remove_set(set_id, deployer)
                 .then(ctrl.sets(ctrl.sets().filter(set=>set.id!==set_id)))
                 .then(ctrl.sets2show(ctrl.sets()))
                 .then(m.redraw);
@@ -243,6 +261,10 @@ let ruletableComponent = {
                         m('.col-sm-4.space',
                             m('.input-set.space', [
                                 !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
+                                    condition_data.values.length === 1 ?
+                                        m('input.form-control.space', {value:user_rule.value, onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
+                                        :
+
                                         m('select.c-select.form-control.space',{onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
                                             m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
                                             condition_data.values.map((value, val_id)=>
