@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2020)
+ * @license Apache-2.0 (2021)
  */
 
 (function () {
@@ -23173,91 +23173,110 @@
         method: 'get'
     }); };
 
+    var sharingRequestComponent = {
+        controller: function controller(ref){
+            var ctrl = ref.ctrl;
+
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.container', [
+                m('.row.p-t-1', [
+                    m('.col-sm-4', [
+                        m('h3', 'Sharing Invitations')
+                    ])]),
+                m('.card.studies-card', [
+                    m('.card-block', [
+                        m('.row', {key: '@@notid@@'}, [
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Owner ')
+                                ])
+                            ]),
+                            m('.col-sm-4', [
+                                m('.form-control-static',[
+                                    m('strong', 'Study name ')
+                                ])]),
+                            m('.col-sm-2', [
+                                m('.form-control-static',[
+                                    m('strong', 'Permission ')
+                                ])
+                            ]),
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Action ')
+                                ])
+                            ])
+                        ]),
+                        ctrl.pendings().map(function (study) { return m('.row.study-row', [
+                                m('.col-sm-3', [
+                                    m('.study-text', study.owner_name)
+                                ]),
+                                m('.col-sm-4', [
+                                    m('.study-text', study.study_name)
+                                ]),
+                                m('.col-sm-2', [
+                                    m('.study-text', study.permission)
+                                ]),
+                                m('.col-sm-3', [
+                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_use_code(study.accept);}}, 'Accept'), ' | ',
+                                        m('button.btn.btn-danger', {onclick:function() {ctrl.do_use_code(study.reject);}}, 'Reject'))
+                                ]),
+                            ]); })
+                    ])
+                ])
+            ]);
+        }
+    };
+
     var messagesComponent = {
         controller: function controller(){
             var ctrl = {
-                role:m.prop(''),
+                has_messages: m.prop(false),
                 pendings: m.prop(''),
                 loaded: false,
                 error: m.prop(''),
                 do_use_code: do_use_code
             };
-            getAuth().then(function (response) {
-                ctrl.role(response.role);
-            });
-
-            function do_use_code(code){
-                use_code(code)
-                    .then(function (){ return ctrl.pendings(ctrl.pendings().filter(function (study){ return study.accept!==code && study.reject!==code; })); })
-                    .then(m.redraw);
-            }
-
             get_pending_studies()
                 .then(function (response) {
+
                     ctrl.pendings(response.studies);
+                    ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0);
                     ctrl.loaded = true;
                 })
                 .catch(function (response) {
                     ctrl.error(response.message);
                 })
                 .then(m.redraw);
+            function do_use_code(code){
+                use_code(code)
+                    .then(function (){ return ctrl.pendings(ctrl.pendings().filter(function (study){ return study.accept!==code && study.reject!==code; })); })
+                    .then(function (){ return ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0); })
+                    .then(m.redraw);
+            }
+
             return ctrl;
         },
         view: function view(ctrl){
-
-            return  !ctrl.loaded
+            return !ctrl.loaded
                 ?
                 m('.loader')
                 :
-                m('.container.studies', [
-                    m('.row.p-t-1', [
-                        m('.col-sm-4', [
-                            m('h3', 'Sharing Invitations')
-                        ])]),
-                    m('.card.studies-card', [
-                        m('.card-block', [
-                            m('.row', {key: '@@notid@@'}, [
-                                m('.col-sm-3', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Owner ')
-                                    ])
-                                ]),
-                                m('.col-sm-4', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Study name ')
-                                    ])]),
-                                m('.col-sm-2', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Permission ')
-                                    ])
-                                ]),
-                                m('.col-sm-3', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Action ')
-                                    ])
-                                ])
-
-                            ]),
-                            ctrl.pendings().map(function (study) { return m('.row.study-row', [
-                                    m('.col-sm-3', [
-                                        m('.study-text', study.owner_name)
-                                    ]),
-                                    m('.col-sm-4', [
-                                        m('.study-text', study.study_name)
-                                    ]),
-                                    m('.col-sm-2', [
-                                        m('.study-text', study.permission)
-                                    ]),
-                                    m('.col-sm-3', [
-                                        m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_use_code(study.accept);}}, 'Accept'), ' | ',
-                                            m('button.btn.btn-danger', {onclick:function() {ctrl.do_use_code(study.reject);}}, 'Reject'))
-                                    ]),
-
-
-                                ]); })
-                        ])])]);
-
-
+                !ctrl.has_messages()
+                    ?
+                    m('.container',
+                        m('.row.p-t-1', [
+                            m('.col-sm-4', [
+                                m('h3', 'There are no messages...')
+                            ])
+                        ])
+                    )
+                    :
+                    m('.container', [
+                        m.component(sharingRequestComponent, {ctrl: ctrl})
+                    ]);
         }
     };
 
