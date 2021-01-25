@@ -1,6 +1,7 @@
 /* eslint no-console:0 */
 require('./config_validation');
 const config        = require('../config');
+const versions        = require('./versions');
 const fs            = require('fs-extra');
 const {insert_new_user, update_role} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
@@ -30,6 +31,7 @@ function fix_versions(studies, study){
                 fs.copy(`${config.user_folder}/${study.folder_name}_tmp`, `${config.user_folder}/${study.folder_name}/v${id + 1}`)
             )
             .then(() => studies.updateOne({_id: study._id}, {$set: {versions}}));
+
     });
 
 }
@@ -42,6 +44,8 @@ connection
             .then(data=>{
                 data.filter(study=>study.versions.filter(version=>!version.hash).length>0).map(study=>
                 {
+                    console.log(study);
+                    return ;
                     // let promises = ;
                     console.log(`create tmp: ${config.user_folder}${study.folder_name}`);
                     return fs.copy(`${config.user_folder}${study.folder_name}`, `${config.user_folder}${study.folder_name}_tmp`)
@@ -49,6 +53,16 @@ connection
                         .catch(err => console.error(err))
                         .then(()=>Promise.all(fix_versions(studies, study)))
                         .then(()=>fs.remove(`${config.user_folder}/${study.folder_name}_tmp`))
+                        .then(()=>{
+                            // user
+                            const now = new Date();
+                            return versions.insert_new_version(study.user_id, study._id,
+                                '',
+                                dateFormat(now, 'yyyymmdd.HHMMss'),
+                                'Develop',
+                                true);
+
+                        })
                         // .then(()=>studies.updateOne({id:study.id}, {$set: {versions}}))
                         ;
                     })
