@@ -44,9 +44,7 @@ connection
             .then(data=>{
                 data.filter(study=>study.versions.filter(version=>!version.hash).length>0).map(study=>
                 {
-                    console.log(study);
-                    return ;
-                    // let promises = ;
+
                     console.log(`create tmp: ${config.user_folder}${study.folder_name}`);
                     return fs.copy(`${config.user_folder}${study.folder_name}`, `${config.user_folder}${study.folder_name}_tmp`)
                         .then(() => console.log('success!'))
@@ -55,8 +53,14 @@ connection
                         .then(()=>fs.remove(`${config.user_folder}/${study.folder_name}_tmp`))
                         .then(()=>{
                             // user
+                            const user_id = study.users.find(user=>user.permission==='owner').user_id;
+                            const latest_version = study.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                            if(latest_version.status==='Develop')
+                                return;
+                            console.log(`Add a new version`);
+
                             const now = new Date();
-                            return versions.insert_new_version(study.user_id, study._id,
+                            return versions.insert_new_version(user_id, study._id,
                                 '',
                                 dateFormat(now, 'yyyymmdd.HHMMss'),
                                 'Develop',
