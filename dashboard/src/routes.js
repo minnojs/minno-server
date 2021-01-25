@@ -15,12 +15,9 @@ import studiesComponent from './study/studiesComponent';
 
 
 import deployListComponent from 'deploy/forms/deployList/deployListComponent';
-import changeRequestListComponent from 'deploy/forms/changeRequestList/changeRequestListComponent';
-import removalListComponent from 'deploy/forms/removalList/removalListComponent';
 
 import deployComponent from './deploy/deployComponent';
-import removalComponent from './deploy/removalComponent';
-import changeRequestComponent from './deploy/changeRequestComponent';
+import oldDeployComponent from './deploy/oldDeployComponent';
 
 import addUserComponent from './addUser/addUserComponent';
 import usersComponent from './admin/users/usersComponent';
@@ -59,17 +56,16 @@ let routes = {
     '/reset_password/:code':  resetPasswordComponent,
 
     '/deployList': deployListComponent,
-    '/removalList': removalListComponent,
-    '/changeRequestList': changeRequestListComponent,
     '/addUser':  addUserComponent,
     '/users':  usersComponent,
     '/config':  configComponent,
     '/homepage':  homepageComponent,
     '/massMail':  massMailComponent,
 
-    '/changeRequest/:studyId':  changeRequestComponent,
-    '/studyRemoval/:studyId':  removalComponent,
     '/deploy/:studyId': deployComponent,
+    '/deploy/:studyId/:deployId': oldDeployComponent,
+    '/review/:deployId': oldDeployComponent,
+
     '/login': loginComponent,
     '/studies' : studiesComponent,
     '/studies/statistics_old' : statistics_oldComponent,

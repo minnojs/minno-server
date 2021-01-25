@@ -1,23 +1,16 @@
+export default collaborationComponent;
+
 import messages from 'utils/messagesComponent';
 import studyFactory from '../files/fileCollectionModel';
 import {delete_study, publish_study, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
-import {print_rules} from '../../ruletable/ruletableActions'
-
 import deployDialog from '../../deploy/deployComponent';
-import changeRequestDialog from '../../deploy/changeRequestComponent';
-import removalDialog from '../../deploy/removalComponent';
-
-
 import sharing_dialog from '../sharing/sharingComponent';
-
 import {createNotifications} from 'utils/notifyComponent';
-import oldDeploysComponent from "../../deploy/oldDeploysComponent";
-
+import oldDeploysComponent from '../../deploy/oldDeploysComponent';
 import data_dialog from '../../downloads/dataComp';
 import stat_dialog from '../open_statistics/statComp';
 
-export default collaborationComponent;
 const notifications= createNotifications();
 
 let collaborationComponent = {
@@ -87,7 +80,7 @@ let collaborationComponent = {
         function show_sharing() {
             let study_id = ctrl.study.id;
             let close = messages.close;
-            messages.custom({header: 'Statistics', wide: true, content: sharing_dialog({study_id, close})})
+            messages.custom({header: 'Statistics', wide: true, content: sharing_dialog({study_id, close})});
         }
 
         function show_data() {
@@ -162,10 +155,10 @@ let collaborationComponent = {
         function present_deploys(deploy2show, version_id){
             let close = messages.close;
             return messages.custom({header:'Old deploys',
-                                    preventEnterSubmits: true,
-                                    wide: true,
-                                    content: oldDeploysComponent({deploy2show, version_id, close})})
-                .then(m.redraw);
+                preventEnterSubmits: true,
+                wide: true,
+                content: oldDeploysComponent({deploy2show, version_id, close})})
+            .then(m.redraw);
         }
 
         function show_duplicate(){
@@ -249,13 +242,11 @@ let collaborationComponent = {
                         m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
                         m('.col-xs-2.space',
                             !version.deploys ? '' :
-                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys, version.id)}, 'Old deploy requests')
+                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys, version.id)}, 'Deploy requests')
                         ),
-
-                            m('.col-xs-3.space',
-                            !version.deploy2show ? '' :
-                                version.deploy2show
-                            )
+                        m('.col-xs-3.space',
+                            !version.deploy2show ? '' : version.deploy2show
+                        )
                     ])
                 ),
 
@@ -294,9 +285,7 @@ let collaborationComponent = {
                                         m('.small', 'This will allows you to...')
                                     ]),
                                     m('.col-sm-3.space.text-sm-right',[
-                                        m('button.btn.btn-primary.btn-sm', {disabled: ctrl.study.versions.filter(version=>version.state === 'Published').length===0, onclick:ctrl.show_deploy}, 'Deploy'),
-                                        ctrl.study.versions.filter(version=>version.state === 'Published').length>0 ? '' : m('p.small.text-muted', 'There are no published versions yet')
-                                    ])
+                                        m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`)}, 'Deploy')])
                                 )
                             ])
                         ),

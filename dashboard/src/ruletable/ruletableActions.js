@@ -4,4 +4,4 @@ export let print_rules = (set) =>{
 
     const print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
     return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
-}
+};

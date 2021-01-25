@@ -1,8 +1,9 @@
 const utils         = require('./utils');
 const connection    = Promise.resolve(require('mongoose').connection);
 const dateFormat    = require('dateformat');
+const versions_comp   = require('./versions');
 
-const {has_read_permission, has_write_permission} = require('./studies');
+const {has_write_permission} = require('./studies');
 
 function get_rules(user_id, deployer = false, user_role = '') {
     if(deployer && (user_role !== 'du' && user_role !== 'su'))
@@ -13,7 +14,7 @@ function get_rules(user_id, deployer = false, user_role = '') {
             .then(user_data=>{
                 if (deployer && !user_data)
                     users.insertOne({_id:-1, rules:[]});
-                return ({sets: user_data ? user_data.rules : []})
+                return ({sets: user_data ? user_data.rules : []});
             });
     });
 }
@@ -38,7 +39,7 @@ function insert_new_set(user_id, rules, deployer = false, user_role = '') {
     });
 }
 
-function delete_set(user_id, set_id, deployer = false, user_role = false) {
+function delete_set(user_id, set_id, deployer = false) {
     return connection.then(function (db) {
         const users   = db.collection('users');
         return users.updateOne({_id: deployer ? -1 : user_id}, {$pull: {rules: {id: set_id}}})
@@ -49,7 +50,7 @@ function delete_set(user_id, set_id, deployer = false, user_role = false) {
     });
 }
 
-function update_set(user_id, rules, deployer = false, user_role = false) {
+function update_set(user_id, rules, deployer = false, user_role) {
     if(deployer && (user_role !== 'du' && user_role !== 'su'))
         return Promise.reject({status:400, message:'Error: Permission denied'});
     return connection.then(function (db) {
@@ -67,31 +68,61 @@ function update_set(user_id, rules, deployer = false, user_role = false) {
 }
 
 
-function update_deploy(deploy_id, priority, pause_rules, status) {
+function read_review(user_id, deploy_id){
+    return connection.then(function (db) {
+        const users = db.collection('users');
+        return users.updateOne({_id: user_id},
+            {$pull: {reviewed_requests: {deploy_id}}});
+    });
+}
+
+function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {
+    if(user_role !== 'du' && user_role !== 'su')
+        return Promise.reject({status:400, message:'Error: Permission denied'});
+
     return connection.then(function (db) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
+        const users = db.collection('users');
 
         return deploys.findOneAndUpdate({_id: deploy_id},
-            {$set: {priority, status, pause_rules}}
-            // {$set: {priority}}
+            {$set: {priority, status, pause_rules, reviewer_comments}}
         ).then(request=>{
-            // studies.findOne({_id:request.value.study_id, 'versions.deploys': { $elemMatch: {id: deploy_id}}})
             return studies.findOne({_id:request.value.study_id})
-
-                // {$set: {'versions.$.deploys.status':status}})
                 .then(study_data=>
                 {
                     let versions = study_data.versions;
-                    let version2update = versions.find(version=>version.id===request.value.version_id);
-                    let deploy2update = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===deploy_id));
-                    let set2update = deploy2update.sets.find(set=>set._id===deploy_id);
-                    set2update.status = status;
+                    let version2update  = versions.find(version=>version.id===request.value.version_id);
+                    let deploy2update   = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===deploy_id));
+                    let set2update      = deploy2update.sets.find(set=>set._id===deploy_id);
+                    set2update.status   = status;
                     set2update.priority = priority;
-                    return studies.updateOne({_id:request.value.study_id},
-                        {$set: {versions:versions}}).then(get_all_deploys);
+                    set2update.reviewer_comments = reviewer_comments;
+                    users.updateMany({_id: {$in: study_data.users.map(user=>user.user_id)}},
+                        {$push: {reviewed_requests: {
+                            study_id:request.value.study_id,
+                            study_name:request.value.study_name,
+                            version_id: request.value.version_id,
+                            deploy_id: request.value._id,
+                            file_name: set2update.experiment_file.file_id,
+                            status: status,
+                            reviewer_comments: reviewer_comments
+                        }}});
 
-                });
+                    return studies.updateOne({_id:request.value.study_id},
+                        {$set: {versions:versions}})
+                        .then(()=> {
+
+                            const now = new Date();
+                            // console.log(version2update.state !=='Develop');
+                            if (version2update.state ==='Develop')
+                                return versions_comp.insert_new_version(study_data.users.find(user=>user.permission === 'owner').user_id, parseInt(request.value.study_id),
+                                    '',
+                                    dateFormat(now, 'yyyymmdd.HHMMss'),
+                                    'Develop',
+                                    true);});
+                })
+                .then(get_all_deploys);
         });
     });
 }
@@ -103,18 +134,25 @@ function get_all_deploys() {
     });
 }
 
+function get_deploy(deploy_id) {
+    return connection.then(function (db) {
+        const deploys = db.collection('deploys');
+        return deploys.findOne({_id:deploy_id});
+    });
+}
+
 function request_deploy(user_id, study_id, props) {
     return has_write_permission(user_id, study_id)
         .then(function({user_data, study_data}) {
             let versions = study_data.versions;
-            let last_version = versions.filter(version=>version.state==='Published').reduce((prev, current) => (prev.id > current.id) ? prev : current);
+            let version2deploy = versions.find(version=>version.hash===props.version_id);
             const now = new Date();
             props.creation_date = dateFormat(now, 'yyyymmdd.HHMMss');
             props.sets.map(set=>set._id = utils.sha1(Date.now()+Math.random()));
-            if(Array.isArray(last_version.deploys))
-                last_version.deploys.push(props);
+            if(Array.isArray(version2deploy.deploys))
+                version2deploy.deploys.push(props);
             else
-                last_version.deploys = [props];
+                version2deploy.deploys = [props];
             return connection.then(function (db) {
                 const studies = db.collection('studies');
 
@@ -130,8 +168,8 @@ function request_deploy(user_id, study_id, props) {
                         _id:set._id,
                         study_id,
                         study_name:study_data.name,
-                        version_id:last_version.id,
-                        version_hash:last_version.hash,
+                        version_id:version2deploy.id,
+                        version_hash:version2deploy.hash,
                         status:'pending',
                         creation_date:props.creation_date,
                         email:user_data.email,
@@ -140,10 +178,11 @@ function request_deploy(user_id, study_id, props) {
                         experiment_file:set.experiment_file,
                         rules:set.rules,
                         priority:set.priority,
+                        planned_procedure: props.planned_procedure,
+                        sample_size: props.sample_size,
                         target_number: set.target_number}));
 
                     const deploys = db.collection('deploys');
-
 
                     return deploys.insertMany(requests)
                         .then(function (user_result) {
@@ -151,9 +190,7 @@ function request_deploy(user_id, study_id, props) {
                                 return Promise.reject();
                             return Promise.resolve(versions[versions.length - 1]);
                         });
-
                 });
-
             });
         });
 }
@@ -172,11 +209,12 @@ function change_deploy(user_id, study_id, props) {
             deploy2update.creation_date = dateFormat(Date.now(), 'yyyymmdd.HHMMss');
             set2update.target_number = props.target_number;
 
-            set2update.priority = props.priority;
+            set2update.priority    = props.priority;
             deploy2update.comments = props.comments;
-            set2update._id      = utils.sha1(Date.now()+Math.random());
-            set2update.status = 'pending';
-            deploy2update.sets  = [set2update];
+            set2update.ref_id      = set2update._id;
+            set2update._id         = utils.sha1(Date.now()+Math.random());
+            set2update.status      = 'pending';
+            deploy2update.sets     = [set2update];
             version2update.deploys.push(deploy2update);
             return connection.then(function (db) {
                 const studies = db.collection('studies');
@@ -188,6 +226,7 @@ function change_deploy(user_id, study_id, props) {
                     const new_deploy ={
                         user_name:user_data.user_name,
                         _id:set2update._id,
+                        ref_id:set2update.ref_id,
                         study_id,
                         study_name:study_data.name,
                         version_id:props.version_id,
@@ -201,15 +240,12 @@ function change_deploy(user_id, study_id, props) {
                         rules:set2update.rules,
                         priority:set2update.priority,
                         target_number: set2update.target_number};
-
                     const deploys = db.collection('deploys');
-
-
                     return deploys.insertOne(new_deploy)
                         .then(function (user_result) {
                             if (!user_result)
                                 return Promise.reject();
-                            return Promise.resolve(version);
+                            return Promise.resolve(new_deploy);
                         });
 
                 });
@@ -217,4 +253,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_all_deploys, update_deploy};
+module.exports = {get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

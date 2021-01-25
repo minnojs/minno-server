@@ -1,15 +1,11 @@
-import studyFactory from '../study/files/fileCollectionModel';
+export default ruletableComponent;
 import {createNotifications} from 'utils/notifyComponent';
 import {save_new_set, remove_set, update_set, get_rules, get_deployer_rules} from './ruletableModel';
-import {print_rules} from './ruletableActions'
+import {print_rules} from './ruletableActions';
+import get_all_rules  from './rules';
 
-export default ruletableComponent;
 const notifications= createNotifications();
 
-
-
-import get_all_rules  from './rules';
-import {get_tags} from "../tags/tagsModel";
 let ruletableComponent = {
     controller(){
         let ctrl = {
@@ -42,7 +38,7 @@ let ruletableComponent = {
             cancel,
             print_rules
         };
-        const deployer = m.route() === '/autupauseruletable';
+        const deployer = m.route() === '/autupauseruletable' || m.route() === '/autupauseruletable/';
         function load() {
             deployer ?
                 get_deployer_rules()
@@ -51,27 +47,25 @@ let ruletableComponent = {
                         ctrl.sets(response.sets ? response.sets : []);
                         ctrl.sets2show(ctrl.sets());
                         get_all_rules(true)
-                            .then(all_rules => ctrl.all_rules = all_rules)
-
-                        m.redraw();
+                            .then(all_rules => ctrl.all_rules = all_rules);
                     })
                     .catch(error => {
                         ctrl.error(error.message);
-                    }).then(m.redraw)
+                    })
+                    .then(m.redraw)
                 :
-            get_rules()
-                .then(response => {
-                    ctrl.loaded(true);
-                    ctrl.sets(response.sets ? response.sets : []);
-                    ctrl.sets2show(ctrl.sets());
-                    get_all_rules()
-                    .then(all_rules => ctrl.all_rules = all_rules)
-
-                    m.redraw();
-                })
-                .catch(error => {
-                    ctrl.error(error.message);
-                }).then(m.redraw);
+                get_rules()
+                    .then(response => {
+                        ctrl.loaded(true);
+                        ctrl.sets(response.sets ? response.sets : []);
+                        ctrl.sets2show(ctrl.sets());
+                        get_all_rules()
+                            .then(all_rules => ctrl.all_rules = all_rules)
+                            .then(m.redraw);
+                    })
+                    .catch(error => {
+                        ctrl.error(error.message);
+                    }).then(m.redraw);
         }
 
 
@@ -103,7 +97,7 @@ let ruletableComponent = {
                 .then(m.redraw);
         }
         function filter_sets(str){
-            ctrl.sets2show(ctrl.sets().filter(set=>set.name.match(new RegExp(str, 'i'))))
+            ctrl.sets2show(ctrl.sets().filter(set=>set.name.match(new RegExp(str, 'i'))));
             m.redraw();
         }
 
@@ -113,10 +107,10 @@ let ruletableComponent = {
         }
         function download_set(set){
             const data2save = new Blob([JSON.stringify(set)], {type: 'application/json'});
-            let downloadLink = document.createElement("a");
+            let downloadLink = document.createElement('a');
             downloadLink.download = set.name+'.json';
             downloadLink.href = window.URL.createObjectURL(data2save);
-            downloadLink.style.display = "none";
+            downloadLink.style.display = 'none';
             document.body.appendChild(downloadLink);
             downloadLink.click();
             downloadLink.remove();
@@ -204,21 +198,20 @@ let ruletableComponent = {
         function show_set(set, parent = false){
             return m('.rules_frame.rules_border', [
                 m('.row', [
-                        parent ? '' :
-                            m('.col-sm-2.space',
-                                m('input.form-control.space', {value: set.name, onchange: e => {ctrl.update_set_name(set, e.target.value);}, onkeyup: e => {ctrl.update_set_name(set, e.target.value);}, placeholder:'Set name'})
-                            ),
+                    parent ? '' :
                         m('.col-sm-2.space',
-                            m('select.c-select.form-control.space',{onchange: e => {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
-                                m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
-                            ])
+                            m('input.form-control.space', {value: set.name, onchange: e => {ctrl.update_set_name(set, e.target.value);}, onkeyup: e => {ctrl.update_set_name(set, e.target.value);}, placeholder:'Set name'})
                         ),
-                        m('.col-sm-2.space',
-                            !parent ? '' : m('a.btn.btn-secondary', {onclick: ()=>ctrl.remove_sub_set(set, parent)}, m('i.fa.fa-minus-circle.space', ' Remove group' ))
-                        ),
-                    ]
-                ),
+                    m('.col-sm-2.space',
+                        m('select.c-select.form-control.space',{onchange: e => {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
+                            m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
+                            m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
+                        ])
+                    ),
+                    m('.col-sm-2.space',
+                        !parent ? '' : m('a.btn.btn-secondary', {onclick: ()=>ctrl.remove_sub_set(set, parent)}, m('i.fa.fa-minus-circle.space', ' Remove group' ))
+                    ),
+                ]),
                 !set.data.length ?
                     m('.row',
                         m('.col-sm-10.space', ''),
@@ -228,64 +221,64 @@ let ruletableComponent = {
                             ])
                         )
                     )
-                :
-                set.data.map(user_rule=>{
-                    const condition_data = user_rule.field === '' ? '' : ctrl.all_rules.find(rule=>rule.nameXML===user_rule.field);
-                    return m('.row',
-                        m('.col-sm-4.space',
-                            m('.input-set.space', [
-                                m('select.c-select.form-control.space',{onchange: e => {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                    m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
-                                    ctrl.all_rules.map(rule=> m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name))
+                    :
+                    set.data.map(user_rule=>{
+                        const condition_data = user_rule.field === '' ? '' : ctrl.all_rules.find(rule=>rule.nameXML===user_rule.field);
+                        return m('.row',
+                            m('.col-sm-4.space',
+                                m('.input-set.space', [
+                                    m('select.c-select.form-control.space',{onchange: e => {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                        m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
+                                        ctrl.all_rules.map(rule=> m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name))
+                                    ])
                                 ])
-                            ])
-                        ),
+                            ),
 
-                        m('.col-sm-2.space',
-                            m('.input-set.space', [
-                                !condition_data ? '' :
-                                    !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
-                                    condition_data.equal.length === 1 ?
-                                        [ctrl.set_comparator(user_rule, ' ', ' '),
-                                            m('select.c-select.form-control.space', {disabled:true, onchange: e => {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
-                                                m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
-                                            ])]
-
-                                        :
-                                        m('select.c-select.form-control.space', {onchange: e => {ctrl.set_comparator(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                            m('option', {value:'', selected:user_rule.comparator==='', disabled:true}, 'Comparator'),
-                                            condition_data.equal.map((comparator, comparator_id)=> m('option', {selected:user_rule.comparator===condition_data.equalXML[comparator_id], value:condition_data.equalXML[comparator_id]}, comparator))
-                                        ])
-                            ])
-                        ),
-                        m('.col-sm-4.space',
-                            m('.input-set.space', [
-                                !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
-                                    condition_data.values.length === 1 ?
-                                        m('input.form-control.space', {value:user_rule.value, onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
-                                        :
-
-                                        m('select.c-select.form-control.space',{onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                            m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
-                                            condition_data.values.map((value, val_id)=>
-                                                typeof value === "object"
-                                                ?[
-                                                m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
-                                                    ]
+                            m('.col-sm-2.space',
+                                m('.input-set.space', [
+                                    !condition_data ? '' :
+                                        !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
+                                            condition_data.equal.length === 1
+                                                ?
+                                                [ctrl.set_comparator(user_rule, ' ', ' '),
+                                                    m('select.c-select.form-control.space', {disabled:true, onchange: e => {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
+                                                        m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
+                                                    ])
+                                                ]
                                                 :
-                                                m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value)
-                                            )
-                                        ])
-                            ])
-                        ),
-                        m('.col-sm-2.space',
-                            m('.btn-set.btn-set-sm.double_space', [
-                                m('a.btn.btn-secondary', {onclick: ()=>ctrl.push_rule(set)}, m('i.fa.fa-plus-circle')),
-                                m('a.btn.btn-secondary', {onclick: ()=>ctrl.remove_rule(set, user_rule)}, m('i.fa.fa-minus-circle'))
-                            ])
-                        )
-                    );
-                }),
+                                                m('select.c-select.form-control.space', {onchange: e => {ctrl.set_comparator(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                                    m('option', {value:'', selected:user_rule.comparator==='', disabled:true}, 'Comparator'),
+                                                    condition_data.equal.map((comparator, comparator_id)=> m('option', {selected:user_rule.comparator===condition_data.equalXML[comparator_id], value:condition_data.equalXML[comparator_id]}, comparator))
+                                                ])
+                                ])
+                            ),
+                            m('.col-sm-4.space',
+                                m('.input-set.space', [
+                                    !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
+                                        condition_data.values.length === 1 ?
+                                            m('input.form-control.space', {value:user_rule.value, onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: e => {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
+                                            :
+
+                                            m('select.c-select.form-control.space',{onchange: e => {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                                m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
+                                                condition_data.values.map((value, val_id)=>
+                                                    typeof value === 'object'
+                                                        ?
+                                                        m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
+                                                        :
+                                                        m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value)
+                                                )
+                                            ])
+                                ])
+                            ),
+                            m('.col-sm-2.space',
+                                m('.btn-set.btn-set-sm.double_space', [
+                                    m('a.btn.btn-secondary', {onclick: ()=>ctrl.push_rule(set)}, m('i.fa.fa-plus-circle')),
+                                    m('a.btn.btn-secondary', {onclick: ()=>ctrl.remove_rule(set, user_rule)}, m('i.fa.fa-minus-circle'))
+                                ])
+                            )
+                        );
+                    }),
 
                 m('.row.space', [
                     m('.col-sm-3.space',
@@ -293,7 +286,7 @@ let ruletableComponent = {
                             m('a.btn.btn-secondary', {onclick: ()=>ctrl.push_sub_set(set)}, m('i.fa.fa-plus-circle.space',' Add group' )),
                         ])
                     ),
-            ]),
+                ]),
                 set.sub_sets.map(sub_set=>{
                     return show_set(sub_set, set);
                 }),
@@ -306,7 +299,7 @@ let ruletableComponent = {
             m('.container', [
                 m('div', ctrl.notifications.view()),
 
-                m('.row',[
+                m('.row.space',[
                     m('.col-sm-12', [
                         m('h3', ' Rules Generator')
                     ]),
@@ -333,11 +326,11 @@ let ruletableComponent = {
                     )
                 ]),
                 ctrl.sets().length===0 ? '' :
-                m('.row',[
-                    m('.col-sm-2.space',
-                        m('input.form-control.space', {onchange: e => {ctrl.filter_sets(e.target.value);}, onkeyup: e => {ctrl.filter_sets(e.target.value);}, placeholder:'Search...'})
-                    )
-                ]),
+                    m('.row',[
+                        m('.col-sm-2.space',
+                            m('input.form-control.space', {onchange: e => {ctrl.filter_sets(e.target.value);}, onkeyup: e => {ctrl.filter_sets(e.target.value);}, placeholder:'Search...'})
+                        )
+                    ]),
                 ctrl.sets2show().map(set=>
                     m('.row.list-group-item.rules_frame',[
                         m('.col-sm-2', [
@@ -381,7 +374,7 @@ let ruletableComponent = {
                         m('.warning_text', check_rules(ctrl.new_set()) ? 'Rule is not ready' : ''),
                         m('.success_text', !check_rules(ctrl.new_set()) && !check_set_name() ? 'Rule is ready' : '')
                     ]),
-                     show_set(ctrl.new_set()),
+                    show_set(ctrl.new_set()),
 
                     m('.row.double_space',[
                         m('.col-sm-12', [

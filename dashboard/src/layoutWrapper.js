@@ -148,25 +148,25 @@ let layout = route => {
                         m('a.navbar-brand', {href:'', config:m.route}, 'Dashboard'),
                         m('ul.nav.navbar-nav',[
                             ctrl.role()==='du' ? '' :
-                            Object.keys(settings).map(comp=>
-                                settings_hash[comp].su && ctrl.role() !=='su' ? '' :
-                                    settings[comp].length==0 ?
-                                        m('li.nav-item',[
-                                            m('a.nav-link',{href:settings_hash[comp].href, config:m.route}, settings_hash[comp].text)
+                                Object.keys(settings).map(comp=>
+                                    settings_hash[comp].su && ctrl.role() !=='su' ? '' :
+                                        settings[comp].length==0 ?
+                                            m('li.nav-item',[
+                                                m('a.nav-link',{href:settings_hash[comp].href, config:m.route}, settings_hash[comp].text)
 
-                                        ])
-                                        :
-                                        m('li.nav-item', [
-                                            m('.dropdown', [
-                                                m('a.nav-link', settings_hash[comp].text),
-                                                m('.dropdown-menu', [
-                                                    settings[comp].map(sub_comp=>
-                                                        m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text)
-                                                    )
+                                            ])
+                                            :
+                                            m('li.nav-item', [
+                                                m('.dropdown', [
+                                                    m('a.nav-link', settings_hash[comp].text),
+                                                    m('.dropdown-menu', [
+                                                        settings[comp].map(sub_comp=>
+                                                            m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text)
+                                                        )
+                                                    ])
                                                 ])
                                             ])
-                                        ])
-                            ),
+                                ),
                             !ctrl.new_msgs() ? '' : m('li.nav-item.pull-xs-right', [
                                 m('a',{href:'/messages', config:m.route},
                                     m('span.fa-stack', [

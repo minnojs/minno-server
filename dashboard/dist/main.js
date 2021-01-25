@@ -21240,26 +21240,49 @@
     var focus_it$3 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function deploy_url()
+    function deploys_url()
     {
-        return (PIUrl + "/deploy_list");
+        return (PIUrl + "/deploy_request");
     }
 
-    function update_url(deploy_id)
+    function deploy_url(deploy_id)
     {
-        return (PIUrl + "/deploy_list/" + deploy_id);
+        return (PIUrl + "/deploy_request/" + deploy_id);
     }
 
-    function update_deploy(deploy_id, priority, pause_rules, status)
+    function edit_deploy_url(study_id)
     {
-        return fetchJson(update_url(deploy_id), {
+        return (PIUrl + "/deploy/" + study_id);
+    }
+
+    function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status)
+    {
+        return fetchJson(deploy_url(deploy_id), {
             method: 'put',
-            body:{priority: priority, pause_rules: pause_rules, status: status}
+            body:{priority: priority, pause_rules: pause_rules, reviewer_comments: reviewer_comments, status: status}
         });
+    }
+    var edit_deploy = function (study_id, version_id, ref) {
+        var deploy_id = ref.deploy_id;
+        var priority = ref.priority;
+        var target_number = ref.target_number;
+        var comments = ref.comments;
+
+        return fetchJson(edit_deploy_url(study_id), {
+        method: 'put',
+        body: {props: {deploy_id: deploy_id, version_id: version_id, priority: priority, target_number: target_number, comments: comments}}
+    });
+    };
+
+
+
+    function get_deploy(deploy_id)
+    {
+        return fetchJson(deploy_url(deploy_id));
     }
 
     function get_deploys(){
-        return fetchJson(deploy_url());
+        return fetchJson(deploys_url());
     }
 
     var print_rules = function (set) {
@@ -21401,12 +21424,12 @@
                 ?
                 m('.loader')
                 :
-                m('', [
+                m('.deploy.container', [
                     m('.row.space', [
-                        m('.col-xs-1.space',
-                            m('strong', 'Show only')
+                        m('.col-xs-2.space',
+                            m('.pulls-right', m('strong', 'Show only'))
                         ),
-                        m('.col-xs-1',
+                        m('.col-xs-2',
                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.filter_requests(e.target.value);}}, [
                                 m('option', {value:'pending', selected:ctrl.filter_by()==='pending'}, 'Pending'),
                                 m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
@@ -21414,27 +21437,25 @@
                                 m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
                             ])
                         ),
-                        m('.col-xs-10',
+                        m('.col-xs-8',
                             m('.text-xs-right',[
                                 m('a.btn.btn-primary.btn-xs', {href: '/autupauseruletable', config: m.route}, 'AutoPause rules')
                             ])
                         ),
                     ]),
+
                     m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
                         m('thead',[
                             m('tr', [
                                 m('th', thConfig$4('creation_date', ctrl.sortBy), 'Creation date'),
                                 m('th', thConfig$4('experiment_file', ctrl.sortBy), 'Study details'),
-                                m('th', 'Rules'),
                                 m('th', thConfig$4('user_name', ctrl.sortBy), 'Researcher name'),
                                 m('th', thConfig$4('target_number', ctrl.sortBy), 'Target number'),
                                 m('th', thConfig$4('priority', ctrl.sortBy), 'Priority'),
-                                m('th', thConfig$4('launch_confirmation', ctrl.sortBy), 'Launch confirmation'),
-                                m('th', thConfig$4('comments', ctrl.sortBy), 'Comments'),
-                                m('th', thConfig$4('status', ctrl.sortBy), 'Actions')
+                                m('th', thConfig$4('status', ctrl.sortBy), 'Status'),
+                                m('th', '')
                             ])
                         ]),
-
                         m('tbody',
                             list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
                                     m('td', formatDate$1(request.creation_date)),
@@ -21444,36 +21465,23 @@
                                             m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (request.experiment_file.id) + "/" + (request.version_hash))}, request.experiment_file.descriptive_id),
                                             ')'
                                         ])
-
                                     ),
-                                    m('td', [
-                                        request.status === 'pending'  && !request.pause_rules ? ctrl.update_pause_rules(request, ctrl.deployer_rules()[0].id) : '',
-                                        request.rules ==='' ? 'None' : m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.rules); }}, 'View'),
-                                        request.status !== 'pending' ? m('', m('a',{href:'', onclick:function (e){ return ctrl.view_rules(e, request.pause_rules); }}, request.pause_rules ? request.pause_rules.name : '')) :
 
-                                        m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_pause_rules(request, e.target.value);}}, [
-                                            ctrl.deployer_rules().map(function (rule){ return m('option', {value:rule.id, selected:request.pause_rules && request.pause_rules.name===rule.name}, rule.name); }
-                                            )
-                                        ])
-                                    ]),
                                     m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
-
                                     m('td', request.target_number),
                                     m('td',
                                         request.status ? request.priority :
                                             m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: function (e){ return ctrl.update_priority(request, e.target.value); }, onchange: function (e){ return ctrl.update_priority(request, e.target.value); }})
                                     ),
-                                    m('td', request.launch_confirmation),
-                                    m('td', request.comments),
+                                    m('td', [
+
+                                        request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                        request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                                        request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
                                     m('td',
                                         m('.btn-group', [
+                                            m('a', {href:("/review/" + (request._id)), config: m.route}, 'Full details')
 
-                                            request.status !== 'pending' ? '' : m('.btn.btn-primary.btn-sm', {title:'Accept', onclick: function (e){ return ctrl.update(request, 'accept'); }},  [
-                                                m('i.fa.fa-check'),
-                                            ]),
-                                            request.status !== 'pending' ? '' : m('.btn.btn-danger.btn-sm', {title:'Reject', onclick: function (e){ return ctrl.update(request, 'reject'); }},  [
-                                                m('i.fa.fa-times'),
-                                            ]),
                                         ])
                                     )
                                 ]); }
@@ -21484,169 +21492,25 @@
         }
     };
 
-    var change_request_url = baseUrl + "/change_request_list";
-
-
-    function get_change_request_list(){
-        return fetchJson(change_request_url);
-    }
-
-    var thConfig$5 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
-    var changeRequestListComponent = {
-        controller: function controller(){
-
-            var ctrl = {
-                list: m.prop(''),
-                sortBy: m.prop('CREATION_DATE')
-            };
-            get_change_request_list()
-                .then(function (response) {ctrl.list(response.requests);
-                })
-                .catch(function (error) {
-                    throw error;
-                })
-                .then(m.redraw);
-            return {ctrl: ctrl};
-        },
-
-        view: function view(ref){
-            var ctrl = ref.ctrl;
-
-            var list = ctrl.list;
-
-
-            return ctrl.list().length === 0
-                ?
-                m('.loader')
-                :
-                m('table', {class:'table table-nowrap table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
-                    m('thead', [
-                        m('tr', [
-                            m('th', thConfig$5('CREATION_DATE',ctrl.sortBy), 'Creation date'),
-                            m('th', thConfig$5('RESEARCHER_EMAIL',ctrl.sortBy), 'Researcher email'),
-                            m('th', thConfig$5('RESEARCHER_NAME',ctrl.sortBy), 'Researcher name'),
-                            m('th', thConfig$5('FILE_NAMES',ctrl.sortBy), 'File names'),
-                            m('th', thConfig$5('TARGET_SESSIONS',ctrl.sortBy), 'Target sessions'),
-                            m('th', thConfig$5('STUDY_SHOWFILES_LINK',ctrl.sortBy), 'Study showfiles link'),
-                            m('th', thConfig$5('STATUS',ctrl.sortBy), 'Status'),
-                            m('th', thConfig$5('COMMENTS',ctrl.sortBy), 'Comments')
-                        ])
-                    ]),
-                    m('tbody', [
-                        ctrl.list().map(function (study) { return m('tr', [
-                            m('td', study.CREATION_DATE),
-                            m('td', m('a', {href:'mailto:' + study.RESEARCHER_EMAIL}, study.RESEARCHER_EMAIL)),
-                            m('td', study.RESEARCHER_NAME),
-                            m('td', study.FILE_NAMES),
-                            m('td', study.TARGET_SESSIONS),
-                            m('td', m('a', {href:study.STUDY_SHOWFILES_LINK}, study.STUDY_SHOWFILES_LINK)),
-                            m('td', study.STATUS),
-                            m('td', study.COMMENTS)
-                        ]); })
-                    ])
-                ]);
-        }
-    };
-
-    var removal_url = baseUrl + "/removal_list";
-
-    function get_removal_list(){
-        return fetchJson(removal_url);
-    }
-
-    var thConfig$6 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
-
-    var removalListComponent = {
-        controller: function controller(){
-            var ctrl = {
-                list: m.prop(''),
-                sortBy: m.prop('CREATION_DATE')
-            };
-            get_removal_list()
-                .then(function (response) {ctrl.list(response.requests);
-                })
-                .catch(function (error) {
-                    throw error;
-                })
-                .then(m.redraw);
-            return {ctrl: ctrl};
-        },
-        view: function view(ref){
-            var ctrl = ref.ctrl;
-
-            var list = ctrl.list;
-
-            return ctrl.list().length === 0
-                ?
-                m('.loader')
-                :
-                m('table', {class:'table table-nowrap table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
-                    m('thead', [
-                        m('tr', [
-                            m('th', thConfig$6('CREATION_DATE',ctrl.sortBy), 'Creation date'),
-                            m('th', thConfig$6('RESEARCHER_EMAIL',ctrl.sortBy), 'Researcher email'),
-                            m('th', thConfig$6('RESEARCHER_NAME',ctrl.sortBy), 'Researcher name'),
-                            m('th', thConfig$6('STUDY_NAME',ctrl.sortBy), 'Study name'),
-                            m('th', thConfig$6('COMPLETED_N',ctrl.sortBy), 'Completed n'),
-                            m('th', thConfig$6('COMMENTS',ctrl.sortBy), 'Comments')
-                        ])
-                    ]),
-                    m('tbody', [
-                        ctrl.list().map(function (study) { return m('tr', [
-                            m('td', study.CREATION_DATE),
-                            m('td', m('a', {href:'mailto:' + study.RESEARCHER_EMAIL}, study.RESEARCHER_EMAIL)),
-                            m('td', study.RESEARCHER_NAME),
-                            m('td', study.STUDY_NAME),
-                            m('td', study.COMPLETED_N),
-                            m('td', study.COMMENTS)
-                        ]); })
-                    ])
-                ]);
-        }
-    };
-
     function deploy_url$1(study_id)
     {
         return (PIUrl + "/deploy/" + (encodeURIComponent(study_id)));
     }
 
-    var study_removal = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
-        method: 'delete',
-        body: {study_name: ctrl.study_name, completed_n: ctrl.completed_n, comments: ctrl.comments}
-    }); };
-
     var deploy = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
         method: 'post',
-        body: {props:{sets: ctrl.sets, launch_confirmation: ctrl.launch_confirmation, comments: ctrl.comments}}
+        body: {props:{version_id:ctrl.version_id, sets: ctrl.sets, launch_confirmation: ctrl.launch_confirmation, planned_procedure: ctrl.planned_procedure, sample_size:ctrl.sample_size, comments: ctrl.comments}}
     }); };
 
-    var update_deploy$1 = function (study_id, version_id, ref) {
-        var deploy_id = ref.deploy_id;
-        var priority = ref.priority;
-        var target_number = ref.target_number;
-        var comments = ref.comments;
-
-        return fetchJson(deploy_url$1(study_id), {
-        method: 'put',
-        body: {props: {deploy_id: deploy_id, version_id: version_id, priority: priority, target_number: target_number, comments: comments}}
-    });
-    };
-
-    var Study_change_request = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
-        method: 'put',
-        body: {file_names: ctrl.file_names, target_sessions: ctrl.target_sessions, status: ctrl.status, comments: ctrl.comments}
-    }); };
-
-    function deployDialog (args) { return m.component(deployDialog$1, args); }
     var ASTERISK = m('span.text-danger.font-weight-bold', '* ');
 
-    var deployDialog$1 = {
-        controller: function controller(ref){
-            var study = ref.study;
-            var close = ref.close;
-
+    var deployDialog = {
+        controller: function controller(){
             var ctrl = {
-                study: study,
+                study: {},
+                versions:m.prop(),
+                version:'',
+                version_id:'',
                 latest_version:{},
                 exps : [],
                 sent:false,
@@ -21657,6 +21521,7 @@
                 add_set: add_set,
                 remove_rule: remove_rule,
                 update_rule: update_rule,
+                update_version: update_version,
                 update_priority: update_priority,
                 update_target_number: update_target_number,
                 update_experiment_file: update_experiment_file,
@@ -21671,11 +21536,13 @@
                 completed_checklist: m.prop(false),
                 real_start: m.prop(false),
 
-                approved_by_a_reviewer: m.prop(false),
                 launch_confirmation: m.prop(''),
-                comments: m.prop('')   
-                
+                planned_procedure :  m.prop(''),
+                sample_size :  m.prop(''),
+                comments: m.prop('')
             };
+
+
 
             function check_sets_validity(){
                 return ctrl.sets().filter(function (set){ return set.experiment_file==='' || set.target_number ==='' || set.priority===''; }).length>0;
@@ -21687,7 +21554,8 @@
                         !ctrl.completed_checklist() ||
                         !ctrl.approved_by_irb() ||
                         !ctrl.real_start() ||
-                        !ctrl.approved_by_a_reviewer() ||
+                        !ctrl.planned_procedure() ||
+                        !ctrl.sample_size() ||
                         ctrl.launch_confirmation()==='';
             }
 
@@ -21695,11 +21563,17 @@
                 ctrl.sets()[set_id].rules = rule_id==='' ? '' : ctrl.all_rules().find(function (rule){ return rule.id===rule_id; });
             }
             function update_experiment_file(set_id, experiment_file){
-                ctrl.sets()[set_id].experiment_file = ctrl.latest_version.experiments.find(function (exp){ return exp.id===experiment_file; });
+                ctrl.sets()[set_id].experiment_file = ctrl.version.experiments.find(function (exp){ return exp.id===experiment_file; });
             }
 
             function update_priority(set_id, priority){
                 ctrl.sets()[set_id].priority = priority;
+            }
+
+            function update_version(version_id){
+                ctrl.version_id = version_id;
+                ctrl.version = ctrl.study.versions.find(function (version){ return version.hash === version_id; });
+                ctrl.exps = ctrl.version.experiments;
             }
 
             function update_target_number(set_id, target_number){
@@ -21715,26 +21589,33 @@
             }
 
             function load() {
-                get_rules()
-                    .then(function (response) { return ctrl.all_rules(response.sets); })
-                    .then(function (){ return ctrl.latest_version = ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).reduce(function (prev, current) { return (prev.id > current.id) ? prev : current; }); })
-                    .then(function (){ return ctrl.exps = ctrl.latest_version.experiments; })
-                    .then(function (){ return ctrl.loaded(true); })
-                    .then(m.redraw);
+                ctrl.study = studyFactory(m.route.param('studyId'));
+                return ctrl.study.get()
+                    .then(function (){
+                        get_rules()
+                            .then(function (response) { return ctrl.all_rules(response.sets); })
+                            .then(function (){
+                                ctrl.versions(ctrl.study.versions);
+                                ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];
+                                ctrl.version_id = ctrl.version.hash;
+                                ctrl.exps = ctrl.version.experiments;
+                            })
+                            .then(function (){ return ctrl.loaded(true); })
+                            .then(m.redraw);
+                    });
             }
             load();
             return {ctrl: ctrl, submit: submit};
 
             function submit(){
                 return check_form_validity() ? false :
-
-                deploy(study.id, ctrl)
-                    .then(function (response) {
-                        ctrl.sent = true;
-                    })
-                    .catch(function (response) {
-                        ctrl.error(response.message);
-                    })
+                    deploy(ctrl.study.id, ctrl)
+                        .then(function () {
+                            ctrl.sent = true;
+                        })
+                        .catch(function (response) {
+                            ctrl.error(response.message);
+                        })
                     .then(m.redraw);
             }
         },
@@ -21744,305 +21625,195 @@
 
             if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/deployList', config: m.route}, 'View Deploy Requests')]),
+                m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
             ]);
             return !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('.deploy.container', [
-                m('.row',[
-                    m('.col-sm-12', [
-                        m('h3', [
-                            'Request Deploy ',
-                            m('small', ((ctrl.study.name) + " (v" + (ctrl.latest_version.id) + ")"))
-                        ]),
-                    ])
-                ]),
-
-
-                m('.row.space',[
-                    m('.col-sm-1',''),
-
-                    m('.col-sm-2',[
-                        ASTERISK, m('strong.space', 'Experiment File')
-                    ]),
-                    m('.col-sm-2',[
-                        ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions'),
-                        m('p.small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
-                    ]),
-                    m('.col-sm-2',[
-                        ASTERISK, m('strong.space', 'Priority')
-                    ]),
-                    m('.col-sm-2',[
-                        m('strong.space', 'Rule set'),
-                        m('p.small.text-muted', ['Create and edit rules sets ',
-                            m('a', {href:'?/ruletable', target:'_blank'}, 'Here')
+                    m('.row',[
+                        m('.col-sm-12', [
+                            m('h3', [
+                                'Request Deploy ',
+                                m('small', ("" + (ctrl.study.name)))
+                            ]),
                         ])
                     ]),
-                    m('.col-sm-3',[
-                        m('strong.space', 'Summary of Rule Logic')
-                    ]),
-                ]),
-                ctrl.sets().map(function (set, set_id) { return m('.row.space',[
-                        m('.col-sm-1',
-                            m('',
-                                ctrl.sets().length === 1 ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set_id); }}, m('i.fa.fa-times'))
-                            )
-                        ),
+                    m('.row.space',[
                         m('.col-sm-2',[
-                            m('select.c-select.form-control.space',{ onchange: function (e) {ctrl.update_experiment_file(set_id, e.target.value);}}, [
-                                ctrl.exps.length===1 ? ctrl.update_experiment_file(set_id, ctrl.exps[0].id) :
-                                    m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
-                                ctrl.exps.map(function (file){ return m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id); }
-                                )
-                            ])
-                        ]),
-                        m('.col-sm-2',[
-                            m('input.form-control.space', {value: set.target_number,  placeholder:'Target Number', onkeyup: function (e) {ctrl.update_target_number(set_id, e.target.value);}, onchange: function (e) {ctrl.update_target_number(set_id, e.target.value);}})
-                        ]),
-                        m('.col-sm-2',[
-                            m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', onkeyup: function (e) {ctrl.update_priority(set_id, e.target.value);}, onchange: function (e) {ctrl.update_priority(set_id, e.target.value);}})
-                        ]),
-
-                        m('.col-sm-2',[
-                            m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_rule(set_id, e.target.value);}}, [
-                                m('option', {value:''}, 'None'),
-                                ctrl.all_rules().map(function (rule){ return m('option', {value:rule.id}, rule.name); })
-                            ])
-                        ]),
-                        m('.col-sm-3',[
-                            m('',
-                                set.rules==='' ? 'None' :   ctrl.print_rules(set.rules)
-                            )
+                            ASTERISK, 'Version '
                         ])
-                    ]); }
-                ),
-                    ctrl.sets() === 1 ? '' : m('.row.double_space',[
-                    m('.col-sm-12.text-sm-right',[
-                        m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: function (){ return ctrl.add_set(); }}, 'Add set')
-                    ])
-                ]),
+                    ]),
+
+                    m('.row',[
+                        m('.col-sm-2',[
+                            m('select.c-select.form-control.space',{onchange: function (e){ return ctrl.update_version(e.target.value); }}, [
+                                m('option', {value:'', selected:ctrl.version_id==='', disabled:true}, 'Select version'),
+                                ctrl.versions().map(function (version){ return m('option', {value:version.hash, selected:ctrl.version_id===version.hash}, 'v'+version.id); }),
+                            ])
+                        ])
+                    ]),
+
                     m('.row.space',[
                         m('.col-sm-12',[
                             m('hr')
                         ])
                     ]),
 
-                m('.row.space',[
-                    m('.col-sm-12',[
-                         m('.font-weight-bold', 'Study is ready for deploy: ')
-                    ])
-                ]),
+                    m('.row.space',[
+                        m('.col-sm-1', ''),
 
-                m('.row.space',[
-                    m('.col-sm-12',{onclick: function () { return ctrl.approved_by_irb(!ctrl.approved_by_irb()); }},[
-                        ASTERISK, m('i.fa.fa-fw', {
-                            class: classNames({'fa-square-o' : !ctrl.approved_by_irb(), 'fa-check-square-o' : ctrl.approved_by_irb()})
-                        }), 'This study has been approved by the appropriate IRB '
 
-                    ])
-                ]),
-                m('.row.space',[
-                    m('.col-sm-12',{onclick: function () { return ctrl.completed_checklist(!ctrl.completed_checklist()); }},[
-                        ASTERISK, m('i.fa.fa-fw', {
-                            class: classNames({'fa-square-o' : !ctrl.completed_checklist(), 'fa-check-square-o' : ctrl.completed_checklist()})
-                        }), 'The study is compliant with ',
-                        m('a', {href:'https://docs.google.com/document/d/1pglAQELqNLWbV1yscE2IVd7G5xVgZ8b4lkT8PYeumu8/edit?usp=sharing', target:'_blank'}, 'PI Research Pool Guidelines and Required Elements & Study Conventions'),
-                        ' .'
-                    ])
-                ]),
-
-                m('.row.space',[
-                    m('.col-sm-12',{onclick: function () { return ctrl.zero_unnecessary_files(!ctrl.zero_unnecessary_files()); }},[
-                        ASTERISK, m('i.fa.fa-fw', {
-                            class: classNames({'fa-square-o' : !ctrl.zero_unnecessary_files(), 'fa-check-square-o' : ctrl.zero_unnecessary_files()})
-                        }), 'My study folder includes ZERO files that aren\'t necessary for the study (e.g., word documents, older versions of files, items that were dropped from the final version)'
-
-                    ])
-                ]),
-
-                m('.row.space',[
-                    m('.col-sm-12',{onclick: function () { return ctrl.real_start(!ctrl.real_start()); }},[
-                        ASTERISK, m('i.fa.fa-fw', {
-                            class: classNames({'fa-square-o' : !ctrl.real_start(), 'fa-check-square-o' : ctrl.real_start()})
-                        }), 'I used a realstart and lastpage tasks'
-
-                    ])
-                ]),
+                        m('.col-sm-2',[
+                            ASTERISK, m('strong.space', 'Experiment File')
+                        ]),
+                        m('.col-sm-2',[
+                            ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions'),
+                            m('p.small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
+                        ]),
+                        m('.col-sm-2',[
+                            ASTERISK, m('strong.space', 'Priority')
+                        ]),
+                        m('.col-sm-2',[
+                            m('strong.space', 'Rule set'),
+                            m('p.small.text-muted', ['Create and edit rules sets ',
+                                m('a', {href:'?/ruletable', target:'_blank'}, 'Here')
+                            ])
+                        ]),
+                        m('.col-sm-3',[
+                            m('strong.space', 'Summary of Rule Logic')
+                        ]),
+                    ]),
+                    ctrl.sets().map(function (set, set_id) { return m('.row.space',[
+                            m('.col-sm-1',
+                                m('',
+                                    ctrl.sets().length === 1 ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set_id); }}, m('i.fa.fa-times'))
+                                )
+                            ),
+                            m('.col-sm-2',[
+                                m('select.c-select.form-control.space',{ onchange: function (e) {ctrl.update_experiment_file(set_id, e.target.value);}}, [
+                                    ctrl.exps.length===1 ? ctrl.update_experiment_file(set_id, ctrl.exps[0].id) :
+                                        m('option', {value: '', selected:set.experiment_file=== '', disabled:true}, 'Select experiment file'),
+                                    ctrl.exps.map(function (file){ return m('option', {value:file.id, selected:set.experiment_file.id===file.id}, file.descriptive_id); }
+                                    )
+                                ])
+                            ]),
+                            m('.col-sm-2',[
+                                m('input.form-control.space', {value: set.target_number,  placeholder:'Target Number', oninput: function (e) {ctrl.update_target_number(set_id, e.target.value);}})
+                            ]),
+                            m('.col-sm-2',[
+                                m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', oninput: function (e) {ctrl.update_priority(set_id, e.target.value);}})
+                            ]),
+                            m('.col-sm-2',[
+                                m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_rule(set_id, e.target.value);}}, [
+                                    m('option', {value:''}, 'None'),
+                                    ctrl.all_rules().map(function (rule){ return m('option', {value:rule.id}, rule.name); })
+                                ])
+                            ]),
+                            m('.col-sm-3',[
+                                m('',
+                                    set.rules==='' ? 'None' :   ctrl.print_rules(set.rules)
+                                )
+                            ])
+                        ]); }
+                    ),
+                    ctrl.sets() === 1 ? '' : m('.row.double_space',[
+                        m('.col-sm-12.text-sm-right',[
+                            m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: function (){ return ctrl.add_set(); }}, 'Add set')
+                        ])
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-12',[
+                            m('hr')
+                        ])
+                    ]),
 
                     m('.row.space',[
-                        m('.col-sm-12',{onclick: function () { return ctrl.approved_by_a_reviewer(!ctrl.approved_by_a_reviewer()); }},[
+                        m('.col-sm-12',[
+                            m('.font-weight-bold', 'Study is ready for deploy: ')
+                        ])
+                    ]),
+
+                    m('.row.space',[
+                        m('.col-sm-12',{onclick: function () { return ctrl.approved_by_irb(!ctrl.approved_by_irb()); }},[
                             ASTERISK, m('i.fa.fa-fw', {
-                                class: classNames({'fa-square-o' : !ctrl.approved_by_a_reviewer(), 'fa-check-square-o' : ctrl.approved_by_a_reviewer()})
-                            }), 'Study has been approved by a *User Experience* Reviewer (Calvin Lai)'
+                                class: classNames({'fa-square-o' : !ctrl.approved_by_irb(), 'fa-check-square-o' : ctrl.approved_by_irb()})
+                            }), 'This study has been approved by the appropriate IRB '
+
+                        ])
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-12',{onclick: function () { return ctrl.completed_checklist(!ctrl.completed_checklist()); }},[
+                            ASTERISK, m('i.fa.fa-fw', {
+                                class: classNames({'fa-square-o' : !ctrl.completed_checklist(), 'fa-check-square-o' : ctrl.completed_checklist()})
+                            }), 'The study is compliant with ',
+                            m('a', {href:'https://docs.google.com/document/d/1pglAQELqNLWbV1yscE2IVd7G5xVgZ8b4lkT8PYeumu8/edit?usp=sharing', target:'_blank'}, 'PI Research Pool Guidelines and Required Elements & Study Conventions'),
+                            ' .'
+                        ])
+                    ]),
+
+                    m('.row.space',[
+                        m('.col-sm-12',{onclick: function () { return ctrl.zero_unnecessary_files(!ctrl.zero_unnecessary_files()); }},[
+                            ASTERISK, m('i.fa.fa-fw', {
+                                class: classNames({'fa-square-o' : !ctrl.zero_unnecessary_files(), 'fa-check-square-o' : ctrl.zero_unnecessary_files()})
+                            }), 'My study folder includes ZERO files that aren\'t necessary for the study (e.g., word documents, older versions of files, items that were dropped from the final version)'
+
+                        ])
+                    ]),
+
+                    m('.row.space',[
+                        m('.col-sm-12',{onclick: function () { return ctrl.real_start(!ctrl.real_start()); }},[
+                            ASTERISK, m('i.fa.fa-fw', {
+                                class: classNames({'fa-square-o' : !ctrl.real_start(), 'fa-check-square-o' : ctrl.real_start()})
+                            }), 'I used a realstart and lastpage tasks'
 
                         ])
                     ]),
 
 
-                // m('.row.space',[
-                //     m('.col-sm-12',[
-                //         ASTERISK, 'Study has been approved by a *User Experience* Reviewer (Calvin Lai): '
-                //     ])
-                // ]),
-                //
-                // m('.row',[
-                //     m('.col-sm-5',[
-                //         m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.approved_by_a_reviewer)}, [
-                //             m('option', {value:'', selected:ctrl.approved_by_a_reviewer()==='', disabled:true}, 'Select answer'),
-                //             m('option', {value:'No, this study is not for the Project Implicit pool', selected:ctrl.approved_by_a_reviewer()==='No, this study is not for the Project Implicit pool'}, 'No, this study is not for the Project Implicit pool'),
-                //             m('option', {value:'Yes', selected:ctrl.approved_by_a_reviewer()==='yes'}, 'Yes'),
-                //         ])
-                //     ])
-                // ]),
-
-
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        ASTERISK, 'If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? '
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-5',[
-                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.launch_confirmation)}, [
-                            m('option', {value:'', selected:ctrl.launch_confirmation()==='', disabled:true}, 'Select answer'),
-                            m('option', {value:'No,this study is mine', selected:ctrl.launch_confirmation()==='No,this study is mine'}, 'No,this study is mine'),
-                            m('option', {value:'Yes', selected:ctrl.launch_confirmation()==='yes'}, 'Yes'),
+                    m('.row.space',[
+                        m('.col-sm-12',[
+                            ASTERISK, 'If you are building this study for another researcher (e.g. a contract study), has the researcher received the standard final launch confirmation email and confirmed that the study is ready to be launched? '
                         ])
-                    ])
-                ]),
-
-
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        'Additional comments'
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-12',[
-                        m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
-                    ])
-                ]),
-
-                !ctrl.error() ? '' : m('.alert.alert-danger', m('strong', 'Error: '), ctrl.error()),
-                m('.row.space',[
-                    m('.col-sm-12.text-sm-right',[
-                        m('button.btn.btn-primary', {disabled: ctrl.check_form_validity(), onclick: submit}, 'Request Deploy'),
-                        !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'All mandatory fields have to be filled')
-
-                    ])
-                ]),
-            ]);
-        }
-    };
-
-    function removalComponent (args) { return m.component(removalDialog, args); }
-    var ASTERIX = m('span.text-danger', '*');
-    var ASTERISK$1 = m('span.text-danger.font-weight-bold', '*');
-
-    var removalDialog = {
-        controller: function controller(ref){
-            var study = ref.study;
-            var close = ref.close;
-
-            var form = formFactory();
-            var ctrl = {
-                study: study,
-                sent:false,
-                researcher_name: m.prop(''),
-                researcher_email: m.prop(''),
-                global_study_name: m.prop(''),
-                study_name: m.prop(''),
-                study_names: m.prop(''),
-                completed_n: m.prop(''),
-                comments: m.prop(''),
-                error: m.prop('')
-            };
-
-            function submit(){
-                form.showValidation(true);
-                if (!form.isValid())
-                {
-                    ctrl.error('Missing parameters');
-                    return;
-                }
-                study_removal(studyId, ctrl)
-                    .then(function () {
-                        ctrl.sent = true;
-                    })
-                    .catch(function (response) {
-                        ctrl.error(response.message);
-                    })
-                    .then(m.redraw);
-            }
-            return {ctrl: ctrl, form: form, submit: submit};
-        },
-        view: function view(ref){
-            var form = ref.form;
-            var ctrl = ref.ctrl;
-            var submit = ref.submit;
-
-            var exps = ctrl.study.files().filter(function (file){ return file.exp_data; });
-
-            return ctrl.sent
-                ?
-                m('.deploy.centrify',[
-                    m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                    m('h5', ['The removal form was sent successfully ', m('a', {href:'/removalList', config: m.route}, 'View removal requests')])
-                ])
-                :
-                m('.StudyRemoval.container', [
+                    ]),
 
                     m('.row',[
-                        m('.col-sm-12', [
-                            m('h3', [
-                                'Study Removal Request ',
-                                m('small', ctrl.study.name)
-                            ]),
-                        ])
-                    ]),
-
-                    m('.row.space',[
-                        m('.col-sm-3',[
-                            ASTERISK$1, ' Name of Experiment File'
-                        ])
-                    ]),
-
-                    m('.row.space',[
-                        m('.col-sm-3',[
-                            m('select.c-select.form-control.space',{onchange: function (e) {}}, [
-                                exps.length===1 ? exps[0].name :
-                                    m('option', {value:'', selected:ctrl.study_name()==='', disabled:true}, 'Select experiment file'),
-                                exps.map(function (file){ return m('option', {value:file.name, selected:ctrl.study_name()===file.name}, file.name); }
-                                )
+                        m('.col-sm-5',[
+                            m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.launch_confirmation)}, [
+                                m('option', {value:'', selected:ctrl.launch_confirmation()==='', disabled:true}, 'Select answer'),
+                                m('option', {value:'No,this study is mine', selected:ctrl.launch_confirmation()==='No,this study is mine'}, 'No,this study is mine'),
+                                m('option', {value:'Yes', selected:ctrl.launch_confirmation()==='yes'}, 'Yes'),
                             ])
                         ])
                     ]),
+                    m('.row.space',[
+                        m('.col-sm-12',[
+                            ASTERISK,
+                            'Planned Procedure',
+                            m('p.small.text-muted', '(if it\'s an extension of a prior approved study, make sure to explicitly describe how it is different from the previous approved study)')
+                        ])
+                    ]),
+
                     m('.row',[
                         m('.col-sm-12',[
-                            m('small.text-muted', 'This is the name you submitted to the RDE (e.g., colinsmith.elmcogload)')
+                            m('textarea.form-control', {value: ctrl.planned_procedure(), oninput:  m.withAttr('value', ctrl.planned_procedure), placeholder:'Planned Procedure'})
                         ])
                     ]),
 
                     m('.row.space',[
-                        m('.col-sm-5',[
-                            ASTERISK$1, ' Please enter your completed n below'
+                        m('.col-sm-12',[
+                            ASTERISK,
+                            'Planned Sample Size and Justification'
                         ])
                     ]),
 
                     m('.row',[
-                        m('.col-sm-5',[
-                            m('input.form-control', {value: ctrl.completed_n(), onchange:  m.withAttr('value', ctrl.completed_n), onkeyup: m.withAttr('value', ctrl.completed_n), placeholder:'Completed n'})
-                        ])
-                    ]),
-                    m('.row',[
                         m('.col-sm-12',[
-                            m('small.text-muted', m('span', ['you can use the following link: ', m('a', {href:'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3'}, 'https://app-prod-03.implicit.harvard.edu/implicit/research/pitracker/PITracking.html#3')]))
+                            m('textarea.form-control', {value: ctrl.sample_size(), oninput:  m.withAttr('value', ctrl.sample_size), placeholder:'Planned Sample Size and Justification'})
                         ])
                     ]),
+
                     m('.row.space',[
                         m('.col-sm-12',[
                             'Additional comments'
@@ -22051,152 +21822,290 @@
 
                     m('.row',[
                         m('.col-sm-12',[
-                            m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
-                        ])
-                    ]),
-                    m('.row',[
-                        m('.col-sm-12',[
-                            m('small.text-muted', '(e.g., anything unusual about the data collection, consistent participant comments, etc.)')
+                            m('textarea.form-control', {value: ctrl.comments(), oninput:  m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
                         ])
                     ]),
 
-                    !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                    !ctrl.error() ? '' : m('.alert.alert-danger', m('strong', 'Error: '), ctrl.error()),
                     m('.row.space',[
                         m('.col-sm-12.text-sm-right',[
-                            m('button.btn.btn-primary', {onclick: submit}, 'Submit')
+                            m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.study.id))); }}, 'Cancel'),
+                            m('button.btn.btn-primary', {disabled: ctrl.check_form_validity(), onclick: submit}, 'Request Deploy'),
+                            !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'All mandatory fields have to be filled')
                         ])
                     ]),
                 ]);
         }
     };
 
-    var ASTERISK$2 = m('span.text-danger.font-weight-bold', '*');
-    function changeRequestComponent (args) { return m.component(changeRequestDialog, args); }
-    var changeRequestDialog = {
-        controller: function controller(ref){
-            var study = ref.study;
-            var close = ref.close;
-
-            var form = formFactory();
+    var reviewDeployDialog = {
+        controller: function controller(){
             var ctrl = {
+                is_review:m.prop(false),
+                is_pending:m.prop(false),
+                is_approved:m.prop(false),
+                edit_mode:m.prop(false),
+                deployer_rules : m.prop(),
+                pause_rules: m.prop(''),
+                update: update,
+                edit_deploy: edit_deploy,
+                change_edit_mode: change_edit_mode,
+                save_deploy: save_deploy,
+                was_changed: was_changed,
+                update_pause_rules: update_pause_rules,
+                target_number:m.prop(''),
+                comments:m.prop(''),
+                reviewer_comments:m.prop(''),
+                priority:m.prop(''),
+                deploy2show:m.prop(),
+                print_rules: print_rules,
+                study: {},
+                versions:m.prop(),
+                version:'',
+                version_id:'',
                 sent:false,
-                study: study,
-                user_name: m.prop(''),
-                researcher_name: m.prop(''),
-                researcher_email: m.prop(''),
-                study_name: m.prop(''),
-                target_sessions: m.prop(''),
-                status: m.prop(''),
-                file_names: m.prop(''),
-                comments: m.prop(''),
-                error: m.prop('')
+                error: m.prop(''),
+                loaded: m.prop(false)
             };
 
-            function submit(){
-                form.showValidation(true);
-                if (!form.isValid())
-                {
-                    ctrl.error('Missing parameters');
-                    return;
-                }
-                Study_change_request(study, ctrl)
-                    .then(function () {
-                        ctrl.sent = true;
-                    })
-                    .catch(function (response) {
-                        ctrl.error(response.message);
-                    }).then(m.redraw);
+            function update_pause_rules(rule_id){
+                ctrl.pause_rules(ctrl.deployer_rules().find(function (rule){ return rule.id===rule_id; }));
+                m.redraw();
             }
-            return {ctrl: ctrl, form: form, submit: submit};
+
+            function update(status){
+                update_deploy(ctrl.deploy2show()._id, ctrl.priority(), ctrl.pause_rules(), ctrl.reviewer_comments(), status)
+                    .then(m.redraw);
+            }
+
+            function change_edit_mode(mode){
+                ctrl.edit_mode(mode);
+                if(mode)
+                    ctrl.target_number(ctrl.deploy2show().target_number);
+                m.redraw();
+            }
+
+            function was_changed(){
+                return ctrl.comments()!== '' && (parseInt(ctrl.priority()) !== ctrl.deploy2show().priority || ctrl.target_number() !== ctrl.deploy2show().target_number);
+            }
+
+            function save_deploy(){
+                if (!was_changed())
+                    return;
+                return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments()})
+                .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }))
+
+            }
+            function load() {
+                get_deploy(m.route.param('deployId'))
+                .then(function (request){
+                    ctrl.version_id = request.version_id;
+                    ctrl.deploy2show(request);
+                    ctrl.is_review(m.route() === ("/review/" + (m.route.param('deployId'))));
+                    ctrl.is_pending(ctrl.deploy2show().status==='pending');
+                    ctrl.is_approved(ctrl.deploy2show().status==='accept');
+                    ctrl.priority(ctrl.deploy2show().priority);
+                })
+                .then(function (){ return !ctrl.is_review() || !ctrl.is_pending() ?  {} :
+                        get_deployer_rules()
+                            .then(function (results){ return ctrl.deployer_rules(results.sets); }); }
+                )
+                .then(function (){ return ctrl.loaded(true); })
+                .then(m.redraw);
+            }
+            load();
+            return {ctrl: ctrl};
         },
         view: function view(ref){
-            var form = ref.form;
             var ctrl = ref.ctrl;
-            var submit = ref.submit;
 
-
-            if (ctrl.sent) return m('.deploy.centrify',[
+            if (ctrl.sent) return m('.deploy.ctrl.deploy2show().status===\'pending\'centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                m('h5', ['The change request form was sent successfully ', m('a', {href:'/changeRequestList', config: m.route}, 'View change request  requests')])
+                m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
             ]);
-            return m('.StudyChangeRequest.container', [
-                m('.row',[
-                    m('.col-sm-12', [
-                        m('h3', [
-                            'Study Change Request ',
-                            m('small', ctrl.study.name)
-                        ]),
-                    ])
-                ]),
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        ASTERISK$2, ' Target number of additional sessions (In addition to the sessions completed so far)'
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-5',[
-                        m('input.form-control', {value: ctrl.target_sessions(), onchange:  m.withAttr('value', ctrl.target_sessions), onkeyup: m.withAttr('value', ctrl.target_sessions), placeholder:'Target number of additional sessions'})
-                    ])
-                ]),
-
-
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        ASTERISK$2, ' What is the current status of your study? '
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-6',[
-                        m('select.c-select.form-control.space',{onchange: m.withAttr('value', ctrl.status)}, [
-                            m('option', {value:'', selected:ctrl.status()==='', disabled:true}, 'Select status'),
-                            m('option', {value:'Currently collecting data and does not need to be unpaused', selected:ctrl.status()==='Currently collecting data and does not need to be unpaused'}, 'Currently collecting data and does not need to be unpaused'),
-                            m('option', {value:'Manually paused and needs to be unpaused', selected:ctrl.status()==='Manually paused and needs to be unpaused'}, 'Manually paused and needs to be unpaused'),
-                            m('option', {value:'Auto-paused due to low completion rates or meeting target N', selected:ctrl.status()==='Auto-paused due to low completion rates or meeting target N'}, 'Auto-paused due to low completion rates or meeting target N')
+            return !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+                m('.deploy.container', [
+                    m('.row',[
+                        m('.col-sm-12', [
+                            m('h3', 'Deploy Request'),
                         ])
-                    ])
-                ]),
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Creation Date:')
+                        ]),
+                        m('.col-sm-9',[
+                            formatDate$1(ctrl.deploy2show().creation_date)
+                        ]),
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Study Name:')
+                        ]),
+                        m('.col-sm-9',[
+                            ((ctrl.deploy2show().study_name) + " (v" + (ctrl.deploy2show().version_id) + ")")
+                        ]),
+                    ]),
+                    !ctrl.is_review()
+                        ?
+                        ''
+                        :
+                        m('.row.space',[
+                            m('.col-sm-3',[
+                                m('strong', 'User name:')
+                            ]),
+                            m('.col-sm-9',[
+                                ctrl.deploy2show().user_name, ' (',  m('a', {href:'mailto:'+ctrl.deploy2show().email}, ctrl.deploy2show().email), ')'
+                            ]),
+                        ]),
 
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        ASTERISK$2, ' Change Request'
-                    ])
-                ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Status:')
+                        ]),
+                        m('.col-sm-9',[
+                            ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                            ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                            ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
+                            !ctrl.deploy2show().ref_id ? '' :  [' ',
+                            ctrl.is_review() ? m('a', {href:("/review/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', ' (change request)'))
+                                :
+                                m('a', {href:("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', '(change request)'))
+                            ]
 
-                m('.row',[
-                    m('.col-sm-12',[
-                        m('textarea.form-control', {value: ctrl.file_names(), onchange:  m.withAttr('value', ctrl.file_names), onkeyup: m.withAttr('value', ctrl.file_names), placeholder:'Change Request'})
-                    ])
-                ]),
-                m('.row',[
-                    m('.col-sm-12',[
-                        m('small.text-muted', 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)')
-                    ])
-                ]),
+                        ])
+                    ]),
+                    !ctrl.is_review() && ctrl.is_pending() ? '' :
+                        m('.row.space',[
+                            m('.col-sm-3',[
+                                m('strong', 'Review Comments:')
+                            ]),
+                            m('.col-sm-9',[
+                                ctrl.is_review() && ctrl.is_pending()
+                                    ?
+                                    m('textarea.form-control', {value: ctrl.reviewer_comments(), oninput:  m.withAttr('value', ctrl.reviewer_comments), placeholder:'Reviewer Comments'})
+                                    :
+                                    ctrl.deploy2show().reviewer_comments ? ctrl.deploy2show().reviewer_comments : 'None'
+                            ])
+                        ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Experiment File:')
+                        ]),
+                        m('.col-sm-9',
+                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (ctrl.deploy2show().experiment_file.id) + "/" + (ctrl.deploy2show().version_hash))}, ctrl.deploy2show().experiment_file.file_id)
+                        )
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Target Number of Completed Study Sessions:'),
+                        ]),
+                        m('.col-sm-2',[
+                            ctrl.edit_mode()
+                                ?
+                                m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', oninput:  m.withAttr('value', ctrl.target_number)})
+                                :
+                                ctrl.deploy2show().target_number
+                        ]),
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Priority:'),
+                        ]),
+                        m('.col-sm-2',[
+                            ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
+                                ?
+                                m('input.form-control.space', {type:'number', min:'0', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)})
+                                :
+                                ctrl.deploy2show().priority
+                        ])
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Summary of Rule Logic:'),
+                        ]),
+                        m('.col-sm-9',[
+                            ctrl.deploy2show().rules==='' ? 'None' :   ctrl.print_rules(ctrl.deploy2show().rules)
+                        ]),
+                    ]),
+                    !ctrl.is_review() && ctrl.is_pending() ? ''
+                        :
+                        m('.row.space',[
+                            m('.col-sm-3',[
+                                m('strong', 'Pause Rule:'),
+                                !ctrl.is_review() ? '' : m('p.small.text-muted',
+                                    m('a', {href:'/autupauseruletable', config: m.route, target:'_blank'}, 'Rules Generator')
+                                )
+                            ]),
+                            m('.col-sm-2',[
+                                !ctrl.is_review() || !ctrl.is_pending()
+                                    ?
+                                    ctrl.deploy2show().pause_rules.name
+                                    :
+                                    m('select.c-select.form-control',{onchange: function (e) {ctrl.update_pause_rules(e.target.value);}}, [
+                                        ctrl.deployer_rules().map(function (rule){ return m('option', {value:rule.id, selected:ctrl.pause_rules && ctrl.pause_rules.name===rule.name}, rule.name); }
+                                        )
+                                    ])
+                            ])
+                        ]),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Planned Procedure:'),
+                            m('p.small.text-muted', '(if it\'s an extension of a prior approved study, make sure to explicitly describe how it is different from the previous approved study)')
+                        ]),
+                        m('.col-sm-9',[
+                            ctrl.deploy2show().planned_procedure
+                        ])
+                    ]),
 
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Planned Sample Size and Justification:')
+                        ]),
+                        m('.col-sm-9',[
+                            ctrl.deploy2show().sample_size
+                        ])
+                    ]),
 
-                // textInput({isArea: true, label: m('span', ['Change Request', m('span.text-danger', ' *')]), help: 'List all file names involved in the change request. Specify for each file whether file is being updated or added to production.)',  placeholder: 'Change Request', prop: ctrl.file_names, form, required:true, isStack:true}),
+                    m('.row.space',[
+                        m('.col-sm-3',[
+                            m('strong', 'Additional Comments:')
+                        ]),
+                        m('.col-sm-9',[
+                            ctrl.edit_mode()
+                                ?
+                                m('textarea.form-control.danger_zone', {value: ctrl.comments(), oninput:  m.withAttr('value', ctrl.comments), placeholder:'* Comments'})
+                                :
+                                ctrl.deploy2show().comments ? ctrl.deploy2show().comments : 'None'
+                        ])
+                    ]),
 
-                m('.row.space',[
-                    m('.col-sm-12',[
-                        'Additional comments'
-                    ])
-                ]),
-
-                m('.row',[
-                    m('.col-sm-12',[
-                        m('textarea.form-control', {value: ctrl.comments(), onchange:  m.withAttr('value', ctrl.comments), onkeyup: m.withAttr('value', ctrl.comments), placeholder:'Additional comments'})
-                    ])
-                ]),
-                !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                m('.row.space',[
-                    m('.col-sm-12.text-sm-right',[
-                        m('button.btn.btn-primary', {onclick: submit}, 'Submit')
-                    ])
-                ])
-
-            ]);
+                    !ctrl.error() ? '' : m('.alert.alert-danger', m('strong', 'Error: '), ctrl.error()),
+                    m('.row.space',[
+                        m('.col-lg-12.text-lg-right',[
+                            ctrl.is_review() ? [
+                                m('.btn.btn-secondary.btn-md', {title:'Cancel', onclick: function (){ return m.route('/deployList'); }},
+                                    m('i.fa.fa-undo', !ctrl.is_pending() ? ' Back' :' Cancel')
+                                ), ' ',
+                                !ctrl.is_pending() ? '' : ctrl.deploy2show().status !== 'pending' ? '' : m('.btn.btn-danger.btn-md', {title:'Reject', onclick: function (){ return ctrl.update('reject'); }},
+                                    m('i.fa.fa-times', ' Reject')
+                                ), ' ',
+                                !ctrl.is_pending() ? '' : ctrl.deploy2show().status !== 'pending' ? '' : m('.btn.btn-primary.btn-md', {title:'Accept', onclick: function (){ return ctrl.update('accept'); }},
+                                    m('i.fa.fa-check', ' Accept')
+                                )
+                            ]
+                            :
+                            [
+                                ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.deploy2show().study_id))); }}, 'Back to study'),
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Accept', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
+                                !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
+                            ]
+                        ])
+                    ]),
+                ]);
         }
     };
 
@@ -23432,13 +23341,23 @@
     };
 
     var pending_url = baseUrl + "/pending";
+    var reviewed_requests_url = baseUrl + "/reviewed";
 
     function apiURL$1(code)
     {
         return (collaborationUrl + "/" + (encodeURIComponent(code)));
     }
 
+    function reviewApiURL(id)
+    {
+        return (baseUrl + "/reviewed/" + id);
+    }
+
     var get_pending_studies = function () { return fetchJson(pending_url, {
+        method: 'get'
+    }); };
+
+    var get_reviewed_requests = function () { return fetchJson(reviewed_requests_url, {
         method: 'get'
     }); };
 
@@ -23447,91 +23366,196 @@
         method: 'get'
     }); };
 
+    var read_review = function (id) { return fetchJson(reviewApiURL(id), {
+        method: 'post'
+    }); };
+
+    var sharingRequestComponent = {
+        controller: function controller(ref){
+            var ctrl = ref.ctrl;
+
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.container', [
+                m('.row.p-t-1', [
+                    m('.col-sm-4', [
+                        m('h3', 'Sharing Invitations')
+                    ])]),
+                m('.card.studies-card', [
+                    m('.card-block', [
+                        m('.row', {key: '@@notid@@'}, [
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Owner ')
+                                ])
+                            ]),
+                            m('.col-sm-4', [
+                                m('.form-control-static',[
+                                    m('strong', 'Study name ')
+                                ])]),
+                            m('.col-sm-2', [
+                                m('.form-control-static',[
+                                    m('strong', 'Permission ')
+                                ])
+                            ]),
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Action ')
+                                ])
+                            ])
+                        ]),
+                        ctrl.pendings().map(function (study) { return m('.row.study-row', [
+                                m('.col-sm-3', [
+                                    m('.study-text', study.owner_name)
+                                ]),
+                                m('.col-sm-4', [
+                                    m('.study-text', study.study_name)
+                                ]),
+                                m('.col-sm-2', [
+                                    m('.study-text', study.permission)
+                                ]),
+                                m('.col-sm-3', [
+                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_use_code(study.accept);}}, 'Accept'), ' | ',
+                                        m('button.btn.btn-danger', {onclick:function() {ctrl.do_use_code(study.reject);}}, 'Reject'))
+                                ]),
+                            ]); })
+                    ])
+                ])
+            ]);
+        }
+    };
+
+    var reviewedRequestsComponent = {
+        controller: function controller(ref){
+            var ctrl = ref.ctrl;
+
+
+
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return m('.container', [
+                m('.row.p-t-1', [
+                    m('.col-sm-4', [
+                        m('h3', 'Reviewed Requests')
+                    ])]),
+                m('.card.studies-card', [
+                    m('.card-block', [
+                        m('.row', {key: '@@notid@@'}, [
+                            m('.col-sm-4', [
+                                m('.form-control-static',[
+                                    m('strong', 'Study name ')
+                                ])]),
+                            m('.col-sm-2', [
+                                m('.form-control-static',[
+                                    m('strong', 'Status ')
+                                ])
+                            ]),
+
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Reviewer Comments ')
+                                ])
+                            ]),
+                            m('.col-sm-3', [
+                                m('.form-control-static',[
+                                    m('strong', 'Action ')
+                                ])
+                            ])
+                        ]),
+                        ctrl.reviewed_requests().map(function (request) { return m('.row.study-row.space', [
+                                m('.col-sm-4', [
+                                    m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name)))
+                                ]),
+                                m('.col-sm-2', [
+                                    m('.study-text', [
+                                        request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                        request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject')
+                                    ])
+                                ]),
+                                m('.col-sm-3', [
+                                    m('.study-text', request.reviewer_comments)
+                                ]),
+                                m('.col-sm-3', [
+                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read')),
+                                ]),
+                            ]); })
+                    ])
+                ])
+            ]);
+        }
+    };
+
     var messagesComponent = {
         controller: function controller(){
             var ctrl = {
-                role:m.prop(''),
+                has_messages: m.prop(false),
+                reviewed_requests: m.prop(''),
                 pendings: m.prop(''),
                 loaded: false,
                 error: m.prop(''),
-                do_use_code: do_use_code
+                do_use_code: do_use_code,
+                do_read: do_read
             };
-            getAuth().then(function (response) {
-                ctrl.role(response.role);
-            });
-
-            function do_use_code(code){
-                use_code(code)
-                    .then(function (){ return ctrl.pendings(ctrl.pendings().filter(function (study){ return study.accept!==code && study.reject!==code; })); })
-                    .then(m.redraw);
-            }
-
             get_pending_studies()
                 .then(function (response) {
                     ctrl.pendings(response.studies);
+                    ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0);
                     ctrl.loaded = true;
                 })
                 .catch(function (response) {
                     ctrl.error(response.message);
                 })
                 .then(m.redraw);
+
+            get_reviewed_requests()
+                .then(function (response) {
+
+                    ctrl.reviewed_requests(response.reviewed_requests);
+                    ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
+                    ctrl.loaded = true;
+                })
+                .catch(function (response) {
+                    ctrl.error(response.message);
+                })
+                .then(m.redraw);
+
+            function do_use_code(code){
+                use_code(code)
+                    .then(function (){ return ctrl.pendings(ctrl.pendings().filter(function (study){ return study.accept!==code && study.reject!==code; })); })
+                    .then(function (){ return ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0); })
+                    .then(m.redraw);
+            }
+
+            function do_read(study_id, deploy_id){
+                read_review(deploy_id)
+                .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
+            }
+
             return ctrl;
         },
         view: function view(ctrl){
-
-            return  !ctrl.loaded
+            return !ctrl.loaded
                 ?
                 m('.loader')
                 :
-                m('.container.studies', [
-                    m('.row.p-t-1', [
-                        m('.col-sm-4', [
-                            m('h3', 'Sharing Invitations')
-                        ])]),
-                    m('.card.studies-card', [
-                        m('.card-block', [
-                            m('.row', {key: '@@notid@@'}, [
-                                m('.col-sm-3', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Owner ')
-                                    ])
-                                ]),
-                                m('.col-sm-4', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Study name ')
-                                    ])]),
-                                m('.col-sm-2', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Permission ')
-                                    ])
-                                ]),
-                                m('.col-sm-3', [
-                                    m('.form-control-static',[
-                                        m('strong', 'Action ')
-                                    ])
-                                ])
+                !ctrl.has_messages()
+                    ?
+                    m('.container',
+                        m('.row.p-t-1', [
+                            m('.col-sm-4', [
+                                m('h3', 'There are no messages...')
+                            ])
+                        ])
+                    )
+                    :
+                    m('.container', [
+                        !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl: ctrl}),
+                        m.component(reviewedRequestsComponent, {ctrl: ctrl}),
 
-                            ]),
-                            ctrl.pendings().map(function (study) { return m('.row.study-row', [
-                                    m('.col-sm-3', [
-                                        m('.study-text', study.owner_name)
-                                    ]),
-                                    m('.col-sm-4', [
-                                        m('.study-text', study.study_name)
-                                    ]),
-                                    m('.col-sm-2', [
-                                        m('.study-text', study.permission)
-                                    ]),
-                                    m('.col-sm-3', [
-                                        m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_use_code(study.accept);}}, 'Accept'), ' | ',
-                                            m('button.btn.btn-danger', {onclick:function() {ctrl.do_use_code(study.reject);}}, 'Reject'))
-                                    ]),
-
-
-                                ]); })
-                        ])])]);
-
-
+                    ]);
         }
     };
 
@@ -23869,40 +23893,8 @@
 
             var ctrl = {
                 deploy2show: deploy2show,
-                edit_deploy: edit_deploy,
-                update_deploy_param: update_deploy_param,
-                cancel_deploy: cancel_deploy,
-                was_changed: was_changed,
-                save_deploy: save_deploy
+                version_id: version_id
             };
-            function cancel_deploy(deploy$$1){
-                deploy$$1.edit = false;
-                m.redraw();
-            }
-
-            function edit_deploy(deploy$$1){
-                deploy$$1.edit = true;
-                deploy$$1.new_comments = '';
-                deploy$$1.new_priority = deploy$$1.priority;
-                deploy$$1.new_target_number = deploy$$1.target_number;
-                m.redraw();
-            }
-            function was_changed(deploy$$1){
-                return parseInt(deploy$$1.new_priority) !== deploy$$1.priority || deploy$$1.new_target_number !== deploy$$1.target_number;
-            }
-
-            function save_deploy(deploy$$1){
-                if (!was_changed(deploy$$1))
-                    return;
-                update_deploy$1(m.route.param('studyId'), version_id, {deploy_id:deploy$$1._id, priority:deploy$$1.new_priority, target_number:deploy$$1.new_target_number, comments:deploy$$1.new_comments});
-                m.redraw();
-            }
-
-            function update_deploy_param(deploy$$1, param, val){
-                deploy$$1['new_'+param] = val;
-                m.redraw();
-            }
-
             return {deploy2show: deploy2show, ctrl: ctrl, close: close};
         },
         view: function view(ref){
@@ -23915,97 +23907,45 @@
                     m('.col-sm-12', [
                         m('h3', [
                             'Old Deploy Requests',
+                            m('small', (" (v" + (ctrl.version_id) + ")"))
                         ]),
                     ])
                 ]),
                 m('table.table.table-sm.table-striped.table-hover',[
                     m('thead',[
                         m('tr', [
-                            m('td',[
-                                m('strong.space', 'Creation date')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Experiment File')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Target Number'),
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Priority')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Launch confirmation')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Summary of Rule Logic')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Comments')
-                            ]),
-                            m('td',[
-                                m('strong.space', 'Change')
-                            ])
+                            m('th', m('strong.space', 'Creation date')),
+                            m('th', m('strong.space', 'Experiment File')),
+                            m('th', m('strong.space', 'Target Number')),
+                            m('th', m('strong.space', 'Priority')),
+                            m('th', m('strong.space', 'Summary of Rule Logic')),
+                            m('th', m('strong.space', 'Status')),
+                            m('th', m('strong.space', 'Full details'))
                         ])
                     ]),
                     m('tbody', [
-                        deploy2show.map(function (deploy$$1){ return deploy$$1.sets.map(function (set){ return m('tr', {class:[set.status==='reject' ?  'table-danger' : set.status==='accept' ? 'table-success' : '']}, [
-                                    m('td',[
-                                        formatDate$1(deploy$$1.creation_date)
-                                    ]),
-                                    m('td',[
-                                        set.experiment_file ? set.experiment_file.descriptive_id : ''
-                                    ]),
-
-                                    m('td', {style:{width:'10%'}}, [
-                                        set.edit ?
-                                            m('input.form-control', {placeholder: 'Target Number' ,value:set.new_target_number, oninput:(function (e){ return ctrl.update_deploy_param(set, 'target_number', e.target.value); })})
-                                        :
-                                        set.target_number
-                                    ]),
-                                    m('td',{style:{width:'10%'}},[
-                                        set.edit ?
-                                            m('input.form-control', {width:'100%', placeholder: 'Priority' , type:'number', min:'0', max:'26', value:set.new_priority, oninput:(function (e){ return ctrl.update_deploy_param(set, 'priority', e.target.value); })})
-                                            :
-                                            set.priority
-                                    ]),
-
-                                    m('td',[
-                                        deploy$$1.launch_confirmation==='Yes' ? 'Yes' : 'No'
-                                    ]),
-
-                                    m('td',[
+                        deploy2show.map(function (deploy){ return deploy.sets.map(function (set){ return m('tr', [
+                                    m('td', formatDate$1(deploy.creation_date)),
+                                    m('td', !set.experiment_file ? '' : set.experiment_file.descriptive_id),
+                                    m('td', set.target_number),
+                                    m('td', set.priority),
+                                    m('td',{style:{width:'30%'}}, [
                                         set.rules === '' ? 'None' : print_rules(set.rules)
                                     ]),
-
-                                    m('td',[
-                                        set.edit ?
-                                            m('textarea.form-control.fixed_textarea', {cols: 100, placeholder: 'comments', value: set.new_comments,  oninput:(function (e){ return ctrl.update_deploy_param(set, 'comments', e.target.value); })})
-                                            :
-                                            deploy$$1.comments
+                                    m('td', [
+                                        set.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                        set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                                        set.status ? '' : m('strong.text-secondary', 'Pending')
                                     ]),
-                                    m('td',[
-                                        m('.btn-toolbar.btn-group', [
-                                            !set.edit ?
-                                            m('button.btn.btn-primary.btn-sm', {title:'Edit', onclick: function (e){ return ctrl.edit_deploy(set); }},  [
-                                                m('i.fa.fa-edit')
-                                            ])
-                                            :
-                                            [
-                                                m('button.btn.btn-danger.btn-sm', {disabled: !ctrl.was_changed(set), title:'Update', onclick: function (e){ return ctrl.save_deploy(set); }},  [
-                                                    m('i.fa.fa-save')
-                                                ]),
-                                                m('button.btn.btn-secondary.btn-sm', {title:'Cancel', onclick: function (e){ return ctrl.cancel_deploy(set); }},  [
-                                                    m('i.fa.fa-times')
-                                                ])
-                                            ]
-                                        ]),
-                                    ])
+
+                                    m('td',
+                                        m('a', {href:("/deploy/" + (m.route.param('studyId')) + "/" + (set._id)), config: m.route, onclick:close, hashchange:close}, 'Full details')
+                                    )
                                 ]); }
                             ); }
                         )
                     ])
                 ]),
-
                 m('.row.space',[
                     m('.col-sm-12.text-sm-right',
                         m('button.btn.btn-primary', {onclick: close}, 'Close')
@@ -24159,10 +24099,10 @@
             function present_deploys(deploy2show, version_id){
                 var close = messages.close;
                 return messages.custom({header:'Old deploys',
-                                        preventEnterSubmits: true,
-                                        wide: true,
-                                        content: oldDeploysComponent({deploy2show: deploy2show, version_id: version_id, close: close})})
-                    .then(m.redraw);
+                    preventEnterSubmits: true,
+                    wide: true,
+                    content: oldDeploysComponent({deploy2show: deploy2show, version_id: version_id, close: close})})
+                .then(m.redraw);
             }
 
             function show_duplicate(){
@@ -24245,13 +24185,11 @@
                             m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
                             m('.col-xs-2.space',
                                 !version.deploys ? '' :
-                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Old deploy requests')
+                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Deploy requests')
                             ),
-
-                                m('.col-xs-3.space',
-                                !version.deploy2show ? '' :
-                                    version.deploy2show
-                                )
+                            m('.col-xs-3.space',
+                                !version.deploy2show ? '' : version.deploy2show
+                            )
                         ]); }
                     ),
 
@@ -24290,9 +24228,7 @@
                                             m('.small', 'This will allows you to...')
                                         ]),
                                         m('.col-sm-3.space.text-sm-right',[
-                                            m('button.btn.btn-primary.btn-sm', {disabled: ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).length===0, onclick:ctrl.show_deploy}, 'Deploy'),
-                                            ctrl.study.versions.filter(function (version){ return version.state === 'Published'; }).length>0 ? '' : m('p.small.text-muted', 'There are no published versions yet')
-                                        ])
+                                            m('button.btn.btn-primary.btn-sm', {onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }}, 'Deploy')])
                                     )
                                 ])
                             ),
@@ -24383,12 +24319,12 @@
                     return JSON.parse(JSON.stringify(autupause_rules));
                 var full_rules = JSON.parse(JSON.stringify(rules$1));
                 full_rules.push({
-                        name:'Did not Start or Complete Study',
-                        nameXML:'study',
-                        equal:['Study name'],
-                        equalXML:['Study name'],
-                        values:studies.map(function (study){ return study.name; }),
-                        valuesXML:studies.map(function (study){ return study.id; })
+                    name:'Did not Start or Complete Study',
+                    nameXML:'study',
+                    equal:['Study name'],
+                    equalXML:['Study name'],
+                    values:studies.map(function (study){ return study.name; }),
+                    valuesXML:studies.map(function (study){ return study.id; })
                 });
                 return full_rules;
             });
@@ -25677,6 +25613,7 @@
     ];
 
     var notifications$2= createNotifications();
+
     var ruletableComponent = {
         controller: function controller(){
             var ctrl = {
@@ -25709,7 +25646,7 @@
                 cancel: cancel,
                 print_rules: print_rules
             };
-            var deployer = m.route() === '/autupauseruletable';
+            var deployer = m.route() === '/autupauseruletable' || m.route() === '/autupauseruletable/';
             function load() {
                 deployer ?
                     get_deployer_rules()
@@ -25719,26 +25656,24 @@
                             ctrl.sets2show(ctrl.sets());
                             get_all_rules(true)
                                 .then(function (all_rules) { return ctrl.all_rules = all_rules; });
-
-                            m.redraw();
                         })
                         .catch(function (error) {
                             ctrl.error(error.message);
-                        }).then(m.redraw)
+                        })
+                        .then(m.redraw)
                     :
-                get_rules()
-                    .then(function (response) {
-                        ctrl.loaded(true);
-                        ctrl.sets(response.sets ? response.sets : []);
-                        ctrl.sets2show(ctrl.sets());
-                        get_all_rules()
-                        .then(function (all_rules) { return ctrl.all_rules = all_rules; });
-
-                        m.redraw();
-                    })
-                    .catch(function (error) {
-                        ctrl.error(error.message);
-                    }).then(m.redraw);
+                    get_rules()
+                        .then(function (response) {
+                            ctrl.loaded(true);
+                            ctrl.sets(response.sets ? response.sets : []);
+                            ctrl.sets2show(ctrl.sets());
+                            get_all_rules()
+                                .then(function (all_rules) { return ctrl.all_rules = all_rules; })
+                                .then(m.redraw);
+                        })
+                        .catch(function (error) {
+                            ctrl.error(error.message);
+                        }).then(m.redraw);
             }
 
 
@@ -25780,10 +25715,10 @@
             }
             function download_set(set){
                 var data2save = new Blob([JSON.stringify(set)], {type: 'application/json'});
-                var downloadLink = document.createElement("a");
+                var downloadLink = document.createElement('a');
                 downloadLink.download = set.name+'.json';
                 downloadLink.href = window.URL.createObjectURL(data2save);
-                downloadLink.style.display = "none";
+                downloadLink.style.display = 'none';
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 downloadLink.remove();
@@ -25873,21 +25808,20 @@
 
                 return m('.rules_frame.rules_border', [
                     m('.row', [
-                            parent ? '' :
-                                m('.col-sm-2.space',
-                                    m('input.form-control.space', {value: set.name, onchange: function (e) {ctrl.update_set_name(set, e.target.value);}, onkeyup: function (e) {ctrl.update_set_name(set, e.target.value);}, placeholder:'Set name'})
-                                ),
+                        parent ? '' :
                             m('.col-sm-2.space',
-                                m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                    m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
-                                    m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
-                                ])
+                                m('input.form-control.space', {value: set.name, onchange: function (e) {ctrl.update_set_name(set, e.target.value);}, onkeyup: function (e) {ctrl.update_set_name(set, e.target.value);}, placeholder:'Set name'})
                             ),
-                            m('.col-sm-2.space',
-                                !parent ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_sub_set(set, parent); }}, m('i.fa.fa-minus-circle.space', ' Remove group' ))
-                            ),
-                        ]
-                    ),
+                        m('.col-sm-2.space',
+                            m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
+                                m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
+                            ])
+                        ),
+                        m('.col-sm-2.space',
+                            !parent ? '' : m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_sub_set(set, parent); }}, m('i.fa.fa-minus-circle.space', ' Remove group' ))
+                        ),
+                    ]),
                     !set.data.length ?
                         m('.row',
                             m('.col-sm-10.space', ''),
@@ -25897,63 +25831,63 @@
                                 ])
                             )
                         )
-                    :
-                    set.data.map(function (user_rule){
-                        var condition_data = user_rule.field === '' ? '' : ctrl.all_rules.find(function (rule){ return rule.nameXML===user_rule.field; });
-                        return m('.row',
-                            m('.col-sm-4.space',
-                                m('.input-set.space', [
-                                    m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                        m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
-                                        ctrl.all_rules.map(function (rule){ return m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name); })
+                        :
+                        set.data.map(function (user_rule){
+                            var condition_data = user_rule.field === '' ? '' : ctrl.all_rules.find(function (rule){ return rule.nameXML===user_rule.field; });
+                            return m('.row',
+                                m('.col-sm-4.space',
+                                    m('.input-set.space', [
+                                        m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                            m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
+                                            ctrl.all_rules.map(function (rule){ return m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name); })
+                                        ])
                                     ])
-                                ])
-                            ),
+                                ),
 
-                            m('.col-sm-2.space',
-                                m('.input-set.space', [
-                                    !condition_data ? '' :
-                                        !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
-                                        condition_data.equal.length === 1 ?
-                                            [ctrl.set_comparator(user_rule, ' ', ' '),
-                                                m('select.c-select.form-control.space', {disabled:true, onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
-                                                    m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
-                                                ])]
-
-                                            :
-                                            m('select.c-select.form-control.space', {onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                                m('option', {value:'', selected:user_rule.comparator==='', disabled:true}, 'Comparator'),
-                                                condition_data.equal.map(function (comparator, comparator_id){ return m('option', {selected:user_rule.comparator===condition_data.equalXML[comparator_id], value:condition_data.equalXML[comparator_id]}, comparator); })
-                                            ])
-                                ])
-                            ),
-                            m('.col-sm-4.space',
-                                m('.input-set.space', [
-                                    !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
-                                        condition_data.values.length === 1 ?
-                                            m('input.form-control.space', {value:user_rule.value, onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
-                                            :
-
-                                            m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                                m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
-                                                condition_data.values.map(function (value, val_id){ return typeof value === "object"
-                                                    ?[
-                                                    m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
-                                                        ]
+                                m('.col-sm-2.space',
+                                    m('.input-set.space', [
+                                        !condition_data ? '' :
+                                            !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
+                                                condition_data.equal.length === 1
+                                                    ?
+                                                    [ctrl.set_comparator(user_rule, ' ', ' '),
+                                                        m('select.c-select.form-control.space', {disabled:true, onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
+                                                            m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
+                                                        ])
+                                                    ]
                                                     :
-                                                    m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value); }
-                                                )
-                                            ])
-                                ])
-                            ),
-                            m('.col-sm-2.space',
-                                m('.btn-set.btn-set-sm.double_space', [
-                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_rule(set); }}, m('i.fa.fa-plus-circle')),
-                                    m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set, user_rule); }}, m('i.fa.fa-minus-circle'))
-                                ])
-                            )
-                        );
-                    }),
+                                                    m('select.c-select.form-control.space', {onchange: function (e) {ctrl.set_comparator(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                                        m('option', {value:'', selected:user_rule.comparator==='', disabled:true}, 'Comparator'),
+                                                        condition_data.equal.map(function (comparator, comparator_id){ return m('option', {selected:user_rule.comparator===condition_data.equalXML[comparator_id], value:condition_data.equalXML[comparator_id]}, comparator); })
+                                                    ])
+                                    ])
+                                ),
+                                m('.col-sm-4.space',
+                                    m('.input-set.space', [
+                                        !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
+                                            condition_data.values.length === 1 ?
+                                                m('input.form-control.space', {value:user_rule.value, onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
+                                                :
+
+                                                m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
+                                                    m('option', {value:'', selected:user_rule.value==='', disabled:true}, 'Value'),
+                                                    condition_data.values.map(function (value, val_id){ return typeof value === 'object'
+                                                            ?
+                                                            m('optgroup.rule_optgroup', {disabled:true, selected:user_rule.value===value, label:value.type})
+                                                            :
+                                                            m('option', {selected:user_rule.value===condition_data.valuesXML[val_id], value:condition_data.valuesXML[val_id]}, value); }
+                                                    )
+                                                ])
+                                    ])
+                                ),
+                                m('.col-sm-2.space',
+                                    m('.btn-set.btn-set-sm.double_space', [
+                                        m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_rule(set); }}, m('i.fa.fa-plus-circle')),
+                                        m('a.btn.btn-secondary', {onclick: function (){ return ctrl.remove_rule(set, user_rule); }}, m('i.fa.fa-minus-circle'))
+                                    ])
+                                )
+                            );
+                        }),
 
                     m('.row.space', [
                         m('.col-sm-3.space',
@@ -25961,7 +25895,7 @@
                                 m('a.btn.btn-secondary', {onclick: function (){ return ctrl.push_sub_set(set); }}, m('i.fa.fa-plus-circle.space',' Add group' )),
                             ])
                         ),
-                ]),
+                    ]),
                     set.sub_sets.map(function (sub_set){
                         return show_set(sub_set, set);
                     }),
@@ -25974,7 +25908,7 @@
                 m('.container', [
                     m('div', ctrl.notifications.view()),
 
-                    m('.row',[
+                    m('.row.space',[
                         m('.col-sm-12', [
                             m('h3', ' Rules Generator')
                         ]),
@@ -26001,11 +25935,11 @@
                         )
                     ]),
                     ctrl.sets().length===0 ? '' :
-                    m('.row',[
-                        m('.col-sm-2.space',
-                            m('input.form-control.space', {onchange: function (e) {ctrl.filter_sets(e.target.value);}, onkeyup: function (e) {ctrl.filter_sets(e.target.value);}, placeholder:'Search...'})
-                        )
-                    ]),
+                        m('.row',[
+                            m('.col-sm-2.space',
+                                m('input.form-control.space', {onchange: function (e) {ctrl.filter_sets(e.target.value);}, onkeyup: function (e) {ctrl.filter_sets(e.target.value);}, placeholder:'Search...'})
+                            )
+                        ]),
                     ctrl.sets2show().map(function (set){ return m('.row.list-group-item.rules_frame',[
                             m('.col-sm-2', [
                                 m('', set.name)
@@ -26048,7 +25982,7 @@
                             m('.warning_text', check_rules(ctrl.new_set()) ? 'Rule is not ready' : ''),
                             m('.success_text', !check_rules(ctrl.new_set()) && !check_set_name() ? 'Rule is ready' : '')
                         ]),
-                         show_set(ctrl.new_set()),
+                        show_set(ctrl.new_set()),
 
                         m('.row.double_space',[
                             m('.col-sm-12', [
@@ -26536,17 +26470,16 @@
         '/reset_password/:code':  resetPasswordComponent,
 
         '/deployList': deployComponent,
-        '/removalList': removalListComponent,
-        '/changeRequestList': changeRequestListComponent,
         '/addUser':  addComponent,
         '/users':  usersComponent,
         '/config':  configComponent,
         '/homepage':  homepageComponent,
         '/massMail':  massMailComponent,
 
-        '/changeRequest/:studyId':  changeRequestComponent,
-        '/studyRemoval/:studyId':  removalComponent,
         '/deploy/:studyId': deployDialog,
+        '/deploy/:studyId/:deployId': reviewDeployDialog,
+        '/review/:deployId': reviewDeployDialog,
+
         '/login': loginComponent,
         '/studies' : mainComponent,
         '/studies/statistics_old' : statisticsComponent$1,
@@ -26719,23 +26652,23 @@
                             m('a.navbar-brand', {href:'', config:m.route}, 'Dashboard'),
                             m('ul.nav.navbar-nav',[
                                 ctrl.role()==='du' ? '' :
-                                Object.keys(settings).map(function (comp){ return settings_hash[comp].su && ctrl.role() !=='su' ? '' :
-                                        settings[comp].length==0 ?
-                                            m('li.nav-item',[
-                                                m('a.nav-link',{href:settings_hash[comp].href, config:m.route}, settings_hash[comp].text)
+                                    Object.keys(settings).map(function (comp){ return settings_hash[comp].su && ctrl.role() !=='su' ? '' :
+                                            settings[comp].length==0 ?
+                                                m('li.nav-item',[
+                                                    m('a.nav-link',{href:settings_hash[comp].href, config:m.route}, settings_hash[comp].text)
 
-                                            ])
-                                            :
-                                            m('li.nav-item', [
-                                                m('.dropdown', [
-                                                    m('a.nav-link', settings_hash[comp].text),
-                                                    m('.dropdown-menu', [
-                                                        settings[comp].map(function (sub_comp){ return m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text); }
-                                                        )
-                                                    ])
                                                 ])
-                                            ]); }
-                                ),
+                                                :
+                                                m('li.nav-item', [
+                                                    m('.dropdown', [
+                                                        m('a.nav-link', settings_hash[comp].text),
+                                                        m('.dropdown-menu', [
+                                                            settings[comp].map(function (sub_comp){ return m('a.dropdown-item',{href:settings_hash[comp].subs[sub_comp].href, config:m.route}, settings_hash[comp].subs[sub_comp].text); }
+                                                            )
+                                                        ])
+                                                    ])
+                                                ]); }
+                                    ),
                                 !ctrl.new_msgs() ? '' : m('li.nav-item.pull-xs-right', [
                                     m('a',{href:'/messages', config:m.route},
                                         m('span.fa-stack', [

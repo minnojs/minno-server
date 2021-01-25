@@ -16,7 +16,7 @@ function user_info (user_id) {
 
 function new_msgs (user_id) {
     return user_info(user_id)
-    .then(user_data => !!user_data.pending_studies && user_data.pending_studies.length);
+    .then(user_data => !!user_data.pending_studies && user_data.pending_studies.length || !!user_data.reviewed_requests && user_data.reviewed_requests.length);
 }
 
 function user_info_by_name (user_name) {

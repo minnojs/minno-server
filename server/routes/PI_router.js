@@ -21,7 +21,7 @@ PIRouter.route('/research_pool')
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
-PIRouter.route('/deploy_list')
+PIRouter.route('/deploy_request')
     .get(
         function(req, res){
             return PI.get_all_deploys()
@@ -40,9 +40,16 @@ PIRouter.route('/deploy_list')
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
 
-PIRouter.route('/deploy_list/:deploy_id')
+PIRouter.route('/deploy_request/:deploy_id')
+    .get(
+        function(req, res){
+            return PI.get_deploy(req.params.deploy_id)
+                .then(deploy=>res.json(deploy))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+
+        })
     .put(function(req, res){
-        return PI.update_deploy(req.params.deploy_id, req.body.priority, req.body.pause_rules, req.body.status)
+        return PI.update_deploy(req.params.deploy_id, req.body.priority, req.body.pause_rules, req.body.reviewer_comments, req.body.status, req.role)
             .then(data=>res.json(data))
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
@@ -89,9 +96,9 @@ PIRouter.route('/rules')
 PIRouter.route('/deployer_rules/:set_id')
     .delete(
         function(req, res){
-            return PI.delete_set(req.user_id, req.params.set_id, true, req.role)
-                .then(()=>res.json({}))
-                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+            return PI.delete_set(req.user_id, req.params.set_id, true)
+                        .then(()=>res.json({}))
+                        .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
 PIRouter.route('/rules/:set_id')
@@ -102,12 +109,13 @@ PIRouter.route('/rules/:set_id')
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
+
 PIRouter.route('/deploy/:study_id')
     .post(
         function(req, res){
             return PI.request_deploy(req.user_id, parseInt(req.params.study_id), req.body.props)
-                .then((deploy_data)=>res.json(deploy_data))
-                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+                    .then((deploy_data)=>res.json(deploy_data))
+                    .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
     .put(
         function(req, res){

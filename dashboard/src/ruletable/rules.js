@@ -1,4 +1,4 @@
-import {load_studies} from "../study/studyModel";
+import {load_studies} from '../study/studyModel';
 
 export default get_all_rules;
 
@@ -24,13 +24,13 @@ function get_all_rules(deployer=false)
                 return JSON.parse(JSON.stringify(autupause_rules));
             let full_rules = JSON.parse(JSON.stringify(rules));
             full_rules.push({
-                    name:'Did not Start or Complete Study',
-                    nameXML:'study',
-                    equal:['Study name'],
-                    equalXML:['Study name'],
-                    values:studies.map(study=>study.name),
-                    valuesXML:studies.map(study=>study.id)
-            })
+                name:'Did not Start or Complete Study',
+                nameXML:'study',
+                equal:['Study name'],
+                equalXML:['Study name'],
+                values:studies.map(study=>study.name),
+                valuesXML:studies.map(study=>study.id)
+            });
             return full_rules;
         });
 }

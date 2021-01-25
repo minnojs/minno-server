@@ -29,7 +29,14 @@ function get_pending_studies(user_id) {
         const users = db.collection('users');
         return users.findOne({_id:user_id})
             .then(user_result =>user_result.pending_studies);
+    });
+}
 
+function get_reviewed_requests(user_id) {
+    return connection.then(function (db) {
+        const users = db.collection('users');
+        return users.findOne({_id:user_id})
+            .then(user_result =>user_result.reviewed_requests);
     });
 }
 
@@ -49,7 +56,6 @@ function get_studies(user_id) {
         function get_user_studies(){
             return users.findOne({_id:user_id})
             .then(user_result => {
-
                 const study_ids = user_result.studies.map(study => study.id);
                 return studies
                 .find({ _id: { $in: study_ids } })
@@ -575,4 +581,4 @@ function delete_link(user_id, study_id) {
 }
 
 
-module.exports = {update_study, make_public, make_link, delete_link, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission, get_id_with_link};
+module.exports = {update_study, make_public, make_link, delete_link, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission, get_id_with_link, get_reviewed_requests};

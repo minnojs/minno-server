@@ -1,94 +1,77 @@
-import {get_pending_studies,
-    use_code} from './messagesModel';
-import {getAuth} from 'login/authModel';
+import {get_pending_studies, get_reviewed_requests, use_code, read_review} from './messagesModel';
+
+import sharingRequestComponent from './sharingRequestsComponent';
+import reviewedRequestsComponent from './reviewedRequestsComponent';
 
 export default messagesComponent;
 
 let messagesComponent = {
     controller(){
         const ctrl = {
-            role:m.prop(''),
+            has_messages: m.prop(false),
+            reviewed_requests: m.prop(''),
             pendings: m.prop(''),
             loaded: false,
             error: m.prop(''),
-            do_use_code
+            do_use_code,
+            do_read
         };
-        getAuth().then((response) => {
-            ctrl.role(response.role);
-        });
-
-        function do_use_code(code){
-            use_code(code)
-                .then(()=>ctrl.pendings(ctrl.pendings().filter(study=>study.accept!==code && study.reject!==code)))
-                .then(m.redraw);
-        }
-
         get_pending_studies()
             .then((response) => {
                 ctrl.pendings(response.studies);
+                ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0);
                 ctrl.loaded = true;
             })
             .catch(response => {
                 ctrl.error(response.message);
             })
             .then(m.redraw);
+
+        get_reviewed_requests()
+            .then((response) => {
+
+                ctrl.reviewed_requests(response.reviewed_requests);
+                ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
+                ctrl.loaded = true;
+            })
+            .catch(response => {
+                ctrl.error(response.message);
+            })
+            .then(m.redraw);
+
+        function do_use_code(code){
+            use_code(code)
+                .then(()=>ctrl.pendings(ctrl.pendings().filter(study=>study.accept!==code && study.reject!==code)))
+                .then(()=>ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0))
+                .then(m.redraw);
+        }
+
+        function do_read(study_id, deploy_id){
+            read_review(deploy_id)
+            .then(m.route(`/deploy/${study_id}/${deploy_id}`));
+        }
+
         return ctrl;
     },
     view(ctrl){
-
-        return  !ctrl.loaded
+        return !ctrl.loaded
             ?
             m('.loader')
             :
-            m('.container.studies', [
-                m('.row.p-t-1', [
-                    m('.col-sm-4', [
-                        m('h3', 'Sharing Invitations')
-                    ])]),
-                m('.card.studies-card', [
-                    m('.card-block', [
-                        m('.row', {key: '@@notid@@'}, [
-                            m('.col-sm-3', [
-                                m('.form-control-static',[
-                                    m('strong', 'Owner ')
-                                ])
-                            ]),
-                            m('.col-sm-4', [
-                                m('.form-control-static',[
-                                    m('strong', 'Study name ')
-                                ])]),
-                            m('.col-sm-2', [
-                                m('.form-control-static',[
-                                    m('strong', 'Permission ')
-                                ])
-                            ]),
-                            m('.col-sm-3', [
-                                m('.form-control-static',[
-                                    m('strong', 'Action ')
-                                ])
-                            ])
+            !ctrl.has_messages()
+                ?
+                m('.container',
+                    m('.row.p-t-1', [
+                        m('.col-sm-4', [
+                            m('h3', 'There are no messages...')
+                        ])
+                    ])
+                )
+                :
+                m('.container', [
+                    !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl}),
+                    m.component(reviewedRequestsComponent, {ctrl}),
 
-                        ]),
-                        ctrl.pendings().map(study =>
-                            m('.row.study-row', [
-                                m('.col-sm-3', [
-                                    m('.study-text', study.owner_name)
-                                ]),
-                                m('.col-sm-4', [
-                                    m('.study-text', study.study_name)
-                                ]),
-                                m('.col-sm-2', [
-                                    m('.study-text', study.permission)
-                                ]),
-                                m('.col-sm-3', [
-                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_use_code(study.accept);}}, 'Accept'), ' | ',
-                                        m('button.btn.btn-danger', {onclick:function() {ctrl.do_use_code(study.reject);}}, 'Reject'))
-                                ]),
-
-
-                            ]))
-                    ])])]);
-
-
+                ]);
     }
 };
