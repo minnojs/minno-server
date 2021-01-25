@@ -3,6 +3,7 @@ require('./config_validation');
 const config        = require('../config');
 const versions        = require('./versions');
 const fs            = require('fs-extra');
+const dateFormat    = require('dateformat');
 const {insert_new_user, update_role} = require('./users');
 const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
