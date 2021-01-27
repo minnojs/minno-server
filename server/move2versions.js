@@ -24,7 +24,7 @@ function fix_versions(studies, study){
         version.creation_date = version.version;
         version.id = id + 1;
         version.availability = false;
-        version.experiments = [];
+        version.experiments = study.experiments;
         return fs.pathExists(`${config.user_folder}/${study.folder_name}/v${id + 1}`)
             .then(existing => existing
                 ? ''
