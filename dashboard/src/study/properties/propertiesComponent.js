@@ -112,7 +112,6 @@ let collaborationComponent = {
                         m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
                         m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
                         m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
-                        m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it,value: version_name(), onchange: m.withAttr('value', version_name)}),
                         m('.input-group.space', [
                             m('select.c-select.form-control.space',{onchange: e => update_url(e.target.value)}, [
                                 m('option', {value:'update', selected:true}, 'Create a new launch URL'),
@@ -124,10 +123,6 @@ let collaborationComponent = {
             })
 
             .then(response => {
-                if (response && !version_name()) {
-                    error('Version name cannot be empty');
-                    return ask();
-                }
                 return  response && publish();
             });
 

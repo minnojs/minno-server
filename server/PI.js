@@ -212,6 +212,7 @@ function change_deploy(user_id, study_id, props) {
             set2update.priority    = props.priority;
             deploy2update.comments = props.comments;
             set2update.ref_id      = set2update._id;
+            set2update.changed     = props.changed;
             set2update._id         = utils.sha1(Date.now()+Math.random());
             set2update.status      = 'pending';
             deploy2update.sets     = [set2update];
@@ -227,6 +228,7 @@ function change_deploy(user_id, study_id, props) {
                         user_name:user_data.user_name,
                         _id:set2update._id,
                         ref_id:set2update.ref_id,
+                        changed:props.changed,
                         study_id,
                         study_name:study_data.name,
                         version_id:props.version_id,

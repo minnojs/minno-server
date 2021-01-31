@@ -18721,7 +18721,7 @@
                 ]),
 
                 m('a.no-decoration', {href:'javascript:void(0);'},
-                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("- v" + (study.version.id) + " (" + (study.version.version_name) + ")")))])
+                    [!study.is_locked ? '' : m('i.fa.fa-fw.fa-lock'), ((study.name) + " " + (!study.version ? '' : ("- v" + (study.version.id))))])
             ]),
             study.isUploading
                 ? m('div', [
@@ -21267,10 +21267,11 @@
         var priority = ref.priority;
         var target_number = ref.target_number;
         var comments = ref.comments;
+        var changed = ref.changed;
 
         return fetchJson(edit_deploy_url(study_id), {
         method: 'put',
-        body: {props: {deploy_id: deploy_id, version_id: version_id, priority: priority, target_number: target_number, comments: comments}}
+        body: {props: {deploy_id: deploy_id, version_id: version_id, priority: priority, target_number: target_number, comments: comments, changed: changed}}
     });
     };
 
@@ -21875,7 +21876,8 @@
 
             function update(status){
                 update_deploy(ctrl.deploy2show()._id, ctrl.priority(), ctrl.pause_rules(), ctrl.reviewer_comments(), status)
-                    .then(m.redraw);
+                    .then(m.route( "/deployList/"));
+
             }
 
             function change_edit_mode(mode){
@@ -21892,7 +21894,12 @@
             function save_deploy(){
                 if (!was_changed())
                     return;
-                return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments()})
+                var changed = [];
+                if(parseInt(ctrl.priority()) !== ctrl.deploy2show().priority)
+                    changed.push('priority');
+                if(ctrl.target_number() !== ctrl.deploy2show().target_number)
+                    changed.push('target_number');
+                return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
                 .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }))
 
             }
@@ -21919,7 +21926,7 @@
         view: function view(ref){
             var ctrl = ref.ctrl;
 
-            if (ctrl.sent) return m('.deploy.ctrl.deploy2show().status===\'pending\'centrify',[
+            if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
                 m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
             ]);
@@ -22003,7 +22010,7 @@
                         m('.col-sm-3',[
                             m('strong', 'Target Number of Completed Study Sessions:'),
                         ]),
-                        m('.col-sm-2',[
+                        m('.col-sm-2', {class:!ctrl.deploy2show().changed  ? '' : !ctrl.deploy2show().changed.includes('target_number') ? '' : 'alert-warning'},[
                             ctrl.edit_mode()
                                 ?
                                 m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', oninput:  m.withAttr('value', ctrl.target_number)})
@@ -22015,11 +22022,13 @@
                         m('.col-sm-3',[
                             m('strong', 'Priority:'),
                         ]),
-                        m('.col-sm-2',[
+                        m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                             ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                                 ?
-                                m('input.form-control.space', {type:'number', min:'0', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)})
+                                m('.has-warning',
+                                m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                                 :
+
                                 ctrl.deploy2show().priority
                         ])
                     ]),
@@ -23479,7 +23488,7 @@
                                     m('.study-text', request.reviewer_comments)
                                 ]),
                                 m('.col-sm-3', [
-                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read')),
+                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
                                 ]),
                             ]); })
                     ])
@@ -24056,7 +24065,6 @@
                             m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
                             m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
                             m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
-                            m('input.form-control', {placeholder: 'Enter Version Name', config: focus_it$5,value: version_name(), onchange: m.withAttr('value', version_name)}),
                             m('.input-group.space', [
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
@@ -24068,10 +24076,6 @@
                 })
 
                 .then(function (response) {
-                    if (response && !version_name()) {
-                        error('Version name cannot be empty');
-                        return ask();
-                    }
                     return  response && publish();
                 }); };
 

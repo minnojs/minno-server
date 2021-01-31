@@ -43,7 +43,8 @@ let reviewDeployDialog = {
 
         function update(status){
             update_deploy(ctrl.deploy2show()._id, ctrl.priority(), ctrl.pause_rules(), ctrl.reviewer_comments(), status)
-                .then(m.redraw);
+                .then(m.route( `/deployList/`));
+
         }
 
         function change_edit_mode(mode){
@@ -60,7 +61,12 @@ let reviewDeployDialog = {
         function save_deploy(){
             if (!was_changed())
                 return;
-            return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments()})
+            let changed = [];
+            if(parseInt(ctrl.priority()) !== ctrl.deploy2show().priority)
+                changed.push('priority');
+            if(ctrl.target_number() !== ctrl.deploy2show().target_number)
+                changed.push('target_number');
+            return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
             .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)))
 
         }
@@ -86,7 +92,7 @@ let reviewDeployDialog = {
         return {ctrl};
     },
     view({ctrl}){
-        if (ctrl.sent) return m('.deploy.ctrl.deploy2show().status===\'pending\'centrify',[
+        if (ctrl.sent) return m('.deploy.centrify',[
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
             m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
         ]);
@@ -170,7 +176,7 @@ let reviewDeployDialog = {
                     m('.col-sm-3',[
                         m('strong', 'Target Number of Completed Study Sessions:'),
                     ]),
-                    m('.col-sm-2',[
+                    m('.col-sm-2', {class:!ctrl.deploy2show().changed  ? '' : !ctrl.deploy2show().changed.includes('target_number') ? '' : 'alert-warning'},[
                         ctrl.edit_mode()
                             ?
                             m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', oninput:  m.withAttr('value', ctrl.target_number)})
@@ -182,11 +188,13 @@ let reviewDeployDialog = {
                     m('.col-sm-3',[
                         m('strong', 'Priority:'),
                     ]),
-                    m('.col-sm-2',[
+                    m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                         ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                             ?
-                            m('input.form-control.space', {type:'number', min:'0', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)})
+                            m('.has-warning',
+                            m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                             :
+
                             ctrl.deploy2show().priority
                     ])
                 ]),

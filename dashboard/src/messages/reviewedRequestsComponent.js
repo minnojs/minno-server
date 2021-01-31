@@ -51,7 +51,7 @@ let reviewedRequestsComponent = {
                                 m('.study-text', request.reviewer_comments)
                             ]),
                             m('.col-sm-3', [
-                                m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read')),
+                                m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
                             ]),
                         ]))
                 ])

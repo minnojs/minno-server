@@ -24,9 +24,9 @@ export function update_deploy(deploy_id, priority, pause_rules, reviewer_comment
         body:{priority, pause_rules, reviewer_comments, status}
     });
 }
-export let edit_deploy = (study_id, version_id, {deploy_id, priority, target_number, comments}) => fetchJson(edit_deploy_url(study_id), {
+export let edit_deploy = (study_id, version_id, {deploy_id, priority, target_number, comments, changed}) => fetchJson(edit_deploy_url(study_id), {
     method: 'put',
-    body: {props: {deploy_id, version_id, priority, target_number, comments}}
+    body: {props: {deploy_id, version_id, priority, target_number, comments, changed}}
 });
 
 
