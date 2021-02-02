@@ -98,7 +98,7 @@ let deployDialog = {
             return ctrl.study.get()
                 .then(()=>{
                     get_rules()
-                        .then(response => ctrl.all_rules(response.sets))
+                        .then(response => ctrl.all_rules(response.sets ? response.sets : []))
                         .then(()=> {
                             ctrl.versions(ctrl.study.versions);
                             ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];

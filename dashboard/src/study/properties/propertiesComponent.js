@@ -31,7 +31,6 @@ let collaborationComponent = {
             share_error:m.prop(''),
             study,
             show_deploy,
-            deploy2show:m.prop(''),
             present_deploys,
             save,
             lock,
@@ -185,6 +184,9 @@ let collaborationComponent = {
                 .then(()=>{
                     ctrl.study_name(ctrl.study.name);
                     ctrl.description(ctrl.study.description);
+                    ctrl.study.invisible = ctrl.study.permission === 'invisible';
+                    if(ctrl.study.invisible)
+                        ctrl.study.isReadonly = true;
                     ctrl.loaded(true);
                 })
 
@@ -211,39 +213,39 @@ let collaborationComponent = {
                 m('.row.space',
                     m('.col-sm-2.space',  m('strong', 'Study name:')),
                     m('.col-sm-10',
-                        m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
+                        ctrl.study.isReadonly ? ctrl.study_name() :
+                            m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
                 ),
                 m('.row.space',
                     m('.col-sm-2.space',  m('strong', 'Description:')),
                     m('.col-sm-10',
-                        m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
+                        ctrl.study.isReadonly ? ctrl.description() :
+                            m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                 ),
-
-                m('.row.space',
+                ctrl.study.isReadonly ? '' : m('.row.space',
                     m('.col-sm-12.space',
                         m('.text-xs-right.btn-toolbar',
                             m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save')
                         )
                     )
                 ),
-                m('.row.space',
-                    m('.col-sm-12.space',  m('h4', 'Versions'))
-                ),
 
-                ctrl.study.versions .map((version, id)=>
-                    m('.row', [
-                        m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
-                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 ? 'Edit' : 'Review')),
-                        m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
-                        m('.col-xs-2.space',
-                            !version.deploys ? '' :
-                                m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys, version.id)}, 'Deploy requests')
-                        ),
-                        m('.col-xs-3.space',
-                            !version.deploy2show ? '' : version.deploy2show
-                        )
-                    ])
-                ),
+                ctrl.study.invisible ? '' : [
+                    m('.row.space',
+                        m('.col-sm-12.space',  m('h4', 'Versions'))
+                    ),
+                    ctrl.study.versions .map((version, id)=>
+                        m('.row', [
+                            m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
+                            m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 && !ctrl.study.isReadonly? 'Edit' : 'Review')),
+                            ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
+                            ctrl.study.isReadonly ? '' : m('.col-xs-2.space',
+                                !version.deploys ? '' :
+                                    m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.present_deploys(version.deploys, version.id)}, 'Deploy requests')
+                            )
+                        ])
+                    )
+                ],
 
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Actions'))
@@ -257,7 +259,7 @@ let collaborationComponent = {
                                 m('.small', 'This will allows you to...')
                             ]),
                             m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate}, 'Duplicate')
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
                             )
                         ),
                         m('.row.',
@@ -266,7 +268,7 @@ let collaborationComponent = {
                                 m('.small', 'This will allows you to...')
                             ]),
                             m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing}, 'Sharing')
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
                             )
                         ),
                         m('.row.space',
@@ -280,7 +282,7 @@ let collaborationComponent = {
                                         m('.small', 'This will allows you to...')
                                     ]),
                                     m('.col-sm-3.space.text-sm-right',[
-                                        m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`)}, 'Deploy')])
+                                        m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`), disabled: ctrl.study.isReadonly}, 'Deploy')])
                                 )
                             ])
                         ),
@@ -291,7 +293,7 @@ let collaborationComponent = {
                                 m('.small', 'This will allows you to...')
                             ]),
                             m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data}, 'Data')
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
                             )
                         ),
                         m('.row.',
@@ -300,47 +302,47 @@ let collaborationComponent = {
                                 m('.small', 'This will allows you to...')
                             ]),
                             m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics}, 'Statistics')
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
                             )
                         ),
                     ])
                 ),
+                ctrl.study.isReadonly ? '' : [
+                    m('.row.space',
+                        m('.col-sm-12',  m('h4', 'Danger zone'))
 
-                m('.row.space',
-                    m('.col-sm-12',  m('h4', 'Danger zone'))
+                    ),
 
-                ),
+                    m('.row.danger_zone.space',
+                        m('.col-sm-12', [
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                    m('strong', 'Publish and create a new version'),
+                                ]),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
+                                )
+                            ),
+                            m('.row.',
+                                m('.col-sm-11.space',[
+                                    m('strong', 'Lock study'),
+                                    m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
+                                    m('.small', 'However, if the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
+                                ]),
 
-                m('.row.danger_zone.space',
-                    m('.col-sm-12', [
-                        m('.row.',
-                            m('.col-sm-11.space',[
-                                m('strong', 'Publish and create a new version'),
-                            ]),
-                            m('.col-sm-1.space',
-                                m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
-                            )
-                        ),
-                        m('.row.',
-                            m('.col-sm-11.space',[
-                                m('strong', 'Lock study'),
-                                m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
-                                m('.small', 'However, if the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
-                            ]),
-
-                            m('.col-sm-1.space',
-                                m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
-                            )
-                        ),
-                        m('.row.space',
-                            m('.col-sm-11.space',  m('strong', 'Delete study')),
-                            m('.col-sm-1.space',
-                                m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
-                            )
-                        ),
-                    ])
-                )
-
+                                m('.col-sm-1.space',
+                                    m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
+                                )
+                            ),
+                            m('.row.space',
+                                m('.col-sm-11.space',  m('strong', 'Delete study')),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
+                                )
+                            ),
+                        ])
+                    )
+                ]
             ]);
     }
 };

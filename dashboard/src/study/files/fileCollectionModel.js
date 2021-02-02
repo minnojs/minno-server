@@ -53,6 +53,7 @@ const studyPrototype = {
                 this.is_locked = study.is_locked;
                 this.is_published = study.is_published;
                 this.is_public = study.is_public;
+                this.permission = study.permission;
                 this.has_data_permission = study.has_data_permission;
                 this.description = study.description;
 

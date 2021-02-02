@@ -173,8 +173,8 @@ function create_bank_studies(){
 
         function updateBankStudies([user_result, bank_studies]){
             const promises = bank_studies.map(study => {
-                console.log(`-- copying "${path.join(`./server/bank/${study.bank_type}`,study.name)}" into "${path.join(config.user_folder, study.folder_name)}"`);
-                return fs.copy(path.join(`./server/bank/${study.bank_type}`, study.name), path.join(config.user_folder, study.folder_name));
+                console.log(`-- copying "${path.join(`./server/bank/${study.bank_type}`,study.name)}" into "${path.join(config.user_folder, study.folder_name), 'v1'}"`);
+                return fs.copy(path.join(`./server/bank/${study.bank_type}`, study.name), path.join(config.user_folder, study.folder_name, 'v1'));
             });
             return Promise.all(promises);
         }
