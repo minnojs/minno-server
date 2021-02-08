@@ -13009,10 +13009,6 @@
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
     }
 
-    function get_restore_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/restore");
-    }
-
 
     function get_requests_url(study_id) {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
@@ -13028,6 +13024,10 @@
 
     function get_publish_url(study_id) {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
+    }
+
+    function get_new_version(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/version");
     }
 
     function get_version_url(study_id, version_id) {
@@ -13061,11 +13061,6 @@
         body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
     }); };
 
-    var restore2version = function (study_id, version_id) { return fetchJson(get_restore_url(study_id), {
-        method: 'post',
-        body: {version_id: version_id}
-    }); };
-
     var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
         method: 'put',
         body: body
@@ -13088,6 +13083,10 @@
     var publish_study = function (study_id, version_name, update_url) { return fetchJson(get_publish_url(study_id), {
         method: 'post',
         body: {version_name: version_name, update_url: update_url}
+    }); };
+
+    var create_version = function (study_id) { return fetchJson(get_new_version(study_id), {
+        method: 'post'
     }); };
 
     var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
@@ -20122,66 +20121,6 @@
             ];
     }
 
-    function restore_dialog (args) { return m.component(restore_dialog$1, args); }
-    var restore_dialog$1 = {
-        controller: function controller(ref){
-            var study_id = ref.study_id;
-            var versions = ref.versions;
-            var close = ref.close;
-
-            var ctrl = {
-                study_id: study_id,
-                versions: m.prop([]),
-                version_id: m.prop(''),
-                error: m.prop('')
-            };
-
-            ctrl.versions(versions.sort(function (a, b) { return b.version-a.version; }).slice(0, -1));
-            ctrl.version_id(ctrl.versions().length<1 ? '' : ctrl.versions()[0].id);
-
-            return {ctrl: ctrl, close: close};
-        },
-        view: function (ref) {
-            var ctrl = ref.ctrl;
-            var close = ref.close;
-
-            return m('div', [
-            m('.card-block', [
-                m('.col-sm-6', [
-                    m('.input-group', [m('strong', 'Version'),
-                        ctrl.versions().length<1
-                            ?
-                            m('.alert.alert-info', 'There are no versions')
-                            :
-                            m('select.c-select.form-control',{onchange: function (e) { return ctrl.version_id(e.target.value); }}, [
-                                ctrl.versions().map(function (version){ return m('option', {value:version.id}, ((version.version) + " (" + (version.state) + ")")); })
-                            ])
-                    ])
-                ])
-            ]),
-            ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
-            m('.text-xs-right.btn-toolbar',[
-                m('a.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
-                m('a.btn.btn-primary.btn-sm', {onclick:function (){do_restore(ctrl); }}, 'Restore')
-            ])
-        ]);
-    }
-    };
-
-
-    function do_restore(ctrl){
-        ctrl.error('');
-
-        return restore2version(ctrl.study_id, ctrl.version_id())
-            .then(function (response) {
-                var version = response.version;
-                if (version == null) return Promise.reject('There was a problem restore your study, please contact your administrator');
-                ctrl.stat_data(response.stat_data);
-            })
-            .catch(function (err){ return ctrl.error(err.message); })
-            .then(m.redraw);
-    }
-
     function collaboration_url(study_id)
     {
         return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/collaboration");
@@ -20542,456 +20481,8 @@
         ask();
     };
 
-    var do_tags = function (study) { return function (e) {
-        e.preventDefault();
-        var study_id = study.id;
-        var filter_tags = function (){return function (tag) { return tag.changed; };};
-        var tags = m.prop([]);
-        messages.confirm({header:'Tags', content: studyTagsComponent({tags: tags, study_id: study_id})})
-            .then(function (response) {
-                if (response){
-                    var new_tags = tags().filter(function (tag){ return tag.used; });
-                    study.tags = new_tags;
-                    tags(tags().filter(filter_tags()).map(function (tag){ return (({text: tag.text, id: tag.id, used: tag.used})); }));
-                    return update_tags_in_study(study_id, tags);
-                }
-            })
-            .then(m.redraw);
-    }; };
-
-    var do_data = function (study) { return function (e) {
-        e.preventDefault();
-        var study_id = study.id;
-        var versions = study.versions;
-        var exps  = m.prop([]);
-
-        var close = messages.close;
-        messages.custom({header:'Data download', content: data_dialog({exps: exps, study_id: study_id, versions: versions, close: close})})
-            .then(m.redraw);
-    }; };
-
-
-
-    var do_stat = function (study) { return function (e) {
-        e.preventDefault();
-        var study_id = study.id;
-        var versions = study.versions;
-        var close = messages.close;
-        messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id: study_id, versions: versions, close: close})})
-            .then(m.redraw);
-    }; };
-
-
-
-
-    var do_sharing = function (study) { return function (e) {
-        e.preventDefault();
-        var study_id = study.id;
-        var close = messages.close;
-        messages.custom({header:'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})})
-            .then(m.redraw);
-    }; };
-
-    var do_restore$1 = function (study) { return function (e) {
-        e.preventDefault();
-        var study_id = study.id;
-        var versions = study.versions;
-        var close = messages.close;
-        messages.custom({header:'Restore', content: restore_dialog({study_id: study_id, versions: versions, close: close})})
-            .then(m.redraw);
-    }; };
-
-
-    var do_make_public = function (study, notifications) { return function (e) {
-        e.preventDefault();
-        var error = m.prop('');
-        return messages.confirm({okText: ['Yes, make ', !study.is_public ? 'public' : 'private'], cancelText: ['No, keep ', !study.is_public ? 'private' : 'public' ], header:'Are you sure?', content:m('p', [m('p', !study.is_public
-            ?
-            'Making the study public will allow everyone to view the files. It will NOT allow others to modify the study or its files.'
-            :
-            'Making the study private will hide its files from everyone but you.'),
-        m('span', {class: error() ? 'alert alert-danger' : ''}, error())])})
-            .then(function (response) {
-                if (response) make_pulic(study.id, !study.is_public)
-                    .then(study.is_public = !study.is_public)
-                    .then(function (){ return notifications.show_success(("'" + (study.name) + "' is now " + (study.is_public ? 'public' : 'private'))); })
-
-                    .then(m.redraw);
-            });
-
-    }; };
-
-
-    var do_delete = function (study) { return function (e) {
-        e.preventDefault();
-        return messages.confirm({header:'Delete study', content:'Are you sure?'})
-            .then(function (response) {
-                if (response) delete_study(study.id)
-                    .then(function (){ return study.deleted=true; })
-                    .catch(function (error) { return messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}); })
-                    .then(m.redraw)
-                    .then(m.route('./'))
-                ;
-            });
-    }; };
-
-    var update_study_description = function (study) { return function (e) {
-        e.preventDefault();
-        var study_description = m.prop(!study.description ? '' : study.description);
-        var error = m.prop();
-
-        var ask = function () { return messages.confirm({
-            header:'Study Description',
-            content: {
-                view: function view(){
-                    return m('div', [
-                        m('textarea.form-control',  {placeholder: 'Enter description', value: study_description(), config: focus_it$2, onchange: m.withAttr('value', study_description)}),
-                        !error() ? '' : m('p.alert.alert-danger', error())
-                    ]);
-                }
-            }
-        }).then(function (response) { return response && rename(); }); };
-
-        var rename = function () { return update_study(study.id, {description:study_description()})
-            .then(function (){ return study.description=study_description(); })
-            .catch(function (e) {
-                error(e.message);
-                ask();
-            })
-            .then(m.redraw); };
-
-        ask();
-    }; };
-
-    var do_rename = function (study, notifications) { return function (e) {
-        e.preventDefault();
-        var study_name = m.prop(study.name);
-        var error = m.prop('');
-
-        var ask = function () { return messages.confirm({
-            header:'New Name',
-            content: {
-                view: function view(){
-                    return m('div', [
-                        m('input.form-control',  {config: focus_it$2, class: 'tmp', placeholder: 'Enter Study Name', value: study_name(), onchange: m.withAttr('value', study_name)}),
-                        !error() ? '' : m('p.alert.alert-danger', error())
-                    ]);
-                }
-            }
-        }).then(function (response) { return response && rename(); }); };
-        var rename = function () { return rename_study(study.id, study_name)
-            .then(function (){ return notifications.show_success(("'" + (study.name) + "' renamed successfully to '" + (study_name()) + "'")); })
-            .then(function (){ return study.name=study_name(); })
-            .then(function (){
-                var study2 = studyFactory(study.id);
-                study2.get().then(function (){ return study.base_url = study2.base_url; }).then(function (){
-                    if (typeof study.files === 'function')
-                        study.files(study2.files());
-                });
-            })
-
-            .then(m.redraw)
-            .catch(function (e) {
-                error(e.message);
-                ask();
-            }).then(m.redraw); };
-
-        ask();
-    }; };
-
-    var do_duplicate= function (study, callback) { return function (e) {
-        e.preventDefault();
-        var study_name = m.prop(study.name);
-        var error = m.prop('');
-
-        var ask = function () { return messages.confirm({
-            header:'New Name',
-            content: m('div', [
-                m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$2,value: study_name(), onchange: m.withAttr('value', study_name)}),
-                !error() ? '' : m('p.alert.alert-danger', error())
-            ])
-        }).then(function (response) { return response && duplicate(); }); };
-
-        var duplicate= function () { return duplicate_study(study.id, study_name)
-            .then(function (response) { return m.route( study.type=='regular' ? ("/editor/" + (response.study_id)): ("/editor/" + (response.study_id)) ); })
-            .then(callback)
-            .then(m.redraw)
-            .catch(function (e) {
-                error(e.message);
-                ask();
-            }); };
-        ask();
-    }; };
-
-    var do_lock = function (study, notifications) { return function (e) {
-        e.preventDefault();
-        var error = m.prop('');
-
-        var ask = function () { return messages.confirm({okText: ['Yes, ', study.is_locked ? 'unlock' : 'lock' , ' the study'], cancelText: 'Cancel', header:'Are you sure?', content:m('p', [m('p', study.is_locked
-            ?
-            !study.is_published
-                ?
-                'Unlocking the study will let you modifying the study. When a study is Unlocked, you can add files, delete files, rename files, edit files, rename the study, or delete the study.'
-                :
-                [
-                    m('p','Unlocking the study will let you modifying the study. When a study is Unlocked, you can add files, delete files, rename files, edit files, rename the study, or delete the study.'),
-                    m('p','However, the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
-                ]
-            :
-            'Are you sure you want to lock the study? This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
-        !error() ? '' : m('p.alert.alert-danger', error())])
-        })
-
-            .then(function (response) { return response && lock(); }); };
-
-        var lock= function () { return lock_study(study.id, !study.is_locked)
-            .then(function () { return study.is_locked = !study.is_locked; })
-            .then(function () { return study.isReadonly = study.is_locked; })
-            .then(function (){ return notifications.show_success(("'" + (study.name) + "' " + (study.is_locked ? 'locked' : 'unlocked') + " successfully")); })
-
-            .catch(function (e) {
-                error(e.message);
-                ask();
-            })
-            .then(m.redraw); };
-        ask();
-    }; };
-
-    var do_publish = function (study, notifications) { return function (e) {
-        e.preventDefault();
-        var error = m.prop('');
-        var update_url =m.prop('update');
-
-        var ask = function () { return messages.confirm({okText: ['Yes, ', study.is_published ? 'Unpublish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[study.is_published ? 'Unpublish' : 'Publish', ' the study?'],
-            content:m('p',
-                [m('p', study.is_published
-                    ?
-                    'The launch URL participants used to run the study will be removed. Participants using this link will see an error page. Use it if you completed running the study, or if you want to pause the study and prevent participants from taking it for a while. You will be able to publish the study again, if you want.'
-                    :
-                    [
-                        m('p', 'This will create a link that participants can use to launch the study.'),
-                        m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
-                        m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
-                        m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL')
-
-                        ,m('.input-group', [
-                            m('select.c-select.form-control',{onchange: function (e) { return update_url(e.target.value); }}, [
-                                m('option', {value:'update', selected:true}, 'Update the launch URL'),
-                                m('option', {value:'keep'}, 'Keep the launch URL'),
-                                study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
-                            ])
-                        ])
-                    ]),
-                !error() ? '' : m('p.alert.alert-danger', error())])
-        })
-
-            .then(function (response) { return response && publish(); }); };
-
-        var publish= function () { return publish_study(study.id, !study.is_published, update_url)
-            .then(function (res){ return study.versions.push(res); })
-            .then(study.is_published = !study.is_published)
-            .then(function (){ return notifications.show_success(("'" + (study.name) + "' " + (study.is_published ? 'published' : 'unpublished') + " successfully")); })
-            .then(study.is_locked = study.is_published || study.is_locked)
-
-            .catch(function (e) {
-                error(e.message);
-                ask();
-            })
-            .then(m.redraw); };
-        ask();
-    }; };
-
     var focus_it$2 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
-
-    var do_copy_url = function (study) { return copyUrl(study.base_url); };
-
-    var can_edit = function (study) { return !study.isReadonly && study.permission !== 'read only'; };
-    var can_see_data = function (study) { return study.has_data_permission; };
-
-    var is_view = function (study) { return study.view; };
-
-    var is_locked = function (study) { return study.is_locked; };
-    var is_published = function (study) { return study.is_published; };
-    var is_public = function (study) { return study.is_public; };
-
-    var not = function (fn) { return function (study) { return !fn(study); }; };
-
-    var settings = {
-        'properties': [],
-        'tags':[],
-        'data':[],
-        'stat':[],
-        // 'restore':[],
-        'delete':[],
-        // 'rename':[],
-        // 'description':[],
-        // 'duplicate':[],
-        // 'publish':[],
-        // 'unpublish':[],
-        // 'lock':[],
-        // 'unlock':[],
-        // 'deploy':[],
-        // 'studyChangeRequest':[],
-        // 'studyRemoval':[],
-        // 'sharing':[],
-        // 'public':[],
-        // 'private':[],
-        // 'unpublic':[],
-        'copyUrl':[]
-    };
-
-    var settings_hash = {
-        tags: {text: 'Tags',
-            config: {
-                display: [can_edit],
-                onmousedown: do_tags,
-                class: 'fa-tags'
-            }},
-        data: {text: 'Data',
-            config: {
-                display: [can_see_data],
-                onmousedown: do_data,
-                class: 'fa-download'
-            }},
-        stat: {text: 'Statistics',
-            config: {
-                display: [can_see_data],
-                onmousedown: do_stat,
-                class: 'fas.fa-bar-chart'
-            }},
-        restore: {text: 'Restore',
-            config: {
-                display: [can_edit],
-                onmousedown: do_restore$1,
-                class: 'fas.fa-undo'
-            }},
-
-        delete: {text: 'Delete Study',
-            config: {
-                display: [can_edit, not(is_locked)],
-                onmousedown: do_delete,
-                class: 'fa-remove'
-            }},
-        rename: {text: 'Rename Study',
-            config: {
-                display: [can_edit, not(is_locked)],
-                onmousedown: do_rename,
-                class: 'fa-exchange'
-            }},
-        description: {text: 'Change description',
-            config: {
-                display: [can_edit, not(is_locked)],
-                onmousedown: update_study_description,
-                class: 'fa-comment'
-            }},
-        properties: {text: 'Properties',
-            config: {
-                display: [not(is_view)],
-                href: "/properties/",
-                class: 'fa-gear'
-            }},
-        duplicate: {text: 'Duplicate study',
-            config: {
-                display: [not(is_view)],
-
-                onmousedown: do_duplicate,
-                class: 'fa-clone'
-            }},
-        lock: {text: 'Lock Study',
-            config: {
-                display: [can_edit, not(is_locked)],
-                onmousedown: do_lock,
-                class: 'fa-lock'
-            }},
-        publish: {text: 'Publish Study',
-            config: {
-                display: [can_edit, not(is_locked), not(is_published)],
-                onmousedown: do_publish,
-                class: 'fa-cloud-upload'
-            }},
-        unpublish: {text: 'Unpublish Study', config: {
-            display: [can_edit, is_published],
-            onmousedown: do_publish,
-            class: 'fa-cloud-upload'
-        }},
-
-        republish: {text: 'Republish Study', config: {
-            display: [can_edit, not(is_published)],
-            onmousedown: do_publish,
-            class: 'fa-cloud-upload'
-        }},
-
-        public: {text: 'Make public', config: {
-            display: [can_edit, not(is_locked), not(is_public)],
-            onmousedown: do_make_public,
-            class: 'fa-globe'
-        }},
-
-        private: {text: 'Make private', config: {
-            display: [can_edit, not(is_locked), is_public],
-            onmousedown: do_make_public,
-            class: 'fa-globe'
-        }},
-
-
-        unlock: {text: 'Unlock Study',
-            config: {
-                display: [can_edit, is_locked],
-                onmousedown: do_lock,
-                class: 'fa-unlock'
-            }},
-        deploy: {text: 'Request Deploy',
-            config: {
-                display: [can_edit, not(is_locked)],
-                href: "/deploy/"
-            }},
-        studyChangeRequest: {text: 'Request Change',
-            config: {
-                display: [can_edit, not(is_locked)],
-                href: "/studyChangeRequest/"
-            }},
-        studyRemoval: {text: 'Request Removal',
-            config: {
-                display: [can_edit, not(is_locked)],
-                href: "/studyRemoval/"
-            }},
-        sharing: {text: 'Sharing',
-            config: {
-                display: [can_edit],
-                // href: `/sharing/`,
-                onmousedown: do_sharing,
-
-                class: 'fa-user-plus'
-            }},
-        copyUrl: {text: 'Copy Base URL',
-            config: {
-                onmousedown: do_copy_url,
-                class: 'fa-link'
-            }}
-    };
-
-
-    var draw_menu = function (study, notifications) { return Object.keys(settings)
-        .map(function (comp) {
-            var config = settings_hash[comp].config;
-            return !should_display(config, study) 
-                ? '' 
-                : config.href
-                    ? m('a.dropdown-item', { href: config.href+study.id, config: m.route }, [
-                        m('i.fa.fa-fw.'+config.class),
-                        settings_hash[comp].text
-                    ])
-                    : m('a.dropdown-item.dropdown-onclick', {onmousedown: config.onmousedown(study, notifications)}, [
-                        m('i.fal.fa.fa-fw.'+config.class),
-                        settings_hash[comp].text
-                    ]);
-        }); };
-
-
-    function should_display(config, study){
-        return !config.display || config.display.every(function (fn) { return fn(study); });
-    }
 
     var mainComponent = {
 
@@ -21172,17 +20663,8 @@
                                     m('.col-sm-3', [
                                         m('.study-text', formatDate(new Date(study.last_modified)))
                                     ]),
-                                    m('.col-sm-3', [
+                                    m('.col-sm-4', [
                                         study.tags.map(function (tag){ return m('span.study-tag',  {style: {'background-color': '#' + tag.color}}, tag.text); })
-                                    ]),
-                                    m('.col-sm-1', [
-                                        m('.btn-toolbar.pull-right',
-                                            m('.btn-group.btn-group-sm', 
-                                                dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-toggle', toggleContent: 'Actions', elements: [
-                                                    draw_menu(study, notifications)
-                                                ]})
-                                            )
-                                        )
                                     ])
                                 ])
                             ]); })
@@ -21889,7 +21371,7 @@
             }
 
             function was_changed(){
-                return ctrl.comments()!== '' && (parseInt(ctrl.priority()) !== ctrl.deploy2show().priority || ctrl.target_number() !== ctrl.deploy2show().target_number);
+                return ctrl.comments()!== '' || (parseInt(ctrl.priority()) !== ctrl.deploy2show().priority || ctrl.target_number() !== ctrl.deploy2show().target_number);
             }
 
             function save_deploy(){
@@ -22023,13 +21505,13 @@
                         m('.col-sm-3',[
                             m('strong', 'Priority:'),
                         ]),
+                        console.log(!ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority')),
                         m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                             ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                                 ?
-                                m('.has-warning',
+                                m('', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' :'has-warning'},
                                 m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                                 :
-
                                 ctrl.deploy2show().priority
                         ])
                     ]),
@@ -22110,7 +21592,8 @@
                             :
                             [
                                 ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.deploy2show().study_id))); }}, 'Back to study'),
-                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Accept', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: function (){}}, m('i.fa.fa-paper-plane', ' Deploy'))],
                                 !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
                             ]
                         ])
@@ -23967,11 +23450,12 @@
 
     var notifications$1= createNotifications();
 
-    var collaborationComponent$1 = {
+    var propertiesComponent = {
         controller: function controller(){
             var ctrl = {
                 notifications: notifications$1,
                 study_name:m.prop(),
+                under_develop:m.prop(false),
                 description:m.prop(),
                 users:m.prop(),
                 is_public:m.prop(),
@@ -23988,11 +23472,13 @@
                 present_deploys: present_deploys,
                 save: save,
                 lock: lock,
+                show_tags: show_tags,
                 show_data: show_data,
                 show_statistics: show_statistics,
                 show_sharing: show_sharing,
                 show_duplicate: show_duplicate,
                 show_publish: show_publish,
+                show_create_version: show_create_version,
                 show_delete: show_delete,
                 show_change_availability: show_change_availability
             };
@@ -24036,6 +23522,31 @@
                 messages.custom({header: 'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})});
             }
 
+            function show_tags() {
+
+                var study_id = ctrl.study.id;
+                var filter_tags = function (){return function (tag) { return tag.changed; };};
+                var tags = m.prop([]);
+                messages.confirm({header:'Tags', content: studyTagsComponent({tags: tags, study_id: study_id})})
+                    .then(function (response) {
+                        if (response){
+                            var new_tags = tags().filter(function (tag){ return tag.used; });
+                            ctrl.study.tags = new_tags;
+                            tags(tags().filter(filter_tags()).map(function (tag){ return (({text: tag.text, id: tag.id, used: tag.used})); }));
+                            return update_tags_in_study(study_id, tags);
+                        }
+                    })
+                    .then(m.redraw);
+                //
+                // let study_id = ctrl.study.id;
+                // let versions = ctrl.study.versions;
+                // let exps  = m.prop([]);
+                //
+                // let close = messages.close;
+                // messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
+                //     .then(m.redraw);
+            }
+
             function show_data() {
                 var study_id = ctrl.study.id;
                 var versions = ctrl.study.versions;
@@ -24053,6 +23564,32 @@
                 messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id: study_id, versions: versions, close: close})})
                     .then(m.redraw);
             }
+            function show_create_version(){
+                var error = m.prop('');
+                var ask = function () { return messages.confirm({okText: ['Yes, create a new version'], cancelText: 'Cancel', header:'Create a new version?',
+                    content:m('p',
+                        [m('p', [
+                            m('p', 'This will create a new version...')
+                        ]),
+                            !error() ? '' : m('p.alert.alert-danger', error())])
+                })
+
+                    .then(function (response) {
+                        return  response && create();
+                    }); };
+
+                var create= function () { return create_version(ctrl.study.id)
+                    .then(function (res){ return ctrl.study.versions.push(res); })
+                    .then(function (){ return ctrl.study.is_published = false; })
+                    .then(function (){ return ctrl.study.under_develop = true; })
+                    .catch(function (e) {
+                        error(e.message);
+                        ask();
+                    })
+                    .then(m.redraw); };
+                ask();
+            }
+
 
             function show_publish(){
                 var error = m.prop('');
@@ -24080,7 +23617,7 @@
                 }); };
 
                 var publish= function () { return publish_study(ctrl.study.id, version_name, update_url)
-                    .then(function (res){ return ctrl.study.versions.push(res); })
+                    .then(function (res){ return ctrl.study.versions[ctrl.study.versions.length-1].state='Published'; })
                     .then(function (){ return ctrl.study.is_published = true; })
                     // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
 
@@ -24137,6 +23674,7 @@
                 return ctrl.study.get()
                     .then(function (){
                         ctrl.study_name(ctrl.study.name);
+                        ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state!=='Develop');
                         ctrl.description(ctrl.study.description);
                         ctrl.study.invisible = ctrl.study.permission === 'invisible';
                         if(ctrl.study.invisible)
@@ -24161,27 +23699,34 @@
 
                     m('.row',[
                         m('.col-sm-12', [
-                            m('h3', [ctrl.study_name(), ': properties'])
+                            m('h3', [ctrl.study_name(), ': Properties'])
                         ])
                     ]),
-                    m('.row.space',
-                        m('.col-sm-2.space',  m('strong', 'Study name:')),
+                    m('.row.space',[
+                        m('.col-sm-12', [
+                            m('h4', 'Study details')
+                        ])
+                    ]),
+                    m('.row',
+                        m('.col-sm-2',  m('strong', 'Study name:')),
                         m('.col-sm-10',
                             ctrl.study.isReadonly ? ctrl.study_name() :
                                 m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
                     ),
                     m('.row.space',
-                        m('.col-sm-2.space',  m('strong', 'Description:')),
+                        m('.col-sm-2',  m('strong', 'Description:')),
                         m('.col-sm-10',
                             ctrl.study.isReadonly ? ctrl.description() :
-                                m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
+                                m('textarea.form-control.fixed_textarea', { rows:5, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                     ),
-                    ctrl.study.isReadonly ? '' : m('.row.space',
-                        m('.col-sm-12.space',
-                            m('.text-xs-right.btn-toolbar',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save')
+                    ctrl.study.isReadonly ? '' : m('.row.space', [
+                            m('.col-sm-2', ''),
+                            m('.col-sm-10',
+                                m('.btn-toolbar',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
+                                )
                             )
-                        )
+                        ]
                     ),
 
                     ctrl.study.invisible ? '' : [
@@ -24189,6 +23734,7 @@
                             m('.col-sm-12.space',  m('h4', 'Versions'))
                         ),
                         ctrl.study.versions .map(function (version, id){ return m('.row', [
+                                console.log(ctrl.study),
                                 m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
                                 m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 && !ctrl.study.isReadonly? 'Edit' : 'Review')),
                                 ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
@@ -24224,9 +23770,7 @@
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
                                 )
                             ),
-                            m('.row.space',
-                                m('.col-sm-4.space',  m('h4', 'Project Implicit Actions'))
-                            ),
+
                             m('.row',
                                 m('.col-sm-12', [
                                     m('.row',
@@ -24240,6 +23784,15 @@
                                 ])
                             ),
 
+                            m('.row.',
+                                m('.col-sm-10.space',[
+                                    m('strong', 'Study\'s tags' ),
+                                    m('.small', 'This will allows you to...')
+                                ]),
+                                m('.col-sm-2.space.text-sm-right',
+                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
+                                )
+                            ),
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Data'),
@@ -24268,28 +23821,38 @@
 
                         m('.row.danger_zone.space',
                             m('.col-sm-12', [
+                                console.log(ctrl.under_develop()),
+                                ctrl.under_develop() ? '' :
+                                    m('.row.',
+                                        m('.col-sm-11.space',[
+                                            m('strong', 'Publish the latest version'),
+                                        ]),
+                                        m('.col-sm-1.space.text-sm-right',
+                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
+                                        )
+                                    ),
+                                !ctrl.under_develop() ? '' :
                                 m('.row.',
                                     m('.col-sm-11.space',[
-                                        m('strong', 'Publish and create a new version'),
+                                        m('strong', 'Create a new version'),
                                     ]),
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
+                                    m('.col-sm-1.space.text-sm-right',
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
                                     )
                                 ),
                                 m('.row.',
                                     m('.col-sm-11.space',[
                                         m('strong', 'Lock study'),
-                                        m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
-                                        m('.small', 'However, if the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
+                                        m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.')
                                     ]),
 
-                                    m('.col-sm-1.space',
+                                    m('.col-sm-1.space.text-sm-right',
                                         m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
                                     )
                                 ),
                                 m('.row.space',
                                     m('.col-sm-11.space',  m('strong', 'Delete study')),
-                                    m('.col-sm-1.space',
+                                    m('.col-sm-1.space.text-sm-right',
                                         m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
                                     )
                                 ),
@@ -26510,7 +26073,7 @@
         '/downloads': downloadsComponent,
         '/downloadsAccess': downloadsAccessComponent,
         '/sharing/:studyId': sharing_dialog,
-        '/properties/:studyId': collaborationComponent$1,
+        '/properties/:studyId': propertiesComponent,
         '/ruletable': ruletableComponent,
         '/autupauseruletable': ruletableComponent
 

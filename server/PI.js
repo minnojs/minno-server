@@ -114,13 +114,11 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
                         .then(()=> {
 
                             const now = new Date();
-                            // console.log(version2update.state !=='Develop');
-                            if (version2update.state ==='Develop')
-                                return versions_comp.insert_new_version(study_data.users.find(user=>user.permission === 'owner').user_id, parseInt(request.value.study_id),
-                                    '',
-                                    dateFormat(now, 'yyyymmdd.HHMMss'),
-                                    'Develop',
-                                    true);});
+                            if (version2update.state ==='Develop') {
+                                return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id));
+                            }
+
+                        });
                 })
                 .then(get_all_deploys);
         });
@@ -153,6 +151,8 @@ function request_deploy(user_id, study_id, props) {
                 version2deploy.deploys.push(props);
             else
                 version2deploy.deploys = [props];
+            // version2deploy.deploys = [props];
+
             return connection.then(function (db) {
                 const studies = db.collection('studies');
 

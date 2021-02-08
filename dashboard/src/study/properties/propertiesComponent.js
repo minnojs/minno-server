@@ -1,8 +1,6 @@
-export default collaborationComponent;
-
 import messages from 'utils/messagesComponent';
 import studyFactory from '../files/fileCollectionModel';
-import {delete_study, publish_study, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
+import {delete_study, publish_study, create_version, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
 import deployDialog from '../../deploy/deployComponent';
 import sharing_dialog from '../sharing/sharingComponent';
@@ -10,14 +8,18 @@ import {createNotifications} from 'utils/notifyComponent';
 import oldDeploysComponent from '../../deploy/oldDeploysComponent';
 import data_dialog from '../../downloads/dataComp';
 import stat_dialog from '../open_statistics/statComp';
+import studyTagsComponent from "../../tags/studyTagsComponent";
+import {update_tags_in_study} from '../../tags/tagsModel';
 
+export default propertiesComponent;
 const notifications= createNotifications();
 
-let collaborationComponent = {
+let propertiesComponent = {
     controller(){
         let ctrl = {
             notifications,
             study_name:m.prop(),
+            under_develop:m.prop(false),
             description:m.prop(),
             users:m.prop(),
             is_public:m.prop(),
@@ -34,11 +36,13 @@ let collaborationComponent = {
             present_deploys,
             save,
             lock,
+            show_tags,
             show_data,
             show_statistics,
             show_sharing,
             show_duplicate,
             show_publish,
+            show_create_version,
             show_delete,
             show_change_availability
         };
@@ -82,6 +86,31 @@ let collaborationComponent = {
             messages.custom({header: 'Statistics', wide: true, content: sharing_dialog({study_id, close})});
         }
 
+        function show_tags() {
+
+            const study_id = ctrl.study.id;
+            const filter_tags = ()=>{return tag => tag.changed;};
+            const tags = m.prop([]);
+            messages.confirm({header:'Tags', content: studyTagsComponent({tags, study_id})})
+                .then(function (response) {
+                    if (response){
+                        const new_tags = tags().filter(tag=> tag.used);
+                        ctrl.study.tags = new_tags;
+                        tags(tags().filter(filter_tags()).map(tag=>(({text: tag.text, id: tag.id, used: tag.used}))));
+                        return update_tags_in_study(study_id, tags);
+                    }
+                })
+                .then(m.redraw);
+            //
+            // let study_id = ctrl.study.id;
+            // let versions = ctrl.study.versions;
+            // let exps  = m.prop([]);
+            //
+            // let close = messages.close;
+            // messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
+            //     .then(m.redraw);
+        }
+
         function show_data() {
             let study_id = ctrl.study.id;
             let versions = ctrl.study.versions;
@@ -99,6 +128,32 @@ let collaborationComponent = {
             messages.custom({header:'Statistics', wide: true, content: stat_dialog({study_id, versions, close})})
                 .then(m.redraw);
         }
+        function show_create_version(){
+            let error = m.prop('');
+            let ask = () => messages.confirm({okText: ['Yes, create a new version'], cancelText: 'Cancel', header:'Create a new version?',
+                content:m('p',
+                    [m('p', [
+                        m('p', 'This will create a new version...')
+                    ]),
+                        !error() ? '' : m('p.alert.alert-danger', error())])
+            })
+
+                .then(response => {
+                    return  response && create();
+                });
+
+            let create= () => create_version(ctrl.study.id)
+                .then(res=>ctrl.study.versions.push(res))
+                .then(()=>ctrl.study.is_published = false)
+                .then(()=>ctrl.study.under_develop = true)
+                .catch(e => {
+                    error(e.message);
+                    ask();
+                })
+                .then(m.redraw);
+            ask();
+        }
+
 
         function show_publish(){
             let error = m.prop('');
@@ -126,7 +181,7 @@ let collaborationComponent = {
             });
 
             let publish= () => publish_study(ctrl.study.id, version_name, update_url)
-                .then(res=>ctrl.study.versions.push(res))
+                .then(res=>ctrl.study.versions[ctrl.study.versions.length-1].state='Published')
                 .then(()=>ctrl.study.is_published = true)
                 // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
 
@@ -183,6 +238,7 @@ let collaborationComponent = {
             return ctrl.study.get()
                 .then(()=>{
                     ctrl.study_name(ctrl.study.name);
+                    ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state!=='Develop');
                     ctrl.description(ctrl.study.description);
                     ctrl.study.invisible = ctrl.study.permission === 'invisible';
                     if(ctrl.study.invisible)
@@ -207,27 +263,34 @@ let collaborationComponent = {
 
                 m('.row',[
                     m('.col-sm-12', [
-                        m('h3', [ctrl.study_name(), ': properties'])
+                        m('h3', [ctrl.study_name(), ': Properties'])
                     ])
                 ]),
-                m('.row.space',
-                    m('.col-sm-2.space',  m('strong', 'Study name:')),
+                m('.row.space',[
+                    m('.col-sm-12', [
+                        m('h4', 'Study details')
+                    ])
+                ]),
+                m('.row',
+                    m('.col-sm-2',  m('strong', 'Study name:')),
                     m('.col-sm-10',
                         ctrl.study.isReadonly ? ctrl.study_name() :
                             m('input.form-control', { value: ctrl.study_name(), oninput: m.withAttr('value', ctrl.study_name)}))
                 ),
                 m('.row.space',
-                    m('.col-sm-2.space',  m('strong', 'Description:')),
+                    m('.col-sm-2',  m('strong', 'Description:')),
                     m('.col-sm-10',
                         ctrl.study.isReadonly ? ctrl.description() :
-                            m('textarea.form-control.fixed_textarea', { rows:10, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
+                            m('textarea.form-control.fixed_textarea', { rows:5, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                 ),
-                ctrl.study.isReadonly ? '' : m('.row.space',
-                    m('.col-sm-12.space',
-                        m('.text-xs-right.btn-toolbar',
-                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save')
+                ctrl.study.isReadonly ? '' : m('.row.space', [
+                        m('.col-sm-2', ''),
+                        m('.col-sm-10',
+                            m('.btn-toolbar',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
+                            )
                         )
-                    )
+                    ]
                 ),
 
                 ctrl.study.invisible ? '' : [
@@ -236,6 +299,7 @@ let collaborationComponent = {
                     ),
                     ctrl.study.versions .map((version, id)=>
                         m('.row', [
+                            console.log(ctrl.study),
                             m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
                             m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, ctrl.study.versions.length===id+1 && !ctrl.study.isReadonly? 'Edit' : 'Review')),
                             ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
@@ -271,9 +335,7 @@ let collaborationComponent = {
                                 m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
                             )
                         ),
-                        m('.row.space',
-                            m('.col-sm-4.space',  m('h4', 'Project Implicit Actions'))
-                        ),
+
                         m('.row',
                             m('.col-sm-12', [
                                 m('.row',
@@ -287,6 +349,15 @@ let collaborationComponent = {
                             ])
                         ),
 
+                        m('.row.',
+                            m('.col-sm-10.space',[
+                                m('strong', 'Study\'s tags' ),
+                                m('.small', 'This will allows you to...')
+                            ]),
+                            m('.col-sm-2.space.text-sm-right',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
+                            )
+                        ),
                         m('.row.',
                             m('.col-sm-10.space',[
                                 m('strong', 'Data'),
@@ -315,28 +386,38 @@ let collaborationComponent = {
 
                     m('.row.danger_zone.space',
                         m('.col-sm-12', [
+                            console.log(ctrl.under_develop()),
+                            ctrl.under_develop() ? '' :
+                                m('.row.',
+                                    m('.col-sm-11.space',[
+                                        m('strong', 'Publish the latest version'),
+                                    ]),
+                                    m('.col-sm-1.space.text-sm-right',
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
+                                    )
+                                ),
+                            !ctrl.under_develop() ? '' :
                             m('.row.',
                                 m('.col-sm-11.space',[
-                                    m('strong', 'Publish and create a new version'),
+                                    m('strong', 'Create a new version'),
                                 ]),
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
+                                m('.col-sm-1.space.text-sm-right',
+                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
                                 )
                             ),
                             m('.row.',
                                 m('.col-sm-11.space',[
                                     m('strong', 'Lock study'),
-                                    m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.'),
-                                    m('.small', 'However, if the study is currently published so you might want to make sure participants are not taking it. We recommend unlocking a published study only if you know that participants are not taking it while you modify the files, or if you know exactly what you are going to change and you are confident that you will not make mistakes that will break the study.')
+                                    m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.')
                                 ]),
 
-                                m('.col-sm-1.space',
+                                m('.col-sm-1.space.text-sm-right',
                                     m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
                                 )
                             ),
                             m('.row.space',
                                 m('.col-sm-11.space',  m('strong', 'Delete study')),
-                                m('.col-sm-1.space',
+                                m('.col-sm-1.space.text-sm-right',
                                     m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
                                 )
                             ),

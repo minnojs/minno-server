@@ -55,7 +55,7 @@ let reviewDeployDialog = {
         }
 
         function was_changed(){
-            return ctrl.comments()!== '' && (parseInt(ctrl.priority()) !== ctrl.deploy2show().priority || ctrl.target_number() !== ctrl.deploy2show().target_number);
+            return ctrl.comments()!== '' || (parseInt(ctrl.priority()) !== ctrl.deploy2show().priority || ctrl.target_number() !== ctrl.deploy2show().target_number);
         }
 
         function save_deploy(){
@@ -188,13 +188,13 @@ let reviewDeployDialog = {
                     m('.col-sm-3',[
                         m('strong', 'Priority:'),
                     ]),
+                    console.log(!ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority')),
                     m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                         ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                             ?
-                            m('.has-warning',
+                            m('', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' :'has-warning'},
                             m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                             :
-
                             ctrl.deploy2show().priority
                     ])
                 ]),
@@ -276,7 +276,8 @@ let reviewDeployDialog = {
                         :
                         [
                             ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.deploy2show().study_id}`)}, 'Back to study'),
-                            !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Accept', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
+                            !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
+                            !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> {}}, m('i.fa.fa-paper-plane', ' Deploy'))],
                             !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
                         ]
                     ])
