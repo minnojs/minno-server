@@ -23595,13 +23595,12 @@
                 var error = m.prop('');
                 var update_url = m.prop('update');
                 var version_name = m.prop('');
-                var ask = function () { return messages.confirm({okText: ['Yes, ', ctrl.study.is_published ? 'Republish' : 'Publish' , ' the study'], cancelText: 'Cancel', header:[ctrl.study.is_published ? 'Republish' : 'Publish', ' the study?'],
+                var ask = function () { return messages.confirm({okText: ['Yes, publish this version'], cancelText: 'Cancel', header:'Publish this version?',
                     content:m('p',
                         [m('p', [
-                            m('p', 'This will create a link that participants can use to launch the study.'),
-                            m('p', 'Publishing locks the study for editing to prevent you from modifying the files while participants take the study. To make changes to the study, you will be able to unpublish it later.'),
-                            m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
-                            m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
+                            m('p', 'This will create a URL that launches this study version.'),
+                            m('p', 'You will not be able to edit the study files of this version.'),
+                            m('p', 'After publishing the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
                             m('.input-group.space', [
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
@@ -23734,12 +23733,16 @@
                         ),
                         ctrl.study.versions .map(function (version, id){ return m('.row', [
                                 m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly? 'Edit' : 'Review')),
-                                ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
-                                ctrl.study.isReadonly ? '' : m('.col-xs-2.space',
-                                    !version.deploys ? '' :
-                                        m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Deploy requests')
-                                )
+                                m('.col-sm-9.space',
+                                [
+                                    m('button.btn.btn-primary.btn-sm.px-2', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'Review'),
+                                     ctrl.study.isReadonly ? '' :
+                                        [' ', m('button.btn.btn-primary.btn-sm.px-5', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')],
+                                    ctrl.study.isReadonly || !version.deploys ? '' :
+                                        [' ', m('button.btn.btn-primary.btn-sm.px-5', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Deploy requests')],
+                                    version.state!=='Develop' ? '' :
+                                        [' ', m('button.btn.btn-primary.btn-sm.px-5', {onclick:ctrl.show_publish}, 'Publish')],
+                                ])
                             ]); }
                         )
                     ],
@@ -23814,21 +23817,10 @@
                     ctrl.study.isReadonly ? '' : [
                         m('.row.space',
                             m('.col-sm-12',  m('h4', 'Danger zone'))
-
                         ),
-
                         m('.row.danger_zone.space',
                             m('.col-sm-12', [
 
-                                !ctrl.under_develop() ? '' :
-                                    m('.row.',
-                                        m('.col-sm-11.space',[
-                                            m('strong', 'Publish the latest version'),
-                                        ]),
-                                        m('.col-sm-1.space.text-sm-right',
-                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
-                                        )
-                                    ),
                                 ctrl.under_develop() ? '' :
                                     m('.row.',
                                         m('.col-sm-11.space',[
@@ -23838,16 +23830,16 @@
                                             m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
                                         )
                                     ),
-                                m('.row.',
-                                    m('.col-sm-11.space',[
-                                        m('strong', 'Lock study'),
-                                        m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.')
-                                    ]),
-
-                                    m('.col-sm-1.space.text-sm-right',
-                                        m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
-                                    )
-                                ),
+                                // m('.row.',
+                                //     m('.col-sm-11.space',[
+                                //         m('strong', 'Lock study'),
+                                //         m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.')
+                                //     ]),
+                                //
+                                //     m('.col-sm-1.space.text-sm-right',
+                                //         m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
+                                //     )
+                                // ),
                                 m('.row.space',
                                     m('.col-sm-11.space',  m('strong', 'Delete study')),
                                     m('.col-sm-1.space.text-sm-right',
