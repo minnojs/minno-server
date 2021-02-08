@@ -23744,7 +23744,6 @@
                                                 m('td', m('button.btn.btn-primary.btn-sm.px-5', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Deploy requests')),
                                             version.state!=='Develop' ? '' :
                                                 m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-
                                         ]); }
                                     )
                                 )
