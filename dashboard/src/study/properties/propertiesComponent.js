@@ -8,8 +8,8 @@ import sharing_dialog from '../sharing/sharingComponent';
 import {createNotifications} from 'utils/notifyComponent';
 import data_dialog from '../../downloads/dataComp';
 import stat_dialog from '../open_statistics/statComp';
-import studyTagsComponent from "../../tags/studyTagsComponent";
-import {update_tags_in_study} from "../../tags/tagsModel";
+import studyTagsComponent from '../../tags/studyTagsComponent';
+import {update_tags_in_study} from '../../tags/tagsModel';
 
 export default propertiesComponent;
 const notifications= createNotifications();
@@ -265,14 +265,13 @@ let propertiesComponent = {
                             m('textarea.form-control.fixed_textarea', { rows:5, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                 ),
                 ctrl.study.isReadonly ? '' : m('.row.space', [
-                        m('.col-sm-2', ''),
-                        m('.col-sm-10',
-                            m('.btn-toolbar',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
-                            )
+                    m('.col-sm-2', ''),
+                    m('.col-sm-10',
+                        m('.btn-toolbar',
+                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
                         )
-                    ]
-                ),
+                    )
+                ]),
                 ctrl.study.invisible ? '' : [
                     m('.row.space',
                         m('.col-sm-12.space',  m('h4', 'Versions'))
@@ -358,14 +357,14 @@ let propertiesComponent = {
                                     )
                                 ),
                             ctrl.under_develop() ? '' :
-                            m('.row.',
-                                m('.col-sm-11.space',[
-                                    m('strong', 'Create a new version'),
-                                ]),
-                                m('.col-sm-1.space.text-sm-right',
-                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
-                                )
-                            ),
+                                m('.row.',
+                                    m('.col-sm-11.space',[
+                                        m('strong', 'Create a new version'),
+                                    ]),
+                                    m('.col-sm-1.space.text-sm-right',
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                    )
+                                ),
                             m('.row.',
                                 m('.col-sm-11.space',[
                                     m('strong', 'Lock study'),
