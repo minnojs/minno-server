@@ -178,17 +178,8 @@ const mainComponent = {
                                 m('.col-sm-3', [
                                     m('.study-text', formatDate(new Date(study.last_modified)))
                                 ]),
-                                m('.col-sm-3', [
+                                m('.col-sm-4', [
                                     study.tags.map(tag=> m('span.study-tag',  {style: {'background-color': '#' + tag.color}}, tag.text))
-                                ]),
-                                m('.col-sm-1', [
-                                    m('.btn-toolbar.pull-right',
-                                        m('.btn-group.btn-group-sm', 
-                                            dropdown({toggleSelector:'a.btn.btn-secondary.btn-sm.dropdown-toggle', toggleContent: 'Actions', elements: [
-                                                draw_menu(study, notifications)
-                                            ]})
-                                        )
-                                    )
                                 ])
                             ])
                         ]))

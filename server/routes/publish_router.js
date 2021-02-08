@@ -13,6 +13,20 @@ publishRouter
     });
 
 
+
+publishRouter.route('/:study_id/version')
+    .post(
+        function(req, res){
+
+            const now = new Date();
+
+            return versions.insert_new_version(req.user_id, parseInt(req.params.study_id),
+                dateFormat(now, 'yyyymmdd.HHMMss'),
+                'Develop')
+                .then(version_data=>res.json(version_data));
+        });
+
+
 publishRouter.route('/:study_id/publish')
     .get(
         function(req, res){
@@ -25,6 +39,9 @@ publishRouter.route('/:study_id/publish')
             const version_name   = req.body.version_name;
 
             const now = new Date();
+            return versions.publish_version(req.user_id, parseInt(req.params.study_id), update_url)
+                .then(version_data=>res.json(version_data));
+
             return versions.insert_new_version(req.user_id, parseInt(req.params.study_id),
                 version_name,
                 dateFormat(now, 'yyyymmdd.HHMMss'),

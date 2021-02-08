@@ -40,6 +40,10 @@ function get_publish_url(study_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/publish`;
 }
 
+function get_new_version(study_id) {
+    return `${baseUrl}/${encodeURIComponent(study_id)}/version`;
+}
+
 function get_version_url(study_id, version_id) {
     return `${baseUrl}/${encodeURIComponent(study_id)}/versions/${version_id}`;
 }
@@ -100,6 +104,10 @@ export let lock_study = (study_id, lock) => fetchJson(get_lock_url(study_id, loc
 export let publish_study = (study_id, version_name, update_url) => fetchJson(get_publish_url(study_id), {
     method: 'post',
     body: {version_name, update_url}
+});
+
+export let create_version = (study_id) => fetchJson(get_new_version(study_id), {
+    method: 'post'
 });
 
 export let delete_study = (study_id) => fetchJson(get_url(study_id), {method: 'delete'});
