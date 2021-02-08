@@ -112,9 +112,7 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
                     return studies.updateOne({_id:request.value.study_id},
                         {$set: {versions:versions}})
                         .then(()=> {
-
-                            const now = new Date();
-                            if (version2update.state ==='Develop') {
+                            if (status==='accept' && version2update.state ==='Develop') {
                                 return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id));
                             }
 

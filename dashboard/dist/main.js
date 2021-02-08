@@ -23736,7 +23736,7 @@
                         ctrl.study.versions .map(function (version, id){ return m('.row', [
                                 console.log(ctrl.study),
                                 m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
-                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, ctrl.study.versions.length===id+1 && !ctrl.study.isReadonly? 'Edit' : 'Review')),
+                                m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly? 'Edit' : 'Review')),
                                 ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
                                 ctrl.study.isReadonly ? '' : m('.col-xs-2.space',
                                     !version.deploys ? '' :
