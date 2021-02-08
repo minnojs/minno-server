@@ -280,13 +280,12 @@ let propertiesComponent = {
                             m('table.table',
                                 ctrl.study.versions.map((version, id)=>
                                     m('tr', [
-                                        m('td',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
+                                        m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
                                         m('td', m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'Review')),
                                         ctrl.study.isReadonly ? ''     :
                                             m('td', m('button.btn.btn-primary.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
-                                                version.state!=='Develop' ? '' :
-                                                    m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-
+                                        version.state!=='Develop' ? '' :
+                                            m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
                                     ])
                                 )
                             )

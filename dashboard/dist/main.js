@@ -23352,22 +23352,20 @@
                             m('.col-sm-12.space',  m('h4', 'Versions'))
                         ),
                         m('.row.space',
-                            m('.col-sm-6.space',
-
-                        m('table.table',
-                            ctrl.study.versions.map(function (version, id){ return m('tr', [
-                                    m('td',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
-                                    m('td', m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'Review')),
-
-
-                                    ctrl.study.isReadonly ? ''     :
-                                        m('td', m('button.btn.btn-primary.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
+                            m('.col-sm-7.space',
+                                m('table.table',
+                                    ctrl.study.versions.map(function (version, id){ return m('tr', [
+                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
+                                            m('td', m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'Review')),
+                                            ctrl.study.isReadonly ? ''     :
+                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
                                             version.state!=='Develop' ? '' :
                                                 m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-
-                                ]); }
+                                        ]); }
+                                    )
+                                )
                             )
-                        )))
+                        )
                     ],
 
                     m('.row.space',
