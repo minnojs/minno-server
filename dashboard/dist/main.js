@@ -12561,7 +12561,7 @@
                     this$1.loaded = true;
                     this$1.isReadonly = !study.is_last;
                     this$1.istemplate = study.is_template;
-                    this$1.is_locked = !study.is_last;
+                    this$1.is_locked = study.is_published;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
                     this$1.has_data_permission = study.is_last;
@@ -12589,7 +12589,7 @@
                     this$1.loaded = true;
                     this$1.isReadonly = study.is_readonly;
                     this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked;
+                    this$1.is_locked = study.is_published;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
                     this$1.permission = study.permission;
@@ -23567,21 +23567,21 @@
             function show_create_version(){
                 var error = m.prop('');
                 var ask = function () { return messages.confirm({okText: ['Yes, create a new version'], cancelText: 'Cancel', header:'Create a new version?',
-                    content:m('p',
-                        [m('p', [
+                    content:m('p', [
+                        m('p', [
                             m('p', 'This will create a new version...')
                         ]),
-                            !error() ? '' : m('p.alert.alert-danger', error())])
+                        !error() ? '' : m('p.alert.alert-danger', error())
+                    ])
                 })
-
-                    .then(function (response) {
-                        return  response && create();
-                    }); };
+                .then(function (response) {
+                    return  response && create();
+                }); };
 
                 var create= function () { return create_version(ctrl.study.id)
                     .then(function (res){ return ctrl.study.versions.push(res); })
                     .then(function (){ return ctrl.study.is_published = false; })
-                    .then(function (){ return ctrl.study.under_develop = true; })
+                    .then(function (){ return ctrl.under_develop(true); })
                     .catch(function (e) {
                         error(e.message);
                         ask();
@@ -23617,9 +23617,9 @@
                 }); };
 
                 var publish= function () { return publish_study(ctrl.study.id, version_name, update_url)
-                    .then(function (res){ return ctrl.study.versions[ctrl.study.versions.length-1].state='Published'; })
+                    .then(function (){ return ctrl.study.versions[ctrl.study.versions.length-1].state='Published'; })
                     .then(function (){ return ctrl.study.is_published = true; })
-                    // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
+                    .then(function (){ return ctrl.under_develop(false); })
 
                     .catch(function (e) {
                         error(e.message);
@@ -23674,7 +23674,7 @@
                 return ctrl.study.get()
                     .then(function (){
                         ctrl.study_name(ctrl.study.name);
-                        ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state!=='Develop');
+                        ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state==='Develop');
                         ctrl.description(ctrl.study.description);
                         ctrl.study.invisible = ctrl.study.permission === 'invisible';
                         if(ctrl.study.invisible)
@@ -23690,13 +23690,14 @@
             return ctrl;
         },
         view: function view(ctrl){
+
+
             return  !ctrl.loaded()
                 ?
                 m('.loader')
                 :
                 m('.container.sharing-page', [
                     m('div', ctrl.notifications.view()),
-
                     m('.row',[
                         m('.col-sm-12', [
                             m('h3', [ctrl.study_name(), ': Properties'])
@@ -23720,21 +23721,18 @@
                                 m('textarea.form-control.fixed_textarea', { rows:5, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                     ),
                     ctrl.study.isReadonly ? '' : m('.row.space', [
-                            m('.col-sm-2', ''),
-                            m('.col-sm-10',
-                                m('.btn-toolbar',
-                                    m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
-                                )
+                        m('.col-sm-2', ''),
+                        m('.col-sm-10',
+                            m('.btn-toolbar',
+                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
                             )
-                        ]
-                    ),
-
+                        )
+                    ]),
                     ctrl.study.invisible ? '' : [
                         m('.row.space',
                             m('.col-sm-12.space',  m('h4', 'Versions'))
                         ),
                         ctrl.study.versions .map(function (version, id){ return m('.row', [
-                                console.log(ctrl.study),
                                 m('.col-sm-3.space',  [m('strong', ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
                                 m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly? 'Edit' : 'Review')),
                                 ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
@@ -23821,8 +23819,8 @@
 
                         m('.row.danger_zone.space',
                             m('.col-sm-12', [
-                                console.log(ctrl.under_develop()),
-                                ctrl.under_develop() ? '' :
+
+                                !ctrl.under_develop() ? '' :
                                     m('.row.',
                                         m('.col-sm-11.space',[
                                             m('strong', 'Publish the latest version'),
@@ -23831,15 +23829,15 @@
                                             m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
                                         )
                                     ),
-                                !ctrl.under_develop() ? '' :
-                                m('.row.',
-                                    m('.col-sm-11.space',[
-                                        m('strong', 'Create a new version'),
-                                    ]),
-                                    m('.col-sm-1.space.text-sm-right',
-                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
-                                    )
-                                ),
+                                ctrl.under_develop() ? '' :
+                                    m('.row.',
+                                        m('.col-sm-11.space',[
+                                            m('strong', 'Create a new version'),
+                                        ]),
+                                        m('.col-sm-1.space.text-sm-right',
+                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                        )
+                                    ),
                                 m('.row.',
                                     m('.col-sm-11.space',[
                                         m('strong', 'Lock study'),

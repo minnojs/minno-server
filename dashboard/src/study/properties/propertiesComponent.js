@@ -8,7 +8,8 @@ import {createNotifications} from 'utils/notifyComponent';
 import oldDeploysComponent from '../../deploy/oldDeploysComponent';
 import data_dialog from '../../downloads/dataComp';
 import stat_dialog from '../open_statistics/statComp';
-import studyTagsComponent from "../../tags/studyTagsComponent";
+
+import studyTagsComponent from '../../tags/studyTagsComponent';
 import {update_tags_in_study} from '../../tags/tagsModel';
 
 export default propertiesComponent;
@@ -131,21 +132,21 @@ let propertiesComponent = {
         function show_create_version(){
             let error = m.prop('');
             let ask = () => messages.confirm({okText: ['Yes, create a new version'], cancelText: 'Cancel', header:'Create a new version?',
-                content:m('p',
-                    [m('p', [
+                content:m('p', [
+                    m('p', [
                         m('p', 'This will create a new version...')
                     ]),
-                        !error() ? '' : m('p.alert.alert-danger', error())])
+                    !error() ? '' : m('p.alert.alert-danger', error())
+                ])
             })
-
-                .then(response => {
-                    return  response && create();
-                });
+            .then(response => {
+                return  response && create();
+            });
 
             let create= () => create_version(ctrl.study.id)
                 .then(res=>ctrl.study.versions.push(res))
                 .then(()=>ctrl.study.is_published = false)
-                .then(()=>ctrl.study.under_develop = true)
+                .then(()=>ctrl.under_develop(true))
                 .catch(e => {
                     error(e.message);
                     ask();
@@ -181,9 +182,9 @@ let propertiesComponent = {
             });
 
             let publish= () => publish_study(ctrl.study.id, version_name, update_url)
-                .then(res=>ctrl.study.versions[ctrl.study.versions.length-1].state='Published')
+                .then(()=>ctrl.study.versions[ctrl.study.versions.length-1].state='Published')
                 .then(()=>ctrl.study.is_published = true)
-                // .then(()=>ctrl.study.is_locked = ctrl.study.is_published || ctrl.study.is_locked)
+                .then(()=>ctrl.under_develop(false))
 
                 .catch(e => {
                     error(e.message);
@@ -238,7 +239,7 @@ let propertiesComponent = {
             return ctrl.study.get()
                 .then(()=>{
                     ctrl.study_name(ctrl.study.name);
-                    ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state!=='Develop');
+                    ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state==='Develop');
                     ctrl.description(ctrl.study.description);
                     ctrl.study.invisible = ctrl.study.permission === 'invisible';
                     if(ctrl.study.invisible)
@@ -254,13 +255,14 @@ let propertiesComponent = {
         return ctrl;
     },
     view(ctrl){
+
+
         return  !ctrl.loaded()
             ?
             m('.loader')
             :
             m('.container.sharing-page', [
                 m('div', ctrl.notifications.view()),
-
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [ctrl.study_name(), ': Properties'])
@@ -284,22 +286,19 @@ let propertiesComponent = {
                             m('textarea.form-control.fixed_textarea', { rows:5, value: ctrl.description(), onchange: m.withAttr('value', ctrl.description)}))
                 ),
                 ctrl.study.isReadonly ? '' : m('.row.space', [
-                        m('.col-sm-2', ''),
-                        m('.col-sm-10',
-                            m('.btn-toolbar',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
-                            )
+                    m('.col-sm-2', ''),
+                    m('.col-sm-10',
+                        m('.btn-toolbar',
+                            m('button.btn.btn-primary.btn-sm', {onclick:ctrl.save}, 'Save Study Details')
                         )
-                    ]
-                ),
-
+                    )
+                ]),
                 ctrl.study.invisible ? '' : [
                     m('.row.space',
                         m('.col-sm-12.space',  m('h4', 'Versions'))
                     ),
                     ctrl.study.versions .map((version, id)=>
                         m('.row', [
-                            console.log(ctrl.study),
                             m('.col-sm-3.space',  [m('strong', ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
                             m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}, version.state==='Develop' && !ctrl.study.isReadonly? 'Edit' : 'Review')),
                             ctrl.study.isReadonly ? '' : m('.col-xs-1.space',  m('button.btn.btn-primary.btn-block.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)}, version.availability ? 'Active' : 'Inactive')),
@@ -386,8 +385,8 @@ let propertiesComponent = {
 
                     m('.row.danger_zone.space',
                         m('.col-sm-12', [
-                            console.log(ctrl.under_develop()),
-                            ctrl.under_develop() ? '' :
+
+                            !ctrl.under_develop() ? '' :
                                 m('.row.',
                                     m('.col-sm-11.space',[
                                         m('strong', 'Publish the latest version'),
@@ -396,15 +395,15 @@ let propertiesComponent = {
                                         m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_publish}, 'Publish')
                                     )
                                 ),
-                            !ctrl.under_develop() ? '' :
-                            m('.row.',
-                                m('.col-sm-11.space',[
-                                    m('strong', 'Create a new version'),
-                                ]),
-                                m('.col-sm-1.space.text-sm-right',
-                                    m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
-                                )
-                            ),
+                            ctrl.under_develop() ? '' :
+                                m('.row.',
+                                    m('.col-sm-11.space',[
+                                        m('strong', 'Create a new version'),
+                                    ]),
+                                    m('.col-sm-1.space.text-sm-right',
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                    )
+                                ),
                             m('.row.',
                                 m('.col-sm-11.space',[
                                     m('strong', 'Lock study'),
