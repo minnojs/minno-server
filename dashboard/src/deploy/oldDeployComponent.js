@@ -44,7 +44,6 @@ let reviewDeployDialog = {
         function update(status){
             update_deploy(ctrl.deploy2show()._id, ctrl.priority(), ctrl.pause_rules(), ctrl.reviewer_comments(), status)
                 .then(m.route( `/deployList/`));
-
         }
 
         function change_edit_mode(mode){
@@ -67,7 +66,7 @@ let reviewDeployDialog = {
             if(ctrl.target_number() !== ctrl.deploy2show().target_number)
                 changed.push('target_number');
             return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
-            .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)))
+            .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
 
         }
         function load() {
@@ -83,7 +82,8 @@ let reviewDeployDialog = {
             .then(()=>
                 !ctrl.is_review() || !ctrl.is_pending() ?  {} :
                     get_deployer_rules()
-                        .then(results=>ctrl.deployer_rules(results.sets))
+                    .then(results=>ctrl.deployer_rules(results.sets))
+                    .then(()=>ctrl.pause_rules(ctrl.deployer_rules()[0]))
             )
             .then(()=>ctrl.loaded(true))
             .then(m.redraw);
@@ -143,12 +143,11 @@ let reviewDeployDialog = {
                         ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
                         ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                         ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                        !ctrl.deploy2show().ref_id ? '' :  [' ',
-                        ctrl.is_review() ? m('a', {href:`/review/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', ' (change request)'))
-                            :
-                            m('a', {href:`/deploy/${ctrl.deploy2show().study_id}/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', '(change request)'))
-                        ]
-
+                        !ctrl.deploy2show().ref_id ? '' :
+                            [' ', ctrl.is_review() ? m('a', {href:`/review/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', ' (change request)'))
+                                :
+                                m('a', {href:`/deploy/${ctrl.deploy2show().study_id}/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', '(change request)'))
+                            ]
                     ])
                 ]),
                 !ctrl.is_review() && ctrl.is_pending() ? '' :
@@ -188,12 +187,11 @@ let reviewDeployDialog = {
                     m('.col-sm-3',[
                         m('strong', 'Priority:'),
                     ]),
-                    console.log(!ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority')),
                     m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                         ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                             ?
                             m('', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' :'has-warning'},
-                            m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
+                                m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                             :
                             ctrl.deploy2show().priority
                     ])
@@ -273,13 +271,13 @@ let reviewDeployDialog = {
                                 m('i.fa.fa-check', ' Accept')
                             )
                         ]
-                        :
-                        [
-                            ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.deploy2show().study_id}`)}, 'Back to study'),
-                            !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
-                            !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> {}}, m('i.fa.fa-paper-plane', ' Deploy'))],
-                            !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
-                        ]
+                            :
+                            [
+                                ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.deploy2show().study_id}`)}, 'Back to study'),
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> {}}, m('i.fa.fa-paper-plane', ' Deploy'))],
+                                !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
+                            ]
                     ])
                 ]),
             ]);

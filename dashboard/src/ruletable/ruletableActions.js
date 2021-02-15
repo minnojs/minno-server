@@ -1,4 +1,7 @@
 export let print_rules = (set) =>{
+    if (!set)
+        return 'There are no rules.';
+
     const clean_rules   = set.data.map(rule=>(rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text));
     const sub_sets_data =  set.sub_sets.map(sub_set=> print_rules(sub_set));
 

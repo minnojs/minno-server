@@ -3,15 +3,30 @@ import {play, pause, remove, edit, create, reset} from './poolActions';
 import {getAuth} from 'login/authModel';
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
+import {testUrl} from 'modelUrls';
+import messages from 'utils/messagesComponent';
+
+import {print_rules} from '../ruletable/ruletableActions';
+
 export default poolComponent;
 
-const PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
 const TABLE_WIDTH = 8;
 
 let poolComponent = {
     controller: () => {
+
+        function view_rules(e, rules){
+            e.preventDefault();
+            return  messages.alert({
+                header:'Summary of Rule Logic',
+                content: m('.space', [
+                    print_rules(rules),
+                ])
+            });
+        }
+
         const ctrl = {
-            play, pause, remove, edit, reset, create,
+            view_rules, play, pause, remove, edit, reset, create,
             canCreate: false,
             list: m.prop([]),
             globalSearch: m.prop(''),
@@ -58,13 +73,13 @@ let poolComponent = {
                             ])
                         ]) : '',
                         m('tr', [
-                            m('th', thConfig('studyId',ctrl.sortBy), 'ID'),
-                            m('th', thConfig('studyUrl',ctrl.sortBy), 'Study'),
-                            m('th', thConfig('rulesUrl',ctrl.sortBy), 'Rules'),
-                            m('th', thConfig('autopauseUrl',ctrl.sortBy), 'Autopause'),
+                            m('th', thConfig('studyName',ctrl.sortBy), 'Study'),
+                            m('th', thConfig('studyUrl',ctrl.sortBy), 'Experiment File'),
+                            m('th', 'Rules'),
+                            m('th', 'Autopause'),
                             m('th', thConfig('completedSessions',ctrl.sortBy), 'Completion'),
                             m('th', thConfig('creationDate',ctrl.sortBy), 'Date'),
-                            m('th','Status'),
+                            m('th', thConfig('status',ctrl.sortBy), 'Status'),
                             m('th','Actions')
                         ])
                     ]),
@@ -80,24 +95,22 @@ let poolComponent = {
                                 )
                             )
                             :
-                            list().filter(studyFilter(ctrl)).map(study => m('tr', [
+                            list().map(study => m('tr', [
                                 // ### ID
-                                m('td', study.studyId),
+                                m('td', study.study_name),
+                                m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${study.experiment_file.id}/${study.version_hash}`}, study.experiment_file.descriptive_id)),
+
 
                                 // ### Study url
                                 m('td', [
-                                    m('a', {href:PRODUCTION_URL + study.studyUrl, target: '_blank'}, 'Study')
+                                    m('a', {href:'', onclick:e=>ctrl.view_rules(e, study.rules)}, 'Rules')
                                 ]),
 
                                 // ### Rules url
                                 m('td', [
-                                    m('a', {href:PRODUCTION_URL + study.rulesUrl, target: '_blank'}, 'Rules')
+                                    m('a', {href:'', onclick:e=>ctrl.view_rules(e, study.pause_rules)}, !study.pause_rules ? '' : study.pause_rules.name)
                                 ]),
 
-                                // ### Autopause url
-                                m('td', [
-                                    m('a', {href:PRODUCTION_URL + study.autopauseUrl, target: '_blank'}, 'Autopause')
-                                ]),
 
                                 // ### Completions
                                 m('td', [
@@ -127,10 +140,10 @@ let poolComponent = {
                                 // ### Status
                                 m('td', [
                                     {
-                                        R: m('span.label.label-success', 'Running'),
-                                        P: m('span.label.label-info', 'Paused'),
-                                        S: m('span.label.label-danger', 'Stopped')
-                                    }[study.studyStatus]
+                                        accept: m('span.label.label-success', 'Running'),
+                                        pending: m('span.label.label-info', 'Paused'),
+                                        reject: m('span.label.label-danger', 'Stopped')
+                                    }[study.status]
                                 ]),
 
                                 // ### Actions
@@ -140,21 +153,21 @@ let poolComponent = {
                                         m('.l', 'Loading...')
                                         :
                                         m('.btn-group', [
-                                            study.canUnpause && study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.play.bind(null, study)}, [
+                                            study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.play.bind(null, study)}, [
                                                 m('i.fa.fa-play')
                                             ]) : '',
-                                            study.canPause && study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.pause.bind(null, study)}, [
+                                            study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.pause.bind(null, study)}, [
                                                 m('i.fa.fa-pause')
                                             ]) : '',
-                                            study.canReset ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.edit.bind(null, study)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.edit.bind(null, study)}, [
                                                 m('i.fa.fa-edit')
-                                            ]): '',
-                                            study.canReset ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.reset.bind(null, study)}, [
+                                            ]),
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.reset.bind(null, study)}, [
                                                 m('i.fa.fa-refresh')
-                                            ]) : '',
-                                            study.canStop ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.remove.bind(null, study, list)}, [
+                                            ]),
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.remove.bind(null, study, list)}, [
                                                 m('i.fa.fa-close')
-                                            ]) : ''
+                                            ])
                                         ])
                                 ])
                             ]))

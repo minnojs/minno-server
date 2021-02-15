@@ -77,6 +77,7 @@ function read_review(user_id, deploy_id){
 }
 
 function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {
+
     if(user_role !== 'du' && user_role !== 'su')
         return Promise.reject({status:400, message:'Error: Permission denied'});
 

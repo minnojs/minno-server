@@ -10935,13 +10935,34 @@
         method: 'get'
     }); };
 
-    var PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
+    var print_rules = function (set) {
+        if (!set)
+            return 'There are no rules.';
+
+        var clean_rules   = set.data.map(function (rule){ return (rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
+        var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
+
+        var print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
+        return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
+    };
+
     var TABLE_WIDTH = 8;
 
     var poolComponent = {
         controller: function () {
+
+            function view_rules(e, rules){
+                e.preventDefault();
+                return  messages.alert({
+                    header:'Summary of Rule Logic',
+                    content: m('.space', [
+                        print_rules(rules),
+                    ])
+                });
+            }
+
             var ctrl = {
-                play: play, pause: pause, remove: remove, edit: edit, reset: reset, create: create,
+                view_rules: view_rules, play: play, pause: pause, remove: remove, edit: edit, reset: reset, create: create,
                 canCreate: false,
                 list: m.prop([]),
                 globalSearch: m.prop(''),
@@ -10988,13 +11009,13 @@
                                 ])
                             ]) : '',
                             m('tr', [
-                                m('th', thConfig('studyId',ctrl.sortBy), 'ID'),
-                                m('th', thConfig('studyUrl',ctrl.sortBy), 'Study'),
-                                m('th', thConfig('rulesUrl',ctrl.sortBy), 'Rules'),
-                                m('th', thConfig('autopauseUrl',ctrl.sortBy), 'Autopause'),
+                                m('th', thConfig('studyName',ctrl.sortBy), 'Study'),
+                                m('th', thConfig('studyUrl',ctrl.sortBy), 'Experiment File'),
+                                m('th', 'Rules'),
+                                m('th', 'Autopause'),
                                 m('th', thConfig('completedSessions',ctrl.sortBy), 'Completion'),
                                 m('th', thConfig('creationDate',ctrl.sortBy), 'Date'),
-                                m('th','Status'),
+                                m('th', thConfig('status',ctrl.sortBy), 'Status'),
                                 m('th','Actions')
                             ])
                         ]),
@@ -11010,24 +11031,22 @@
                                     )
                                 )
                                 :
-                                list().filter(studyFilter(ctrl)).map(function (study) { return m('tr', [
+                                list().map(function (study) { return m('tr', [
                                     // ### ID
-                                    m('td', study.studyId),
+                                    m('td', study.study_name),
+                                    m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (study.experiment_file.id) + "/" + (study.version_hash))}, study.experiment_file.descriptive_id)),
+
 
                                     // ### Study url
                                     m('td', [
-                                        m('a', {href:PRODUCTION_URL + study.studyUrl, target: '_blank'}, 'Study')
+                                        m('a', {href:'', onclick:function (e){ return ctrl.view_rules(e, study.rules); }}, 'Rules')
                                     ]),
 
                                     // ### Rules url
                                     m('td', [
-                                        m('a', {href:PRODUCTION_URL + study.rulesUrl, target: '_blank'}, 'Rules')
+                                        m('a', {href:'', onclick:function (e){ return ctrl.view_rules(e, study.pause_rules); }}, !study.pause_rules ? '' : study.pause_rules.name)
                                     ]),
 
-                                    // ### Autopause url
-                                    m('td', [
-                                        m('a', {href:PRODUCTION_URL + study.autopauseUrl, target: '_blank'}, 'Autopause')
-                                    ]),
 
                                     // ### Completions
                                     m('td', [
@@ -11057,10 +11076,10 @@
                                     // ### Status
                                     m('td', [
                                         {
-                                            R: m('span.label.label-success', 'Running'),
-                                            P: m('span.label.label-info', 'Paused'),
-                                            S: m('span.label.label-danger', 'Stopped')
-                                        }[study.studyStatus]
+                                            accept: m('span.label.label-success', 'Running'),
+                                            pending: m('span.label.label-info', 'Paused'),
+                                            reject: m('span.label.label-danger', 'Stopped')
+                                        }[study.status]
                                     ]),
 
                                     // ### Actions
@@ -11070,21 +11089,21 @@
                                             m('.l', 'Loading...')
                                             :
                                             m('.btn-group', [
-                                                study.canUnpause && study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.play.bind(null, study)}, [
+                                                study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.play.bind(null, study)}, [
                                                     m('i.fa.fa-play')
                                                 ]) : '',
-                                                study.canPause && study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.pause.bind(null, study)}, [
+                                                study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.pause.bind(null, study)}, [
                                                     m('i.fa.fa-pause')
                                                 ]) : '',
-                                                study.canReset ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.edit.bind(null, study)}, [
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.edit.bind(null, study)}, [
                                                     m('i.fa.fa-edit')
-                                                ]): '',
-                                                study.canReset ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.reset.bind(null, study)}, [
+                                                ]),
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.reset.bind(null, study)}, [
                                                     m('i.fa.fa-refresh')
-                                                ]) : '',
-                                                study.canStop ? m('button.btn.btn-sm.btn-secondary', {onclick: ctrl.remove.bind(null, study, list)}, [
+                                                ]),
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.remove.bind(null, study, list)}, [
                                                     m('i.fa.fa-close')
-                                                ]) : ''
+                                                ])
                                             ])
                                     ])
                                 ]); })
@@ -11097,17 +11116,7 @@
     // @TODO: bad idiom! should change things within the object, not the object itself.
     var thConfig = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
-    function studyFilter(ctrl){
-        return function (study) { return includes(study.studyId, ctrl.globalSearch()) ||
-            includes(study.studyUrl, ctrl.globalSearch()) ||
-            includes(study.rulesUrl, ctrl.globalSearch()); };
-
-        function includes(val, search){
-            return typeof val === 'string' && val.includes(search);
-        }
-    }
-
-    var PRODUCTION_URL$1 = 'https://implicit.harvard.edu/implicit/';
+    var PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
     var poolComponent$1 = {
         controller: function () {
             var ctrl = {
@@ -11167,17 +11176,17 @@
 
                             // ### Study url
                             m('td', [
-                                m('a', {href:PRODUCTION_URL$1 + study.studyUrl, target: '_blank'}, 'Study')
+                                m('a', {href:PRODUCTION_URL + study.studyUrl, target: '_blank'}, 'Study')
                             ]),
 
                             // ### Rules url
                             m('td', [
-                                m('a', {href:PRODUCTION_URL$1 + study.rulesUrl, target: '_blank'}, 'Rules')
+                                m('a', {href:PRODUCTION_URL + study.rulesUrl, target: '_blank'}, 'Rules')
                             ]),
 
                             // ### Autopause url
                             m('td', [
-                                m('a', {href:PRODUCTION_URL$1 + study.autopauseUrl, target: '_blank'}, 'Autopause')
+                                m('a', {href:PRODUCTION_URL + study.autopauseUrl, target: '_blank'}, 'Autopause')
                             ]),
                             
                         
@@ -20769,14 +20778,6 @@
         return fetchJson(deploys_url());
     }
 
-    var print_rules = function (set) {
-        var clean_rules   = set.data.map(function (rule){ return (rule.field==='' ? '_' : rule.field_text) + ' ' + (rule.comparator==='' ? '_' : rule.comparator_text) + ' ' + (rule.value==='' ? '_' : rule.value_text); });
-        var sub_sets_data =  set.sub_sets.map(function (sub_set){ return print_rules(sub_set); });
-
-        var print_both = set.data.length>0 && set.sub_sets.length>0 ? ', ' : '';
-        return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
-    };
-
     function rules_url(id) {
         if ( id === void 0 ) id = '';
 
@@ -21360,7 +21361,6 @@
             function update(status){
                 update_deploy(ctrl.deploy2show()._id, ctrl.priority(), ctrl.pause_rules(), ctrl.reviewer_comments(), status)
                     .then(m.route( "/deployList/"));
-
             }
 
             function change_edit_mode(mode){
@@ -21383,7 +21383,7 @@
                 if(ctrl.target_number() !== ctrl.deploy2show().target_number)
                     changed.push('target_number');
                 return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
-                .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }))
+                .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }));
 
             }
             function load() {
@@ -21398,7 +21398,8 @@
                 })
                 .then(function (){ return !ctrl.is_review() || !ctrl.is_pending() ?  {} :
                         get_deployer_rules()
-                            .then(function (results){ return ctrl.deployer_rules(results.sets); }); }
+                        .then(function (results){ return ctrl.deployer_rules(results.sets); })
+                        .then(function (){ return ctrl.pause_rules(ctrl.deployer_rules()[0]); }); }
                 )
                 .then(function (){ return ctrl.loaded(true); })
                 .then(m.redraw);
@@ -21460,12 +21461,11 @@
                             ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
                             ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                             ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                            !ctrl.deploy2show().ref_id ? '' :  [' ',
-                            ctrl.is_review() ? m('a', {href:("/review/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', ' (change request)'))
-                                :
-                                m('a', {href:("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', '(change request)'))
-                            ]
-
+                            !ctrl.deploy2show().ref_id ? '' :
+                                [' ', ctrl.is_review() ? m('a', {href:("/review/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', ' (change request)'))
+                                    :
+                                    m('a', {href:("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', '(change request)'))
+                                ]
                         ])
                     ]),
                     !ctrl.is_review() && ctrl.is_pending() ? '' :
@@ -21505,12 +21505,11 @@
                         m('.col-sm-3',[
                             m('strong', 'Priority:'),
                         ]),
-                        console.log(!ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority')),
                         m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
                             ctrl.edit_mode() || (ctrl.is_review() && ctrl.is_pending())
                                 ?
                                 m('', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' :'has-warning'},
-                                m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
+                                    m('input.form-control', {classes: !ctrl.deploy2show().changed || !ctrl.deploy2show().changed.includes('priority') ? '' : '.form-control-warning', type:'number', min:'0', max:ctrl.is_review() ? '' : '26', value: ctrl.priority(),  placeholder:'priority', oninput:  m.withAttr('value', ctrl.priority)}))
                                 :
                                 ctrl.deploy2show().priority
                         ])
@@ -21589,13 +21588,13 @@
                                     m('i.fa.fa-check', ' Accept')
                                 )
                             ]
-                            :
-                            [
-                                ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.deploy2show().study_id))); }}, 'Back to study'),
-                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
-                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: function (){}}, m('i.fa.fa-paper-plane', ' Deploy'))],
-                                !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
-                            ]
+                                :
+                                [
+                                    ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.deploy2show().study_id))); }}, 'Back to study'),
+                                    !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
+                                    !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: function (){}}, m('i.fa.fa-paper-plane', ' Deploy'))],
+                                    !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
+                                ]
                         ])
                     ]),
                 ]);
