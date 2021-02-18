@@ -10920,19 +10920,108 @@
         return result;
     }, {}); };
 
-    var loginUrl = baseUrl + "/connect";
-    var logoutUrl = baseUrl + "/logout";
-    var is_logedinUrl = baseUrl + "/is_loggedin";
+    function get_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)));
+    }
 
-    var login = function (username, password) { return fetchJson(loginUrl, {
-        method: 'post',
-        body: {username: username, password: password}
+    function get_duplicate_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/copy");
+    }
+
+
+    function get_exps_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
+    }
+
+    function get_stat_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
+    }
+
+
+    function get_requests_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
+    }
+
+    function get_lock_url(study_id , lock) {
+
+        if (lock)
+            return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/lock");
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/unlock");
+    }
+
+
+    function get_publish_url(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
+    }
+
+    function get_new_version(study_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/version");
+    }
+
+    function get_version_url(study_id, version_id) {
+        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/versions/" + version_id);
+    }
+
+    /*CRUD*/
+    var load_studies = function () { return fetchJson(studyUrl); };
+
+    var load_templates = function () { return fetchJson(templatesUrl); };
+
+    var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
+
+
+    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
+
+
+    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
+        method: 'delete',
+        body: {request_id: request_id}
+
     }); };
 
-    var logout = function () { return fetchVoid(logoutUrl, {method:'post'}).then(getAuth); };
+    var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
+        method: 'post',
+        body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
+    }); };
 
-    var getAuth = function () { return fetchJson(is_logedinUrl, {
-        method: 'get'
+    var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
+        method: 'post',
+        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
+    }); };
+
+    var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
+        method: 'put',
+        body: body
+    }); };
+
+    var rename_study = function (study_id, study_name) { return fetchJson(((get_url(study_id)) + "/rename"), {
+        method: 'put',
+        body: {study_name: study_name}
+    }); };
+
+    var duplicate_study = function (study_id, study_name) { return fetchJson(get_duplicate_url(study_id), {
+        method: 'put',
+        body: {study_name: study_name}
+    }); };
+
+    var lock_study = function (study_id, lock) { return fetchJson(get_lock_url(study_id, lock), {
+        method: 'post'
+    }); };
+
+    var publish_study = function (study_id, version_name, update_url) { return fetchJson(get_publish_url(study_id), {
+        method: 'post',
+        body: {version_name: version_name, update_url: update_url}
+    }); };
+
+    var create_version = function (study_id) { return fetchJson(get_new_version(study_id), {
+        method: 'post'
+    }); };
+
+    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
+
+    var change_version_availability = function (study_id, version_id, availability) { return fetchJson(get_version_url(study_id, version_id), {
+        method: 'put',
+        body: {availability: availability}
     }); };
 
     var print_rules = function (set) {
@@ -10950,7 +11039,6 @@
 
     var poolComponent = {
         controller: function () {
-
             function view_rules(e, rules){
                 e.preventDefault();
                 return  messages.alert({
@@ -10961,18 +11049,36 @@
                 });
             }
 
+            function permissionFilter (study){
+                if(ctrl.permissionChoice() === 'my')
+                    return  ctrl.studies().includes(study.study_id);
+                return true;
+            }
+
+            function globalFilter (study){
+                if (ctrl.globalSearch() === '')
+                    return true;
+                return study.study_name && study.study_name.toLowerCase().includes(ctrl.globalSearch().toLowerCase()) || study.experiment_file.descriptive_id && study.experiment_file.descriptive_id.toLowerCase().includes(ctrl.globalSearch().toLowerCase());
+            }
+
             var ctrl = {
                 view_rules: view_rules, play: play, pause: pause, remove: remove, edit: edit, reset: reset, create: create,
                 canCreate: false,
+                studies: m.prop([]),
                 list: m.prop([]),
                 globalSearch: m.prop(''),
+                globalFilter: globalFilter,
+                permissionChoice: m.prop('my'),
+                permissionFilter: permissionFilter,
                 sortBy: m.prop(),
                 error: m.prop(''),
                 loaded: m.prop()
             };
-
-            getAuth().then(function (response) {ctrl.canCreate = response.role === 'SU';});
-            getAllPoolStudies()
+            load_studies()
+                .then(function (response) { return response.studies; })
+                .then(ctrl.studies)
+                .then(function (){ return ctrl.studies(ctrl.studies().filter(function (study){ return study.permission==='owner' || study.permission==='can edit'; }).map(function (study){ return study.id; })); })
+                .then(function (){ return getAllPoolStudies(); })
                 .then(ctrl.list)
                 .then(ctrl.loaded)
                 .catch(ctrl.error)
@@ -10980,20 +11086,31 @@
             return ctrl;
         },
         view: function (ctrl) {
-            var list = ctrl.list;
-            return m('.pool', [
-                m('h2', 'Study pool'),
-                ctrl.error()
-                    ?
-                    m('.alert.alert-warning',
-                        m('strong', 'Warning!! '), ctrl.error().message
-                    )
-                    :
-                    m('table', {class:'table table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
+            var list = ctrl.list().filter(function (study){ return ctrl.permissionFilter(study); }).filter(function (study){ return ctrl.globalFilter(study); });
+            return ctrl.error()
+                ?
+                m('.alert.alert-warning',
+                    m('strong', 'Warning!! '), ctrl.error().message
+                )
+                :
+                m('.pool', [
+
+                    m('h2', 'Study pool'),
+                    m('.row', [
+                        m('.col-sm-2',
+                            m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
+                        ),
+                        m('.col-sm-2',
+                            m('select.c-select.form-control', {onchange: function (e) { return ctrl.permissionChoice(e.target.value); }}, [
+                                m('option', {value:'my'}, 'Show only my studies'),
+                                m('option', {value:'all'}, 'Show all studies')
+                            ])
+                        )
+                    ]),
+                    m('table', {class:'table table-striped table-hover',onclick:sortTable(ctrl.list, ctrl.sortBy)}, [
                         m('thead', [
                             m('tr', [
                                 m('th', {colspan:TABLE_WIDTH - 1}, [
-                                    m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
                                 ]),
                                 m('th', [
                                     m('a.btn.btn-secondary', {href:'/pool/history', config:m.route}, [
@@ -11001,26 +11118,19 @@
                                     ])
                                 ])
                             ]),
-                            ctrl.canCreate ? m('tr', [
-                                m('th.text-xs-center', {colspan:TABLE_WIDTH}, [
-                                    m('button.btn.btn-secondary', {onclick:ctrl.create.bind(null, list)}, [
-                                        m('i.fa.fa-plus'), '  Add new study'
-                                    ])
-                                ])
-                            ]) : '',
                             m('tr', [
-                                m('th', thConfig('studyName',ctrl.sortBy), 'Study'),
-                                m('th', thConfig('studyUrl',ctrl.sortBy), 'Experiment File'),
+                                m('th', thConfig('studyName', ctrl.sortBy), 'Study'),
+                                m('th', thConfig('studyUrl', ctrl.sortBy), 'Experiment File'),
                                 m('th', 'Rules'),
                                 m('th', 'Autopause'),
-                                m('th', thConfig('completedSessions',ctrl.sortBy), 'Completion'),
-                                m('th', thConfig('creationDate',ctrl.sortBy), 'Date'),
-                                m('th', thConfig('status',ctrl.sortBy), 'Status'),
+                                m('th', thConfig('completedSessions', ctrl.sortBy), 'Completion'),
+                                m('th', thConfig('creationDate', ctrl.sortBy), 'Date'),
+                                m('th', thConfig('status', ctrl.sortBy), 'Status'),
                                 m('th','Actions')
                             ])
                         ]),
                         m('tbody', [
-                            list().length === 0
+                            list.length === 0
                                 ?
                                 m('tr.table-info',
                                     m('td.text-xs-center', {colspan: TABLE_WIDTH},
@@ -11031,7 +11141,7 @@
                                     )
                                 )
                                 :
-                                list().map(function (study) { return m('tr', [
+                                list.map(function (study) { return m('tr', [
                                     // ### ID
                                     m('td', study.study_name),
                                     m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (study.experiment_file.id) + "/" + (study.version_hash))}, study.experiment_file.descriptive_id)),
@@ -11089,19 +11199,13 @@
                                             m('.l', 'Loading...')
                                             :
                                             m('.btn-group', [
-                                                study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.play.bind(null, study)}, [
-                                                    m('i.fa.fa-play')
-                                                ]) : '',
-                                                study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.pause.bind(null, study)}, [
-                                                    m('i.fa.fa-pause')
-                                                ]) : '',
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.edit.bind(null, study)}, [
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.play.bind(null, study)}, [
                                                     m('i.fa.fa-edit')
                                                 ]),
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.reset.bind(null, study)}, [
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.reset.bind(null, study)}, [
                                                     m('i.fa.fa-refresh')
                                                 ]),
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.remove.bind(null, study, list)}, [
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
                                                     m('i.fa.fa-close')
                                                 ])
                                             ])
@@ -11114,7 +11218,7 @@
     };
 
     // @TODO: bad idiom! should change things within the object, not the object itself.
-    var thConfig = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
+    var thConfig = function (prop, current) { return ({'data-sort-by':prop, class: current === prop ? 'active' : ''}); };
 
     var PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
     var poolComponent$1 = {
@@ -11170,7 +11274,7 @@
                         ])
                     ]),
                     m('tbody', [
-                        list().filter(studyFilter$1(ctrl)).map(function (study) { return m('tr', [
+                        list().filter(studyFilter(ctrl)).map(function (study) { return m('tr', [
                             // ### ID
                             m('td', study.studyId),
 
@@ -11241,7 +11345,7 @@
     // @TODO: bad idiom! should change things within the object, not the object itself.
     var thConfig$1 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
-    function studyFilter$1(ctrl){
+    function studyFilter(ctrl){
         return function (study) { return (includes(study.studyId, ctrl.globalSearch()) ||    includes(study.updaterId, ctrl.globalSearch()) || includes(study.rulesUrl, ctrl.globalSearch())
                 || includes(study.targetCompletions, ctrl.globalSearch()))
             && (new Date(study.creationDate)).getTime() >= ctrl.startDate().getTime()
@@ -11608,7 +11712,7 @@
                             ? m('tr.table-info', [
                                 m('td.text-xs-center', {colspan: TABLE_WIDTH$1}, 'There are no downloads running yet')
                             ])
-                            : list().filter(studyFilter$2(ctrl)).map(function (download) { return m('tr', [
+                            : list().filter(studyFilter$1(ctrl)).map(function (download) { return m('tr', [
                                 // ### ID
                                 m('td', download.studyId),
 
@@ -11675,7 +11779,7 @@
     // @TODO: bad idiom! should change things within the object, not the object itself.
     var thConfig$2 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
-    function studyFilter$2(ctrl){
+    function studyFilter$1(ctrl){
         var search = ctrl.globalSearch();
         return function (study) { return includes(study.studyId, search) ||
             includes(study.studyUrl, search); };
@@ -12102,6 +12206,21 @@
         result[key] = obj[key]();
         return result;
     }, {}); };
+
+    var loginUrl = baseUrl + "/connect";
+    var logoutUrl = baseUrl + "/logout";
+    var is_logedinUrl = baseUrl + "/is_loggedin";
+
+    var login = function (username, password) { return fetchJson(loginUrl, {
+        method: 'post',
+        body: {username: username, password: password}
+    }); };
+
+    var logout = function () { return fetchVoid(logoutUrl, {method:'post'}).then(getAuth); };
+
+    var getAuth = function () { return fetchJson(is_logedinUrl, {
+        method: 'get'
+    }); };
 
     var TABLE_WIDTH$2 = 6;
 
@@ -13000,110 +13119,6 @@
     function dirName(name){
         return name === '/' ? m('span.text-muted', 'Root Directory') : name;
     }
-
-    function get_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)));
-    }
-
-    function get_duplicate_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/copy");
-    }
-
-
-    function get_exps_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/experiments");
-    }
-
-    function get_stat_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/statistics");
-    }
-
-
-    function get_requests_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/data");
-    }
-
-    function get_lock_url(study_id , lock) {
-
-        if (lock)
-            return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/lock");
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/unlock");
-    }
-
-
-    function get_publish_url(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/publish");
-    }
-
-    function get_new_version(study_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/version");
-    }
-
-    function get_version_url(study_id, version_id) {
-        return (studyUrl + "/" + (encodeURIComponent(study_id)) + "/versions/" + version_id);
-    }
-
-    /*CRUD*/
-    var load_studies = function () { return fetchJson(studyUrl); };
-
-    var load_templates = function () { return fetchJson(templatesUrl); };
-
-    var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
-
-
-    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
-
-
-    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
-        method: 'delete',
-        body: {request_id: request_id}
-
-    }); };
-
-    var get_data = function (study_id, exp_id, version_id, file_format, file_split, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
-        method: 'post',
-        body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
-    }); };
-
-    var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
-        method: 'post',
-        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
-    }); };
-
-    var update_study = function (study_id, body) { return fetchJson(get_url(study_id), {
-        method: 'put',
-        body: body
-    }); };
-
-    var rename_study = function (study_id, study_name) { return fetchJson(((get_url(study_id)) + "/rename"), {
-        method: 'put',
-        body: {study_name: study_name}
-    }); };
-
-    var duplicate_study = function (study_id, study_name) { return fetchJson(get_duplicate_url(study_id), {
-        method: 'put',
-        body: {study_name: study_name}
-    }); };
-
-    var lock_study = function (study_id, lock) { return fetchJson(get_lock_url(study_id, lock), {
-        method: 'post'
-    }); };
-
-    var publish_study = function (study_id, version_name, update_url) { return fetchJson(get_publish_url(study_id), {
-        method: 'post',
-        body: {version_name: version_name, update_url: update_url}
-    }); };
-
-    var create_version = function (study_id) { return fetchJson(get_new_version(study_id), {
-        method: 'post'
-    }); };
-
-    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
-
-    var change_version_availability = function (study_id, version_id, availability) { return fetchJson(get_version_url(study_id, version_id), {
-        method: 'put',
-        body: {availability: availability}
-    }); };
 
     function copyFileComponent (args) { return m.component(copyFileComponent$1, args); }
     var copyFileComponent$1 = {

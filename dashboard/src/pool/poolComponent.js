@@ -1,10 +1,11 @@
 import {getAllPoolStudies, STATUS_PAUSED, STATUS_RUNNING} from './poolModel';
 import {play, pause, remove, edit, create, reset} from './poolActions';
-import {getAuth} from 'login/authModel';
+
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
 import {testUrl} from 'modelUrls';
 import messages from 'utils/messagesComponent';
+import {load_studies} from '../study/studyModel';
 
 import {print_rules} from '../ruletable/ruletableActions';
 
@@ -14,7 +15,6 @@ const TABLE_WIDTH = 8;
 
 let poolComponent = {
     controller: () => {
-
         function view_rules(e, rules){
             e.preventDefault();
             return  messages.alert({
@@ -25,18 +25,36 @@ let poolComponent = {
             });
         }
 
+        function permissionFilter (study){
+            if(ctrl.permissionChoice() === 'my')
+                return  ctrl.studies().includes(study.study_id);
+            return true;
+        }
+
+        function globalFilter (study){
+            if (ctrl.globalSearch() === '')
+                return true;
+            return study.study_name && study.study_name.toLowerCase().includes(ctrl.globalSearch().toLowerCase()) || study.experiment_file.descriptive_id && study.experiment_file.descriptive_id.toLowerCase().includes(ctrl.globalSearch().toLowerCase());
+        }
+
         const ctrl = {
             view_rules, play, pause, remove, edit, reset, create,
             canCreate: false,
+            studies: m.prop([]),
             list: m.prop([]),
             globalSearch: m.prop(''),
+            globalFilter,
+            permissionChoice: m.prop('my'),
+            permissionFilter,
             sortBy: m.prop(),
             error: m.prop(''),
             loaded: m.prop()
         };
-
-        getAuth().then((response) => {ctrl.canCreate = response.role === 'SU';});
-        getAllPoolStudies()
+        load_studies()
+            .then(response => response.studies)
+            .then(ctrl.studies)
+            .then(()=>ctrl.studies(ctrl.studies().filter(study=>study.permission==='owner' || study.permission==='can edit').map(study=>study.id)))
+            .then(()=>getAllPoolStudies())
             .then(ctrl.list)
             .then(ctrl.loaded)
             .catch(ctrl.error)
@@ -44,20 +62,31 @@ let poolComponent = {
         return ctrl;
     },
     view: ctrl => {
-        let list = ctrl.list;
-        return m('.pool', [
-            m('h2', 'Study pool'),
-            ctrl.error()
-                ?
-                m('.alert.alert-warning',
-                    m('strong', 'Warning!! '), ctrl.error().message
-                )
-                :
-                m('table', {class:'table table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
+        let list = ctrl.list().filter(study=>ctrl.permissionFilter(study)).filter(study=>ctrl.globalFilter(study));
+        return ctrl.error()
+            ?
+            m('.alert.alert-warning',
+                m('strong', 'Warning!! '), ctrl.error().message
+            )
+            :
+            m('.pool', [
+
+                m('h2', 'Study pool'),
+                m('.row', [
+                    m('.col-sm-2',
+                        m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
+                    ),
+                    m('.col-sm-2',
+                        m('select.c-select.form-control', {onchange: e => ctrl.permissionChoice(e.target.value)}, [
+                            m('option', {value:'my'}, 'Show only my studies'),
+                            m('option', {value:'all'}, 'Show all studies')
+                        ])
+                    )
+                ]),
+                m('table', {class:'table table-striped table-hover',onclick:sortTable(ctrl.list, ctrl.sortBy)}, [
                     m('thead', [
                         m('tr', [
                             m('th', {colspan:TABLE_WIDTH - 1}, [
-                                m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
                             ]),
                             m('th', [
                                 m('a.btn.btn-secondary', {href:'/pool/history', config:m.route}, [
@@ -65,26 +94,19 @@ let poolComponent = {
                                 ])
                             ])
                         ]),
-                        ctrl.canCreate ? m('tr', [
-                            m('th.text-xs-center', {colspan:TABLE_WIDTH}, [
-                                m('button.btn.btn-secondary', {onclick:ctrl.create.bind(null, list)}, [
-                                    m('i.fa.fa-plus'), '  Add new study'
-                                ])
-                            ])
-                        ]) : '',
                         m('tr', [
-                            m('th', thConfig('studyName',ctrl.sortBy), 'Study'),
-                            m('th', thConfig('studyUrl',ctrl.sortBy), 'Experiment File'),
+                            m('th', thConfig('studyName', ctrl.sortBy), 'Study'),
+                            m('th', thConfig('studyUrl', ctrl.sortBy), 'Experiment File'),
                             m('th', 'Rules'),
                             m('th', 'Autopause'),
-                            m('th', thConfig('completedSessions',ctrl.sortBy), 'Completion'),
-                            m('th', thConfig('creationDate',ctrl.sortBy), 'Date'),
-                            m('th', thConfig('status',ctrl.sortBy), 'Status'),
+                            m('th', thConfig('completedSessions', ctrl.sortBy), 'Completion'),
+                            m('th', thConfig('creationDate', ctrl.sortBy), 'Date'),
+                            m('th', thConfig('status', ctrl.sortBy), 'Status'),
                             m('th','Actions')
                         ])
                     ]),
                     m('tbody', [
-                        list().length === 0
+                        list.length === 0
                             ?
                             m('tr.table-info',
                                 m('td.text-xs-center', {colspan: TABLE_WIDTH},
@@ -95,7 +117,7 @@ let poolComponent = {
                                 )
                             )
                             :
-                            list().map(study => m('tr', [
+                            list.map(study => m('tr', [
                                 // ### ID
                                 m('td', study.study_name),
                                 m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${study.experiment_file.id}/${study.version_hash}`}, study.experiment_file.descriptive_id)),
@@ -153,19 +175,13 @@ let poolComponent = {
                                         m('.l', 'Loading...')
                                         :
                                         m('.btn-group', [
-                                            study.studyStatus === STATUS_PAUSED ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.play.bind(null, study)}, [
-                                                m('i.fa.fa-play')
-                                            ]) : '',
-                                            study.studyStatus === STATUS_RUNNING ? m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.pause.bind(null, study)}, [
-                                                m('i.fa.fa-pause')
-                                            ]) : '',
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.edit.bind(null, study)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.play.bind(null, study)}, [
                                                 m('i.fa.fa-edit')
                                             ]),
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.reset.bind(null, study)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.reset.bind(null, study)}, [
                                                 m('i.fa.fa-refresh')
                                             ]),
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: true, onclick: ctrl.remove.bind(null, study, list)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
                                                 m('i.fa.fa-close')
                                             ])
                                         ])
@@ -178,15 +194,10 @@ let poolComponent = {
 };
 
 // @TODO: bad idiom! should change things within the object, not the object itself.
-let thConfig = (prop, current) => ({'data-sort-by':prop, class: current() === prop ? 'active' : ''});
+let thConfig = (prop, current) => ({'data-sort-by':prop, class: current === prop ? 'active' : ''});
 
-function studyFilter(ctrl){
-    return study =>
-        includes(study.studyId, ctrl.globalSearch()) ||
-        includes(study.studyUrl, ctrl.globalSearch()) ||
-        includes(study.rulesUrl, ctrl.globalSearch());
 
-    function includes(val, search){
-        return typeof val === 'string' && val.includes(search);
-    }
-}
+
+
+
+
