@@ -103,7 +103,7 @@ let layout = route => {
                 // 'pool':[],
                 'tags':[],
                 'pi':['rules', 'pool'],
-                'admin':['deployList', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                'admin':['deployList', 'registration',/* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
             };
 
             const settings_hash = {
@@ -127,6 +127,7 @@ let layout = route => {
                 'admin':{text: 'Admin', href:false,
                     su:true,
                     subs:{'deployList': {text: m('i.fa.fa-list', ' Deploy List'), href: '/deployList'},
+                        'registration': {text: m('i.fa.fa-sign-in', ' Registration page'), href: '/edit_registration'},
                         'removalList': {text: 'Removal List', href:'/removalList'},
                         'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
                         'addUser': {text:'Add User', href: '/addUser'},

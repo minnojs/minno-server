@@ -20,7 +20,19 @@ PIRouter.route('/research_pool')
                 .then(deploys=>res.json(deploys))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
-
+PIRouter.route('/edit_registration')
+    .put(
+        function(req, res){
+            return PI.edit_registration(req.body.study_id, req.body.version_id, req.body.experiment_id)
+                .then(registration=>res.json(registration))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
+    .get(
+        function(req, res){
+            return PI.get_registration()
+                .then(registration=>res.json(registration))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        });
 PIRouter.route('/deploy_request')
     .get(
         function(req, res){

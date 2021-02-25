@@ -138,6 +138,24 @@ function get_deploy(deploy_id) {
     });
 }
 
+function edit_registration(study_id, version_id, experiment_id) {
+    return connection.then(function (db) {
+        const config_data = db.collection('config');
+        return config_data.updateOne({var: 'registration'},
+            {$set: {study_id, version_id, experiment_id}}, {upsert: true})
+            .then(() => ('registration successfully updated'));
+    });
+}
+
+function get_registration() {
+    return connection.then(function (db) {
+        const config_data = db.collection('config');
+        return config_data.findOne({var: 'registration'})
+            .then(data=>data);
+    });
+}
+
+
 function request_deploy(user_id, study_id, props) {
     return has_write_permission(user_id, study_id)
         .then(function({user_data, study_data}) {
@@ -254,4 +272,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {edit_registration, get_registration, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

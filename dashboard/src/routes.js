@@ -19,6 +19,8 @@ import deployListComponent from 'deploy/forms/deployList/deployListComponent';
 import deployComponent from './deploy/deployComponent';
 import oldDeployComponent from './deploy/oldDeployComponent';
 
+import editRegistrationComponent from './admin/edit_registration/editRegistrationComponent';
+
 import addUserComponent from './addUser/addUserComponent';
 import usersComponent from './admin/users/usersComponent';
 import configComponent from './admin/config/configComponent';
@@ -65,6 +67,7 @@ let routes = {
     '/deploy/:studyId': deployComponent,
     '/deploy/:studyId/:deployId': oldDeployComponent,
     '/review/:deployId': oldDeployComponent,
+    '/edit_registration': editRegistrationComponent,
 
     '/login': loginComponent,
     '/studies' : studiesComponent,
