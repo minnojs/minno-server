@@ -8,6 +8,7 @@ import downloadsComponent from './downloads/downloadsComponent';
 import downloadsAccessComponent from './downloadsAccess/downloadsAccessComponent';
 
 import loginComponent from './login/loginComponent';
+import registrationComponent from './registration/registrationComponent';
 import filesComponent from './study/files/filesComponent';
 import viewFilesComponent from './study/files/viewFilesComponent';
 
@@ -70,6 +71,8 @@ let routes = {
     '/edit_registration': editRegistrationComponent,
 
     '/login': loginComponent,
+    '/registration': registrationComponent,
+
     '/studies' : studiesComponent,
     '/studies/statistics_old' : statistics_oldComponent,
     '/studies/statistics' : statisticsComponent,

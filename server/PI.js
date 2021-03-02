@@ -2,6 +2,11 @@ const utils         = require('./utils');
 const connection    = Promise.resolve(require('mongoose').connection);
 const dateFormat    = require('dateformat');
 const versions_comp   = require('./versions');
+const Validator = require('node-input-validator');
+const config        = require('../config');
+const path          = require('path');
+const urljoin       = require('url-join');
+const join          = require('path').join;
 
 const {has_write_permission} = require('./studies');
 
@@ -147,6 +152,86 @@ function edit_registration(study_id, version_id, experiment_id) {
     });
 }
 
+function registration(email_address) {
+    let validator = new Validator({email:email_address},
+        {email: 'required|email'});
+
+    return validator.check()
+        .then(function () {
+            if (Object.keys(validator.errors).length !== 0)
+                return Promise.reject({status: 400, message: 'The email must be a valid email address'});
+            return connection.then(function (db) {
+                const participants = db.collection('participants');
+                return participants.findOne({email_address})
+                    .then(data=>
+                    {
+                        if (data)
+                            return Promise.reject({status: 400, message: 'This email is already in used'});
+                        return participants.insertOne({email_address})
+                            .then(function (user_result) {
+                                if (!user_result)
+                                    return Promise.reject();
+
+                                return Promise.resolve(user_result.ops[0]);
+                            });
+
+                    });
+            });
+        });
+
+}
+
+
+function get_registration_url (id) {
+    return connection.then(function (db) {
+        const counters = db.collection('counters');
+        const studies = db.collection('studies');
+        return get_registration().then(registration_data=>
+
+
+        studies.findOne({versions: { $elemMatch: {hash: registration_data.version_id} }})
+            .then(function(study_data){
+                if(!study_data)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
+
+                const version_data = study_data.versions.filter(version=>version.hash === registration_data.version_id)[0];
+
+                if(!version_data.availability)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t available.'});
+
+                const exp_data = version_data.experiments.filter(exp=>exp.id === registration_data.experiment_id)[0];
+                if (!exp_data)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
+
+                const version_folder = path.join(study_data.folder_name, 'v'+version_data.id);
+
+                const url       = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
+                const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
+
+                const file_path = join(config.user_folder,  version_folder, exp_data.file_id);
+
+                return counters.findOneAndUpdate({_id:'session_id'},
+                    {'$inc': {'seq': 1}},
+                    {upsert: true, new: true, returnOriginal: false})
+                    .then(function(counter_data){
+
+                        const session_id = counter_data.value.seq;
+                        return {
+                            version_data: version_data,
+                            exp_id:exp_data.id,
+                            descriptive_id: exp_data.descriptive_id,
+                            session_id,
+                            registration_id:id,
+                            type: study_data.type,
+                            url,
+                            path: file_path,
+                            base_url
+                        };
+                    });
+            }));
+    });
+}
+
 function get_registration() {
     return connection.then(function (db) {
         const config_data = db.collection('config');
@@ -272,4 +357,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {edit_registration, get_registration, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

@@ -6,6 +6,7 @@ const files       = require('./files');
 
 
 const launch_router         = require('./routes/launch_router');
+const registration_router   = require('./routes/PI_registration_router');
 const connections_router    = require('./routes/connections_router');
 const lock_router           = require('./routes/lock_router');
 const publish_router        = require('./routes/publish_router');
@@ -113,6 +114,7 @@ basePathRouter.use('/view_files' ,view_router);
 
 basePathRouter.use('/users', express.static(config.user_folder));
 basePathRouter.use(launch_router);
+basePathRouter.use(registration_router);
 
 
 basePathRouter.use(connections_router);

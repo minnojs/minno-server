@@ -7,6 +7,7 @@ const config_db     = require('../config_db');
 const data_server   = require('../data_server/controllers/controller');
 const studies       = require('../studies');
 const utils         = require('../utils');
+const PI          = require('../PI');
 
 
 const router        = express.Router();
@@ -65,15 +66,26 @@ router.get('/play/:study_id/:version_id/:file_id', function(req, res){
         status: 401,
         message: 'You must be logged in to access this page'
     });
-
     return experiments
         .get_play_url(sess.user.id, req.params.study_id, req.params.file_id, req.params.version_id)
         .then(displayExperiment(req.query, res, req.fingerprint))
         .catch(displayErrorPage(res));
 });
 
+// router.get('/register/:registration_id', function(req, res){
+//    console.log('x');
+// });
 
-function displayExperiment(params, res, fingerprint){
+router.route('/registration/:id')
+    .get(
+        function(req, res){
+            return PI
+                .get_registration_url(req.params.id)
+                .then(displayExperiment(req.query, res, req.fingerprint, req.params.id))
+                .catch(displayErrorPage(res));
+        });
+
+function displayExperiment(params, res, fingerprint, registration_id = {}){
     return function(exp_data){
         return config_db.get_fingerprint()
             .then(use_fingerprint=>{
@@ -93,6 +105,8 @@ function displayExperiment(params, res, fingerprint){
                     studyId:exp_data.exp_id,
                     versionId:version_data.hash
                 };
+                if(registration_id)
+                    postAlways.registration_id = registration_id;
                 const postOnce = Object.assign({}, params, {
                     descriptiveId: exp_data.descriptive_id,
                     version:version_data.version,

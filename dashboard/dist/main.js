@@ -12479,6 +12479,87 @@
         };
     }
 
+    var registrationUrl = baseUrl + "/registration";
+
+    var registration = function (email_address) { return fetchText(registrationUrl, {
+        method: 'post',
+        body: {email_address: email_address}
+    }); };
+
+    var registrationComponent = {
+        controller: function controller(){
+            var ctrl = {
+                email_address:m.prop(''),
+                quest:m.prop(''),
+                validity:m.prop(true),
+                set_email: set_email,
+                registrationAction: registrationAction,
+                error: m.prop('')
+            };
+            return ctrl;
+
+            function registrationAction(){
+                if(ctrl.email_address() && ctrl.validity())
+                    registration(ctrl.email_address)
+                        .then(function (data) {
+                            document.open();
+                            document.write(data);
+                            document.close();
+
+                            // ctrl.quest(data);
+                            // console.log(data);
+                                // window.location.href = baseUrl+data.url;
+                            // m.redraw();
+                        })
+                        .catch(function (response) {
+                            ctrl.error(response.message);
+                            m.redraw();
+                        })
+                    ;
+            }
+            function set_email(e){
+                ctrl.email_address(e.target.value);
+                ctrl.validity(e.target.validationMessage==='');
+            }
+
+        },
+        view: function view(ctrl){
+            return ctrl.quest()? m('', m.trust(ctrl.quest())) :
+
+            m('.container.space.homepage', { config:fullHeight},[
+
+                m('.row.space.centrify', [
+                    m('h1', 'Registration'),
+
+                    m('.col-md-5.space',
+                        m('form.homepage-background', {onsubmit:function (){ return false; }}, [
+
+                            m('.space', 'Email address'),
+                            m('input.form-control', {
+                                type:'email',
+                                placeholder: 'Email address',
+                                value: ctrl.email_address(),
+                                name: 'email_address',
+                                autofocus:true,
+                                oninput: function (e){ return ctrl.set_email(e); },
+                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
+                                config: getStartValue$1(ctrl.email_address)
+                            }),
+                            !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                            m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
+                        ])
+                    )
+                ])
+            ]);
+        }
+    };
+
+    function getStartValue$1(prop){
+        return function (element, isInit) {// !isInit && prop(element.value);
+            if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
+        };
+    }
+
     var jshintOptions = {
         // JSHint Default Configuration File (as on JSHint website)
         // See http://jshint.com/docs/ for more details
@@ -21864,7 +21945,7 @@
                                         value: ctrl.first_name(),
                                         oninput: m.withAttr('value', ctrl.first_name),
                                         onchange: m.withAttr('value', ctrl.first_name),
-                                        config: getStartValue$1(ctrl.first_name)
+                                        config: getStartValue$2(ctrl.first_name)
                                     })
                                 ),
                                 m('fieldset.form-group',
@@ -21875,7 +21956,7 @@
                                         value: ctrl.last_name(),
                                         oninput: m.withAttr('value', ctrl.last_name),
                                         onchange: m.withAttr('value', ctrl.last_name),
-                                        config: getStartValue$1(ctrl.last_name)
+                                        config: getStartValue$2(ctrl.last_name)
                                     }
                                     ))
                                 ,m('fieldset.form-group',
@@ -21886,7 +21967,7 @@
                                         value: ctrl.email(),
                                         oninput: m.withAttr('value', ctrl.email),
                                         onchange: m.withAttr('value', ctrl.email),
-                                        config: getStartValue$1(ctrl.email)
+                                        config: getStartValue$2(ctrl.email)
                                     })
                                 )
                             ]),
@@ -21899,7 +21980,7 @@
         }
     };
 
-    function getStartValue$1(prop){
+    function getStartValue$2(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -22762,7 +22843,7 @@
                     value: ctrl.email(),
                     oninput: m.withAttr('value', ctrl.email),
                     onchange: m.withAttr('value', ctrl.email),
-                    config: getStartValue$2(ctrl.email)
+                    config: getStartValue$3(ctrl.email)
                 })
             ])
             ,
@@ -22773,7 +22854,7 @@
 
     ]); };
 
-    function getStartValue$2(prop){
+    function getStartValue$3(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -22789,7 +22870,7 @@
                     value: ctrl.password(),
                     oninput: m.withAttr('value', ctrl.password),
                     onchange: m.withAttr('value', ctrl.password),
-                    config: getStartValue$3(ctrl.password)
+                    config: getStartValue$4(ctrl.password)
                 }),
                 m('label.space', 'Confirm password:'),
                 m('input.form-control', {
@@ -22798,7 +22879,7 @@
                     value: ctrl.confirm(),
                     oninput: m.withAttr('value', ctrl.confirm),
                     onchange: m.withAttr('value', ctrl.confirm),
-                    config: getStartValue$3(ctrl.confirm)
+                    config: getStartValue$4(ctrl.confirm)
                 })
             ]),
             !ctrl.password_error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.password_error()),
@@ -22806,7 +22887,7 @@
         ])
     ]); };
 
-    function getStartValue$3(prop){
+    function getStartValue$4(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -23293,7 +23374,7 @@
                                         value: ctrl.subject(),
                                         oninput: m.withAttr('value', ctrl.subject),
                                         onchange: m.withAttr('value', ctrl.subject),
-                                        config: getStartValue$4(ctrl.subject)
+                                        config: getStartValue$5(ctrl.subject)
                                     }
                                     )),
                                 m('fieldset.form-group',
@@ -23303,7 +23384,7 @@
                                         value: ctrl.body(),
                                         oninput: m.withAttr('value', ctrl.body),
                                         onchange: m.withAttr('value', ctrl.body),
-                                        config: getStartValue$4(ctrl.body)
+                                        config: getStartValue$5(ctrl.body)
                                     }
                                     )),
                                 m('fieldset.form-group',
@@ -23344,7 +23425,7 @@
         }
     };
 
-    function getStartValue$4(prop){
+    function getStartValue$5(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -23542,7 +23623,7 @@
                                     value: ctrl.username(),
                                     oninput: m.withAttr('value', ctrl.username),
                                     onchange: m.withAttr('value', ctrl.username),
-                                    config: getStartValue$5(ctrl.username)
+                                    config: getStartValue$6(ctrl.username)
                                 })
                             ]),
 
@@ -23554,7 +23635,7 @@
         }
     };
 
-    function getStartValue$5(prop){
+    function getStartValue$6(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -26230,6 +26311,8 @@
         '/edit_registration': editRegistration,
 
         '/login': loginComponent,
+        '/registration': registrationComponent,
+
         '/studies' : mainComponent,
         '/studies/statistics_old' : statisticsComponent$1,
         '/studies/statistics' : statisticsComponent,
@@ -26300,7 +26383,7 @@
                         if(ctrl.role()!=='du' && ctrl.role()!=='su'  && m.route() === '/deployList')
                             return m.route('./');
 
-                        if (!is_view &&  !ctrl.isloggedin  && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
+                        if (!is_view &&  !ctrl.isloggedin && m.route() !== '/registration'   && m.route() !== '/login' && m.route() !== '/recovery' && m.route() !== '/activation/'+ m.route.param('code') && m.route() !== '/change_password/'+ m.route.param('code')  && m.route() !== '/reset_password/'+ m.route.param('code')){
                             var url = m.route();
                             m.route('/login');
                             location.hash = encodeURIComponent(url);
