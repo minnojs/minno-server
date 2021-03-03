@@ -6,10 +6,10 @@ const config = require.main.require('../config'),
     Study = require('../models/studySchema'), //created model loading here
     DataRequest = mongoose.model('DataRequest'),
     Data = mongoose.model('Data'),
-    experimentSessionSchema2=require('../models/experimentSessionSchema'),
+    experimentSessionSchema2 = require('../models/experimentSessionSchema'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
-const logger = require('../../logger');	
+const logger = require('../../logger');
 
 let fs = require('fs-extra');
 // var convert = require('mongoose_schema-json');
@@ -21,19 +21,17 @@ const defaultValueName = 'data'; // name used for non json items in data arrays
 const dataPrefix = ''; //prefix for items in the data array
 const dataFileLocation = config.base_folder;
 const dataFolder = config.dataFolder;
-let maxRowsInMemory=config.data_rows;
-if(typeof maxRowsInMemory == 'undefined')
-{
-    maxRowsInMemory=100000;
+let maxRowsInMemory = config.data_rows;
+if (typeof maxRowsInMemory == 'undefined') {
+    maxRowsInMemory = 100000;
 }
 
 
 exports.insertData = function(req, res) {
     let reqBody = req.body;
-    reqBody=sanitizeMongoJson(reqBody);
+    reqBody = sanitizeMongoJson(reqBody);
     let newData = new Data(reqBody);
-    if(newData.sessionId<0)
-    {
+    if (newData.sessionId < 0) {
         res.json('{message:"data not saved due to negative sessionID"}');
         return;
     }
@@ -44,18 +42,77 @@ exports.insertData = function(req, res) {
     });
 };
 exports.insertExperimentSession = async function(params) {
-    if(params.sessionId<0)
-    {
+    if (params.sessionId < 0) {
         return null;
     }
     let newData = new experimentSessionSchema(params);
     newData.save(function(err) {
         if (err)
-            logger.error({message:err});
+            logger.error({
+                message: err
+            });
         return true;
     });
 };
+exports.getExperimentStarts = async function(params) {
+    if (params.studyId < 0 || !params.rulesId) {
+        return null;
+    }
+    let results = await experimentSessionSchema.countDocuments({
+        studyId: params.studyId,
+        state: 'started',
+        rulesId: params.rulesId
+    }, (err, dataRequests) => {
+        if (err) {
+            throw err;
+        } else {
+            return dataRequests;
+        }
 
+
+    });
+    return results;
+
+};
+exports.getExperimentCompletes = async function(params) {
+    if (params.studyId < 0 || !params.rulesId) {
+        return null;
+    }
+    let results = await experimentSessionSchema.countDocuments({
+        studyId: params.studyId,
+        state: 'completed',
+        rulesId: params.rulesId
+    }, (err, dataRequests) => {
+        if (err) {
+            throw err;
+        } else {
+            return dataRequests;
+        }
+
+
+    });
+    return results;
+
+};
+exports.updateExperimentStatus = async function(params) {
+    if (params.sessionId < 0) {
+        return null;
+    }
+    let results = await experimentSessionSchema.findOneAndUpdate({
+        sessionId: params.sessionId
+    }, {
+        status: params.status
+    }, (err, dataRequests) => {
+        if (err) {
+            throw err;
+        } else {
+            return dataRequests;
+        }
+
+
+    });
+    return results;
+};
 
 exports.getDownloadRequests = function(studyIds) {
     return new Promise(function(resolve, reject) {
@@ -78,17 +135,15 @@ exports.getDownloadRequests = function(studyIds) {
 additionalColumns: an array with strings of additional fields to include in the output
 dateSize: How to group date fields.  'day' 'month' 'year' are the options.  defaults 'day'
 **/
-exports.getStatistics = async function(studyId, versionId,  startDate, endDate, dateSize, additionalColumns) 	
-{
+exports.getStatistics = async function(studyId, versionId, startDate, endDate, dateSize, additionalColumns) {
     if (typeof studyId == 'undefined' || !studyId)
         throw new Error('Error: studyId must be specified');
     let findObject = {};
     let pos = 0;
     findObject.studyId = studyId;
-    if(Array.isArray(studyId))
-    {
-        findObject.studyId ={};
-        findObject.studyId.$in=studyId;
+    if (Array.isArray(studyId)) {
+        findObject.studyId = {};
+        findObject.studyId.$in = studyId;
     }
     if (typeof startDate !== 'undefined' && startDate) {
         findObject.createdDate = {};
@@ -100,74 +155,62 @@ exports.getStatistics = async function(studyId, versionId,  startDate, endDate, 
         }
         findObject.createdDate.$lt = new Date(endDate);
     }
-    if(typeof versionId !== 'undefined' && versionId)
-    {
-        if(Array.isArray(versionId))
-        {
-            versionId.forEach(function(vId,index,versionId) {
-                versionId[index]=vId.toString();
+    if (typeof versionId !== 'undefined' && versionId) {
+        if (Array.isArray(versionId)) {
+            versionId.forEach(function(vId, index, versionId) {
+                versionId[index] = vId.toString();
             });
-            findObject.versionId={};
-            findObject.versionId.$in=versionId;
-        }
-        else
-        {
-            findObject.versionId=versionId.toString();
+            findObject.versionId = {};
+            findObject.versionId.$in = versionId;
+        } else {
+            findObject.versionId = versionId.toString();
         }
     }
-    let fieldsToFind='descriptiveId -_id createdDate version ';
-    if(typeof dateSize == 'undefined' || dateSize!='day' && dateSize!='month' && dateSize!='year')
-    {
-        dateSize='none';
+    let fieldsToFind = 'descriptiveId -_id createdDate version ';
+    if (typeof dateSize == 'undefined' || dateSize != 'day' && dateSize != 'month' && dateSize != 'year') {
+        dateSize = 'none';
     }
-    if(additionalColumns!=null)
-    {
+    if (additionalColumns != null) {
         additionalColumns.forEach(function(element) {
-            fieldsToFind+=' '+element;
+            fieldsToFind += ' ' + element;
         });
     }
-    let dataMap=new Map(),currentDate=null;
-    let cursor = experimentSessionSchema.find(findObject,fieldsToFind).lean().cursor({ batchSize: 10000 });//;
+    let dataMap = new Map(),
+        currentDate = null;
+    let cursor = experimentSessionSchema.find(findObject, fieldsToFind).lean().cursor({
+        batchSize: 10000
+    }); //;
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-        if(dateSize!='none')
-        {
-            dataEntry.createdDate=formatDate(dataEntry.createdDate,dateSize);
-        }
-        else
-        {
-            currentDate=dataEntry.createdDate;
+        if (dateSize != 'none') {
+            dataEntry.createdDate = formatDate(dataEntry.createdDate, dateSize);
+        } else {
+            currentDate = dataEntry.createdDate;
             delete dataEntry.createdDate;
         }
-        let dataHash=JSON.stringify(dataEntry).hashCode();
-		
-        if(!dataMap.has(dataHash))
-        {
-            dataEntry['#earliest_session']=currentDate;
-            dataEntry['#latest_session']=currentDate;
-            dataEntry['#totalsessions']=1;
-            dataMap.set(dataHash,dataEntry);
-        }
-        else
-        {
-            dataEntry=dataMap.get(dataHash);
+        let dataHash = JSON.stringify(dataEntry).hashCode();
+
+        if (!dataMap.has(dataHash)) {
+            dataEntry['#earliest_session'] = currentDate;
+            dataEntry['#latest_session'] = currentDate;
+            dataEntry['#totalsessions'] = 1;
+            dataMap.set(dataHash, dataEntry);
+        } else {
+            dataEntry = dataMap.get(dataHash);
             dataEntry['#totalsessions']++;
-            if(dataEntry['#earliest_session']>currentDate)
-            {
-                dataEntry['#earliest_session']=currentDate;
+            if (dataEntry['#earliest_session'] > currentDate) {
+                dataEntry['#earliest_session'] = currentDate;
             }
-            if(dataEntry['#latest_session']<currentDate)
-            {
-                dataEntry['#latest_session']=currentDate;
+            if (dataEntry['#latest_session'] < currentDate) {
+                dataEntry['#latest_session'] = currentDate;
             }
-            dataMap.set(dataHash,dataEntry);
+            dataMap.set(dataHash, dataEntry);
         }
-			
+
     }
-    let output=new Array(dataMap.size);
-    pos=0;
-    for (let key of dataMap.keys())
-    {
-        output[pos]=dataMap.get(key);
+    let output = new Array(dataMap.size);
+    pos = 0;
+    for (let key of dataMap.keys()) {
+        output[pos] = dataMap.get(key);
         pos++;
     }
     return output;
@@ -179,7 +222,7 @@ exports.getStatistics = async function(studyId, versionId,  startDate, endDate, 
 exports.getData2 = function(req, res) {
     res.send(exports.getData(req.get('studyId')));
 };
-exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate,versionId) {
+exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate, versionId) {
     if (typeof studyId == 'undefined' || !studyId)
         throw new Error('Error: studyId must be specified');
     let findObject = {};
@@ -188,13 +231,12 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let rowSplitString = '\t';
     let fileSuffix = '.txt';
     let fileConfig = {};
-    let dataCount=0;
-    let useDataArray=true;
+    let dataCount = 0;
+    let useDataArray = true;
     findObject.studyId = studyId;
-    if(Array.isArray(studyId))
-    {
-        findObject.studyId ={};
-        findObject.studyId.$in=studyId;
+    if (Array.isArray(studyId)) {
+        findObject.studyId = {};
+        findObject.studyId.$in = studyId;
     }
     if (typeof startDate !== 'undefined' && startDate) {
         findObject.createdDate = {};
@@ -206,19 +248,15 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         }
         findObject.createdDate.$lt = new Date(endDate);
     }
-    if(typeof versionId !== 'undefined' && versionId)
-    {
-        if(Array.isArray(versionId))
-        {
-            versionId.forEach(function(vId,index,versionId) {
-                versionId[index]=vId.toString();
+    if (typeof versionId !== 'undefined' && versionId) {
+        if (Array.isArray(versionId)) {
+            versionId.forEach(function(vId, index, versionId) {
+                versionId[index] = vId.toString();
             });
-            findObject.versionId={};
-            findObject.versionId.$in=versionId;
-        }
-        else
-        {
-            findObject.versionId==versionId.toString();
+            findObject.versionId = {};
+            findObject.versionId.$in = versionId;
+        } else {
+            findObject.versionId == versionId.toString();
         }
     }
     if (fileFormat == 'csv') {
@@ -228,133 +266,142 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     if (fileFormat == 'tsv') {
         rowSplitString = '\t';
     }
-    let newMapArray=[maxRowsInMemory];
-    let cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });//;
+    let newMapArray = [maxRowsInMemory];
+    let cursor = Data.find(findObject).lean().cursor({
+        batchSize: 10000
+    }); //;
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
         let newMaps = getInitialVarMap(dataEntry);
-        if(useDataArray){
-            newMapArray[dataCount]=newMaps;
-            dataCount++;}
-        if(dataCount>=maxRowsInMemory) //query is too large to store in memory
+        if (useDataArray) {
+            newMapArray[dataCount] = newMaps;
+            dataCount++;
+        }
+        if (dataCount >= maxRowsInMemory) //query is too large to store in memory
         {
-            useDataArray=false;
-            dataCount=0;
-            newMapArray=[]; 
+            useDataArray = false;
+            dataCount = 0;
+            newMapArray = [];
         }
         newMaps.forEach(function(newMap) {
             updateMap(dataMaps, newMap, fileSplitVar);
         });
-			
+
     }
     if (Object.keys(dataMaps).length == 0) {
 
-        throw {status:500, message: 'ERROR: No data!'};
-		
+        throw {
+            status: 500,
+            message: 'ERROR: No data!'
+        };
+
     }
-    cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });//;
-    try{
+    cursor = experimentSessionSchema.find(findObject).lean().cursor({
+        batchSize: 10000
+    }); //;
+    try {
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             let newMaps = getInitialVarMap(dataEntry);
-            if(useDataArray){
-                newMapArray[dataCount]=newMaps;
-                dataCount++;}
-            if(dataCount>=maxRowsInMemory) //query is too large to store in memory
+            if (useDataArray) {
+                newMapArray[dataCount] = newMaps;
+                dataCount++;
+            }
+            if (dataCount >= maxRowsInMemory) //query is too large to store in memory
             {
-                useDataArray=false;
-                dataCount=0;
-                newMapArray=[]; 
+                useDataArray = false;
+                dataCount = 0;
+                newMapArray = [];
             }
             newMaps.forEach(function(newMap) {
                 updateMap(dataMaps, newMap, fileSplitVar);
             });
-			
-        }}
-    catch(e)
-    {
-        logger.error({message:e});
+
+        }
+    } catch (e) {
+        logger.error({
+            message: e
+        });
     }
     await fileSetup(fileConfig);
-    if(useDataArray  && typeof fileFormat !== 'undefined' && fileFormat!=='json')
-    {
-        for(let x=0;x<dataCount;x++){
-            let newMaps=newMapArray[x];
-            for await (let newMap of newMaps)
-            {
-                let filename=null;
-                if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+    if (useDataArray && typeof fileFormat !== 'undefined' && fileFormat !== 'json') {
+        for (let x = 0; x < dataCount; x++) {
+            let newMaps = newMapArray[x];
+            for await (let newMap of newMaps) {
+                let filename = null;
+                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
                     filename = defaultDataFilename;
                 } else {
                     filename = newMap[fileSplitVar];
                 }
                 let dataMap = dataMaps[filename];
-                let row = mapToRow(dataMap, newMap, filename);			
+                let row = mapToRow(dataMap, newMap, filename);
                 writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
             }
         }
-	
-    }
-    else
-    {
-        cursor = cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
-        dataCount=0;
+
+    } else {
+        cursor = cursor = Data.find(findObject).lean().cursor({
+            batchSize: 10000
+        });
+        dataCount = 0;
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             dataCount++;
-            if(typeof fileFormat !== 'undefined' && fileFormat=='json')
-            {
-                writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
+            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
+                writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig);
                 continue;
             }
             //dataEntry = JSON.parse(JSON.stringify(dataEntry));
             let newMaps = getInitialVarMap(dataEntry);
-            for await (let newMap of newMaps)
-            {
-                let filename=null;
-                if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+            for await (let newMap of newMaps) {
+                let filename = null;
+                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
                     filename = defaultDataFilename;
                 } else {
                     filename = newMap[fileSplitVar];
                 }
                 let dataMap = dataMaps[filename];
-                let row = mapToRow(dataMap, newMap, filename);	
+                let row = mapToRow(dataMap, newMap, filename);
                 writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
             }
         }
-        cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
+        cursor = experimentSessionSchema.find(findObject).lean().cursor({
+            batchSize: 10000
+        });
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             dataCount++;
-            if(typeof fileFormat !== 'undefined' && fileFormat=='json')
-            {
-                writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig) ;
+            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
+                writeDataFile(JSON.stringify(dataEntry), defaultDataFilename, fileSuffix, files, fileConfig);
                 continue;
             }
             //dataEntry = JSON.parse(JSON.stringify(dataEntry));
             let newMaps = getInitialVarMap(dataEntry);
-            for await (let newMap of newMaps)
-            {
-                let filename =null;
-                if (fileSplitVar==null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+            for await (let newMap of newMaps) {
+                let filename = null;
+                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
                     filename = defaultDataFilename;
                 } else {
                     filename = newMap[fileSplitVar];
                 }
                 let dataMap = dataMaps[filename];
-                let row = mapToRow(dataMap, newMap, filename);	
+                let row = mapToRow(dataMap, newMap, filename);
                 writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
             }
         }
 
     }
-	
+
     await closeFiles(files);
-    if(dataCount==0  && useDataArray==true) {
-        throw {status:500, message: 'ERROR: No data!'};
+    if (dataCount == 0 && useDataArray == true) {
+        throw {
+            status: 500,
+            message: 'ERROR: No data!'
+        };
     }
     return zipFiles(fileConfig);
 
 
 };
 let mapToRow = function(dataMap, newMap) {
-	
+
     let row = new Array(Object.keys(dataMap).length);
     row.fill(nullDataValue);
     Object.keys(newMap).forEach(function(key) {
@@ -395,13 +442,13 @@ let getInitialVarMap = function(data) {
     });
     let item = data.data;
     /*try {
-		item = JSON.parse(item);
-	} catch (e) {}*/
+        item = JSON.parse(item);
+    } catch (e) {}*/
     let pushVarMaps = false;
-    if ((item!=null && item.length > 0 && typeof item == 'object')) {
+    if ((item != null && item.length > 0 && typeof item == 'object')) {
         item.forEach(function(row, index) {
             if (Object.keys(row).length > 0 && typeof row == 'object') {
-                varMaps.push(getVarMap(row, dataPrefix,  Object.assign({}, varMap)));//JSON.parse(JSON.stringify(varMap))));
+                varMaps.push(getVarMap(row, dataPrefix, Object.assign({}, varMap))); //JSON.parse(JSON.stringify(varMap))));
 
             } else {
                 if (varMap[defaultValueName + varSplit + index] == null) {
@@ -421,8 +468,7 @@ let getInitialVarMap = function(data) {
     return varMaps;
 };
 let getVarMap = function(data, prefix, map) {
-    if(data==null)
-    {
+    if (data == null) {
         return map;
     }
     if (Array.isArray(data)) {
@@ -442,31 +488,31 @@ let getVarMap = function(data, prefix, map) {
     }
     Object.keys(data).forEach(function(key) {
         let item = data[key];
-        if (typeof(item)== 'undefined' || item === null) {
+        if (typeof(item) == 'undefined' || item === null) {
             return;
         }
 
 
         /*try {
-			if (typeof item == 'object'){
-			item = JSON.parse(item);}
-		} catch (e) {}*/
+            if (typeof item == 'object'){
+            item = JSON.parse(item);}
+        } catch (e) {}*/
         if (Array.isArray(item)) {
             map = getVarMap(item, prefix + key + varSplit, map);
         } else {
             if (typeof item == 'object') {
                 Object.keys(item).forEach(function(key2) {
                     let item2 = item[key2];
-                    if (item2!==null && typeof item2 == 'object') {
+                    if (item2 !== null && typeof item2 == 'object') {
                         map = getVarMap(item[key2], prefix + key + varSplit + key2 + varSplit, map);
                     } else {
-                        if (typeof(map[prefix + key + varSplit + key2])=='undefined' || map[prefix + key + varSplit + key2] === null) {
+                        if (typeof(map[prefix + key + varSplit + key2]) == 'undefined' || map[prefix + key + varSplit + key2] === null) {
                             map[prefix + key + varSplit + key2] = item2;
                         }
                     }
                 });
             } else {
-                if (typeof(map[prefix + key])=='undefined' || map[prefix + key] === null) //TODO: what to do if collision happens
+                if (typeof(map[prefix + key]) == 'undefined' || map[prefix + key] === null) //TODO: what to do if collision happens
                 {
                     map[prefix + key] = item;
 
@@ -491,7 +537,7 @@ let updateMap = function(dataMaps, newMap, splitVar) {
     }
     let pos = Object.keys(dataMap).length;
     Object.keys(newMap).forEach(function(key) {
-        if (typeof(dataMap[key])== 'undefined' || dataMap[key] === null) {
+        if (typeof(dataMap[key]) == 'undefined' || dataMap[key] === null) {
             dataMap[key] = pos;
             pos++;
         }
@@ -510,21 +556,19 @@ let updateMap = function(dataMaps, newMap, splitVar) {
 
     return dateString;
 };*/
-let formatDate = function(date,dateSize)
-{
+let formatDate = function(date, dateSize) {
     let dd = date.getDate();
     let mm = date.getMonth();
     let yyyy = date.getFullYear();
 
-    if(dateSize=='day'){
-        return dd + '.' + mm + '.' + yyyy;}
-    if(dateSize=='month')
-    {
+    if (dateSize == 'day') {
+        return dd + '.' + mm + '.' + yyyy;
+    }
+    if (dateSize == 'month') {
         return mm + '.' + yyyy;
     }
-    if(dateSize=='year')
-    {
-        return ''+yyyy;
+    if (dateSize == 'year') {
+        return '' + yyyy;
     }
 };
 let zipFolder = async function(zipPath, zipFolder) {
@@ -538,8 +582,8 @@ let zipFolder = async function(zipPath, zipFolder) {
     // listen for all archive data to be written
     // 'close' event is fired only when a file descriptor is involved
     output.on('close', function() {
-        //	console.log(archive.pointer() + ' total bytes');
-        //	console.log('archiver has been finalized and the output file descriptor has closed.');
+        //    console.log(archive.pointer() + ' total bytes');
+        //    console.log('archiver has been finalized and the output file descriptor has closed.');
     });
 
     // This event is fired when the data source is drained no matter what was the data source.
@@ -573,7 +617,7 @@ let fileSetup = async function(fileConfig) {
     let dataPath = dataFolder + '/';
     let currentTime = new Date();
     currentTime = currentTime.getTime();
-    let zipName=currentTime+makeid(8);
+    let zipName = currentTime + makeid(8);
     let filePrefix = dataFileLocation + dataPath;
     if (!fs.existsSync(filePrefix)) {
         await fs.mkdir(filePrefix);
@@ -584,7 +628,7 @@ let fileSetup = async function(fileConfig) {
     fileConfig.filePrefix = filePrefix;
     fileConfig.zipName = zipName + '.zip';
 };
-let makeid= function(length) {
+let makeid = function(length) {
     let text = '';
     let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -593,8 +637,7 @@ let makeid= function(length) {
 
     return text;
 };
-let closeFiles= async function(files)
-{
+let closeFiles = async function(files) {
     for (let key in files) {
         await files[key].end();
     }
@@ -605,12 +648,11 @@ let writeDataFile = async function(data, filename, fileSuffix, files, fileConfig
     }
     filename = sanitize(filename);
     filename = fileConfig.filePrefix + filename + fileSuffix;
-    if (!files[filename])
-    {
+    if (!files[filename]) {
         let wstream = fs.createWriteStream(filename);
         files[filename] = wstream;
     }
-    await files[filename].write(data);		
+    await files[filename].write(data);
 };
 let writeDataRowToFile = async function(row, map, filename, rowSplitString, fileSuffix, files, fileConfig) {
     if (fileSuffix == null) {
@@ -647,7 +689,7 @@ let zipFiles = async function(fileConfig) {
 };
 
 let csvEscape = function(theString) {
-    if (typeof(theString)!=undefined && theString!==null) {
+    if (typeof(theString) != undefined && theString !== null) {
         theString = theString + '';
     } else {
         return '';
@@ -682,15 +724,15 @@ let arrayToCsvString = function(theArray, separator) {
     return newString;
 };
 let sanitizeMongoJson = function(mongoJson) {
-    if(Array.isArray(mongoJson)){
-        mongoJson.forEach(element => sanitizeMongoJson(element));}
-    else
-    {
-        if (mongoJson instanceof Object){
-            mongoJson=sanitizeMongo(mongoJson);
+    if (Array.isArray(mongoJson)) {
+        mongoJson.forEach(element => sanitizeMongoJson(element));
+    } else {
+        if (mongoJson instanceof Object) {
+            mongoJson = sanitizeMongo(mongoJson);
             for (let key in mongoJson) {
-                mongoJson[key]=sanitizeMongoJson(mongoJson[key]);
-            }}
+                mongoJson[key] = sanitizeMongoJson(mongoJson[key]);
+            }
+        }
     }
     return mongoJson;
 };
@@ -705,11 +747,12 @@ let sanitizeMongo = function(v) {
     return v;
 };
 String.prototype.hashCode = function() {
-    let hash = 0, i, chr;
+    let hash = 0,
+        i, chr;
     if (this.length === 0) return hash;
     for (i = 0; i < this.length; i++) {
-        chr   = this.charCodeAt(i);
-        hash  = ((hash << 5) - hash) + chr;
+        chr = this.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
         hash |= 0; // Convert to 32bit integer
     }
     return hash;
