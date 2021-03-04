@@ -17,6 +17,16 @@ function edit_deploy_url(study_id)
     return `${PIUrl}/deploy/${study_id}`;
 }
 
+
+
+export function deploy2pool(deploy_id)
+{
+    return fetchJson(deploy_url(deploy_id), {
+        method: 'post',
+        body:{}
+    });
+}
+
 export function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status)
 {
     return fetchJson(deploy_url(deploy_id), {

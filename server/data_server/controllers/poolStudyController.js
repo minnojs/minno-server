@@ -11,6 +11,7 @@ exports.insertPoolStudy = async function(poolStudy) {
 
     await newData.save(function(err, data) {
         if (err) {
+            console.log(err);
             logger.error({
                 message: err
             });

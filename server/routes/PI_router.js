@@ -1,6 +1,6 @@
-const express     = require('express');
-const PI          = require('../PI');
-
+const express       = require('express');
+const PI            = require('../PI');
+const research_pool = require('../researchpool');
 const PIRouter = express.Router();
 
 module.exports = PIRouter;
@@ -16,7 +16,7 @@ PIRouter
 PIRouter.route('/research_pool')
     .post(
         function(req, res){
-            return PI.get_all_deploys()
+            return research_pool.getPoolStudies()
                 .then(deploys=>res.json(deploys))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
@@ -53,6 +53,15 @@ PIRouter.route('/deploy_request')
     });
 
 PIRouter.route('/deploy_request/:deploy_id')
+    .post(
+        function(req, res){
+            return PI.add2pool(req.params.deploy_id)
+                .then(research_pool.addPoolStudy)
+
+                .then(deploy=>res.json(deploy))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
+
     .get(
         function(req, res){
             return PI.get_deploy(req.params.deploy_id)

@@ -1,4 +1,4 @@
-import {get_deploy, update_deploy, edit_deploy} from './forms/deployList/deployListModel';
+import {get_deploy, update_deploy, edit_deploy, deploy2pool} from './forms/deployList/deployListModel';
 
 export default reviewDeployDialog;
 import formatDate from 'utils/formatDate_str';
@@ -21,6 +21,7 @@ let reviewDeployDialog = {
             save_deploy,
             was_changed,
             update_pause_rules,
+            do_deploy,
             target_number:m.prop(''),
             comments:m.prop(''),
             reviewer_comments:m.prop(''),
@@ -69,6 +70,13 @@ let reviewDeployDialog = {
             .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
 
         }
+
+        function do_deploy(){
+            return deploy2pool(ctrl.deploy2show()._id);
+                // .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
+
+        }
+
         function load() {
             get_deploy(m.route.param('deployId'))
             .then(request=> {
@@ -77,6 +85,7 @@ let reviewDeployDialog = {
                 ctrl.is_review(m.route() === `/review/${m.route.param('deployId')}`);
                 ctrl.is_pending(ctrl.deploy2show().status==='pending');
                 ctrl.is_approved(ctrl.deploy2show().status==='accept');
+
                 ctrl.priority(ctrl.deploy2show().priority);
             })
             .then(()=>
@@ -140,9 +149,10 @@ let reviewDeployDialog = {
                         m('strong', 'Status:')
                     ]),
                     m('.col-sm-9',[
-                        ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                        ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                         ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                         ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
+                        ctrl.deploy2show().status !== 'running' ? '' : m('strong.text-success', 'Running'),
                         !ctrl.deploy2show().ref_id ? '' :
                             [' ', ctrl.is_review() ? m('a', {href:`/review/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', ' (change request)'))
                                 :
@@ -275,7 +285,7 @@ let reviewDeployDialog = {
                             [
                                 ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.deploy2show().study_id}`)}, 'Back to study'),
                                 !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
-                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> {}}, m('i.fa.fa-paper-plane', ' Deploy'))],
+                                !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> ctrl.do_deploy()}, m('i.fa.fa-paper-plane', ' Deploy'))],
                                 !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
                             ]
                     ])
