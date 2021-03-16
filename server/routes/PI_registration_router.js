@@ -1,7 +1,7 @@
 const express     = require('express');
 const PI          = require('../PI');
 const experiments   = require('../experiments');
-
+const demographicsController   = require('../data_server/controllers/demographicsController');
 const PIRouter = express.Router();
 
 module.exports = PIRouter;
@@ -30,4 +30,10 @@ PIRouter.route('/registration')
 
                 // .then(data=>res.json(data._id))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
-        });
+        })
+	    .put(
+	        function(req, res){
+	            return demographicsController.insertDemographics(req,res)
+	                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+	        }
+	);

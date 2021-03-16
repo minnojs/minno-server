@@ -2,13 +2,22 @@
 const mongoose = require('mongoose'),
     Data2 = require('../models/poolStudySchema'),
     PoolStudy = mongoose.model('PoolStudy'),
-    logger = require('../../logger');
+    logger = require('../../logger'),
+	PI = require('../../PI');
 
 
 
-exports.insertPoolStudy = async function(poolStudy) {
-    let newData = new PoolStudy(poolStudy);
-
+exports.insertPoolStudy = async function(id) {
+	let deploy = await PI.get_deploy(id);
+	let poolStudy={};
+	poolStudy.priority=deploy.priority;
+	poolStudy.email=deploy.email;
+	poolStudy.experiment_file=deploy.experiment_file;
+	poolStudy.rules=deploy.rules;
+	poolStudy.target_number=deploy.target_number;
+	poolStudy.pause_rules=deploy.pause_rules;
+	let newData = new PoolStudy(poolStudy);
+    
     await newData.save(function(err, data) {
         if (err) {
             console.log(err);
@@ -151,4 +160,27 @@ String.prototype.hashCode = function() {
         hash |= 0; // Convert to 32bit integer
     }
     return hash;
+};
+let sanitizeMongoJson = function(mongoJson) {
+    if (Array.isArray(mongoJson)) {
+        mongoJson.forEach(element => sanitizeMongoJson(element));
+    } else {
+        if (mongoJson instanceof Object) {
+            mongoJson = sanitizeMongo(mongoJson);
+            for (let key in mongoJson) {
+                mongoJson[key] = sanitizeMongoJson(mongoJson[key]);
+            }
+        }
+    }
+    return mongoJson;
+};
+let sanitizeMongo = function(v) {
+    if (v instanceof Object) {
+        for (let key in v) {
+            if (/^\$/.test(key)) {
+                delete v[key];
+            }
+        }
+    }
+    return v;
 };

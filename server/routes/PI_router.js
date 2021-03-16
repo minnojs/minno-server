@@ -56,7 +56,7 @@ PIRouter.route('/deploy_request/:deploy_id')
     .post(
         function(req, res){
             return PI.add2pool(req.params.deploy_id)
-                .then(research_pool.addPoolStudy)
+                .then(research_pool.addPoolStudy(req.params.deploy_id))
 
                 .then(deploy=>res.json(deploy))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
