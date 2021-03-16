@@ -14,7 +14,7 @@ PIRouter.route('/registration')
                 .then(data=>
                     // res.json({url:'/registration/'+data._id})
 
-                    res.redirect('/registration/'+data._id)
+                    res.redirect('/launch_registration/'+data._id)
                 )
 
                 // .then(data=>

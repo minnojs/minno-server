@@ -76,7 +76,7 @@ router.get('/play/:study_id/:version_id/:file_id', function(req, res){
 //    console.log('x');
 // });
 
-router.route('/registration/:id')
+router.route('/launch_registration/:id')
     .get(
         function(req, res){
             return PI
