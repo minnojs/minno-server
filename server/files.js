@@ -260,7 +260,6 @@ function rename_file(user_id, study_id, file_id, new_path, server_url) {
         const version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
         const new_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, new_path);
         const exist_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, fid);
-
         return Promise.all([
             fs.rename(exist_file_path, new_file_path),
             studies_comp.update_modify(study_id),
@@ -269,6 +268,7 @@ function rename_file(user_id, study_id, file_id, new_path, server_url) {
         ]);
     })
     .then(() => get_study_files(user_id, study_id, server_url))
+        .catch(err=>console.log(err))
     .then(study => study.files);
 }
 

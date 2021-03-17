@@ -289,7 +289,8 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
                 const versions = study_data.versions;
                 const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
                 let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id);
-                exp_data.file_id = new_file_id;
+                if (exp_data)
+                    exp_data.file_id = new_file_id;
 
                 const studies = db.collection('studies');
                 return studies.updateOne({_id: study_id},
