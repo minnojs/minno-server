@@ -23239,6 +23239,7 @@
                             m('p', 'This will create a URL that launches this study version.'),
                             m('p', 'You will not be able to edit the study files of this version.'),
                             m('p', 'After publishing the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
+                            m('p', 'To modify the files after publishing, you can create a new version ("Create a new version" button will be added below), modify files and publish the new version to replace this version.'),
                             m('.input-group.space', [
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
