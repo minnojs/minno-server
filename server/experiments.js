@@ -47,6 +47,9 @@ function get_experiment_url (req, test=false) {
                 if(!study_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
                 const version_data = study_data.versions.filter(version=>version.hash === req.params.version_id)[0];
+                if(!test && !version_data.availability)
+                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t available.'});
+
                 const exp_data = version_data.experiments.filter(exp=>exp.id === req.params.exp_id)[0];
                 if (!exp_data)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});

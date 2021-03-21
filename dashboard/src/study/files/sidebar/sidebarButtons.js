@@ -6,7 +6,7 @@ import {uploadonchange} from 'utils/uploader';
 export default sidebarButtons;
 
 const sidebarButtons = ({study}, notifications) => {
-    const readonly = study.isReadonly;
+    const readonly = study.isReadonly || study.is_published;
     return m('.sidebar-buttons.btn-toolbar', [
 
 

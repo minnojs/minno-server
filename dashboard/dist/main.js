@@ -12580,7 +12580,7 @@
                     this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
-                    this$1.isReadonly = !study.is_last;
+                    this$1.isReadonly = study.is_readonly;
                     this$1.istemplate = study.is_template;
                     this$1.is_locked = study.is_published;
                     this$1.is_published = study.is_published;
@@ -17036,7 +17036,7 @@
 
             !isJs ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                    m('strong', study.isReadonly ? 'View' : 'Edit')
+                    m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
                 ]),
                 m('a.btn.btn-secondary', {onclick: setMode('syntax'), class: modeClass('syntax')},[
                     m('strong',
@@ -17049,7 +17049,7 @@
             ]),
             !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                    m('strong', study.isReadonly ? 'View' : 'Edit')
+                    m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
                 ]),
             ]),
             !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
@@ -17061,7 +17061,7 @@
             /**
              * Snippets
              **/
-            study.isReadonly ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+            study.isReadonly || study.is_published ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 !/^minno/.test(study.type) ? '' : [
                     APItype !== 'managerAPI' ? '' : [
                         m('a.btn.btn-secondary', {onclick: taskSnippet(observer), title: 'Add task element'}, [
@@ -17123,7 +17123,7 @@
                     ]),
                 ],
 
-                m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly})},[
+                m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly || study.is_published})},[
                     m('strong.fa.fa-save')
                 ])
             ])
@@ -17182,7 +17182,7 @@
                     onSave: save(file), 
                     mode: textMode,
                     jshintOptions: jshintOptions,
-                    isReadonly: study.isReadonly||study.is_locked,
+                    isReadonly: study.isReadonly||study.is_locked||study.is_published,
                     undoManager: file.undoManager,
                     position: file.position
                 }
@@ -18331,7 +18331,7 @@
     var fileContext = function (file, study, notifications) {
         // console.log(notifications);
         var path = !file ? '/' : file.isDir ? file.path : file.basePath;
-        var isReadonly = study.isReadonly;
+        var isReadonly = study.isReadonly || study.is_published;
         var menu = [];
 
         if (!isReadonly) {
@@ -18776,7 +18776,7 @@
     var sidebarButtons = function (ref, notifications) {
         var study = ref.study;
 
-        var readonly = study.isReadonly;
+        var readonly = study.isReadonly || study.is_published;
         return m('.sidebar-buttons.btn-toolbar', [
 
 
@@ -19043,7 +19043,7 @@
                     this$1.loaded = true;
                     this$1.isReadonly = study.is_readonly;
                     this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked;
+                    this$1.is_locked = study.is_locked || study.is_published;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
                     this$1.has_data_permission = study.has_data_permission;

@@ -14,7 +14,7 @@ export default fileContext;
 const fileContext = (file, study, notifications) => {
     // console.log(notifications);
     let path = !file ? '/' : file.isDir ? file.path : file.basePath;
-    let isReadonly = study.isReadonly;
+    let isReadonly = study.isReadonly || study.is_published;
     let menu = [];
 
     if (!isReadonly) {

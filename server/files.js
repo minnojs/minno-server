@@ -93,9 +93,10 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
         return walk(server_url, folder_path, experiments)
         .then(files => {
             const study_user = study_data.users.find(user=>user.user_id===user_id);
+            const is_published = study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published';
             return {
                 study_name:study_data.name,
-                is_published: study_data.versions && study_data.versions.length>1 && study_data.versions[study_data.versions.length-1].state==='Published',
+                is_published: is_published,
                 is_locked: study_data.locked,
                 type: study_data.type,
                 is_public: study_data.is_public,
