@@ -2,6 +2,7 @@ const utils         = require('./utils');
 const connection    = Promise.resolve(require('mongoose').connection);
 const dateFormat    = require('dateformat');
 const versions_comp   = require('./versions');
+const research_pool   = require('./researchpool');
 const Validator = require('node-input-validator');
 const config        = require('../config');
 const path          = require('path');
@@ -83,27 +84,30 @@ function read_review(user_id, deploy_id){
 function add2pool(deploy_id) {
     return connection.then(function (db) {
 
-            const deploys = db.collection('deploys');
-            const studies = db.collection('studies');
-
-            return deploys.findOneAndUpdate({_id: deploy_id},
-                {$set: {status: 'running'}})
-                .then(request => {
-                    return studies.findOne({_id: request.value.study_id})
-                        .then(study_data => {
-                            let versions = study_data.versions;
-                            let version2update = versions.find(version => version.id === request.value.version_id);
-                            let deploy2update = version2update.deploys.find(deploy => deploy.sets.find(set => set._id === deploy_id));
-                            let set2update = deploy2update.sets.find(set => set._id === deploy_id);
-                            set2update.status = 'running';
-                            const studies = db.collection('studies');
-                            return studies.updateOne({_id: request.value.study_id}, {
-                                $set: {versions}
+        const deploys = db.collection('deploys');
+        const studies = db.collection('studies');
+        return get_deploy(deploy_id)
+            .then(deploy=>{
+                research_pool.addPoolStudy(deploy);
+                return deploys.findOneAndUpdate({_id: deploy_id},
+                    {$set: {status: 'running'}})
+                    .then(request => {
+                        return studies.findOne({_id: request.value.study_id})
+                            .then(study_data => {
+                                let versions = study_data.versions;
+                                let version2update = versions.find(version => version.id === request.value.version_id);
+                                let deploy2update = version2update.deploys.find(deploy => deploy.sets.find(set => set._id === deploy_id));
+                                let set2update = deploy2update.sets.find(set => set._id === deploy_id);
+                                set2update.status = 'running';
+                                const studies = db.collection('studies');
+                                return studies.updateOne({_id: request.value.study_id}, {
+                                    $set: {versions}
+                                });
                             });
-                        });
-                })
-        })
-        .then(()=>get_deploy(deploy_id));
+                    });
+            });
+    })
+    .then(()=>get_deploy(deploy_id));
 }
 
 function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {

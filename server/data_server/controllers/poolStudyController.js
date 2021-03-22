@@ -7,8 +7,7 @@ const mongoose = require('mongoose'),
 
 
 
-exports.insertPoolStudy = async function(id) {
-	let deploy = await PI.get_deploy(id);
+exports.insertPoolStudy = async function(deploy) {
 	let poolStudy={};
 	poolStudy.priority=deploy.priority;
 	poolStudy.email=deploy.email;
