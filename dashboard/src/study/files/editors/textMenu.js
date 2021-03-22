@@ -46,7 +46,7 @@ const textMenuView = ({mode, file, study, observer}) => {
 
         !isJs ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
             m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                m('strong', study.isReadonly ? 'View' : 'Edit')
+                m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
             ]),
             m('a.btn.btn-secondary', {onclick: setMode('syntax'), class: modeClass('syntax')},[
                 m('strong',
@@ -59,7 +59,7 @@ const textMenuView = ({mode, file, study, observer}) => {
         ]),
         !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
             m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                m('strong', study.isReadonly ? 'View' : 'Edit')
+                m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
             ]),
         ]),
         !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
@@ -71,7 +71,7 @@ const textMenuView = ({mode, file, study, observer}) => {
         /**
          * Snippets
          **/
-        study.isReadonly ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+        study.isReadonly || study.is_published ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
             !/^minno/.test(study.type) ? '' : [
                 APItype !== 'managerAPI' ? '' : [
                     m('a.btn.btn-secondary', {onclick: taskSnippet(observer), title: 'Add task element'}, [
@@ -133,7 +133,7 @@ const textMenuView = ({mode, file, study, observer}) => {
                 ]),
             ],
 
-            m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly})},[
+            m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly || study.is_published})},[
                 m('strong.fa.fa-save')
             ])
         ])

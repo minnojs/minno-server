@@ -38,7 +38,11 @@ export const moveFile = (file, study, notifications) => () => {
 
         if (response && newPath() !== file.basePath)
             return moveAction(targetPath, file, study)
-            .then(()=>notifications.show_success(`'${file.name}' successfully moved to '${newPath()}'`));
+                .then(()=>notifications.show_success(`'${file.name}' successfully moved to '${newPath()}'`))
+                .catch(response => messages.alert({
+                    header: 'Failed to move File',
+                    content: m('p.alert.alert-danger', response.message)
+                }));
     });
 };
 
@@ -49,9 +53,9 @@ export let duplicateFile = (file, study) => () => {
         postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
         prop: newPath
     })
-        .then(response => {
-            if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
-        });
+    .then(response => {
+        if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
+    });
 };
 
 export let copyFile = (file, study, notifications) => () => {
@@ -80,8 +84,13 @@ export let renameFile = (file, study, notifications) => () => {
     .then(response => {
         if (response && newPath() !== file.name)
             return moveAction(newPath(), file, study)
+
                 .then(()=>notifications.show_success(`'${file.name}' successfully renamed to '${newPath()}'`))
-                .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${encodeURIComponent(encodeURIComponent(newPath()))}`): '');
+                .then(()=>file.id === m.route.param('fileId') ? m.route(`/editor/${study.id}/file/${encodeURIComponent(encodeURIComponent(newPath()))}`): '')
+                .catch(response => messages.alert({
+                    header: 'Failed to rename File',
+                    content: m('p.alert.alert-danger', response.message)
+                }));
     });
 
 };
@@ -142,32 +151,15 @@ export let delete_experiment = (file, study, notifications) => () => {
 };
 
 function moveAction(newPath, file, study){
-    const isFocused = file.id === m.route.param('fileId');
-
-    const def = study
+    return study
         .move(newPath, file) // the actual movement
-        .then(redirect)
-        .catch(response => messages.alert({
-            header: 'Move/Rename File',
-            content: m('p.alert.alert-danger', response.message)
-        }))
-        .then(m.redraw); // redraw after server response
-
-    m.redraw();
-    return def;
-
-    function redirect(response){
-        // redirect only if the file is chosen, otherwise we can stay right here...
-        if (isFocused) m.route(`/editor/${study.id}/file/${encodeURI(file.id)}`);
-        return response;
-    }
+        .then(m.redraw);
 }
 
 function copyAction(path, file, study_id, new_study_id){
     let def = file
         .copy(path, study_id, new_study_id) // the actual movement
         .catch(response => messages.alert({
-
             header: 'Copy File',
             content: m('p.alert.alert-danger', response.message)
         }))
@@ -226,7 +218,7 @@ export let save = file => () => {
         .then(m.redraw)
         .catch(err => messages.alert({
             header: 'Error Saving:',
-            content: err.message
+            content: m('p.alert.alert-danger', err.message)
         }));
 };
 
@@ -243,7 +235,7 @@ export let  createFile = (study, name, content) => {
         })
         .catch(err => messages.alert({
             header: 'Failed to create file:',
-            content: err.message
+            content: m('p.alert.alert-danger', err.message)
         }));
 };
 
@@ -258,7 +250,7 @@ export let  duplicateAction = (study, file, new_path) => {
         })
         .catch(err => messages.alert({
             header: 'Failed to create file:',
-            content: err.message
+            content: m('p.alert.alert-danger', err.message)
         }));
 };
 
@@ -276,7 +268,7 @@ export let createDir = (study, path='') => () => {
         .then(m.redraw)
         .catch(err => messages.alert({
             header: 'Failed to create directory:',
-            content: err.message
+            content: m('p.alert.alert-danger', err.message)
         }));
 };
 

@@ -16,8 +16,7 @@ const PERMISSION_READ_ONLY = 'read only';
 function create_version_obj(study_id, state, id) {
     const now     = new Date();
     const creation_date = dateFormat(now, 'yyyymmdd.HHMMss');
-
-    return {id, hash: generate_hash(study_id, creation_date, state), creation_date, state, experiments:[]};
+    return {id, hash: generate_hash(study_id, creation_date, state), creation_date, state, experiments:[], availability: true};
 }
 
 function generate_hash(study_id, creation_date, state, id) {
@@ -323,7 +322,6 @@ function duplicate_study(user_id, study_id, new_study_name) {
                                     duplicate_experiments(study_data, experiments)
                                         .then(() => ({study_id: study_data._id}))
                                         .catch(() => Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'}))
-
                                 );
                     });
             });

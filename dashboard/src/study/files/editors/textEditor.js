@@ -53,7 +53,7 @@ const textContent = (ctrl, {file, study, observer}) => {
                 onSave: save(file), 
                 mode: textMode,
                 jshintOptions,
-                isReadonly: study.isReadonly||study.is_locked,
+                isReadonly: study.isReadonly||study.is_locked||study.is_published,
                 undoManager: file.undoManager,
                 position: file.position
             }

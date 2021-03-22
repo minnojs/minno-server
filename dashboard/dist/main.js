@@ -12768,7 +12768,7 @@
                     this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
                     var files = this$1.parseFiles(study.files);
                     this$1.loaded = true;
-                    this$1.isReadonly = !study.is_last;
+                    this$1.isReadonly = study.is_readonly;
                     this$1.istemplate = study.is_template;
                     this$1.is_locked = study.is_published;
                     this$1.is_published = study.is_published;
@@ -13295,7 +13295,11 @@
 
             if (response && newPath() !== file.basePath)
                 return moveAction(targetPath, file, study)
-                .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully moved to '" + (newPath()) + "'")); });
+                    .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully moved to '" + (newPath()) + "'")); })
+                    .catch(function (response) { return messages.alert({
+                        header: 'Failed to move File',
+                        content: m('p.alert.alert-danger', response.message)
+                    }); });
         });
     }; };
 
@@ -13306,9 +13310,9 @@
             postContent: m('p.text-muted', 'You can move a file to a specific folder be specifying the full path. For example "images/img.jpg"'),
             prop: newPath
         })
-            .then(function (response) {
-                if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
-            });
+        .then(function (response) {
+            if (response && newPath() !== file.name) return duplicateAction(study, file, newPath);
+        });
     }; };
 
     var copyFile = function (file, study, notifications) { return function () {
@@ -13337,8 +13341,13 @@
         .then(function (response) {
             if (response && newPath() !== file.name)
                 return moveAction(newPath(), file, study)
+
                     .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully renamed to '" + (newPath()) + "'")); })
-                    .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(newPath()))))): ''; });
+                    .then(function (){ return file.id === m.route.param('fileId') ? m.route(("/editor/" + (study.id) + "/file/" + (encodeURIComponent(encodeURIComponent(newPath()))))): ''; })
+                    .catch(function (response) { return messages.alert({
+                        header: 'Failed to rename File',
+                        content: m('p.alert.alert-danger', response.message)
+                    }); });
         });
 
     }; };
@@ -13399,32 +13408,15 @@
     }; };
 
     function moveAction(newPath, file, study){
-        var isFocused = file.id === m.route.param('fileId');
-
-        var def = study
+        return study
             .move(newPath, file) // the actual movement
-            .then(redirect)
-            .catch(function (response) { return messages.alert({
-                header: 'Move/Rename File',
-                content: m('p.alert.alert-danger', response.message)
-            }); })
-            .then(m.redraw); // redraw after server response
-
-        m.redraw();
-        return def;
-
-        function redirect(response){
-            // redirect only if the file is chosen, otherwise we can stay right here...
-            if (isFocused) m.route(("/editor/" + (study.id) + "/file/" + (encodeURI(file.id))));
-            return response;
-        }
+            .then(m.redraw);
     }
 
     function copyAction(path, file, study_id, new_study_id){
         var def = file
             .copy(path, study_id, new_study_id) // the actual movement
             .catch(function (response) { return messages.alert({
-
                 header: 'Copy File',
                 content: m('p.alert.alert-danger', response.message)
             }); })
@@ -13464,7 +13456,7 @@
             .then(m.redraw)
             .catch(function (err) { return messages.alert({
                 header: 'Error Saving:',
-                content: err.message
+                content: m('p.alert.alert-danger', err.message)
             }); });
     }; };
 
@@ -13481,7 +13473,7 @@
             })
             .catch(function (err) { return messages.alert({
                 header: 'Failed to create file:',
-                content: err.message
+                content: m('p.alert.alert-danger', err.message)
             }); });
     };
 
@@ -13496,7 +13488,7 @@
             })
             .catch(function (err) { return messages.alert({
                 header: 'Failed to create file:',
-                content: err.message
+                content: m('p.alert.alert-danger', err.message)
             }); });
     };
 
@@ -13517,7 +13509,7 @@
             .then(m.redraw)
             .catch(function (err) { return messages.alert({
                 header: 'Failed to create directory:',
-                content: err.message
+                content: m('p.alert.alert-danger', err.message)
             }); });
     };
     };
@@ -17120,7 +17112,7 @@
 
             !isJs ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                    m('strong', study.isReadonly ? 'View' : 'Edit')
+                    m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
                 ]),
                 m('a.btn.btn-secondary', {onclick: setMode('syntax'), class: modeClass('syntax')},[
                     m('strong',
@@ -17133,7 +17125,7 @@
             ]),
             !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 m('a.btn.btn-secondary', {onclick: setMode('edit'), class: modeClass('edit')},[
-                    m('strong', study.isReadonly ? 'View' : 'Edit')
+                    m('strong', study.isReadonly || study.is_published ? 'View' : 'Edit')
                 ]),
             ]),
             !isMd ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
@@ -17145,7 +17137,7 @@
             /**
              * Snippets
              **/
-            study.isReadonly ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
+            study.isReadonly || study.is_published ? '' : m('.btn-group.btn-group-sm.pull-xs-right', [
                 !/^minno/.test(study.type) ? '' : [
                     APItype !== 'managerAPI' ? '' : [
                         m('a.btn.btn-secondary', {onclick: taskSnippet(observer), title: 'Add task element'}, [
@@ -17207,7 +17199,7 @@
                     ]),
                 ],
 
-                m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly})},[
+                m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly || study.is_published})},[
                     m('strong.fa.fa-save')
                 ])
             ])
@@ -17266,7 +17258,7 @@
                     onSave: save(file), 
                     mode: textMode,
                     jshintOptions: jshintOptions,
-                    isReadonly: study.isReadonly||study.is_locked,
+                    isReadonly: study.isReadonly||study.is_locked||study.is_published,
                     undoManager: file.undoManager,
                     position: file.position
                 }
@@ -18415,7 +18407,7 @@
     var fileContext = function (file, study, notifications) {
         // console.log(notifications);
         var path = !file ? '/' : file.isDir ? file.path : file.basePath;
-        var isReadonly = study.isReadonly;
+        var isReadonly = study.isReadonly || study.is_published;
         var menu = [];
 
         if (!isReadonly) {
@@ -18860,7 +18852,7 @@
     var sidebarButtons = function (ref, notifications) {
         var study = ref.study;
 
-        var readonly = study.isReadonly;
+        var readonly = study.isReadonly || study.is_published;
         return m('.sidebar-buttons.btn-toolbar', [
 
 
@@ -19127,7 +19119,7 @@
                     this$1.loaded = true;
                     this$1.isReadonly = study.is_readonly;
                     this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked;
+                    this$1.is_locked = study.is_locked || study.is_published;
                     this$1.is_published = study.is_published;
                     this$1.is_public = study.is_public;
                     this$1.has_data_permission = study.has_data_permission;

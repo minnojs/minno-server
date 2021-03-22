@@ -22,7 +22,7 @@ const studyPrototype = {
                 this.version = study.versions.filter(version_obj=>version_obj.id === parseInt(version))[0];
                 const files = this.parseFiles(study.files);
                 this.loaded = true;
-                this.isReadonly = !study.is_last;
+                this.isReadonly = study.is_readonly;
                 this.istemplate = study.is_template;
                 this.is_locked = study.is_published;
                 this.is_published = study.is_published;
