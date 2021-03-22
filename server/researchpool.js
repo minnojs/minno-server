@@ -14,11 +14,11 @@ exports.getPoolStudies = async function() {
 	console.log(arrayOfPoolStudies);
     return arrayOfPoolStudies;
 };
-exports.addPoolStudy = async function(deploy) {
+exports.addPoolStudy = async function(deploy_id) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-    let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
+    let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy_id);
     arrayOfPoolStudies.push(newPoolStudy);
 };
 exports.removePoolStudy = async function(poolStudy) {
@@ -73,6 +73,8 @@ exports.checkRules = function(target, rules) {
         return false;
     }
 };
+
+
 
 const RulesComparator = {
     '>': function(element, participant) {
