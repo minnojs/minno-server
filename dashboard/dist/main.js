@@ -23857,14 +23857,11 @@
                 }); };
 
                 var create= function () { return create_version(ctrl.study.id)
-                    .then(function (res){ return ctrl.study.versions.push(res); })
-                    .then(function (){ return ctrl.study.is_published = false; })
-                    .then(function (){ return ctrl.under_develop(true); })
+                    .then(function (){ return window.location.reload(true); })
                     .catch(function (e) {
                         error(e.message);
                         ask();
-                    })
-                    .then(m.redraw); };
+                    }); };
                 ask();
             }
 

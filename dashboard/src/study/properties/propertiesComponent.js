@@ -144,14 +144,11 @@ let propertiesComponent = {
             });
 
             let create= () => create_version(ctrl.study.id)
-                .then(res=>ctrl.study.versions.push(res))
-                .then(()=>ctrl.study.is_published = false)
-                .then(()=>ctrl.under_develop(true))
+                .then(()=> window.location.reload(true))
                 .catch(e => {
                     error(e.message);
                     ask();
-                })
-                .then(m.redraw);
+                });
             ask();
         }
 
