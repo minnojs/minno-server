@@ -3,12 +3,15 @@ const mongoose = require('mongoose'),
     Data2 = require('../models/poolStudySchema'),
     PoolStudy = mongoose.model('PoolStudy'),
     logger = require('../../logger'),
-	PI = require('../../PI');
+	PI = require('../../PI'),
+    connection    = Promise.resolve(require('mongoose').connection);
 
 
 
-exports.insertPoolStudy = async function(deploy) {
+exports.insertPoolStudy = async function(deploy_id) {
 	let poolStudy={};
+    const deploys = db.collection('deploys');
+    let deploy=await deploys.findOne({_id:deploy_id});
 	poolStudy.priority=deploy.priority;
 	poolStudy.email=deploy.email;
 	poolStudy.experiment_file=deploy.experiment_file;
