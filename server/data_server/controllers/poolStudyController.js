@@ -8,10 +8,11 @@ const mongoose = require('mongoose'),
 
 
 
-exports.insertPoolStudy = async function(deploy_id) {
+exports.insertPoolStudy = async function(deploy) {
 	let poolStudy={};
-    const deploys = db.collection('deploys');
-    let deploy=await deploys.findOne({_id:deploy_id});
+    poolStudy.study_id=deploy.study_id;
+    poolStudy.version_id=deploy.version_id;
+
 	poolStudy.priority=deploy.priority;
 	poolStudy.email=deploy.email;
 	poolStudy.experiment_file=deploy.experiment_file;

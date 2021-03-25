@@ -28,7 +28,7 @@ let poolComponent = {
         function permissionFilter (study){
             if(ctrl.permissionChoice() === 'my')
                 return  ctrl.studies().includes(study.study_id);
-            return true;
+            return ctrl.studies();
         }
 
         function globalFilter (study){
@@ -55,6 +55,7 @@ let poolComponent = {
             .then(ctrl.studies)
             .then(()=>ctrl.studies(ctrl.studies().filter(study=>study.permission==='owner' || study.permission==='can edit').map(study=>study.id)))
             .then(()=>getAllPoolStudies())
+
             .then(ctrl.list)
             .then(ctrl.loaded)
             .catch(ctrl.error)
@@ -133,23 +134,22 @@ let poolComponent = {
                                     m('a', {href:'', onclick:e=>ctrl.view_rules(e, study.pause_rules)}, !study.pause_rules ? '' : study.pause_rules.name)
                                 ]),
 
-
                                 // ### Completions
                                 m('td', [
-                                    study.startedSessions ? (100 * study.completedSessions / study.startedSessions).toFixed(1) + '% ' : 'n/a ',
+                                    study.starts ? (100 * study.completes / study.starts).toFixed(1) + '% ' : 'n/a ',
                                     m('i.fa.fa-info-circle'),
                                     m('.info-box', [
                                         m('.card', [
                                             m('.card-header', 'Completion Details'),
                                             m('ul.list-group.list-group-flush',[
                                                 m('li.list-group-item', [
-                                                    m('strong', 'Target Completions: '), study.targetCompletions
+                                                    m('strong', 'Target Completions: '), study.completes
                                                 ]),
                                                 m('li.list-group-item', [
-                                                    m('strong', 'Started Sessions: '), study.startedSessions
+                                                    m('strong', 'Started Sessions: '), study.starts
                                                 ]),
                                                 m('li.list-group-item', [
-                                                    m('strong', 'Completed Sessions: '), study.completedSessions
+                                                    m('strong', 'Completed Sessions: '), study.completes
                                                 ])
                                             ])
                                         ])
@@ -157,12 +157,12 @@ let poolComponent = {
                                 ]),
 
                                 // ### Date
-                                m('td', formatDate(new Date(study.creationDate))),
+                                m('td', formatDate(new Date(study.createdDate))),
 
                                 // ### Status
                                 m('td', [
                                     {
-                                        accept: m('span.label.label-success', 'Running'),
+                                        running: m('span.label.label-success', 'Running'),
                                         pending: m('span.label.label-info', 'Paused'),
                                         reject: m('span.label.label-danger', 'Stopped')
                                     }[study.status]

@@ -88,8 +88,10 @@ function add2pool(deploy_id) {
         const studies = db.collection('studies');
         return get_deploy(deploy_id)
             .then(deploy=>{
-                research_pool.addPoolStudy(deploy);
-                return deploys.findOneAndUpdate({_id: deploy_id},
+                return research_pool.addPoolStudy(deploy)
+                    .then(()=>
+
+                deploys.findOneAndUpdate({_id: deploy_id},
                     {$set: {status: 'running'}})
                     .then(request => {
                         return studies.findOne({_id: request.value.study_id})
@@ -104,7 +106,7 @@ function add2pool(deploy_id) {
                                     $set: {versions}
                                 });
                             });
-                    });
+                    }));
             });
     })
     .then(()=>get_deploy(deploy_id));

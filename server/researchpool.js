@@ -11,14 +11,13 @@ exports.getPoolStudies = async function() {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-	console.log(arrayOfPoolStudies);
     return arrayOfPoolStudies;
 };
-exports.addPoolStudy = async function(deploy_id) {
+exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-    let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy_id);
+    let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
     arrayOfPoolStudies.push(newPoolStudy);
 };
 exports.removePoolStudy = async function(poolStudy) {
