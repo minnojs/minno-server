@@ -12,6 +12,7 @@ exports.insertPoolStudy = async function(deploy) {
 	let poolStudy={};
     poolStudy.study_id=deploy.study_id;
     poolStudy.version_id=deploy.version_id;
+    poolStudy.request_id=deploy._id;
 
 	poolStudy.priority=deploy.priority;
 	poolStudy.email=deploy.email;
