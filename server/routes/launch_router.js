@@ -20,7 +20,12 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
         .then(displayExperiment(req.query, res,req.fingerprint))
         .catch(displayErrorPage(res));
 });
-
+router.get('/launch/:exp_id/:version_id/:registration_id',function(req, res){
+    return experiments
+        .get_experiment_url(req)
+        .then(displayExperiment(req.query, res,req.fingerprint,req.params.registration_id))
+        .catch(displayErrorPage(res));
+});
 
 router.get('/test/:exp_id/:version_id',function(req, res){
     return experiments

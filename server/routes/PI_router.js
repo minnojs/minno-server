@@ -20,6 +20,8 @@ PIRouter.route('/research_pool')
                 .then(deploys=>res.json(deploys))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
+
+		
 PIRouter.route('/edit_registration')
     .put(
         function(req, res){
@@ -33,6 +35,7 @@ PIRouter.route('/edit_registration')
                 .then(registration=>res.json(registration))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
+
 PIRouter.route('/deploy_request')
     .get(
         function(req, res){

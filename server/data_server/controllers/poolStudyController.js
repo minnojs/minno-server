@@ -51,7 +51,7 @@ exports.getAllPoolStudies = async function() {
 
 exports.getRunningPoolStudies = async function() {
 
-    let results = await PoolStudy.find({
+   /* let results = await PoolStudy.find({
         status: 'running'
     }, (err, dataRequests) => {
         if (err) {
@@ -65,7 +65,16 @@ exports.getRunningPoolStudies = async function() {
         }
 
 
-    });
+    });*/
+	   let cursor=PoolStudy.find({
+        status: 'running'
+    }).lean().cursor({
+	           batchSize: 10000
+	       });
+		   let results=[];
+		   for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+			   results.push(dataEntry);
+		   }
     return results;
 };
 exports.deletePoolStudy = async function(poolStudy) {

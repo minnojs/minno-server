@@ -1,4 +1,6 @@
 const PoolStudyController = require('./data_server/controllers/poolStudyController');
+const DemographicsStudyController = require('./data_server/controllers/demographicsController');
+const experiments   = require('./experiments');
 
 let arrayOfPoolStudies = null;
 const loadPoolStudies = async function() {
@@ -33,15 +35,20 @@ exports.removePoolStudy = async function(poolStudy) {
     }
     return false;
 };
-exports.assignStudy = async function(user_demographics) {
-    if (!arrayOfPoolStudies) {
+exports.assignStudy = async function(registration_id,res) {
+	if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
+	let user_demographics = DemographicsStudyController.getUserDemographics(registration_id);
     let legalStudies = [];
     for (const element of arrayOfPoolStudies) {
-        if (RulesComparator[element.comparator](element, user_demographics)) {
+        if (element&& element.comparator && RulesComparator[element.comparator](element, user_demographics)) {
             legalStudies.push(element);
         }
+		else if(element && element.priority)
+		{
+			legalStudies.push(element); //study without rules gets assigned to everyone
+		}
     }
     if (legalStudies.length == 0) {
         return null;
@@ -54,15 +61,31 @@ exports.assignStudy = async function(user_demographics) {
         }
     }
     let randValue = Math.floor(Math.random() * totalPriority) + 1;
+	let result=null;
     for (const element of legalStudies) {
         let priority = element.priority;
         if (Number.isInteger(priority)) {
             randValue -= priority;
             if (randValue <= 0) {
-                return element;
+                result= element;
+				break;
             }
         }
     }
+	if(result==null)
+	{
+		res.status(200).json({result:'no studies available'});
+	}
+	else
+	{
+		
+		/*console.log(result);
+		console.log("type is"+typeof result);
+		console.log("prop "+Object.getOwnPropertyNames(result)); 
+		console.log(Object.keys(result));
+		console.log(result["experiment_file"]);*/
+		 res.redirect('/launch/'+result.experiment_file.id+'/'+registration_id)
+	}
 
 };
 exports.checkRules = function(target, rules) {
