@@ -1,7 +1,11 @@
 const config = require('../config');
+
+
+
 const fs           = require('fs-extra');
 const path         = require('path');
 const dropbox      = require('./dropbox');
+
 const studies_comp = require('./studies');
 const {has_write_permission} = studies_comp;
 const {get_file_content}   = require('./files');
@@ -10,6 +14,7 @@ const {get_file_content}   = require('./files');
 function get_properties(user_id, study_id, file_id) {
     return get_file_content(user_id, study_id, file_id);
 }
+
 
 function save_file(user_id, study_id, file_id, responses, stimuli, conditions_data, constants) {
     let conditions = [];
@@ -29,6 +34,8 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
     return has_write_permission(user_id, study_id)
         .then(function({study_data}){
             return fs.readFile(config.base_folder+'/server/views/cognitive_task.js', 'utf8', function(err, contents) {
+
+
                 contents = write_possible_answers(contents, responses);
                 contents = write_constants(contents, constants);
                 contents = write_instructions(contents, constants.instructions);
@@ -38,9 +45,17 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
                 contents = write_sequence(contents, conditions_data);
 
                 const properties = {responses, stimuli, conditions_data, constants};
-                fs.writeFile(path.join(config.user_folder, study_data.folder_name, file_id), JSON.stringify(properties), 'utf8');
+                const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                if (latest_version.state === 'Published')
+                    return Promise.reject({status:500, message: 'Published version cannot be edited'})
+                const version_id = latest_version.id;
+
+                const path2write = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file_id);
+
+
+                fs.writeFile(path2write, JSON.stringify(properties), 'utf8');
                 const output_file = `${path.parse(file_id).name}.js`;
-                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, output_file), contents, 'utf8')
+                return fs.writeFile(path.join(config.user_folder, study_data.folder_name, 'v'+version_id, output_file), contents, 'utf8')
                     .then(function(){
                         const file_url = path.join('..',config.user_folder,study_data.folder_name, output_file);
                         return studies_comp.update_modify(study_id)
