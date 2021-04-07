@@ -31,7 +31,6 @@ dropboxRouter.route('/set')
     .get(
         function(req, res){
             const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-
             const user_id = req.session.user.id;
             const code = req.query.code;
             return dropbox.get_access_token(code, server_url)
