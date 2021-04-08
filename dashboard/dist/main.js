@@ -21828,7 +21828,7 @@
                             m('.row',[
                                 m('.col-sm-2',  m('strong', 'Experiment')),
                                 m('.col-sm-2', [
-                                    m('select.c-select.form-control',{onchange: function (e) { return false && select_experiment(ctrl, e.target.value); }}, [
+                                    m('select.c-select.form-control',{onchange: function (e) { return select_experiment(ctrl, e.target.value); }}, [
                                         ctrl.version().experiments.length===1 ?
                                             [
                                                 select_experiment(ctrl, ctrl.version().experiments[0].id),

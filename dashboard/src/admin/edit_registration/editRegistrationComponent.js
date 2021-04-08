@@ -110,7 +110,7 @@ let editRegistration = {
                         m('.row',[
                             m('.col-sm-2',  m('strong', 'Experiment')),
                             m('.col-sm-2', [
-                                m('select.c-select.form-control',{onchange: e => false && select_experiment(ctrl, e.target.value)}, [
+                                m('select.c-select.form-control',{onchange: e => select_experiment(ctrl, e.target.value)}, [
                                     ctrl.version().experiments.length===1 ?
                                         [
                                             select_experiment(ctrl, ctrl.version().experiments[0].id),
