@@ -23146,6 +23146,7 @@
         controller: function controller(){
             var ctrl = {
                 sent:false,
+                message:m.prop(''),
                 username: m.prop(''),
                 error: m.prop(''),
                 recoveryAction: recoveryAction
@@ -23157,6 +23158,7 @@
                     .catch(function (response) {
                         ctrl.error(response.message);
                     })
+                    .then(function (res){ return ctrl.message(res.message); })
                     .then(function (){ctrl.sent = true; m.redraw();});
             }
         },
@@ -23166,7 +23168,7 @@
                     ?
                     [
                         m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                        m('h5', 'Recovery request successfully sent!')
+                        m('h5', ctrl.message())
                     ]
                     :
                     m('.card.card-inverse.col-md-4', [

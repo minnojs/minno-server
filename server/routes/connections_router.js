@@ -50,9 +50,8 @@ connectionsRouter.post('/logout',function(req, res) {
 
 connectionsRouter.post('/recovery',function(req, res){
     const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-
     return users.reset_password_request(req.body.username, server_url)
-        .then(()=>res.json({}))
+        .then(message=>res.json(message))
         .catch(err=>
             res.status(err.status || 500).json({message:err.message}));
 });
