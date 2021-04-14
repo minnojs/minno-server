@@ -151,7 +151,7 @@ basePathRouter.route('/download_data')
 
 
 mongoose.Promise = global.Promise;
-mongoose.connect(config.mongo_url, {useNewUrlParser:true,server: { reconnectTries: 60 * 60 * 24, reconnectInterval: 1000 }});
+mongoose.connect(config.mongo_url, {useNewUrlParser:true, useUnifiedTopology: truese});
 mongoose.connection.once('open', function() {
     // All OK - fire (emit) a ready event so that express can start
     app.emit('ready');

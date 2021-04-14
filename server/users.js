@@ -3,6 +3,7 @@ const sender      = require('./sender');
 const fs          = require('fs-extra');
 const path        = require('path');
 const utils       = require('./utils');
+const config_db = require('./config_db');
 
 const connection    = Promise.resolve(require('mongoose').connection);
 const Validator = require('node-input-validator');
@@ -259,8 +260,13 @@ function reset_password_request(user_name, server_url)
         return users.findOneAndUpdate({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
             .then(function(user_data)
             {
-                sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: server_url+'/dashboard/?/reset_password/'+reset_code});
-                return ({});
+                return config_db.get_gmail().then(function (gmail_details) {
+                    if (!gmail_details)
+                        return ({message: 'Recovery request successfully sent to administrator'});
+
+                    sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: server_url+'/dashboard/?/reset_password/'+reset_code});
+                    return ({message: 'Recovery request successfully sent!'});
+                });
             });
     });
 }
