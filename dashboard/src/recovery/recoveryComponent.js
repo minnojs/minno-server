@@ -6,6 +6,7 @@ let recoveryComponent = {
     controller(){
         const ctrl = {
             sent:false,
+            message:m.prop(''),
             username: m.prop(''),
             error: m.prop(''),
             recoveryAction
@@ -17,6 +18,7 @@ let recoveryComponent = {
                 .catch(response => {
                     ctrl.error(response.message);
                 })
+                .then(res=>ctrl.message(res.message))
                 .then(()=>{ctrl.sent = true; m.redraw();});
         }
     },
@@ -26,7 +28,7 @@ let recoveryComponent = {
                 ?
                 [
                     m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                    m('h5', 'Recovery request successfully sent!')
+                    m('h5', ctrl.message())
                 ]
                 :
                 m('.card.card-inverse.col-md-4', [
