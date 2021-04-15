@@ -12,7 +12,7 @@ let demographicsSchema = new Schema({
     },
     demographics: {
         type: Object,
-		default:{}
+        default:{}
     }
 });
 

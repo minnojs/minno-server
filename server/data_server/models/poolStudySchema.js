@@ -26,12 +26,12 @@ let poolStudySchema = new Schema({
     },
     rules: {
         type: Object,
-		default: {}
+        default: {}
         //required: [true, 'A condition is required for pool studies']
     },
     pause_rules: {
         type: Object,
-		default: {}
+        default: {}
         //required: [true, 'An autopause is required for pool studies']
     }
 

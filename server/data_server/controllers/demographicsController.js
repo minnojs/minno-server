@@ -9,10 +9,9 @@ const mongoose = require('mongoose'),
 exports.insertDemographics = async function(req,res) {
     let reqBody = req.body;
     reqBody = sanitizeMongoJson(reqBody);
-	console.log(reqBody);
     let newData = new Demographics(reqBody);
 
-    await newData.save(function(err, data) {
+    await newData.save(function(err) {
         if (err) {
             console.log(err);
             logger.error({
