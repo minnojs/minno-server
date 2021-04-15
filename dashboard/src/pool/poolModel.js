@@ -11,6 +11,10 @@ function pool_url()
 {
     return `${PIUrl}/research_pool`;
 }
+function pool_study_url(deploy_id)
+{
+    return `${PIUrl}/research_pool/${deploy_id}`;
+}
 
 
 export function createStudy(study){
@@ -42,10 +46,19 @@ export function updateStatus(study, status){
         .then(interceptErrors);
 }
 
+
+
+
 export function getAllPoolStudies(){
     return fetchJson(pool_url(), {method:'post', body: {action:'getAllPoolStudies'}})
         .then(interceptErrors);
 }
+
+export function pause_study(study){
+    return fetchJson(pool_study_url(study._id), {method:'post'})
+        .then(interceptErrors);
+}
+
 
 export function getLast100PoolUpdates(){
     return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})

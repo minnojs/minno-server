@@ -21,6 +21,16 @@ PIRouter.route('/research_pool')
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });
 
+PIRouter.route('/research_pool/:deploy_id')
+    .post(
+        function(req, res){
+            console.log(req.params.deploy_id);
+            // return research_pool.getPoolStudies()
+            //     .then(deploys=>res.json(deploys))
+            //     .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        });
+
+
 		
 PIRouter.route('/edit_registration')
     .put(

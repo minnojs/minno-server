@@ -25,6 +25,12 @@ exports.addPoolStudy = async function(deploy) {
     let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
     arrayOfPoolStudies.push(newPoolStudy);
 };
+
+exports.updateStudyPool = async function(study) {
+    //study = sanitizeMongoJson(study);
+    await PoolStudyController.updatePoolStudy(study);
+};
+
 exports.removePoolStudy = async function(poolStudy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();

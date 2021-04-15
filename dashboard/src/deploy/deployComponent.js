@@ -171,9 +171,7 @@ let deployDialog = {
                         ASTERISK, m('strong.space', 'Experiment File')
                     ]),
                     m('.col-sm-2',[
-                        ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions'),
-                        m('p.small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
-                    ]),
+                        ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions')]),
                     m('.col-sm-2',[
                         ASTERISK, m('strong.space', 'Priority')
                     ]),
@@ -204,7 +202,7 @@ let deployDialog = {
                             ])
                         ]),
                         m('.col-sm-2',[
-                            m('input.form-control.space', {value: set.target_number,  placeholder:'Target Number', oninput: e => {ctrl.update_target_number(set_id, e.target.value);}})
+                            m('input.form-control.space', {value: set.target_number,  type:'number', min:'0', placeholder:'Target Number', oninput: e => {ctrl.update_target_number(set_id, e.target.value);}})
                         ]),
                         m('.col-sm-2',[
                             m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', oninput: e => {ctrl.update_priority(set_id, e.target.value);}})

@@ -164,7 +164,6 @@ mongoose.connection.once('open', function() {
 app.on('ready', async function() {
     const curConfig=await configDb.get_config();
     await Server.startServer(app,curConfig);
-
 });
 
 process.on('unhandledRejection', (reason, p) => {

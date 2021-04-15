@@ -10274,6 +10274,10 @@
     {
         return (PIUrl + "/research_pool");
     }
+    function pool_study_url(deploy_id)
+    {
+        return (PIUrl + "/research_pool/" + deploy_id);
+    }
 
 
     function createStudy(study){
@@ -10305,10 +10309,19 @@
             .then(interceptErrors);
     }
 
+
+
+
     function getAllPoolStudies(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getAllPoolStudies'}})
             .then(interceptErrors);
     }
+
+    function pause_study(study){
+        return fetchJson(pool_study_url(study._id), {method:'post'})
+            .then(interceptErrors);
+    }
+
 
     function getLast100PoolUpdates(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
@@ -10809,12 +10822,12 @@
     function pause(study){
         return messages.confirm({
             header: 'Pause Study:',
-            content: ("Are you sure you want to pause \"" + (study.studyId) + "\"?")
+            content: ("Are you sure you want to pause \"" + (study.study_name) + "\"?")
         })
             .then(function (response) {
                 if(response) {
                     studyPending(study, true)();
-                    return updateStatus(study, STATUS_PAUSED)
+                    return pause_study(study)
                         .then(function (){ return study.studyStatus = STATUS_PAUSED; })
                         .catch(reportError('Pause Study'))
                         .then(studyPending(study, false));
@@ -11199,11 +11212,11 @@
                                             m('.l', 'Loading...')
                                             :
                                             m('.btn-group', [
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.play.bind(null, study)}, [
-                                                    m('i.fa.fa-edit')
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
+                                                    m('i.fa.fa-pause')
                                                 ]),
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.reset.bind(null, study)}, [
-                                                    m('i.fa.fa-refresh')
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.edit.bind(null, study)}, [
+                                                    m('i.fa.fa-edit')
                                                 ]),
                                                 m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
                                                     m('i.fa.fa-close')
@@ -21252,9 +21265,7 @@
                             ASTERISK, m('strong.space', 'Experiment File')
                         ]),
                         m('.col-sm-2',[
-                            ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions'),
-                            m('p.small.text-muted', 'For private studies (not in the Project Implicit research pool), enter n/a')
-                        ]),
+                            ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions')]),
                         m('.col-sm-2',[
                             ASTERISK, m('strong.space', 'Priority')
                         ]),
@@ -21283,7 +21294,7 @@
                                 ])
                             ]),
                             m('.col-sm-2',[
-                                m('input.form-control.space', {value: set.target_number,  placeholder:'Target Number', oninput: function (e) {ctrl.update_target_number(set_id, e.target.value);}})
+                                m('input.form-control.space', {value: set.target_number,  type:'number', min:'0', placeholder:'Target Number', oninput: function (e) {ctrl.update_target_number(set_id, e.target.value);}})
                             ]),
                             m('.col-sm-2',[
                                 m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', oninput: function (e) {ctrl.update_priority(set_id, e.target.value);}})
@@ -21427,6 +21438,7 @@
                 is_review:m.prop(false),
                 is_pending:m.prop(false),
                 is_approved:m.prop(false),
+                is_running:m.prop(false),
                 edit_mode:m.prop(false),
                 deployer_rules : m.prop(),
                 pause_rules: m.prop(''),
@@ -21500,6 +21512,7 @@
                     ctrl.is_review(m.route() === ("/review/" + (m.route.param('deployId'))));
                     ctrl.is_pending(ctrl.deploy2show().status==='pending');
                     ctrl.is_approved(ctrl.deploy2show().status==='accept');
+                    ctrl.is_running(ctrl.deploy2show().status==='running');
 
                     ctrl.priority(ctrl.deploy2show().priority);
                 })
@@ -21701,6 +21714,7 @@
                                     ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.deploy2show().study_id))); }}, 'Back to study'),
                                     !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Edit'))],
                                     !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: function (){ return ctrl.do_deploy(); }}, m('i.fa.fa-paper-plane', ' Deploy'))],
+                                    !ctrl.is_running() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: function (){ return ctrl.change_edit_mode(true); }}, m('i.fa.fa-edit', ' Change request'))],
                                     !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
                                 ]
                         ])

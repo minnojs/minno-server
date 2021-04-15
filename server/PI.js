@@ -81,35 +81,59 @@ function read_review(user_id, deploy_id){
     });
 }
 
-function add2pool(deploy_id) {
-    return connection.then(function (db) {
 
+
+function add_study2pool(deploy) {
+    return connection.then(function (db) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
-        return get_deploy(deploy_id)
-            .then(deploy=>{
-                return research_pool.addPoolStudy(deploy)
-                    .then(()=>
+        return deploys.findOneAndUpdate({_id: deploy._id},
+            {$set: {status: 'running'}})
+            .then(request => {
+                return studies.findOne({_id: request.value.study_id})
+                    .then(study_data => {
+                        let versions = study_data.versions;
+                        let version2update = versions.find(version => version.id === request.value.version_id);
+                        let deploy2update = version2update.deploys.find(deploy => deploy.sets.find(set => set._id === deploy._id));
+                        let set2update = deploy2update.sets.find(set => set._id === deploy._id);
+                        set2update.status = 'running';
+                        const studies = db.collection('studies');
+                        return studies.updateOne({_id: request.value.study_id}, {
+                            $set: {versions}
+                        });
+                    });
 
-                deploys.findOneAndUpdate({_id: deploy_id},
-                    {$set: {status: 'running'}})
-                    .then(request => {
-                        return studies.findOne({_id: request.value.study_id})
-                            .then(study_data => {
-                                let versions = study_data.versions;
-                                let version2update = versions.find(version => version.id === request.value.version_id);
-                                let deploy2update = version2update.deploys.find(deploy => deploy.sets.find(set => set._id === deploy_id));
-                                let set2update = deploy2update.sets.find(set => set._id === deploy_id);
-                                set2update.status = 'running';
-                                const studies = db.collection('studies');
-                                return studies.updateOne({_id: request.value.study_id}, {
-                                    $set: {versions}
-                                });
-                            });
-                    }));
             });
-    })
+    });
+}
+
+
+function add2pool(deploy_id) {
+    return get_deploy(deploy_id)
+        .then(deploy=>{
+            if(deploy.ref_id)
+                return get_deploy(deploy.ref_id)
+                    .then(old_deploy=>update_in_pool(deploy, old_deploy));
+            return research_pool.addPoolStudy(deploy)
+                .then(()=>add_study2pool(deploy));
+        })
     .then(()=>get_deploy(deploy_id));
+}
+
+function update_in_pool(new_deploy, old_deploy) {
+    if (old_deploy.status!=='running')
+        return research_pool.addPoolStudy(new_deploy)
+            .then(()=>add_study2pool(new_deploy));
+    const new_id = new_deploy._id;
+    new_deploy._id = old_deploy._id;
+    console.log(old_deploy._id);
+    return research_pool.updateStudyPool(new_deploy)
+        // .catch(err=>console.log(err))
+        .then(()=>{
+            return false;
+            new_deploy._id = new_id;
+            return add_study2pool(new_deploy)
+        });
 }
 
 function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {

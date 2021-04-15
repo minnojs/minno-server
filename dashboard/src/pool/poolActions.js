@@ -1,4 +1,4 @@
-import {updateStudy, createStudy, updateStatus, getStudyId, resetStudy, STATUS_RUNNING, STATUS_PAUSED, STATUS_STOP} from './poolModel';
+import {updateStudy, pause_study, createStudy, updateStatus, getStudyId, resetStudy, STATUS_RUNNING, STATUS_PAUSED, STATUS_STOP} from './poolModel';
 import messages from 'utils/messagesComponent';
 import spinner from 'utils/spinnerComponent';
 import editMessage from './poolEditComponent';
@@ -24,12 +24,12 @@ export function play(study){
 export function pause(study){
     return messages.confirm({
         header: 'Pause Study:',
-        content: `Are you sure you want to pause "${study.studyId}"?`
+        content: `Are you sure you want to pause "${study.study_name}"?`
     })
         .then(response => {
             if(response) {
                 studyPending(study, true)();
-                return updateStatus(study, STATUS_PAUSED)
+                return pause_study(study)
                     .then(()=>study.studyStatus = STATUS_PAUSED)
                     .catch(reportError('Pause Study'))
                     .then(studyPending(study, false));

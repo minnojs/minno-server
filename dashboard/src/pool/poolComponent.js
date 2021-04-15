@@ -175,11 +175,11 @@ let poolComponent = {
                                         m('.l', 'Loading...')
                                         :
                                         m('.btn-group', [
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.play.bind(null, study)}, [
-                                                m('i.fa.fa-edit')
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
+                                                m('i.fa.fa-pause')
                                             ]),
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.reset.bind(null, study)}, [
-                                                m('i.fa.fa-refresh')
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.edit.bind(null, study)}, [
+                                                m('i.fa.fa-edit')
                                             ]),
                                             m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
                                                 m('i.fa.fa-close')

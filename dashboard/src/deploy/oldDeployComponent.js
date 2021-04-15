@@ -12,6 +12,7 @@ let reviewDeployDialog = {
             is_review:m.prop(false),
             is_pending:m.prop(false),
             is_approved:m.prop(false),
+            is_running:m.prop(false),
             edit_mode:m.prop(false),
             deployer_rules : m.prop(),
             pause_rules: m.prop(''),
@@ -85,6 +86,7 @@ let reviewDeployDialog = {
                 ctrl.is_review(m.route() === `/review/${m.route.param('deployId')}`);
                 ctrl.is_pending(ctrl.deploy2show().status==='pending');
                 ctrl.is_approved(ctrl.deploy2show().status==='accept');
+                ctrl.is_running(ctrl.deploy2show().status==='running');
 
                 ctrl.priority(ctrl.deploy2show().priority);
             })
@@ -286,6 +288,7 @@ let reviewDeployDialog = {
                                 ctrl.edit_mode() ?  '' : m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.deploy2show().study_id}`)}, 'Back to study'),
                                 !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Edit'))],
                                 !ctrl.is_approved() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-danger.btn-md', {title:'Deploy', onclick: ()=> ctrl.do_deploy()}, m('i.fa.fa-paper-plane', ' Deploy'))],
+                                !ctrl.is_running() || ctrl.edit_mode() ?  '' : [' ', m('.btn.btn-primary.btn-md', {title:'Edit', onclick: ()=>ctrl.change_edit_mode(true)}, m('i.fa.fa-edit', ' Change request'))],
                                 !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
                             ]
                     ])
