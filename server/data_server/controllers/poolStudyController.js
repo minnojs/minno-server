@@ -10,7 +10,7 @@ const mongoose = require('mongoose'),
 
 exports.insertPoolStudy = async function(deploy) {
     let poolStudy = {};
-    deploy = sanitizeMongoJson(deploy);
+    //deploy = sanitizeMongoJson(deploy);
     poolStudy.study_id = deploy.study_id;
     poolStudy.version_id = deploy.version_id;
     poolStudy.request_id = deploy._id;
@@ -35,7 +35,7 @@ exports.insertPoolStudy = async function(deploy) {
     });
 };
 exports.updatePoolStudy = async function(study) {
-    study = sanitizeMongoJson(study);
+    //study = sanitizeMongoJson(study);
     await PoolStudy.findByIdAndUpdate(study._id, study);
 };
 
