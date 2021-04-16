@@ -73,12 +73,8 @@ function publish_version(user_id, study_id, update_url) {
 
             let version_hash = generate_id(study_id, Math.floor(Date.now() / 1000), 'Published');
             last_version.hash = version_hash;
-            if (update_url==='keep'){
-                const last_published_version = published_versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
-                const last_hash = last_published_version.hash;
-                last_published_version.hash = version_hash;
-                last_version.hash = last_hash;
-            }
+            if (update_url!=='keep')
+                last_version.hash = version_hash;
 
             last_version.state = 'Published';
 
