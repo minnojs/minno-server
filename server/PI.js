@@ -172,9 +172,8 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
                         {$set: {versions:versions}})
                         .then(()=> {
                             if (status==='accept' && version2update.state ==='Develop') {
-                                return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id));
+                                return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id), 'keep');
                             }
-
                         });
                 })
                 .then(get_all_deploys);
