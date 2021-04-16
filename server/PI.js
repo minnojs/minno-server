@@ -126,9 +126,9 @@ function update_in_pool(new_deploy, old_deploy) {
             .then(()=>add_study2pool(new_deploy));
     const new_id = new_deploy._id;
     new_deploy._id = old_deploy._id;
-    console.log(old_deploy._id);
+    console.log(new_deploy);
     return research_pool.updateStudyPool(new_deploy)
-        // .catch(err=>console.log(err))
+        .catch(err=>console.log(err))
         .then(()=>{
             return false;
             new_deploy._id = new_id;

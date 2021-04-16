@@ -35,12 +35,15 @@ exports.insertPoolStudy = async function(deploy) {
     });
 };
 exports.updatePoolStudy = async function(study) {
-    console.log({study:study._id});
+    //study = sanitizeMongoJson(study);
+    await PoolStudy.findByIdAndUpdate(study._id, study);
+};
+
+exports.updatePoolStudy2 = async function(study) {
     //study = sanitizeMongoJson(study);
     await PoolStudy.findOneAndUpdate({request_id: study._id},
         {$set: {priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules}});
 };
-
 
 
 exports.getAllPoolStudies = async function() {
