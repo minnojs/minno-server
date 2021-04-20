@@ -13,7 +13,7 @@ exports.insertPoolStudy = async function(deploy) {
     //deploy = sanitizeMongoJson(deploy);
     poolStudy.study_id = deploy.study_id;
     poolStudy.version_id = deploy.version_id;
-    poolStudy.request_id = deploy._id;
+    poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
     poolStudy.priority = deploy.priority;
     poolStudy.email = deploy.email;
     poolStudy.experiment_file = deploy.experiment_file;
@@ -25,18 +25,12 @@ exports.insertPoolStudy = async function(deploy) {
     poolStudy.user_name = deploy.user_name;
     let newData = new PoolStudy(poolStudy);
 
-    await newData.save(function(err, data) {
-        if (err) {
-            logger.error({
-                message: err
-            });
-        }
-        return data;
-    });
+    return await newData.save();
 };
 exports.updatePoolStudy = async function(study) {
     //study = sanitizeMongoJson(study);
-    await PoolStudy.findByIdAndUpdate(study._id, study);
+	let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
+    await PoolStudy.findByIdAndUpdate(study._id, updateObject);
 };
 
 exports.updatePoolStudy2 = async function(study) {

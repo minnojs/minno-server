@@ -8,6 +8,10 @@ let poolStudySchema = new Schema({
         type: Date,
         default: Date.now
     },
+	_id: {
+		type: String,//mongoose.ObjectId,	
+		required: [true, 'An ID is required for pool studies']
+	},
     status: {
         type: String,
         default: 'running'

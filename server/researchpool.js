@@ -14,7 +14,7 @@ exports.getPoolStudies = async function() {
     }
     /*for(let study of arrayOfPoolStudies)
     {
-        exports.removePoolStudy(study);
+        await exports.removePoolStudy(study);
     }*/
     return arrayOfPoolStudies;
 };
@@ -28,7 +28,7 @@ exports.addPoolStudy = async function(deploy) {
 
 exports.updateStudyPool = async function(study) {
     //study = sanitizeMongoJson(study);
-    await PoolStudyController.updatePoolStudy2(study);
+    await PoolStudyController.updatePoolStudy(study);
 };
 
 exports.removePoolStudy = async function(poolStudy) {
@@ -38,7 +38,7 @@ exports.removePoolStudy = async function(poolStudy) {
     for (let x = 0; x < arrayOfPoolStudies.length; x++) {
         if (arrayOfPoolStudies[x] == poolStudy) {
             arrayOfPoolStudies.splice(x, 1);
-            PoolStudyController.deletePoolStudy(poolStudy);
+            await PoolStudyController.deletePoolStudy(poolStudy);
             return true;
         }
     }
