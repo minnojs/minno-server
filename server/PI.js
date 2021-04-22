@@ -85,7 +85,6 @@ function read_review(user_id, deploy_id){
 
 function add_study2pool(deploy) {
     return connection.then(function (db) {
-
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
         return deploys.findOneAndUpdate({_id: deploy._id},
@@ -93,17 +92,11 @@ function add_study2pool(deploy) {
             .then(request => {
                 return studies.findOne({_id: request.value.study_id})
                     .then(study_data => {
-
                         let versions = study_data.versions;
-
                         let version2update = versions.find(version => version.id === request.value.version_id);
-
                         let deploy2update   = version2update.deploys.find(deploy2check=>deploy2check.sets.find(set=>set._id==deploy._id));
-
-
                         let set2update      = deploy2update.sets.find(set=>set._id===deploy._id);
                         set2update.status = 'running';
-
                         const studies = db.collection('studies');
                         return studies.updateOne({_id: request.value.study_id}, {
                             $set: {versions}
@@ -118,8 +111,8 @@ function add_study2pool(deploy) {
 function add2pool(deploy_id) {
     return get_deploy(deploy_id)
         .then(deploy=>{
-            if(deploy.ref_id)
-                return get_deploy(deploy.ref_id)
+            if(deploy.running_id)
+                return get_deploy(deploy.running_id)
                     .then(old_deploy=>update_in_pool(deploy, old_deploy));
             return research_pool.addPoolStudy(deploy)
                 .then(()=>add_study2pool(deploy));
@@ -128,11 +121,14 @@ function add2pool(deploy_id) {
 }
 
 function update_in_pool(new_deploy, old_deploy) {
-    if (old_deploy.status!=='running')
-        return research_pool.addPoolStudy(new_deploy)
-            .then(()=>add_study2pool(new_deploy));
+    // if (old_deploy.status!=='running')
+    //     return research_pool.addPoolStudy(new_deploy)
+    //         .then(()=>add_study2pool(new_deploy));
     const new_id = new_deploy._id;
     new_deploy._id = old_deploy._id;
+    console.log('bang!');
+    console.log({new_deploy, old_deploy});
+
     return research_pool.updateStudyPool(new_deploy)
         .catch(err=> Promise.reject({status:400, message:err}))
         .then(()=>{
@@ -360,24 +356,32 @@ function change_deploy(user_id, study_id, props) {
             let version2update = versions.find(version=>version.id===props.version_id);
             let old_deploy = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===props.deploy_id));
             let deploy2update = JSON.parse(JSON.stringify(old_deploy));
-            let old_set = deploy2update.sets.find(set=>set._id===props.deploy_id);
+            let old_set = old_deploy.sets.find(set=>set._id===props.deploy_id);
             let set2update = JSON.parse(JSON.stringify(old_set));
-            if (old_set.status==='running')
-            {
-                // console.log(old_set);
-                old_set.status = 'running2';
-            }
+
+
             deploy2update.creation_date = dateFormat(Date.now(), 'yyyymmdd.HHMMss');
             set2update.target_number = props.target_number;
 
             set2update.priority    = props.priority;
             deploy2update.comments = props.comments;
-            set2update.ref_id      = set2update._id;
+
+            if (old_set.running_id)
+                set2update.running_id = old_set.running_id;
+
+            if (old_set.status === 'running')
+                set2update.running_id = old_set._id;
+
+            set2update.ref_id      = set2update.ref_id ? set2update.ref_id : set2update._id;
+            if(set2update.running_id)
+                set2update.ref_id = set2update.running_id;
             set2update.changed     = props.changed;
             set2update._id         = utils.sha1(Date.now()+Math.random());
             set2update.status      = 'pending';
             deploy2update.sets     = [set2update];
             version2update.deploys.push(deploy2update);
+
+            old_set.status = old_set.status+'2';
             return connection.then(function (db) {
                 const studies = db.collection('studies');
 
@@ -389,6 +393,7 @@ function change_deploy(user_id, study_id, props) {
                         user_name:user_data.user_name,
                         _id:set2update._id,
                         ref_id:set2update.ref_id,
+                        running_id : set2update.running_id ? set2update.running_id : '',
                         changed:props.changed,
                         study_id,
                         study_name:study_data.name,
@@ -402,13 +407,16 @@ function change_deploy(user_id, study_id, props) {
                         experiment_file:set2update.experiment_file,
                         rules:set2update.rules,
                         priority:set2update.priority,
+                        planned_procedure: deploy2update.planned_procedure,
+                        sample_size: deploy2update.sample_size,
                         target_number: set2update.target_number};
+
                     const deploys = db.collection('deploys');
                     return deploys.insertOne(new_deploy)
                         .then(function (deploy_data) {
                             if (!deploy_data)
                                 return Promise.reject();
-                            return deploys.updateOne({_id:props.deploy_id}, {$set: {status:'running2'}} )
+                            return deploys.updateOne({_id:props.deploy_id}, {$set: {status:old_set.status}} )
                                 .then(()=> Promise.resolve(new_deploy));
                         });
 

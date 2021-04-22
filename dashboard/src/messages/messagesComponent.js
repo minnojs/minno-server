@@ -12,9 +12,11 @@ let messagesComponent = {
             reviewed_requests: m.prop(''),
             pendings: m.prop(''),
             loaded: false,
+            loaded2: false,
             error: m.prop(''),
             do_use_code,
-            do_read
+            do_read,
+            do_ignore
         };
         get_pending_studies()
             .then((response) => {
@@ -25,14 +27,11 @@ let messagesComponent = {
             .catch(response => {
                 ctrl.error(response.message);
             })
-            .then(m.redraw);
-
-        get_reviewed_requests()
+            .then(()=>get_reviewed_requests())
             .then((response) => {
 
                 ctrl.reviewed_requests(response.reviewed_requests);
                 ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
-                ctrl.loaded = true;
             })
             .catch(response => {
                 ctrl.error(response.message);
@@ -50,7 +49,12 @@ let messagesComponent = {
             read_review(deploy_id)
             .then(m.route(`/deploy/${study_id}/${deploy_id}`));
         }
-
+        function do_ignore(study_id, deploy_id){
+            console.log({deploy_id, r:ctrl.reviewed_requests()});
+            read_review(deploy_id)
+                .then(()=>ctrl.reviewed_requests(ctrl.reviewed_requests().filter(study=>study.deploy_id!==deploy_id)))
+                .then(m.redraw);
+        }
         return ctrl;
     },
     view(ctrl){

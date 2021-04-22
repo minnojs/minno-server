@@ -21504,7 +21504,7 @@
                     ctrl.is_review(m.route() === ("/review/" + (m.route.param('deployId'))));
                     ctrl.is_pending(ctrl.deploy2show().status==='pending');
                     ctrl.is_approved(ctrl.deploy2show().status==='accept');
-                    ctrl.is_running(ctrl.deploy2show().status==='running' || ctrl.deploy2show().status==='running2');
+                    ctrl.is_running(ctrl.deploy2show().status==='running');
                     ctrl.priority(ctrl.deploy2show().priority);
                 })
                 .then(function (){ return !ctrl.is_review() || !ctrl.is_pending() ?  {} :
@@ -21570,9 +21570,12 @@
                         ]),
                         m('.col-sm-9',[
                             ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
+                            ctrl.deploy2show().status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
                             ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                             ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                            ctrl.deploy2show().status !== 'running' && ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running'),
+                            ctrl.deploy2show().status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                            ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+
                             !ctrl.deploy2show().ref_id ? '' :
                                 [' ', ctrl.is_review() ? m('a', {href:("/review/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', ' (change request)'))
                                     :
@@ -23218,7 +23221,7 @@
                 m('.card.studies-card', [
                     m('.card-block', [
                         m('.row', {key: '@@notid@@'}, [
-                            m('.col-sm-4', [
+                            m('.col-sm-3', [
                                 m('.form-control-static',[
                                     m('strong', 'Study name ')
                                 ])]),
@@ -23233,14 +23236,14 @@
                                     m('strong', 'Reviewer Comments ')
                                 ])
                             ]),
-                            m('.col-sm-3', [
+                            m('.col-sm-4', [
                                 m('.form-control-static',[
                                     m('strong', 'Action ')
                                 ])
                             ])
                         ]),
                         ctrl.reviewed_requests().map(function (request) { return m('.row.study-row.space', [
-                                m('.col-sm-4', [
+                                m('.col-sm-3', [
                                     m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name)))
                                 ]),
                                 m('.col-sm-2', [
@@ -23252,8 +23255,9 @@
                                 m('.col-sm-3', [
                                     m('.study-text', request.reviewer_comments)
                                 ]),
-                                m('.col-sm-3', [
+                                m('.col-sm-4', [
                                     m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
+                                    m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'ignore'))
                                 ]),
                             ]); })
                     ])
@@ -23269,9 +23273,11 @@
                 reviewed_requests: m.prop(''),
                 pendings: m.prop(''),
                 loaded: false,
+                loaded2: false,
                 error: m.prop(''),
                 do_use_code: do_use_code,
-                do_read: do_read
+                do_read: do_read,
+                do_ignore: do_ignore
             };
             get_pending_studies()
                 .then(function (response) {
@@ -23282,14 +23288,11 @@
                 .catch(function (response) {
                     ctrl.error(response.message);
                 })
-                .then(m.redraw);
-
-            get_reviewed_requests()
+                .then(function (){ return get_reviewed_requests(); })
                 .then(function (response) {
 
                     ctrl.reviewed_requests(response.reviewed_requests);
                     ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
-                    ctrl.loaded = true;
                 })
                 .catch(function (response) {
                     ctrl.error(response.message);
@@ -23307,7 +23310,12 @@
                 read_review(deploy_id)
                 .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
             }
-
+            function do_ignore(study_id, deploy_id){
+                console.log({deploy_id: deploy_id, r:ctrl.reviewed_requests()});
+                read_review(deploy_id)
+                    .then(function (){ return ctrl.reviewed_requests(ctrl.reviewed_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
+                    .then(m.redraw);
+            }
             return ctrl;
         },
         view: function view(ctrl){
@@ -23700,7 +23708,7 @@
                         ])
                     ]),
                     m('tbody', [
-                        deploy2show.map(function (deploy){ return deploy.sets.map(function (set){ return m('tr', [
+                        deploy2show.map(function (deploy){ return deploy.sets.filter(function (set){ return set.status!=='accept2'; }).map(function (set){ return m('tr', [
                                     m('td', formatDate$1(deploy.creation_date)),
                                     m('td', !set.experiment_file ? '' : set.experiment_file.descriptive_id),
                                     m('td', set.target_number),
@@ -23710,10 +23718,13 @@
                                     ]),
                                     m('td', [
                                         set.status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
-                                        set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                        set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running'),
+                                        set.status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
 
-                                        set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
+                                        set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                                        set.status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                                        set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+
+                                        set.status  && set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
                                     ]),
 
                                     m('td',

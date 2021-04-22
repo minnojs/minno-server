@@ -85,7 +85,7 @@ let reviewDeployDialog = {
                 ctrl.is_review(m.route() === `/review/${m.route.param('deployId')}`);
                 ctrl.is_pending(ctrl.deploy2show().status==='pending');
                 ctrl.is_approved(ctrl.deploy2show().status==='accept');
-                ctrl.is_running(ctrl.deploy2show().status==='running' || ctrl.deploy2show().status==='running2');
+                ctrl.is_running(ctrl.deploy2show().status==='running');
                 ctrl.priority(ctrl.deploy2show().priority);
             })
             .then(()=>
@@ -150,9 +150,12 @@ let reviewDeployDialog = {
                     ]),
                     m('.col-sm-9',[
                         ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
+                        ctrl.deploy2show().status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
                         ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                         ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                        ctrl.deploy2show().status !== 'running' && ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running'),
+                        ctrl.deploy2show().status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                        ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+
                         !ctrl.deploy2show().ref_id ? '' :
                             [' ', ctrl.is_review() ? m('a', {href:`/review/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', ' (change request)'))
                                 :
