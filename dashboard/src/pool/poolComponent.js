@@ -1,4 +1,4 @@
-import {getAllPoolStudies, STATUS_PAUSED, STATUS_RUNNING} from './poolModel';
+import {getAllPoolStudies} from './poolModel';
 import {play, pause, remove, edit, create, reset} from './poolActions';
 
 import sortTable from 'utils/sortTable';
@@ -178,7 +178,9 @@ let poolComponent = {
                                             m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
                                                 m('i.fa.fa-pause')
                                             ]),
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.edit.bind(null, study)}, [
+
+                                            // {m.route(`/deploy/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ()=>m.route(`/deploy/${study.study_id}/${study._id}`)}, [
                                                 m('i.fa.fa-edit')
                                             ]),
                                             m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
@@ -189,7 +191,7 @@ let poolComponent = {
                             ]))
                     ])
                 ])
-        ]);
+            ]);
     }
 };
 

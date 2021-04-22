@@ -1,4 +1,4 @@
-    const config = require('../config');
+const config = require('../config');
 const zipFolder = require('zip-a-folder');
 
 const fs           = require('fs-extra');
@@ -66,7 +66,7 @@ function view_study_files(link, server_url, version_id = ''){
     return studies_comp.get_id_with_link(link)
         .then(function(study){
             if(!study)
-                return res.status(400).json('Error: code doesn\'t exist');
+                return Promise.reject({status:400, message: 'code doesn\'t exist!'});
             const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
             return get_study_files(owner_id, parseInt(study._id), server_url, parseInt(version_id))
                 .then(function(response){
@@ -120,7 +120,7 @@ function create_folder(user_id, study_id, folder_id) {
         folder_id = urlencode.decode(folder_id);
         const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
         if (latest_version.state === 'Published')
-            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'})
+            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'});
         const version_id = latest_version.id;
 
         const folder_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, folder_id);
@@ -143,7 +143,7 @@ function update_file(user_id, study_id, file_id, content) {
     .then(function({study_data}){
         const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
         if (latest_version.state === 'Published')
-            return Promise.reject({status:500, message: 'Published version cannot be edited'})
+            return Promise.reject({status:500, message: 'Published version cannot be edited'});
         const version_id = latest_version.id;
 
         file_id = urlencode.decode(file_id);
@@ -178,7 +178,7 @@ function delete_files(user_id, study_id, files, server_url) {
         const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
         if (latest_version.state === 'Published')
-            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'})
+            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'});
         const version_id = latest_version.id;
 
         return files.map(function(file) {
@@ -275,7 +275,7 @@ function rename_file(user_id, study_id, file_id, new_path, server_url) {
         const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
         if (latest_version.state === 'Published')
-            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'})
+            return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'});
         const version_id = latest_version.id;
         const new_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, new_path);
         const exist_file_path = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, fid);
@@ -316,7 +316,7 @@ function duplicate_file(user_id, study_id, file_id, new_file_id, server_url) {
             file_id = urlencode.decode(file_id);
             const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
             if (latest_version.state === 'Published')
-                return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'})
+                return Promise.reject({status:500, message: 'ERROR: Published version cannot be edited'});
             const version_id = latest_version.id;
 
             const new_file_path = path.join(config.user_folder,study_data.folder_name, 'v'+version_id, new_file_id);

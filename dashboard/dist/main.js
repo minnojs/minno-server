@@ -10838,7 +10838,7 @@
     var remove  = function (study, list) {
         return messages.confirm({
             header: 'Remove Study:',
-            content: ("Are you sure you want to remove \"" + (study.studyId) + "\" from the pool?")
+            content: ("Are you sure you want to remove \"" + (study.study_name) + "\" from the pool?")
         })
             .then(function (response) {
                 if(response) {
@@ -11215,7 +11215,9 @@
                                                 m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
                                                     m('i.fa.fa-pause')
                                                 ]),
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.edit.bind(null, study)}, [
+
+                                                // {m.route(`/deploy/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: function (){ return m.route(("/deploy/" + (study.study_id) + "/" + (study._id))); }}, [
                                                     m('i.fa.fa-edit')
                                                 ]),
                                                 m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
@@ -11226,7 +11228,7 @@
                                 ]); })
                         ])
                     ])
-            ]);
+                ]);
         }
     };
 
@@ -12518,11 +12520,6 @@
                             document.open();
                             document.write(data);
                             document.close();
-
-                            // ctrl.quest(data);
-                            // console.log(data);
-                                // window.location.href = baseUrl+data.url;
-                            // m.redraw();
                         })
                         .catch(function (response) {
                             ctrl.error(response.message);
@@ -12539,31 +12536,28 @@
         view: function view(ctrl){
             return ctrl.quest()? m('', m.trust(ctrl.quest())) :
 
-            m('.container.space.homepage', { config:fullHeight},[
-
-                m('.row.space.centrify', [
-                    m('h1', 'Registration'),
-
-                    m('.col-md-5.space',
-                        m('form.homepage-background', {onsubmit:function (){ return false; }}, [
-
-                            m('.space', 'Email address'),
-                            m('input.form-control', {
-                                type:'email',
-                                placeholder: 'Email address',
-                                value: ctrl.email_address(),
-                                name: 'email_address',
-                                autofocus:true,
-                                oninput: function (e){ return ctrl.set_email(e); },
-                                onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
-                                config: getStartValue$1(ctrl.email_address)
-                            }),
-                            !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                            m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
-                        ])
-                    )
-                ])
-            ]);
+                m('.container.space.homepage', { config:fullHeight},[
+                    m('.row.space.centrify', [
+                        m('h1', 'Registration'),
+                        m('.col-md-5.space',
+                            m('form.homepage-background', {onsubmit:function (){ return false; }}, [
+                                m('.space', 'Email address'),
+                                m('input.form-control', {
+                                    type:'email',
+                                    placeholder: 'Email address',
+                                    value: ctrl.email_address(),
+                                    name: 'email_address',
+                                    autofocus:true,
+                                    oninput: function (e){ return ctrl.set_email(e); },
+                                    onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
+                                    config: getStartValue$1(ctrl.email_address)
+                                }),
+                                !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                                m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
+                            ])
+                        )
+                    ])
+                ]);
         }
     };
 
@@ -20619,7 +20613,6 @@
             function loadStudies() {
 
                 ctrl.type(m.route() == '/studies' ? 'regular' : 'template');
-                // console.log(ctrl.type());
                 load_studies()
                     .then(function (response) { return response.studies; })
                     .then(ctrl.studies)
@@ -21495,12 +21488,11 @@
                     changed.push('target_number');
                 return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
                 .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }));
-
             }
 
             function do_deploy(){
-                return deploy2pool(ctrl.deploy2show()._id);
-                    // .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
+                return deploy2pool(ctrl.deploy2show()._id)
+                    .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }));
 
             }
 
@@ -21512,8 +21504,7 @@
                     ctrl.is_review(m.route() === ("/review/" + (m.route.param('deployId'))));
                     ctrl.is_pending(ctrl.deploy2show().status==='pending');
                     ctrl.is_approved(ctrl.deploy2show().status==='accept');
-                    ctrl.is_running(ctrl.deploy2show().status==='running');
-
+                    ctrl.is_running(ctrl.deploy2show().status==='running' || ctrl.deploy2show().status==='running2');
                     ctrl.priority(ctrl.deploy2show().priority);
                 })
                 .then(function (){ return !ctrl.is_review() || !ctrl.is_pending() ?  {} :
@@ -21581,7 +21572,7 @@
                             ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                             ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                             ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                            ctrl.deploy2show().status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                            ctrl.deploy2show().status !== 'running' && ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running'),
                             !ctrl.deploy2show().ref_id ? '' :
                                 [' ', ctrl.is_review() ? m('a', {href:("/review/" + (ctrl.deploy2show().ref_id)), config: m.route}, m('strong', ' (change request)'))
                                     :
@@ -21617,7 +21608,7 @@
                         m('.col-sm-2', {class:!ctrl.deploy2show().changed  ? '' : !ctrl.deploy2show().changed.includes('target_number') ? '' : 'alert-warning'},[
                             ctrl.edit_mode()
                                 ?
-                                m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', oninput:  m.withAttr('value', ctrl.target_number)})
+                                m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', type:'number', min:'0', oninput:  m.withAttr('value', ctrl.target_number)})
                                 :
                                 ctrl.deploy2show().target_number
                         ]),
@@ -22962,21 +22953,21 @@
         ])
     ]); };
 
-    var settings$1 = {'password':[],
+    var settings = {'password':[],
         'emil':[],
         'dropbox':[]
         // ,'templates':[]
     };
 
-    var settings_hash$1 = {
+    var settings_hash = {
         password: password_body,
         emil: emil_body,
         dropbox: dropbox_body
         // templates: templates_body
     };
 
-    var draw_menu$1 = function (ctrl, external) {
-        return Object.keys(settings$1).map(function (feature){ return settings_hash$1[feature](ctrl, external); });
+    var draw_menu = function (ctrl, external) {
+        return Object.keys(settings).map(function (feature){ return settings_hash[feature](ctrl, external); });
     };
 
     var changePasswordComponent = {
@@ -23112,7 +23103,7 @@
         },
         view: function view(ctrl){
             return m('.activation.centrify', {config:fullHeight},[
-                draw_menu$1(ctrl),
+                draw_menu(ctrl),
                 m('.card-block',
 
                     m('button.btn.btn-primary.btn-block', {onclick: ctrl.update_all_details},'Update')
@@ -23720,9 +23711,9 @@
                                     m('td', [
                                         set.status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                                         set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                        set.status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                                        set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running'),
 
-                                        set.status ? '' : m('strong.text-secondary', 'Pending')
+                                        set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
                                     ]),
 
                                     m('td',

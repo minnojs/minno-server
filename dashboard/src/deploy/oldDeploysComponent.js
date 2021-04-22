@@ -46,9 +46,9 @@ let oldDeploysDialog = {
                                 m('td', [
                                     set.status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                                     set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                    set.status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                                    set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running'),
 
-                                    set.status ? '' : m('strong.text-secondary', 'Pending')
+                                    set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
                                 ]),
 
                                 m('td',

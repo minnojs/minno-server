@@ -69,12 +69,11 @@ let reviewDeployDialog = {
                 changed.push('target_number');
             return edit_deploy(ctrl.deploy2show().study_id, ctrl.deploy2show().version_id, {deploy_id:ctrl.deploy2show()._id, priority:ctrl.priority(), target_number:ctrl.target_number(), comments:ctrl.comments(), changed:changed})
             .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
-
         }
 
         function do_deploy(){
-            return deploy2pool(ctrl.deploy2show()._id);
-                // .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
+            return deploy2pool(ctrl.deploy2show()._id)
+                .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
 
         }
 
@@ -86,8 +85,7 @@ let reviewDeployDialog = {
                 ctrl.is_review(m.route() === `/review/${m.route.param('deployId')}`);
                 ctrl.is_pending(ctrl.deploy2show().status==='pending');
                 ctrl.is_approved(ctrl.deploy2show().status==='accept');
-                ctrl.is_running(ctrl.deploy2show().status==='running');
-
+                ctrl.is_running(ctrl.deploy2show().status==='running' || ctrl.deploy2show().status==='running2');
                 ctrl.priority(ctrl.deploy2show().priority);
             })
             .then(()=>
@@ -154,7 +152,7 @@ let reviewDeployDialog = {
                         ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                         ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                         ctrl.deploy2show().status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
-                        ctrl.deploy2show().status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                        ctrl.deploy2show().status !== 'running' && ctrl.deploy2show().status !== 'running2' ? '' : m('strong.text-success', 'Running'),
                         !ctrl.deploy2show().ref_id ? '' :
                             [' ', ctrl.is_review() ? m('a', {href:`/review/${ctrl.deploy2show().ref_id}`, config: m.route}, m('strong', ' (change request)'))
                                 :
@@ -190,7 +188,7 @@ let reviewDeployDialog = {
                     m('.col-sm-2', {class:!ctrl.deploy2show().changed  ? '' : !ctrl.deploy2show().changed.includes('target_number') ? '' : 'alert-warning'},[
                         ctrl.edit_mode()
                             ?
-                            m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', oninput:  m.withAttr('value', ctrl.target_number)})
+                            m('input.form-control.space', {value: ctrl.target_number(),  placeholder:'Target number', type:'number', min:'0', oninput:  m.withAttr('value', ctrl.target_number)})
                             :
                             ctrl.deploy2show().target_number
                     ]),

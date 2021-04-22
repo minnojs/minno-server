@@ -1,7 +1,6 @@
 import {registration} from './registrationModel';
 import fullHeight from 'utils/fullHeight';
 export default registrationComponent;
-import {baseUrl} from 'modelUrls';
 
 let registrationComponent = {
     controller(){
@@ -22,11 +21,6 @@ let registrationComponent = {
                         document.open();
                         document.write(data);
                         document.close();
-
-                        // ctrl.quest(data);
-                        // console.log(data);
-                            // window.location.href = baseUrl+data.url;
-                        // m.redraw();
                     })
                     .catch(response => {
                         ctrl.error(response.message);
@@ -43,31 +37,28 @@ let registrationComponent = {
     view(ctrl){
         return ctrl.quest()? m('', m.trust(ctrl.quest())) :
 
-        m('.container.space.homepage', { config:fullHeight},[
-
-            m('.row.space.centrify', [
-                m('h1', 'Registration'),
-
-                m('.col-md-5.space',
-                    m('form.homepage-background', {onsubmit:()=>false}, [
-
-                        m('.space', 'Email address'),
-                        m('input.form-control', {
-                            type:'email',
-                            placeholder: 'Email address',
-                            value: ctrl.email_address(),
-                            name: 'email_address',
-                            autofocus:true,
-                            oninput: e=>ctrl.set_email(e),
-                            onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction: false;},
-                            config: getStartValue(ctrl.email_address)
-                        }),
-                        !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
-                        m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
-                    ])
-                )
-            ])
-        ]);
+            m('.container.space.homepage', { config:fullHeight},[
+                m('.row.space.centrify', [
+                    m('h1', 'Registration'),
+                    m('.col-md-5.space',
+                        m('form.homepage-background', {onsubmit:()=>false}, [
+                            m('.space', 'Email address'),
+                            m('input.form-control', {
+                                type:'email',
+                                placeholder: 'Email address',
+                                value: ctrl.email_address(),
+                                name: 'email_address',
+                                autofocus:true,
+                                oninput: e=>ctrl.set_email(e),
+                                onkeydown: (e)=>{(e.keyCode == 13) ? ctrl.loginAction: false;},
+                                config: getStartValue(ctrl.email_address)
+                            }),
+                            !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
+                            m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
+                        ])
+                    )
+                ])
+            ]);
     }
 };
 

@@ -5,7 +5,6 @@ import {createNotifications} from 'utils/notifyComponent';
 
 import dropdown from 'utils/dropdown';
 import {do_create} from './studyActions';
-import {draw_menu} from './studyMenu';
 
 import classNames from 'utils/classNames';
 import formatDate from 'utils/formatDate';
@@ -35,7 +34,6 @@ const mainComponent = {
         function loadStudies() {
 
             ctrl.type(m.route() == '/studies' ? 'regular' : 'template');
-            // console.log(ctrl.type());
             load_studies()
                 .then(response => response.studies)
                 .then(ctrl.studies)

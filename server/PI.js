@@ -85,6 +85,7 @@ function read_review(user_id, deploy_id){
 
 function add_study2pool(deploy) {
     return connection.then(function (db) {
+
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
         return deploys.findOneAndUpdate({_id: deploy._id},
@@ -92,11 +93,17 @@ function add_study2pool(deploy) {
             .then(request => {
                 return studies.findOne({_id: request.value.study_id})
                     .then(study_data => {
+
                         let versions = study_data.versions;
+
                         let version2update = versions.find(version => version.id === request.value.version_id);
-                        let deploy2update = version2update.deploys.find(deploy => deploy.sets.find(set => set._id === deploy._id));
-                        let set2update = deploy2update.sets.find(set => set._id === deploy._id);
+
+                        let deploy2update   = version2update.deploys.find(deploy2check=>deploy2check.sets.find(set=>set._id==deploy._id));
+
+
+                        let set2update      = deploy2update.sets.find(set=>set._id===deploy._id);
                         set2update.status = 'running';
+
                         const studies = db.collection('studies');
                         return studies.updateOne({_id: request.value.study_id}, {
                             $set: {versions}
@@ -127,10 +134,10 @@ function update_in_pool(new_deploy, old_deploy) {
     const new_id = new_deploy._id;
     new_deploy._id = old_deploy._id;
     return research_pool.updateStudyPool(new_deploy)
-        .catch(err=>console.log(err))
+        .catch(err=> Promise.reject({status:400, message:err}))
         .then(()=>{
             new_deploy._id = new_id;
-            return add_study2pool(new_deploy)
+            return add_study2pool(new_deploy);
         });
 }
 
@@ -238,48 +245,47 @@ function get_registration_url (id) {
         const counters = db.collection('counters');
         const studies = db.collection('studies');
         return get_registration().then(registration_data=>
+            studies.findOne({versions: { $elemMatch: {hash: registration_data.version_id} }})
+                .then(function(study_data){
+                    if(!study_data)
+                        return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
 
+                    const version_data = study_data.versions.filter(version=>version.hash === registration_data.version_id)[0];
 
-        studies.findOne({versions: { $elemMatch: {hash: registration_data.version_id} }})
-            .then(function(study_data){
-                if(!study_data)
-                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
+                    if(!version_data.availability)
+                        return Promise.reject({status:400, message:'Error: Experiment doesn\'t available.'});
 
-                const version_data = study_data.versions.filter(version=>version.hash === registration_data.version_id)[0];
+                    const exp_data = version_data.experiments.filter(exp=>exp.id === registration_data.experiment_id)[0];
+                    if (!exp_data)
+                        return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
 
-                if(!version_data.availability)
-                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t available.'});
+                    const version_folder = path.join(study_data.folder_name, 'v'+version_data.id);
 
-                const exp_data = version_data.experiments.filter(exp=>exp.id === registration_data.experiment_id)[0];
-                if (!exp_data)
-                    return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist'});
+                    const url       = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
+                    const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
 
-                const version_folder = path.join(study_data.folder_name, 'v'+version_data.id);
+                    const file_path = join(config.user_folder,  version_folder, exp_data.file_id);
 
-                const url       = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
-                const base_url  = urljoin(config.relative_path, 'users', version_folder, '/');
+                    return counters.findOneAndUpdate({_id:'session_id'},
+                        {'$inc': {'seq': 1}},
+                        {upsert: true, new: true, returnOriginal: false})
+                        .then(function(counter_data){
 
-                const file_path = join(config.user_folder,  version_folder, exp_data.file_id);
-
-                return counters.findOneAndUpdate({_id:'session_id'},
-                    {'$inc': {'seq': 1}},
-                    {upsert: true, new: true, returnOriginal: false})
-                    .then(function(counter_data){
-
-                        const session_id = counter_data.value.seq;
-                        return {
-                            version_data: version_data,
-                            exp_id:exp_data.id,
-                            descriptive_id: exp_data.descriptive_id,
-                            session_id,
-                            registration_id:id,
-                            type: study_data.type,
-                            url,
-                            path: file_path,
-                            base_url
-                        };
-                    });
-            }));
+                            const session_id = counter_data.value.seq;
+                            return {
+                                version_data: version_data,
+                                exp_id:exp_data.id,
+                                descriptive_id: exp_data.descriptive_id,
+                                session_id,
+                                registration_id:id,
+                                type: study_data.type,
+                                url,
+                                path: file_path,
+                                base_url
+                            };
+                        });
+                })
+        );
     });
 }
 
@@ -347,17 +353,20 @@ function request_deploy(user_id, study_id, props) {
         });
 }
 function change_deploy(user_id, study_id, props) {
-
     return has_write_permission(user_id, study_id)
         .then(function({user_data, study_data}) {
 
             let versions = study_data.versions;
             let version2update = versions.find(version=>version.id===props.version_id);
-
-            let deploy2update = JSON.parse(JSON.stringify(version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===props.deploy_id))));
-
-            let set2update = JSON.parse(JSON.stringify(deploy2update.sets.find(set=>set._id===props.deploy_id)));
-
+            let old_deploy = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===props.deploy_id));
+            let deploy2update = JSON.parse(JSON.stringify(old_deploy));
+            let old_set = deploy2update.sets.find(set=>set._id===props.deploy_id);
+            let set2update = JSON.parse(JSON.stringify(old_set));
+            if (old_set.status==='running')
+            {
+                // console.log(old_set);
+                old_set.status = 'running2';
+            }
             deploy2update.creation_date = dateFormat(Date.now(), 'yyyymmdd.HHMMss');
             set2update.target_number = props.target_number;
 
@@ -399,7 +408,8 @@ function change_deploy(user_id, study_id, props) {
                         .then(function (deploy_data) {
                             if (!deploy_data)
                                 return Promise.reject();
-                            return Promise.resolve(new_deploy);
+                            return deploys.updateOne({_id:props.deploy_id}, {$set: {status:'running2'}} )
+                                .then(()=> Promise.resolve(new_deploy));
                         });
 
                 });

@@ -68,7 +68,6 @@ function publish_version(user_id, study_id, update_url) {
     return has_write_permission(user_id, study_id)
         .then(function({study_data}) {
             let versions = study_data.versions;
-            const published_versions = versions.filter(version=>version.state==='Published');
             const last_version = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
             let version_hash = generate_id(study_id, Math.floor(Date.now() / 1000), 'Published');

@@ -19,6 +19,7 @@ exports.getPoolStudies = async function() {
     return arrayOfPoolStudies;
 };
 exports.addPoolStudy = async function(deploy) {
+
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }

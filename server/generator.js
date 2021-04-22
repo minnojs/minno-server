@@ -47,7 +47,7 @@ function save_file(user_id, study_id, file_id, responses, stimuli, conditions_da
                 const properties = {responses, stimuli, conditions_data, constants};
                 const latest_version = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
                 if (latest_version.state === 'Published')
-                    return Promise.reject({status:500, message: 'Published version cannot be edited'})
+                    return Promise.reject({status:500, message: 'Published version cannot be edited'});
                 const version_id = latest_version.id;
 
                 const path2write = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file_id);
