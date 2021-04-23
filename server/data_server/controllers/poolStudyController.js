@@ -9,30 +9,45 @@ const mongoose = require('mongoose'),
 
 
 exports.insertPoolStudy = async function(deploy) {
-    let poolStudy = {};
-    //deploy = sanitizeMongoJson(deploy);
-    poolStudy.study_id = deploy.study_id;
-    poolStudy.version_id = deploy.version_id;
-    poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
-    poolStudy.priority = deploy.priority;
-    poolStudy.email = deploy.email;
-    poolStudy.experiment_file = deploy.experiment_file;
-    poolStudy.rules = deploy.rules;
-    poolStudy.target_number = deploy.target_number;
-    poolStudy.pause_rules = deploy.pause_rules;
-    poolStudy.version_hash = deploy.version_hash;
-    poolStudy.study_name = deploy.study_name;
-    poolStudy.user_name = deploy.user_name;
+    let poolStudy = generatePoolStudy(deploy);
     let newData = new PoolStudy(poolStudy);
-
     return await newData.save();
 };
 exports.updatePoolStudy = async function(study) {
-    //study = sanitizeMongoJson(study);
-    let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
-    return await PoolStudy.findByIdAndUpdate(study._id, updateObject,{new: true});
+    let poolStudy = generatePoolStudy(study);
+    //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
+    return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
 };
-
+function generatePoolStudy(deploy)
+{
+	let poolStudy={};
+	if(deploy.study_id){
+    poolStudy.study_id = deploy.study_id;}
+	if(deploy.version_id){
+    poolStudy.version_id = deploy.version_id;}
+    poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
+	if(deploy.priority){
+    poolStudy.priority = deploy.priority;}
+	if(deploy.email){
+    poolStudy.email = deploy.email;}
+	if(deploy.experiment_file){
+    poolStudy.experiment_file = deploy.experiment_file;}
+	if(deploy.rules){
+    poolStudy.rules = deploy.rules;}
+	if(deploy.target_number){
+    poolStudy.target_number = deploy.target_number;}
+	if(deploy.pause_rules){
+    poolStudy.pause_rules = deploy.pause_rules;}
+	if(deploy.version_hash){
+    poolStudy.version_hash = deploy.version_hash;}
+	if(deploy.study_name){
+    poolStudy.study_name = deploy.study_name;}
+	if(deploy.user_name){
+    poolStudy.user_name = deploy.user_name;}
+	if(deploy.study_status){
+	poolStudy.status = deploy.study_status;}
+    return poolStudy;
+}
 
 
 exports.getAllPoolStudies = async function() {
@@ -50,6 +65,7 @@ exports.getAllPoolStudies = async function() {
 };
 
 exports.getRunningPoolStudies = async function() {
+	//await PoolStudy.deleteMany({});
     let cursor = PoolStudy.find({
         status: 'running'
     }).lean().cursor({
@@ -57,13 +73,13 @@ exports.getRunningPoolStudies = async function() {
     });
     let results = [];
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-        await exports.updatePoolStudy(dataEntry);
+        //await exports.updatePoolStudy(dataEntry);
         results.push(dataEntry);
     }
     return results;
 };
 exports.deletePoolStudy = async function(poolStudy) {
-
+	
     let results = await PoolStudy.deleteOne(poolStudy, (err, dataRequests) => {
         if (err) {
             throw err;

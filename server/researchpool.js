@@ -12,14 +12,9 @@ exports.getPoolStudies = async function() {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-    /*for(let study of arrayOfPoolStudies)
-    {
-        await exports.removePoolStudy(study);
-    }*/
     return arrayOfPoolStudies;
 };
 exports.addPoolStudy = async function(deploy) {
-
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
@@ -40,7 +35,7 @@ function updateRunningStudies(newStudy)
 			break;
 		}
 	}
-			if(newStudy.status=='running')
+			if(newStudy.status)
 			{
 				arrayOfPoolStudies.push(newStudy);	
 				return true;
