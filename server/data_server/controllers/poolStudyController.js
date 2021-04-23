@@ -30,7 +30,7 @@ exports.insertPoolStudy = async function(deploy) {
 exports.updatePoolStudy = async function(study) {
     //study = sanitizeMongoJson(study);
     let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
-    await PoolStudy.findByIdAndUpdate(study._id, updateObject);
+    return await PoolStudy.findByIdAndUpdate(study._id, updateObject,{new: true});
 };
 
 

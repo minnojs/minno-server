@@ -13,7 +13,6 @@ exports.insertDemographics = async function(req,res) {
 
     await newData.save(function(err) {
         if (err) {
-            console.log(err);
             logger.error({
                 message: err
             });

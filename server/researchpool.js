@@ -27,11 +27,25 @@ exports.addPoolStudy = async function(deploy) {
     arrayOfPoolStudies.push(newPoolStudy);
 };
 
-exports.updateStudyPool = async function(study) {
+exports.updateStudyPool = async function(change_request) {
     //study = sanitizeMongoJson(study);
-    await PoolStudyController.updatePoolStudy(study);
+    let newPoolStudy=await PoolStudyController.updatePoolStudy(change_request);
+	updateRunningStudies(newPoolStudy);
 };
-
+function updateRunningStudies(newStudy)
+{
+    for (let x = 0; x < arrayOfPoolStudies.length; x++) {
+        if (arrayOfPoolStudies[x]._id == newStudy._id) {
+			arrayOfPoolStudies.splice(x, 1);
+			break;
+		}
+	}
+			if(newStudy.status=='running')
+			{
+				arrayOfPoolStudies.push(newStudy);	
+				return true;
+			}	
+}
 exports.removePoolStudy = async function(poolStudy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
