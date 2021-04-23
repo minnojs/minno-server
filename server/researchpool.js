@@ -35,7 +35,7 @@ function updateRunningStudies(newStudy)
 			break;
 		}
 	}
-			if(newStudy.status)
+			if(newStudy.study_status)
 			{
 				arrayOfPoolStudies.push(newStudy);	
 				return true;
