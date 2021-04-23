@@ -102,7 +102,6 @@ function add_study2pool(deploy) {
                             $set: {versions}
                         });
                     });
-
             });
     });
 }
@@ -114,6 +113,7 @@ function add2pool(deploy_id) {
             if(deploy.running_id)
                 return get_deploy(deploy.running_id)
                     .then(old_deploy=>update_in_pool(deploy, old_deploy));
+            deploy.deploy_id = deploy._id;
             return research_pool.addPoolStudy(deploy)
                 .then(()=>add_study2pool(deploy));
         })
@@ -126,8 +126,7 @@ function update_in_pool(new_deploy, old_deploy) {
     //         .then(()=>add_study2pool(new_deploy));
     const new_id = new_deploy._id;
     new_deploy._id = old_deploy._id;
-    console.log('bang!');
-    console.log({new_deploy, old_deploy});
+    new_deploy.deploy_id = new_id;
 
     return research_pool.updateStudyPool(new_deploy)
         .catch(err=> Promise.reject({status:400, message:err}))

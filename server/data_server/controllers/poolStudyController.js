@@ -46,6 +46,9 @@ function generatePoolStudy(deploy)
     poolStudy.user_name = deploy.user_name;}
 	if(deploy.study_status){
 	poolStudy.study_status = deploy.study_status;}
+	if(deploy.deploy_id){
+    poolStudy.deploy_id = deploy.deploy_id;}
+
     return poolStudy;
 }
 

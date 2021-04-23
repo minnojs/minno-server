@@ -12,6 +12,10 @@ let poolStudySchema = new Schema({
 		type: String,//mongoose.ObjectId,	
 		required: [true, 'An ID is required for pool studies']
 	},
+    deploy_id: {
+        type: String,//mongoose.ObjectId,
+        default: ''
+    },
     study_status: {
         type: String,
         default: 'running'
