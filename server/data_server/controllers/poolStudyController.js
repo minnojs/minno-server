@@ -14,10 +14,12 @@ exports.insertPoolStudy = async function(deploy) {
     return await newData.save();
 };
 exports.updatePoolStudy = async function(study) {
+    console.log(study);
     let poolStudy = generatePoolStudy(study);
     //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
     return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
 };
+
 function generatePoolStudy(deploy)
 {
 	let poolStudy={};

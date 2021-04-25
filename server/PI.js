@@ -81,7 +81,34 @@ function read_review(user_id, deploy_id){
     });
 }
 
-
+function pause_study(deploy_id) {
+    return connection.then(function (db) {
+        const deploys = db.collection('deploys');
+        const studies = db.collection('studies');
+        return deploys.findOneAndUpdate({_id: deploy_id},
+            {$set: {status: 'pause'}})
+            .then(request => {
+                let study_obj = request.value;
+                study_obj.study_status = 'pause';
+                return studies.findOne({_id: study_obj.study_id})
+                    .then(study_data => {
+                        let versions = study_data.versions;
+                        let version2update = versions.find(version => version.id === study_obj.version_id);
+                        let deploy2update = version2update.deploys.find(deploy2check => deploy2check.sets.find(set => set._id === deploy_id));
+                        let set2update = deploy2update.sets.find(set => set._id === deploy_id);
+                        set2update.status = 'pause';
+                        const studies = db.collection('studies');
+                        return studies.updateOne({_id: study_obj.study_id}, {
+                            $set: {versions}
+                        })
+                        .then(()=>
+                            research_pool.updateStudyPool(study_obj)
+                                .catch(err=> Promise.reject({status:400, message:err}))
+                        );
+                    });
+            });
+    });
+}
 
 function add_study2pool(deploy) {
     return connection.then(function (db) {
@@ -424,4 +451,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {add2pool, edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {add2pool, pause_study, edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
