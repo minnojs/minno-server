@@ -30,7 +30,7 @@ exports.updateStudyPool = async function(change_request) {
 function updateRunningStudies(newStudy)
 {
     for (let x = 0; x < arrayOfPoolStudies.length; x++) {
-        if (arrayOfPoolStudies[x]._id == newStudy._id) {
+        if (arrayOfPoolStudies[x].deploy_id == newStudy.deploy_id) {
 			arrayOfPoolStudies.splice(x, 1);
 			break;
 		}
