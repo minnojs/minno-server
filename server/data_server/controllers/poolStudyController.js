@@ -14,10 +14,17 @@ exports.insertPoolStudy = async function(deploy) {
     return await newData.save();
 };
 exports.updatePoolStudy = async function(study) {
-    console.log(study);
+    //console.log(study);
     let poolStudy = generatePoolStudy(study);
+	let updateObject={};
+	if(!poolStudy.deploy_id)
+	{
+		throw 'cannot update research pool with a deploy_id';
+	}
+	updateObject.deploy_id=poolStudy.deploy_id;
     //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
-    return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
+	return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
+    //return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
 };
 
 function generatePoolStudy(deploy)
@@ -27,7 +34,6 @@ function generatePoolStudy(deploy)
     poolStudy.study_id = deploy.study_id;}
 	if(deploy.version_id){
     poolStudy.version_id = deploy.version_id;}
-    poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
 	if(deploy.priority){
     poolStudy.priority = deploy.priority;}
 	if(deploy.email){
@@ -72,7 +78,7 @@ exports.getAllPoolStudies = async function() {
 exports.getRunningPoolStudies = async function() {
 	//await PoolStudy.deleteMany({});
     let cursor = PoolStudy.find({
-        status: 'running'
+        study_status: 'running'
     }).lean().cursor({
         batchSize: 10000
     });
