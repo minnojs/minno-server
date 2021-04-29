@@ -67,7 +67,6 @@ function generatePoolStudy(deploy)
 
 
 exports.getAllPoolStudies = async function() {
-
     let results = await PoolStudy.find({}, (err, dataRequests) => {
         if (err) {
             throw err;
