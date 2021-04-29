@@ -18,12 +18,14 @@ exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
+	if(deploy.running_id){
     for (let x = 0; x < arrayOfPoolStudies.length; x++) {
-        if (arrayOfPoolStudies[x].deploy_id == deploy.running_id) { //update instead of insert if running_id exists
+        if (arrayOfPoolStudies[x].deploy_id == deploy.deploy_id) { //update instead of insert if running_id exists
 			deploy.poolId=arrayOfPoolStudies[x]._id;
 			return await updatePoolStudy(deploy);	
 		}
 	}
+    }
     let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
     arrayOfPoolStudies.push(newPoolStudy);
 };
