@@ -180,7 +180,7 @@ let poolComponent = {
                                             ]),
 
                                             // {m.route(`/deploy/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ()=>m.route(`/deploy/${study.study_id}/${study._id}`)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ()=>m.route(`/deploy/${study.study_id}/${study.deploy_id}`)}, [
                                                 m('i.fa.fa-edit')
                                             ]),
                                             m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [

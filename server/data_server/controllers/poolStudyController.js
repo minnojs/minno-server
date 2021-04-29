@@ -38,6 +38,7 @@ function generatePoolStudy(deploy)
     poolStudy.study_id = deploy.study_id;}
 	if(deploy.version_id){
     poolStudy.version_id = deploy.version_id;}
+    poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
 	if(deploy.priority){
     poolStudy.priority = deploy.priority;}
 	if(deploy.email){

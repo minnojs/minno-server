@@ -155,7 +155,7 @@ function update_in_pool(new_deploy, old_deploy) {
     new_deploy._id = old_deploy._id;
     new_deploy.deploy_id = new_id;
 
-    return research_pool.updateStudyPool(new_deploy)
+    return research_pool.updateStudyPool(old_deploy._id, new_deploy)
         .catch(err=> Promise.reject({status:400, message:err}))
         .then(()=>{
             new_deploy._id = new_id;
