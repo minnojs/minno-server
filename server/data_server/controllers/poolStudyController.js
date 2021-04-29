@@ -16,20 +16,24 @@ exports.insertPoolStudy = async function(deploy) {
 exports.updatePoolStudy = async function(study) {
     //console.log(study);
     let poolStudy = generatePoolStudy(study);
-	let updateObject={};
+	/*let updateObject={};
 	if(!poolStudy.deploy_id)
 	{
 		throw 'cannot update research pool with a deploy_id';
 	}
-	updateObject.deploy_id=poolStudy.deploy_id;
+	updateObject.deploy_id=poolStudy.deploy_id;*/
     //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
-	return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
-    //return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
+	//return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
+    return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
 };
 
 function generatePoolStudy(deploy)
 {
 	let poolStudy={};
+	if(deploy.poolId)
+	{
+		deploy._id=deploy.poolId;
+	}
 	if(deploy.study_id){
     poolStudy.study_id = deploy.study_id;}
 	if(deploy.version_id){
@@ -91,16 +95,7 @@ exports.getRunningPoolStudies = async function() {
 };
 exports.deletePoolStudy = async function(poolStudy) {
 	
-    let results = await PoolStudy.deleteOne(poolStudy, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-
-
-
-    });
+    let results = await PoolStudy.findByIdAndRemove(poolStudy._id);
     return results;
 };
 exports.incrementStarts = async function(poolStudyId, count) {

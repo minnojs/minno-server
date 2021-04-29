@@ -18,12 +18,36 @@ exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
+    for (let x = 0; x < arrayOfPoolStudies.length; x++) {
+        if (arrayOfPoolStudies[x].deploy_id == deploy.running_id) { //update instead of insert if running_id exists
+			deploy.poolId=arrayOfPoolStudies[x]._id;
+			return await updatePoolStudy(deploy);	
+		}
+	}
     let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
     arrayOfPoolStudies.push(newPoolStudy);
 };
-
-exports.updateStudyPool = async function(change_request) {
-    //study = sanitizeMongoJson(study);
+exports.updateStudyPool= async function(study_id, params)
+{
+	params.poolId=study_id;
+	return await updatePoolStudy(params);
+}
+exports.pauseStudyPool= async function(study_id)
+{
+	let params={study_status:"paused"};
+	exports.updateStudyPool(study_id,params);
+}
+exports.unpauseStudyPool= async function(study_id)
+{
+	let params={study_status:"running"};
+	exports.updateStudyPool(study_id,params);
+}
+exports.removeStudyPool= async function(study_id)
+{
+	let params={_id:study_id};
+	removePoolStudy(params);
+}
+updatePoolStudy = async function(change_request) {
     let newPoolStudy=await PoolStudyController.updatePoolStudy(change_request);
 	updateRunningStudies(newPoolStudy);
 };
@@ -41,12 +65,12 @@ function updateRunningStudies(newStudy)
 				return true;
 			}	
 }
-exports.removePoolStudy = async function(poolStudy) {
+removePoolStudy = async function(poolStudy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
     for (let x = 0; x < arrayOfPoolStudies.length; x++) {
-        if (arrayOfPoolStudies[x] == poolStudy) {
+        if (arrayOfPoolStudies[x]._id == poolStudy._id) {
             arrayOfPoolStudies.splice(x, 1);
             await PoolStudyController.deletePoolStudy(poolStudy);
             return true;
