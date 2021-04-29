@@ -102,7 +102,7 @@ function pause_study(deploy_id) {
                             $set: {versions}
                         })
                         .then(()=>
-                            research_pool.updateStudyPool(study_obj)
+                            research_pool.pauseStudyPool(deploy_id)
                                 .catch(err=> Promise.reject({status:400, message:err}))
                         );
                     });
