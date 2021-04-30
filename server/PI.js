@@ -148,17 +148,21 @@ function add2pool(deploy_id) {
 }
 
 function update_in_pool(new_deploy, old_deploy) {
+
     // if (old_deploy.status!=='running')
     //     return research_pool.addPoolStudy(new_deploy)
     //         .then(()=>add_study2pool(new_deploy));
-    const new_id = new_deploy._id;
-    new_deploy._id = old_deploy._id;
-    new_deploy.deploy_id = new_id;
-
-    return research_pool.updateStudyPool(old_deploy._id, new_deploy)
+    // const new_id = new_deploy._id;
+    // new_deploy._id = new_deploy.ref_id;
+    // new_deploy.deploy_id = new_id;
+    const params = {priority: new_deploy.priority,
+                    target_number: new_deploy.target_number,
+                    pause_rules: new_deploy.pause_rules,
+                    deploy_id: new_deploy._id,
+    };
+    return research_pool.updateStudyPool(new_deploy.pool_id, params)
         .catch(err=> Promise.reject({status:400, message:err}))
         .then(()=>{
-            new_deploy._id = new_id;
             return add_study2pool(new_deploy);
         });
 }
@@ -395,12 +399,17 @@ function change_deploy(user_id, study_id, props) {
             if (old_set.running_id)
                 set2update.running_id = old_set.running_id;
 
-            if (old_set.status === 'running')
+            if (old_set.status === 'running') {
+                set2update.pool_id = set2update._id;
+                if (old_set.pool_id)
+                    set2update.pool_id = old_set.pool_id;
                 set2update.running_id = old_set._id;
-
+            }
             set2update.ref_id      = set2update.ref_id ? set2update.ref_id : set2update._id;
             if(set2update.running_id)
                 set2update.ref_id = set2update.running_id;
+            if(set2update.pool_id)
+                set2update.pool_id = set2update.pool_id;
             set2update.changed     = props.changed;
             set2update._id         = utils.sha1(Date.now()+Math.random());
             set2update.status      = 'pending';
@@ -420,6 +429,7 @@ function change_deploy(user_id, study_id, props) {
                         _id:set2update._id,
                         ref_id:set2update.ref_id,
                         running_id : set2update.running_id ? set2update.running_id : '',
+                        pool_id : set2update.pool_id ? set2update.pool_id : '',
                         changed:props.changed,
                         study_id,
                         study_name:study_data.name,

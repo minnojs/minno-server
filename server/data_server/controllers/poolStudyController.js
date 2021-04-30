@@ -14,7 +14,6 @@ exports.insertPoolStudy = async function(deploy) {
     return await newData.save();
 };
 exports.updatePoolStudy = async function(study) {
-    //console.log(study);
     let poolStudy = generatePoolStudy(study);
 	/*let updateObject={};
 	if(!poolStudy.deploy_id)
@@ -30,10 +29,10 @@ exports.updatePoolStudy = async function(study) {
 function generatePoolStudy(deploy)
 {
 	let poolStudy={};
-	if(deploy.poolId)
-	{
-		deploy._id=deploy.poolId;
-	}
+	// if(deploy.running_id)
+	// {
+	// 	deploy._id=deploy.running_id;
+	// }
 	if(deploy.study_id){
     poolStudy.study_id = deploy.study_id;}
 	if(deploy.version_id){
@@ -61,7 +60,6 @@ function generatePoolStudy(deploy)
 	poolStudy.study_status = deploy.study_status;}
 	if(deploy.deploy_id){
     poolStudy.deploy_id = deploy.deploy_id;}
-
     return poolStudy;
 }
 

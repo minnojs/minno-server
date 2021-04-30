@@ -33,7 +33,7 @@ exports.addPoolStudy = async function(deploy) {
 };
 exports.updateStudyPool= async function(study_id, params)
 {
-	params.poolId=study_id;
+	params._id=study_id;
 	return await updatePoolStudy(params);
 }
 exports.pauseStudyPool= async function(study_id)
