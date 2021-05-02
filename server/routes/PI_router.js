@@ -24,8 +24,17 @@ PIRouter.route('/research_pool')
 PIRouter.route('/research_pool/:deploy_id')
     .post(
         function(req, res){
-            return PI.pause_study(req.params.deploy_id)
-                .then(data=>res.json(data))
+            return PI.pause_study(req.params.deploy_id, req.body.status)
+                .then(()=>res.json({}))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+            // return research_pool.getPoolStudies()
+            //     .then(deploys=>res.json(deploys))
+            //     .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
+    .delete(
+        function(req, res){
+            return PI.remove_study(req.params.deploy_id)
+                .then(()=>res.json({}))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
             // return research_pool.getPoolStudies()
             //     .then(deploys=>res.json(deploys))

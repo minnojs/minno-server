@@ -34,7 +34,7 @@ let oldDeploysDialog = {
                 ]),
                 m('tbody', [
                     deploy2show.map(deploy=>
-                        deploy.sets.filter(set=>set.status!=='accept2').map(set=>
+                        deploy.sets.filter(set=>set.status!=='accept2' && set.status!=='running2').map(set=>
                             m('tr', [
                                 m('td', formatDate(deploy.creation_date)),
                                 m('td', !set.experiment_file ? '' : set.experiment_file.descriptive_id),
@@ -45,11 +45,14 @@ let oldDeploysDialog = {
                                 ]),
                                 m('td', [
                                     set.status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
+                                    set.status !== 'removed' ? '' : m('strong.text-primary', 'Removed'),
+
+                                    set.status !== 'paused' ? '' : m('strong.text-secondary', 'paused'),
                                     set.status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
 
                                     set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                                     set.status !== 'running' ? '' : m('strong.text-success', 'Running'),
-                                    set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+                                    set.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
 
                                     set.status  && set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
                                 ]),

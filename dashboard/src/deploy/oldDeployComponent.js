@@ -149,6 +149,9 @@ let reviewDeployDialog = {
                         m('strong', 'Status:')
                     ]),
                     m('.col-sm-9',[
+                        ctrl.deploy2show().status !== 'paused' ? '' : m('strong.text-secondary', 'Paused'),
+                        ctrl.deploy2show().status !== 'removed' ? '' : m('strong.text-primary', 'Removed'),
+
                         ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                         ctrl.deploy2show().status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
                         ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),

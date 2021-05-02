@@ -115,9 +115,7 @@ let deployDialog = {
         function submit(){
             return check_form_validity() ? false :
                 deploy(ctrl.study.id, ctrl)
-                    .then(() => {
-                        ctrl.sent = true;
-                    })
+                    .then(deploy => ctrl.sent = true)
                     .catch(response => {
                         ctrl.error(response.message);
                     })

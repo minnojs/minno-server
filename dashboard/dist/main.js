@@ -10266,8 +10266,6 @@
     }; };
 
     var STATUS_RUNNING = 'R';
-    var STATUS_PAUSED = 'P';
-    var STATUS_STOP = 'S';
 
 
     function pool_url()
@@ -10318,10 +10316,19 @@
     }
 
     function pause_study(study){
-        return fetchJson(pool_study_url(study._id), {method:'post'})
+        return fetchJson(pool_study_url(study.deploy_id), {method:'post', body:{status: 'paused'}})
             .then(interceptErrors);
     }
 
+    function unpause_study(study){
+        return fetchJson(pool_study_url(study._id), {method:'post', body:{status: 'running'}})
+            .then(interceptErrors);
+    }
+
+    function remove_study(study){
+        return fetchJson(pool_study_url(study.deploy_id), {method:'delete'})
+            .then(interceptErrors);
+    }
 
     function getLast100PoolUpdates(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
@@ -10828,14 +10835,29 @@
                 if(response) {
                     studyPending(study, true)();
                     return pause_study(study)
-                        .then(function (){ return study.studyStatus = STATUS_PAUSED; })
+                        .then(function (){ return study.study_status = 'paused'; })
                         .catch(reportError('Pause Study'))
                         .then(studyPending(study, false));
                 }
             });
     }
+    function unpause(study){
+        return messages.confirm({
+            header: 'Unpause Study:',
+            content: ("Are you sure you want to unpause \"" + (study.study_name) + "\"?")
+        })
+            .then(function (response) {
+                if(response) {
+                    studyPending(study, true)();
+                    return unpause_study(study)
+                        .then(function (){ return study.study_status = 'running'; })
+                        .catch(reportError('Unpause Study'))
+                        .then(studyPending(study, false));
+                }
+            });
+    }
 
-    var remove  = function (study, list) {
+    var remove  = function (study) {
         return messages.confirm({
             header: 'Remove Study:',
             content: ("Are you sure you want to remove \"" + (study.study_name) + "\" from the pool?")
@@ -10843,8 +10865,8 @@
             .then(function (response) {
                 if(response) {
                     studyPending(study, true)();
-                    return updateStatus(study, STATUS_STOP)
-                        .then(function () { return list(list().filter(function (el) { return el !== study; })); })
+                    return remove_study(study, 'deleted')
+                        .then(function (){ return study.study_status = 'removed'; })
                         .catch(reportError('Remove Study'))
                         .then(studyPending(study, false));
                 }
@@ -11075,7 +11097,7 @@
             }
 
             var ctrl = {
-                view_rules: view_rules, play: play, pause: pause, remove: remove, edit: edit, reset: reset, create: create,
+                view_rules: view_rules, play: play, pause: pause, unpause: unpause, remove: remove, edit: edit, reset: reset, create: create,
                 canCreate: false,
                 studies: m.prop([]),
                 list: m.prop([]),
@@ -11100,7 +11122,7 @@
             return ctrl;
         },
         view: function (ctrl) {
-            var list = ctrl.list().filter(function (study){ return ctrl.permissionFilter(study); }).filter(function (study){ return ctrl.globalFilter(study); });
+            var list = ctrl.list().filter(function (study){ return study.study_status!=='removed'; }).filter(function (study){ return ctrl.permissionFilter(study); }).filter(function (study){ return ctrl.globalFilter(study); });
             return ctrl.error()
                 ?
                 m('.alert.alert-warning',
@@ -11200,9 +11222,9 @@
                                     m('td', [
                                         {
                                             running: m('span.label.label-success', 'Running'),
-                                            pending: m('span.label.label-info', 'Paused'),
+                                            paused: m('span.label.label-info', 'Paused'),
                                             reject: m('span.label.label-danger', 'Stopped')
-                                        }[study.status]
+                                        }[study.study_status]
                                     ]),
 
                                     // ### Actions
@@ -11212,15 +11234,17 @@
                                             m('.l', 'Loading...')
                                             :
                                             m('.btn-group', [
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
+                                                study.study_status !== 'running' ? '' :  m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
                                                     m('i.fa.fa-pause')
                                                 ]),
-
+                                                study.study_status !== 'paused' ? '' :m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.unpause.bind(null, study)}, [
+                                                    m('i.fa.fa-play')
+                                                ]),
                                                 // {m.route(`/deploy/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}
                                                 m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: function (){ return m.route(("/deploy/" + (study.study_id) + "/" + (study.deploy_id))); }}, [
                                                     m('i.fa.fa-edit')
                                                 ]),
-                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
+                                                m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study)}, [
                                                     m('i.fa.fa-close')
                                                 ])
                                             ])
@@ -12656,7 +12680,7 @@
         define: function define(context){
             if ( context === void 0 ) context = window;
 
-            console.warn('This should be deprecated!!!');
+            /* TODO: This should be deprecated!!!' */
             var requirejs = context.requirejs;
             var name = this.url;
             var content = this.content();
@@ -21199,9 +21223,7 @@
             function submit(){
                 return check_form_validity() ? false :
                     deploy(ctrl.study.id, ctrl)
-                        .then(function () {
-                            ctrl.sent = true;
-                        })
+                        .then(function (deploy$$1) { return ctrl.sent = true; })
                         .catch(function (response) {
                             ctrl.error(response.message);
                         })
@@ -21569,6 +21591,9 @@
                             m('strong', 'Status:')
                         ]),
                         m('.col-sm-9',[
+                            ctrl.deploy2show().status !== 'paused' ? '' : m('strong.text-secondary', 'Paused'),
+                            ctrl.deploy2show().status !== 'removed' ? '' : m('strong.text-primary', 'Removed'),
+
                             ctrl.deploy2show().status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
                             ctrl.deploy2show().status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
                             ctrl.deploy2show().status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
@@ -23311,7 +23336,6 @@
                 .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
             }
             function do_ignore(study_id, deploy_id){
-                console.log({deploy_id: deploy_id, r:ctrl.reviewed_requests()});
                 read_review(deploy_id)
                     .then(function (){ return ctrl.reviewed_requests(ctrl.reviewed_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
                     .then(m.redraw);
@@ -23708,7 +23732,7 @@
                         ])
                     ]),
                     m('tbody', [
-                        deploy2show.map(function (deploy){ return deploy.sets.filter(function (set){ return set.status!=='accept2'; }).map(function (set){ return m('tr', [
+                        deploy2show.map(function (deploy){ return deploy.sets.filter(function (set){ return set.status!=='accept2' && set.status!=='running2'; }).map(function (set){ return m('tr', [
                                     m('td', formatDate$1(deploy.creation_date)),
                                     m('td', !set.experiment_file ? '' : set.experiment_file.descriptive_id),
                                     m('td', set.target_number),
@@ -23718,11 +23742,14 @@
                                     ]),
                                     m('td', [
                                         set.status !== 'accept' ? '' : m('strong.text-info', 'Accept'),
+                                        set.status !== 'removed' ? '' : m('strong.text-primary', 'Removed'),
+
+                                        set.status !== 'paused' ? '' : m('strong.text-secondary', 'paused'),
                                         set.status !== 'accept2' ? '' : m('strong.text-info', 'Accept (changed)'),
 
                                         set.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                                         set.status !== 'running' ? '' : m('strong.text-success', 'Running'),
-                                        set.status !== 'running' && set.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+                                        set.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
 
                                         set.status  && set.status !==  'pending' ? '' : m('strong.text-secondary', 'Pending')
                                     ]),

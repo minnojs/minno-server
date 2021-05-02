@@ -14,7 +14,8 @@ PIRouter.route('/registration')
                 .then(data=> res.redirect('/launch_registration/'+data._id))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         })
-		.put(function(req, res){
+	.put(
+		function(req, res){
 			return demographicsController.insertDemographics(req,res)
 			.catch(err=>res.status(err.status || 500).json({message:err.message}));
 		});

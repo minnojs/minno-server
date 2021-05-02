@@ -1,4 +1,4 @@
-import {updateStudy, pause_study, createStudy, updateStatus, getStudyId, resetStudy, STATUS_RUNNING, STATUS_PAUSED, STATUS_STOP} from './poolModel';
+import {updateStudy, pause_study, unpause_study, remove_study, createStudy, updateStatus, getStudyId, resetStudy, STATUS_RUNNING} from './poolModel';
 import messages from 'utils/messagesComponent';
 import spinner from 'utils/spinnerComponent';
 import editMessage from './poolEditComponent';
@@ -30,14 +30,29 @@ export function pause(study){
             if(response) {
                 studyPending(study, true)();
                 return pause_study(study)
-                    .then(()=>study.studyStatus = STATUS_PAUSED)
+                    .then(()=>study.study_status = 'paused')
                     .catch(reportError('Pause Study'))
                     .then(studyPending(study, false));
             }
         });
 }
+export function unpause(study){
+    return messages.confirm({
+        header: 'Unpause Study:',
+        content: `Are you sure you want to unpause "${study.study_name}"?`
+    })
+        .then(response => {
+            if(response) {
+                studyPending(study, true)();
+                return unpause_study(study)
+                    .then(()=>study.study_status = 'running')
+                    .catch(reportError('Unpause Study'))
+                    .then(studyPending(study, false));
+            }
+        });
+}
 
-export let remove  = (study, list) => {
+export let remove  = (study) => {
     return messages.confirm({
         header: 'Remove Study:',
         content: `Are you sure you want to remove "${study.study_name}" from the pool?`
@@ -45,8 +60,8 @@ export let remove  = (study, list) => {
         .then(response => {
             if(response) {
                 studyPending(study, true)();
-                return updateStatus(study, STATUS_STOP)
-                    .then(() => list(list().filter(el => el !== study)))
+                return remove_study(study, 'deleted')
+                    .then(()=>study.study_status = 'removed')
                     .catch(reportError('Remove Study'))
                     .then(studyPending(study, false));
             }

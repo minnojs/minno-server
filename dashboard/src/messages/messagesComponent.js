@@ -50,7 +50,6 @@ let messagesComponent = {
             .then(m.route(`/deploy/${study_id}/${deploy_id}`));
         }
         function do_ignore(study_id, deploy_id){
-            console.log({deploy_id, r:ctrl.reviewed_requests()});
             read_review(deploy_id)
                 .then(()=>ctrl.reviewed_requests(ctrl.reviewed_requests().filter(study=>study.deploy_id!==deploy_id)))
                 .then(m.redraw);

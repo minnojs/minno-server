@@ -81,32 +81,70 @@ function read_review(user_id, deploy_id){
     });
 }
 
-function pause_study(deploy_id) {
+function pause_study(deploy_id, status) {
+
     return connection.then(function (db) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
         return deploys.findOneAndUpdate({_id: deploy_id},
-            {$set: {status: 'pause'}})
-            .then(request => {
-                let study_obj = request.value;
-                study_obj.study_status = 'pause';
-                return studies.findOne({_id: study_obj.study_id})
-                    .then(study_data => {
-                        let versions = study_data.versions;
-                        let version2update = versions.find(version => version.id === study_obj.version_id);
-                        let deploy2update = version2update.deploys.find(deploy2check => deploy2check.sets.find(set => set._id === deploy_id));
-                        let set2update = deploy2update.sets.find(set => set._id === deploy_id);
-                        set2update.status = 'pause';
-                        const studies = db.collection('studies');
-                        return studies.updateOne({_id: study_obj.study_id}, {
-                            $set: {versions}
-                        })
-                        .then(()=>
-                            research_pool.pauseStudyPool(deploy_id)
-                                .catch(err=> Promise.reject({status:400, message:err}))
-                        );
-                    });
-            });
+            {$set: {status}}
+        ).then(request=>{
+            const study_obj = request.value;
+            return studies.findOne({_id:study_obj.study_id})
+                .then(study_data=>
+                {
+                    let versions = study_data.versions;
+                    let version2update  = versions.find(version=>version.id===study_obj.version_id);
+                    let deploy2update   = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===deploy_id));
+                    let set2update      = deploy2update.sets.find(set=>set._id===deploy_id);
+                    set2update.status   = status;
+
+                    return studies.updateOne({_id:study_obj.study_id},
+                        {$set: {versions:versions}});
+                })
+                .then(()=> {
+                    if (!study_obj.pool_id)
+                        study_obj.pool_id = study_obj._id;
+                    if (status === 'paused')
+                        return research_pool.pauseStudyPool(study_obj.pool_id)
+                            .catch(err=> Promise.reject({status:400, message:err}));
+                    return research_pool.unpauseStudyPool(study_obj.pool_id)
+                        .catch(err=> Promise.reject({status:400, message:err}));
+                });
+        });
+    });
+}
+
+function remove_study(deploy_id) {
+    const status = 'removed';
+    return connection.then(function (db) {
+        const deploys = db.collection('deploys');
+        const studies = db.collection('studies');
+
+        return deploys.findOneAndUpdate({_id: deploy_id},
+            {$set: {status}}
+        ).then(request=>{
+            const study_obj = request.value;
+            return studies.findOne({_id:study_obj.study_id})
+                .then(study_data=>
+                {
+                    let versions = study_data.versions;
+                    let version2update  = versions.find(version=>version.id===study_obj.version_id);
+                    let deploy2update   = version2update.deploys.find(deploy=>deploy.sets.find(set=>set._id===deploy_id));
+                    let set2update      = deploy2update.sets.find(set=>set._id===deploy_id);
+                    set2update.status   = status;
+
+                    return studies.updateOne({_id:study_obj.study_id},
+                        {$set: {versions:versions}});
+                })
+                .then(()=>
+                {
+                    if (!study_obj.pool_id)
+                        study_obj.pool_id = study_obj._id;
+                    return research_pool.removeStudyPool(study_obj.pool_id)
+                        .catch(err=> Promise.reject({status:400, message:err}));
+                });
+        });
     });
 }
 
@@ -115,7 +153,7 @@ function add_study2pool(deploy) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
         return deploys.findOneAndUpdate({_id: deploy._id},
-            {$set: {status: 'running'}})
+            {$set: {status: 'running', /*pool_id:deploy._id*/}})
             .then(request => {
                 return studies.findOne({_id: request.value.study_id})
                     .then(study_data => {
@@ -124,6 +162,7 @@ function add_study2pool(deploy) {
                         let deploy2update   = version2update.deploys.find(deploy2check=>deploy2check.sets.find(set=>set._id==deploy._id));
                         let set2update      = deploy2update.sets.find(set=>set._id===deploy._id);
                         set2update.status = 'running';
+                        /*set2update.pool_id = set2update._id;*/
                         const studies = db.collection('studies');
                         return studies.updateOne({_id: request.value.study_id}, {
                             $set: {versions}
@@ -138,8 +177,7 @@ function add2pool(deploy_id) {
     return get_deploy(deploy_id)
         .then(deploy=>{
             if(deploy.running_id)
-                return get_deploy(deploy.running_id)
-                    .then(old_deploy=>update_in_pool(deploy, old_deploy));
+                return update_in_pool(deploy);
             deploy.deploy_id = deploy._id;
             return research_pool.addPoolStudy(deploy)
                 .then(()=>add_study2pool(deploy));
@@ -147,7 +185,7 @@ function add2pool(deploy_id) {
     .then(()=>get_deploy(deploy_id));
 }
 
-function update_in_pool(new_deploy, old_deploy) {
+function update_in_pool(new_deploy) {
 
     // if (old_deploy.status!=='running')
     //     return research_pool.addPoolStudy(new_deploy)
@@ -155,10 +193,11 @@ function update_in_pool(new_deploy, old_deploy) {
     // const new_id = new_deploy._id;
     // new_deploy._id = new_deploy.ref_id;
     // new_deploy.deploy_id = new_id;
-    const params = {priority: new_deploy.priority,
-                    target_number: new_deploy.target_number,
-                    pause_rules: new_deploy.pause_rules,
-                    deploy_id: new_deploy._id,
+    const params = {
+        priority: new_deploy.priority,
+        target_number: new_deploy.target_number,
+        pause_rules: new_deploy.pause_rules,
+        deploy_id: new_deploy._id
     };
     return research_pool.updateStudyPool(new_deploy.pool_id, params)
         .catch(err=> Promise.reject({status:400, message:err}))
@@ -408,8 +447,6 @@ function change_deploy(user_id, study_id, props) {
             set2update.ref_id      = set2update.ref_id ? set2update.ref_id : set2update._id;
             if(set2update.running_id)
                 set2update.ref_id = set2update.running_id;
-            if(set2update.pool_id)
-                set2update.pool_id = set2update.pool_id;
             set2update.changed     = props.changed;
             set2update._id         = utils.sha1(Date.now()+Math.random());
             set2update.status      = 'pending';
@@ -461,4 +498,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {add2pool, pause_study, edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

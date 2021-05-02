@@ -55,10 +55,19 @@ export function getAllPoolStudies(){
 }
 
 export function pause_study(study){
-    return fetchJson(pool_study_url(study._id), {method:'post'})
+    return fetchJson(pool_study_url(study.deploy_id), {method:'post', body:{status: 'paused'}})
         .then(interceptErrors);
 }
 
+export function unpause_study(study){
+    return fetchJson(pool_study_url(study._id), {method:'post', body:{status: 'running'}})
+        .then(interceptErrors);
+}
+
+export function remove_study(study){
+    return fetchJson(pool_study_url(study.deploy_id), {method:'delete'})
+        .then(interceptErrors);
+}
 
 export function getLast100PoolUpdates(){
     return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})

@@ -1,5 +1,5 @@
 import {getAllPoolStudies} from './poolModel';
-import {play, pause, remove, edit, create, reset} from './poolActions';
+import {play, pause, unpause, remove, edit, create, reset} from './poolActions';
 
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
@@ -38,7 +38,7 @@ let poolComponent = {
         }
 
         const ctrl = {
-            view_rules, play, pause, remove, edit, reset, create,
+            view_rules, play, pause, unpause, remove, edit, reset, create,
             canCreate: false,
             studies: m.prop([]),
             list: m.prop([]),
@@ -63,7 +63,7 @@ let poolComponent = {
         return ctrl;
     },
     view: ctrl => {
-        let list = ctrl.list().filter(study=>ctrl.permissionFilter(study)).filter(study=>ctrl.globalFilter(study));
+        let list = ctrl.list().filter(study=>study.study_status!=='removed').filter(study=>ctrl.permissionFilter(study)).filter(study=>ctrl.globalFilter(study));
         return ctrl.error()
             ?
             m('.alert.alert-warning',
@@ -163,9 +163,9 @@ let poolComponent = {
                                 m('td', [
                                     {
                                         running: m('span.label.label-success', 'Running'),
-                                        pending: m('span.label.label-info', 'Paused'),
+                                        paused: m('span.label.label-info', 'Paused'),
                                         reject: m('span.label.label-danger', 'Stopped')
-                                    }[study.status]
+                                    }[study.study_status]
                                 ]),
 
                                 // ### Actions
@@ -175,15 +175,17 @@ let poolComponent = {
                                         m('.l', 'Loading...')
                                         :
                                         m('.btn-group', [
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
+                                            study.study_status !== 'running' ? '' :  m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.pause.bind(null, study)}, [
                                                 m('i.fa.fa-pause')
                                             ]),
-
+                                            study.study_status !== 'paused' ? '' :m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.unpause.bind(null, study)}, [
+                                                m('i.fa.fa-play')
+                                            ]),
                                             // {m.route(`/deploy/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}}
                                             m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ()=>m.route(`/deploy/${study.study_id}/${study.deploy_id}`)}, [
                                                 m('i.fa.fa-edit')
                                             ]),
-                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study, list)}, [
+                                            m('button.btn.btn-sm.btn-secondary', {disabled: !ctrl.studies().includes(study.study_id), onclick: ctrl.remove.bind(null, study)}, [
                                                 m('i.fa.fa-close')
                                             ])
                                         ])
