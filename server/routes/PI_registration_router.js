@@ -18,8 +18,21 @@ PIRouter.route('/registration')
 		function(req, res){
 			return demographicsController.insertDemographics(req,res)
 			.catch(err=>res.status(err.status || 500).json({message:err.message}));
-		});
-PIRouter.get('/assign/:registration_id', function(req, res){
-	return research_pool.assignStudy(req.params.registration_id,res)
-                .catch(err=>res.status(err.status || 500).json({message:err.message}));
-	});
+		})
+	.get(
+		function(req, res){
+			return PI.get_all_participants()
+				.then(data=>console.log(data))
+				;
+		}
+	);
+
+PIRouter.post('/assignment', function(req, res){
+	return PI.login_and_assign(req.body.email_address)
+		.then(data=>console.log(data))
+		// .then((deploy_data)=>res.json(deploy_data))
+		.catch(err=>res.status(err.status || 500).json({message:err.message}));
+
+	// return research_pool.assignStudy(req.params.registration_id,res)
+	//     .catch(err=>res.status(err.status || 500).json({message:err.message}));
+});

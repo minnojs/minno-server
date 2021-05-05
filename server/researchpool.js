@@ -84,7 +84,8 @@ removePoolStudy = async function(poolStudy) {
     }
     return false;
 };
-exports.assignStudy = async function(registration_id, res) {
+exports.assignStudy = async function(registration_id) {
+
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
@@ -97,12 +98,11 @@ exports.assignStudy = async function(registration_id, res) {
             legalStudies.push(element); //study without rules gets assigned to everyone
         }
     }
+
     if (legalStudies.length == 0) {
-        res.status(200).json({
-            result: 'no studies available'
-        });
-        return null;
-    }
+        console.log('No studies available');
+        return Promise.reject({status: 200, message: 'No studies available.'});
+}
     let totalPriority = 0;
     for (const element of legalStudies) {
         let priority = element.priority;
@@ -110,6 +110,7 @@ exports.assignStudy = async function(registration_id, res) {
             totalPriority += priority;
         }
     }
+
     let randValue = Math.floor(Math.random() * totalPriority) + 1;
     let result = null;
     for (const element of legalStudies) {
@@ -122,13 +123,23 @@ exports.assignStudy = async function(registration_id, res) {
             }
         }
     }
-    if (result == null) {
-        res.status(200).json({
-            result: 'no studies available'
-        });
-    } else {
-        res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
+    if (result == null){
+        console.log('No studies available');
+        return Promise.reject({status:200, message:'No studies available.'});
     }
+    // if (!result.experiment_file)
+    //
+    //     {
+    //         console.log('bang!');
+    //
+    //         // console.log(result);
+    //         return this.removeStudyPool(result._id);
+    //
+    //     }
+    return {experiment_file: result.experiment_file.id, version_hash: result.version_hash};
+    // else {
+    //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
+    // }
 
 };
 exports.checkRules = function(target, rules) {

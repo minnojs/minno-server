@@ -9,6 +9,7 @@ import downloadsAccessComponent from './downloadsAccess/downloadsAccessComponent
 
 import loginComponent from './login/loginComponent';
 import registrationComponent from './registration/registrationComponent';
+import assignmentComponent from './assignment/assignmentComponent';
 import filesComponent from './study/files/filesComponent';
 import viewFilesComponent from './study/files/viewFilesComponent';
 
@@ -72,6 +73,7 @@ let routes = {
 
     '/login': loginComponent,
     '/registration': registrationComponent,
+    '/assignment': assignmentComponent,
 
     '/studies' : studiesComponent,
     '/studies/statistics_old' : statistics_oldComponent,

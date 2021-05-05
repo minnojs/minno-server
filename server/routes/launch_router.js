@@ -81,6 +81,18 @@ router.get('/play/:study_id/:version_id/:file_id', function(req, res){
 //    console.log('x');
 // });
 
+
+router.route('/assign/:registration_id')
+    .get(
+        function(req, res){
+            //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
+
+            return PI
+                .assign_study(req.params.id)
+                .then(displayExperiment(req.query, res, req.fingerprint, req.params.id))
+                .catch(displayErrorPage(res));
+        });
+
 router.route('/launch_registration/:id')
     .get(
         function(req, res){

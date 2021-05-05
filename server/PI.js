@@ -275,6 +275,12 @@ function edit_registration(study_id, version_id, experiment_id) {
             .then(() => ('registration successfully updated'));
     });
 }
+function get_all_participants() {
+    return connection.then(function (db) {
+        const participants = db.collection('participants');
+        return participants.find({}).toArray();
+    });
+}
 
 function registration(email_address) {
     let validator = new Validator({email:email_address},
@@ -304,6 +310,20 @@ function registration(email_address) {
 
 }
 
+function login_and_assign (email_address){
+    return connection.then(function (db) {
+        const participants = db.collection('participants');
+        return participants.findOne({email_address})
+            .then(participant_data=>research_pool.assignStudy(participant_data._id))
+            // .then(data=>console.log({data}));
+        });
+            // return research_pool.assignStudy(registration_id)
+}
+
+
+function assign_study (registration_id){
+    return research_pool.assignStudy(registration_id)
+}
 
 function get_registration_url (id) {
     return connection.then(function (db) {
@@ -498,4 +518,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
