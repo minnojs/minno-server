@@ -1,9 +1,21 @@
 const PoolStudyController = require('./data_server/controllers/poolStudyController');
 const DemographicsStudyController = require('./data_server/controllers/demographicsController');
-
+const studyController = require('./data_server/controllers/controller');
+const legalStudyStatus={completed:true,started:true}
 let arrayOfPoolStudies = null;
 const loadPoolStudies = async function() {
+	let autopause=false;
+	if(!arrayOfPoolStudies)
+	{
+		autopause=true;
+	}
     arrayOfPoolStudies = await PoolStudyController.getAllPoolStudies();
+	if(autopause)
+	{
+		exports.runAutopause();
+		setInterval(exports.runAutopause, 1000 * 60 * 60);
+	}
+	
 };
 exports.setPoolStudies = function(array_of_poolstudies) {
     arrayOfPoolStudies = array_of_poolstudies;
@@ -14,6 +26,59 @@ exports.getPoolStudies = async function() {
     }
     return arrayOfPoolStudies;
 };
+exports.runAutopause=async function()
+{
+    if (!arrayOfPoolStudies) {
+        await loadPoolStudies();
+    }
+	for(let poolStudy of arrayOfPoolStudies)
+	{
+		if(poolStudy.study_status!='running')
+		{
+			continue;
+		}
+		const params={poolId:poolStudy._id};
+		let completions=await studyController.getExperimentStatusCount(params);
+		let completesObject={};
+		for(let x=0; x<completions.length;x++)
+		{
+			completesObject[completions[x]._id]=completions[x].total;
+		}
+		let updateObject={}
+		if(completesObject.started)
+		{
+			if(completesObject.completed)
+			{
+				completesObject.started+=completesObject.completed;
+			}
+			updateObject.starts=completesObject.started;
+		}
+		if(completesObject.completed)
+		{
+			updateObject.completes=completesObject.completed;
+		}
+		if(updateObject!={})
+		{
+			await exports.updateStudyPool(poolStudy._id,updateObject);
+		}
+		if(poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
+		{
+			await pauseStudyPool(poolStudy._id);
+		}
+	}
+}
+const checkAutopause=function(poolStudy,completesObject)
+{
+	if(completesObject.completed && completesObject.completed >= poolStudy.target_number)
+	{
+		return true;
+	}
+	if(poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
+	{
+		return true;
+	}
+	return false;
+}
 exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
@@ -89,10 +154,11 @@ exports.assignStudy = async function(registration_id) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
+	
     let user_demographics = DemographicsStudyController.getUserDemographics(registration_id);
     let legalStudies = [];
     for (const element of arrayOfPoolStudies) {
-        if (element && element.comparator && RulesComparator[element.comparator](element, user_demographics)) {
+        if (element.rules && element.rules.comparator && RulesComparator[element.rules.comparator](element.rules, user_demographics)) {
             legalStudies.push(element);
         } else if (element && element.priority) {
             legalStudies.push(element); //study without rules gets assigned to everyone
@@ -136,7 +202,7 @@ exports.assignStudy = async function(registration_id) {
     //         return this.removeStudyPool(result._id);
     //
     //     }
-    return {experiment_file: result.experiment_file.id, version_hash: result.version_hash};
+    return {experiment_file: result.experiment_file.id, version_hash: result.version_hash,pool_id: result._id};
     // else {
     //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
     // }
@@ -149,6 +215,28 @@ exports.checkRules = function(target, rules) {
         return false;
     }
 };
+exports.updateExperimentStatus = async function(sessionId,status,res) {
+	if(!legalStudyStatus[status])
+	{
+		res.status(500).json({message:"missing or illegal study status"});
+		return;
+	}
+	if(!sessionId || sessionId<0)
+	{
+		res.status(500).json({message:"missing or illegal sessionId"});
+		return;
+	}
+	let params={sessionId:sessionId,status:status};
+	try
+	{
+	let result =await studyController.updateExperimentStatus(params);
+	res.status(200).json({message:"success"});
+}
+catch(err)
+{
+	res.status(500).json({message:err.message});
+}
+}
 
 
 

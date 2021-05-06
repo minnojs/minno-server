@@ -20,10 +20,10 @@ router.get('/launch/:exp_id/:version_id',function(req, res){
         .then(displayExperiment(req.query, res,req.fingerprint))
         .catch(displayErrorPage(res));
 });
-router.get('/launch/:exp_id/:version_id/:registration_id',function(req, res){
+router.get('/launch/:exp_id/:version_id/:registration_id/:pool_id',function(req, res){
     return experiments
         .get_experiment_url(req)
-        .then(displayExperiment(req.query, res,req.fingerprint,req.params.registration_id))
+        .then(displayExperiment(req.query, res,req.fingerprint,req.params.registration_id,req.params.pool_id))
         .catch(displayErrorPage(res));
 });
 
@@ -102,7 +102,7 @@ router.route('/launch_registration/:id')
                 .catch(displayErrorPage(res));
         });
 
-function displayExperiment(params, res, fingerprint, registration_id = {}){
+function displayExperiment(params, res, fingerprint, registration_id = {},pool_id = {}){
     return function(exp_data){
         return config_db.get_fingerprint()
             .then(use_fingerprint=>{
@@ -122,8 +122,7 @@ function displayExperiment(params, res, fingerprint, registration_id = {}){
                     studyId:exp_data.exp_id,
                     versionId:version_data.hash
                 };
-                if(registration_id)
-                    postAlways.registration_id = registration_id;
+                
                 const postOnce = Object.assign({}, params, {
                     descriptiveId: exp_data.descriptive_id,
                     version:version_data.version,
@@ -138,8 +137,17 @@ function displayExperiment(params, res, fingerprint, registration_id = {}){
                     taskName:'_session_data',
                     studyId:exp_data.exp_id,
                     versionId:version_data.hash,
-                    data:[fingerprint]
+                    data:[fingerprint],
+					
                 };
+                if(registration_id)
+					{postAlways.registrationId = registration_id;
+					experimentSessionData.registrationId = registration_id;
+					}
+	            if(pool_id)
+					{postAlways.poolId = pool_id;
+					experimentSessionData.poolId = pool_id;
+					}
                 data_server.insertExperimentSession(experimentSessionData);
                 if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
                     .then(transformHtml(exp_data,postOnce,postAlways))

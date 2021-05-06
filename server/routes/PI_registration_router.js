@@ -36,3 +36,12 @@ PIRouter.post('/assignment', function(req, res){
 	// return research_pool.assignStudy(req.params.registration_id,res)
 	//     .catch(err=>res.status(err.status || 500).json({message:err.message}));
 });
+
+PIRouter.put('/setstart/:session_id/', function(req, res){
+	try{research_pool.updateExperimentStatus(req.params.session_id,'started',res)}
+	               catch(err){res.status(err.status || 500).json({message:err.message})};
+	});	
+	PIRouter.put('/setcomplete/:session_id', function(req, res){
+		return research_pool.updateExperimentStatus(req.params.session_id,'completed',res)
+		               .catch(err=>res.status(err.status || 500).json({message:err.message}));
+		});	

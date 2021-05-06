@@ -32,6 +32,10 @@ let poolStudySchema = new Schema({
         type: Number,
         default: 0
     },
+	target_number: {
+        type: Number,
+        default: 0
+    },
     rules: {
         type: Object,
         default: {}

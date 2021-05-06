@@ -54,15 +54,42 @@ exports.insertExperimentSession = async function(params) {
         return true;
     });
 };
-exports.getExperimentStarts = async function(params) {
+exports.getExperimentStatusCount = async function(params) {
+    if (!params.poolId) {
+        return null;
+    }
+	var agg = [
+		{ $match : {poolId:params.poolId }},
+	    {$group: {
+	      _id: "$status",
+	      // SUCCESS!!! :D
+	      total: {$sum: 1}
+	    }}
+	  ];
+	  const aggregate = experimentSessionSchema.aggregate(agg);
+	  const results = await aggregate.exec();
+	  return results;
+	  
+}
+/*exports.getExperimentStateCount = async function(params) {
     if (params.studyId < 0 || !params.rulesId) {
         return null;
     }
-    let results = await experimentSessionSchema.countDocuments({
+	let findBy={
         studyId: params.studyId,
         state: 'started',
-        rulesId: params.rulesId
-    }, (err, dataRequests) => {
+        rulesId: params.poolId,
+		createdDate:{}
+    };
+	if(params.startDate)
+	{
+		findyBy.createdDate.$gte=startDate;
+	}
+	if(params.endDate)
+	{
+		findyBy.createdDate.$lte=endDate;
+	}
+    let results = await experimentSessionSchema.countDocuments(findby, (err, dataRequests) => {
         if (err) {
             throw err;
         } else {
@@ -73,7 +100,7 @@ exports.getExperimentStarts = async function(params) {
     });
     return results;
 
-};
+};*/
 exports.getExperimentCompletes = async function(params) {
     if (params.studyId < 0 || !params.rulesId) {
         return null;

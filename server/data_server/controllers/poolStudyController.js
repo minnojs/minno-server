@@ -60,25 +60,21 @@ function generatePoolStudy(deploy)
 	poolStudy.study_status = deploy.study_status;}
 	if(deploy.deploy_id){
     poolStudy.deploy_id = deploy.deploy_id;}
+	if(deploy.starts){
+    poolStudy.starts = deploy.starts;}
+	if(deploy.completes){
+    poolStudy.completes = deploy.completes;}
     return poolStudy;
 }
 
 
 exports.getAllPoolStudies = async function() {
-    let results = await PoolStudy.find({}, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-
-
-    });
+	//await PoolStudy.deleteMany({});
+    let results = await PoolStudy.find({}).lean();
     return results;
 };
 
 exports.getRunningPoolStudies = async function() {
-	//await PoolStudy.deleteMany({});
     let cursor = PoolStudy.find({
         study_status: 'running'
     }).lean().cursor({
