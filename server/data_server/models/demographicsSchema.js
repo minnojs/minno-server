@@ -2,9 +2,9 @@
 let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 let demographicsSchema = new Schema({
-    registration_id: {
+    registrationId: {
         type: String,
-        required: [true,'A registration_id is required']
+        required: [true,'A registrationId is required']
     },
     createdDate: {
         type: Date,
