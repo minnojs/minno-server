@@ -150,12 +150,14 @@ removePoolStudy = async function(poolStudy) {
     return false;
 };
 exports.assignStudy = async function(registration_id) {
-
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-	
-    let user_demographics = DemographicsStudyController.getUserDemographics(registration_id);
+    let user_demographics = await DemographicsStudyController.getUserDemographics(registration_id);
+	if(!user_demographics)
+	{
+		return Promise.reject({status: 200, message: 'No studies available.'});
+	}
     let legalStudies = [];
     for (const element of arrayOfPoolStudies) {
         if (element.rules && element.rules.comparator && RulesComparator[element.rules.comparator](element.rules, user_demographics)) {
