@@ -41,7 +41,7 @@ let autupause_rules = [
         name:'Started sessions',
         nameXML:'startedSessions',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['Started sessions'],
         valuesXML:[]
     },
@@ -49,7 +49,7 @@ let autupause_rules = [
         name:'Completion rate',
         nameXML:'completionRate',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['Completion rate'],
         valuesXML:[]
     }
@@ -61,7 +61,7 @@ let rules = [
         name:'Sex',
         nameXML:'sex',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:['Male','Female'],
         valuesXML:['m','f']
     },
@@ -69,7 +69,7 @@ let rules = [
         name:'Month of birth',
         nameXML:'birthmonth',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['January','February','March','April','May','June','July','August','September','October','November','December'],
         valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12']
     },
@@ -78,7 +78,7 @@ let rules = [
         name:'Year of birth',
         nameXML:'birthyear',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:generate_years(),
         valuesXML:generate_years()
     },
@@ -86,7 +86,7 @@ let rules = [
         name:'Education',
         nameXML:'education',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['elementary school','junior high','some high school','high school graduate','some college','associates degree','bachelors degree','some graduate school','masters degree','JD','MD','PhD','other advanced degree','MBA'],
         valuesXML:['1','2','3','4','5','6','7','8','9','10','11','12','13','14']
     },
@@ -95,7 +95,7 @@ let rules = [
         name:'Major field of study',
         nameXML:'major',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             'Biological sciences/life sciences',
             'Business',
@@ -118,7 +118,7 @@ let rules = [
         name:'Political Identity',
         nameXML:'politicalid',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['Strongly conservative','Moderately conservative','Slightly conservative','moderate/neutral','Slightly liberal','Moderately liberal','Strongly liberal'],
         valuesXML:['-3','-2','-1','0','1','2','3']
     },
@@ -127,7 +127,7 @@ let rules = [
         name:'Religiosity',
         nameXML:'religionid',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['Very Religious','Moderately Religious','Somewhat Religious','Not at all Religious'],
         valuesXML:['4','3','2','1']
     },
@@ -136,7 +136,7 @@ let rules = [
         name:'Postal Code',
         nameXML:'zipcode',
         equal:['>','<','=','>=','<=','!='],
-        equalXML:['gt','lt','eq','gte','lte','neq'],
+        equalXML:['>','<','==','>=','<=','!='],
         values:['Code'],
         valuesXML:[]
     },
@@ -144,7 +144,7 @@ let rules = [
         name:'Race',
         nameXML:'raceomb',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:['American Indian/Alaska Native','East Asian','South Asian','Native Hawaiian or other Pacific Islander',
             'Black or African American','White','More than one race - Black/White','More than one race - Other','Other or Unknown'],
         valuesXML:['1','2','3','4','5','6','7','8','9']
@@ -154,14 +154,14 @@ let rules = [
         name:'Ethnicity',
         nameXML:'ethnicityomb',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:['Hispanic or Latino','Not Hispanic or Latino','Unknown']
     },
     {
         name:'General Occupation',
         nameXML:'genoccupation',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             'Administrative Support',
             'Arts/Design/Entertainment/Sports',
@@ -199,7 +199,7 @@ let rules = [
         name:'Specific Occupation',
         nameXML:'occupation',//demographics
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             ///administrator support 43-000
             {type:'Administrator support'},
@@ -425,7 +425,7 @@ let rules = [
         name:'Citizenship',
         nameXML:'citizenship',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             'U.S.A.','Afghanistan','Albania',
             'Algeria','American Samoa','Andorra',
@@ -538,7 +538,7 @@ let rules = [
             'ga','gm','ge',
             'de','gh','gi',
             'gr','gl','gd',
-            'gp','gu','gt',
+            'gp','gu','>',
             'gn','gw','gy',
             'ht','hm','hn',
             'hk','hu','is',
@@ -550,7 +550,7 @@ let rules = [
             'kw','kg','la',
             'lv','lb','ls',
             'lr','ly','li',
-            'lt','lu','mo',
+            '<','lu','mo',
             'mk','mg','mw',
             'my','mv','ml',
             'mt','mh','mq',
@@ -595,7 +595,7 @@ let rules = [
         name:'Residence',
         nameXML:'residence',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             'U.S.A.','Afghanistan','Albania',
             'Algeria','American Samoa','Andorra',
@@ -707,7 +707,7 @@ let rules = [
             'ga','gm','ge',
             'de','gh','gi',
             'gr','gl','gd',
-            'gp','gu','gt',
+            'gp','gu','>',
             'gn','gw','gy',
             'ht','hm','hn',
             'hk','hu','is',
@@ -719,7 +719,7 @@ let rules = [
             'kw','kg','la',
             'lv','lb','ls',
             'lr','ly','li',
-            'lt','lu','mo',
+            '<','lu','mo',
             'mk','mg','mw',
             'my','mv','ml',
             'mt','mh','mq',
@@ -764,7 +764,7 @@ let rules = [
         name:'Number of Studies Started',
         nameXML:'started_studies',
         equal:['>','<','=','>=','<='],
-        equalXML:['gt','lt','eq','gte','lte',],
+        equalXML:['>','<','==','>=','<=',],
         values:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
         valuesXML:[]
     },
@@ -781,7 +781,7 @@ let rules = [
         name:'General Religious Affiliation',
         nameXML:'religion',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:['Buddhist/Confucian/Shinto','Christian: Catholic or Orthodox','Christian: Protestant or Other','Hindu','Jewish','Muslim/Islamic','Not Religious','Other Religion'],
         valuesXML:['buddhist','catholic','protestant','hindu','jewish','muslim','none','otherrelig']
     },
@@ -789,7 +789,7 @@ let rules = [
         name:'Specific Religious Affiliation',
         nameXML:'relfamily',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             {type: 'protestant'},
             'Adventist',
@@ -989,7 +989,7 @@ let rules = [
         name:'Specific Religious Denomination',
         nameXML:'reldenom',
         equal:['Is','Is Not'],
-        equalXML:['eq','neq'],
+        equalXML:['==','!='],
         values:[
             // Protestant/OtherChristian
             {type:'Protestant/Other Christian'},
