@@ -15,9 +15,8 @@ let assignmentComponent = {
         };
         check_connectivity()
             .then(status=>{
-                if (status)
+                if (status === true)
                     return window.location.href = '/assign';
-                console.log('xoxo');
                 ctrl.loaded(true);
                 m.redraw()
             });

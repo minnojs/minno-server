@@ -12599,7 +12599,7 @@
         body: {email_address: email_address}
     }); };
 
-    var check_connectivity = function () { return fetchText(assignmentUrl, {
+    var check_connectivity = function () { return fetchJson(assignmentUrl, {
         method: 'get'
     }); };
 
@@ -12616,9 +12616,8 @@
             };
             check_connectivity()
                 .then(function (status){
-                    if (status)
+                    if (status === true)
                         return window.location.href = '/assign';
-                    console.log('xoxo');
                     ctrl.loaded(true);
                     m.redraw();
                 });
