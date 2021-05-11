@@ -7,3 +7,7 @@ export let login = (email_address) => fetchText(assignmentUrl, {
     method: 'post',
     body: {email_address}
 });
+
+export let check_connectivity = () => fetchText(assignmentUrl, {
+    method: 'get'
+});

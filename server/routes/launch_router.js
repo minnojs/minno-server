@@ -82,16 +82,6 @@ router.get('/play/:study_id/:version_id/:file_id', function(req, res){
 // });
 
 
-router.route('/assign/:registration_id')
-    .get(
-        function(req, res){
-            //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
-
-            return PI
-                .assign_study(req.params.id)
-                .then(displayExperiment(req.query, res, req.fingerprint, req.params.id))
-                .catch(displayErrorPage(res));
-        });
 
 router.route('/launch_registration/:id')
     .get(
@@ -102,8 +92,25 @@ router.route('/launch_registration/:id')
                 .catch(displayErrorPage(res));
         });
 
-function displayExperiment(params, res, fingerprint, registration_id = {},pool_id = {}){
+
+router.route('/assign/')
+    .get(
+        function(req, res){
+            //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
+            if (!req.session.participant_data)
+                return res.redirect('/dashboard/?/assignment');
+            return PI.assign_study(req.session.participant_data._id)
+                // .then(result=>res.redirect('/launch/' + result.experiment_file + '/' + result.version_hash+ '/' + req.session.participant_data._id + '/' +result.pool_id))
+                .then(displayExperiment(req.query, res, req.fingerprint))
+
+                // .then(displayExperiment(req.query, res, req.fingerprint, req.params.id))
+                .catch(displayErrorPage(res));
+        });
+
+
+function displayExperiment(params, res, fingerprint){
     return function(exp_data){
+
         return config_db.get_fingerprint()
             .then(use_fingerprint=>{
                 if(!use_fingerprint)
@@ -122,7 +129,7 @@ function displayExperiment(params, res, fingerprint, registration_id = {},pool_i
                     studyId:exp_data.exp_id,
                     versionId:version_data.hash
                 };
-                
+
                 const postOnce = Object.assign({}, params, {
                     descriptiveId: exp_data.descriptive_id,
                     version:version_data.version,
@@ -140,14 +147,15 @@ function displayExperiment(params, res, fingerprint, registration_id = {},pool_i
                     data:[fingerprint],
 					
                 };
-                if(registration_id)
-					{postAlways.registrationId = registration_id;
-					experimentSessionData.registrationId = registration_id;
-					}
-	            if(pool_id)
-					{postAlways.poolId = pool_id;
-					experimentSessionData.poolId = pool_id;
-					}
+
+                if(exp_data.registration_id){
+                    postAlways.registrationId = exp_data.registration_id;
+                    experimentSessionData.registrationId = exp_data.registration_id;
+                }
+                if(exp_data.pool_id){
+                    postAlways.poolId = exp_data.pool_id;
+                    experimentSessionData.poolId = exp_data.pool_id;
+                }
                 data_server.insertExperimentSession(experimentSessionData);
                 if (exp_data.type === 'html') return readFile(exp_data.path, 'utf8')
                     .then(transformHtml(exp_data,postOnce,postAlways))

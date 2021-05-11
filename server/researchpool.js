@@ -198,12 +198,13 @@ exports.assignStudy = async function(registration_id) {
     // if (!result.experiment_file)
     //
     //     {
-    //         console.log('bang!');
+    //         console.log(result);
     //
     //         // console.log(result);
-    //         return this.removeStudyPool(result._id);
     //
     //     }
+
+
     return {experiment_file: result.experiment_file.id, version_hash: result.version_hash,pool_id: result._id};
     // else {
     //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);

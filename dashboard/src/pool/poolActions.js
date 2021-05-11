@@ -53,9 +53,10 @@ export function unpause(study){
 }
 
 export let remove  = (study) => {
+    console.log(study);
     return messages.confirm({
         header: 'Remove Study:',
-        content: `Are you sure you want to remove "${study.study_name}" from the pool?`
+        content: `Are you sure you want to remove2 "${study.study_name}" from the pool?`
     })
         .then(response => {
             if(response) {

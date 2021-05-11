@@ -8,16 +8,15 @@ module.exports = PIRouter;
 
 
 PIRouter.route('/registration')
-    .post(
-        function(req, res){
-            return PI.registration(req.body.email_address)
-                .then(data=> res.redirect('/launch_registration/'+data._id))
-                .catch(err=>res.status(err.status || 500).json({message:err.message}));
-        })
-	.put(
+	.post(
 		function(req, res){
-			return demographicsController.insertDemographics(req,res)
-			.catch(err=>res.status(err.status || 500).json({message:err.message}));
+			return PI.registration(req.body.email_address)
+				.then(data=> res.redirect('/launch_registration/'+data._id))
+				.catch(err=>res.status(err.status || 500).json({message:err.message}));
+		})
+	.put(function(req, res){
+		return demographicsController.insertDemographics(req,res)
+				.catch(err=>res.status(err.status || 500).json({message:err.message}));
 		})
 	.get(
 		function(req, res){
@@ -28,20 +27,27 @@ PIRouter.route('/registration')
 	);
 
 PIRouter.post('/assignment', function(req, res){
+	if (req.session.participant_data)
+		return res.redirect('/assign/');
 	return PI.login_and_assign(req.body.email_address)
-		.then(data=>console.log(data))
-		// .then((deploy_data)=>res.json(deploy_data))
+		.then(participant_data => {
+			req.session.participant_data = participant_data;
+			res.redirect('/assign/');
+		})
 		.catch(err=>res.status(err.status || 500).json({message:err.message}));
+});
 
-	// return research_pool.assignStudy(req.params.registration_id,res)
-	//     .catch(err=>res.status(err.status || 500).json({message:err.message}));
+PIRouter.get('/assignment', function(req, res){
+	return res.json(!!req.session.participant_data);
+
+	// return res.redirect('/dashboard/?/assignment');
 });
 
 PIRouter.put('/setstart/:session_id/', function(req, res){
 	try{research_pool.updateExperimentStatus(req.params.session_id,'started',res)}
-	               catch(err){res.status(err.status || 500).json({message:err.message})};
-	});	
-	PIRouter.put('/setcomplete/:session_id', function(req, res){
-		return research_pool.updateExperimentStatus(req.params.session_id,'completed',res)
-		               .catch(err=>res.status(err.status || 500).json({message:err.message}));
-		});	
+	catch(err){res.status(err.status || 500).json({message:err.message})};
+});
+PIRouter.put('/setcomplete/:session_id', function(req, res){
+	return research_pool.updateExperimentStatus(req.params.session_id,'completed',res)
+		.catch(err=>res.status(err.status || 500).json({message:err.message}));
+});

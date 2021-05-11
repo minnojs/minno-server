@@ -116,6 +116,7 @@ function pause_study(deploy_id, status) {
 }
 
 function remove_study(deploy_id) {
+    
     const status = 'removed';
     return connection.then(function (db) {
         const deploys = db.collection('deploys');
@@ -314,16 +315,62 @@ function login_and_assign (email_address){
     return connection.then(function (db) {
         const participants = db.collection('participants');
         return participants.findOne({email_address})
-            .then(participant_data=>research_pool.assignStudy(participant_data._id))
-            // .then(data=>console.log({data}));
-        });
-            // return research_pool.assignStudy(registration_id)
+    });
 }
 
 
-function assign_study (registration_id){
-    return research_pool.assignStudy(registration_id)
+function assign_study (registration_id) {
+    return connection.then(function (db) {
+
+        const counters = db.collection('counters');
+        const studies = db.collection('studies');
+        return research_pool.assignStudy(registration_id)
+            .then(study_details => {
+
+                return studies.findOne({versions: {$elemMatch: {hash: study_details.version_hash}}})
+                    .then(function (study_data) {
+                        if (!study_data)
+                            return Promise.reject({status: 400, message: 'Error: Experiment doesn\'t exist.'});
+
+                        const version_data = study_data.versions.filter(version => version.hash === study_details.version_hash)[0];
+                        if (!version_data.availability)
+                            return Promise.reject({status: 400, message: 'Error: Experiment doesn\'t available.'});
+
+                        const exp_data = version_data.experiments.filter(exp => exp.id === study_details.experiment_file)[0];
+
+                        if (!exp_data)
+                            return Promise.reject({status: 400, message: 'Error: Experiment doesn\'t exist'});
+
+                        const version_folder = path.join(study_data.folder_name, 'v' + version_data.id);
+
+                        const url = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
+                        const base_url = urljoin(config.relative_path, 'users', version_folder, '/');
+                        const file_path = join(config.user_folder, version_folder, exp_data.file_id);
+
+                        return counters.findOneAndUpdate({_id: 'session_id'},
+                            {'$inc': {'seq': 1}},
+                            {upsert: true, new: true, returnOriginal: false})
+                            .then(function (counter_data) {
+                                const session_id = counter_data.value.seq;
+                                return {
+                                    registration_id,
+                                    pool_id:study_details.pool_id,
+                                    version_data: version_data,
+                                    exp_id: study_details.experiment_file,
+                                    descriptive_id: exp_data.descriptive_id,
+                                    session_id,
+                                    type: study_data.type,
+                                    url,
+                                    path: file_path,
+                                    base_url
+                                };
+                            });
+                    });
+            });
+    });
 }
+
+
 
 function get_registration_url (id) {
     return connection.then(function (db) {

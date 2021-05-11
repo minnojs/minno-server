@@ -1,10 +1,11 @@
-import {login} from './assignmentModel';
+import {login, check_connectivity} from './assignmentModel';
 import fullHeight from 'utils/fullHeight';
 export default assignmentComponent;
 
 let assignmentComponent = {
     controller(){
         const ctrl = {
+            loaded:m.prop(false),
             email_address:m.prop(''),
             quest:m.prop(''),
             validity:m.prop(true),
@@ -12,6 +13,14 @@ let assignmentComponent = {
             loginAction,
             error: m.prop('')
         };
+        check_connectivity()
+            .then(status=>{
+                if (status)
+                    return window.location.href = '/assign';
+                console.log('xoxo');
+                ctrl.loaded(true);
+                m.redraw()
+            });
         return ctrl;
 
         function loginAction(){
@@ -32,11 +41,14 @@ let assignmentComponent = {
             ctrl.email_address(e.target.value);
             ctrl.validity(e.target.validationMessage==='');
         }
-
     },
     view(ctrl){
-        return ctrl.quest()? m('', m.trust(ctrl.quest())) :
 
+        return !ctrl.loaded()
+            ?
+            m('.loader')
+            :
+        ctrl.quest()? m('', m.trust(ctrl.quest())) :
             m('.container.space.homepage', { config:fullHeight},[
                 m('.row.space.centrify', [
                     m('h1', 'Login'),

@@ -120,7 +120,7 @@ let ruletableComponent = {
         }
 
         function init_set(){
-            return {comparator:'&', comparator_str:'All', name: '', sub_sets: [], data:[empty_rule()]};
+            return {comparator:'&&', comparator_str:'All', name: '', sub_sets: [], data:[empty_rule()]};
         }
 
         function empty_rule(){
@@ -204,8 +204,8 @@ let ruletableComponent = {
                         ),
                     m('.col-sm-2.space',
                         m('select.c-select.form-control.space',{onchange: e => {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
-                            m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
-                            m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
+                            m('option', {value:'&&', selected:set.comparator==='&&'}, 'All'),
+                            m('option', {value:'||', selected:set.comparator==='||'}, 'Any')
                         ])
                     ),
                     m('.col-sm-2.space',

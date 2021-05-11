@@ -10858,9 +10858,10 @@
     }
 
     var remove  = function (study) {
+        console.log(study);
         return messages.confirm({
             header: 'Remove Study:',
-            content: ("Are you sure you want to remove \"" + (study.study_name) + "\" from the pool?")
+            content: ("Are you sure you want to remove2 \"" + (study.study_name) + "\" from the pool?")
         })
             .then(function (response) {
                 if(response) {
@@ -12598,9 +12599,14 @@
         body: {email_address: email_address}
     }); };
 
+    var check_connectivity = function () { return fetchText(assignmentUrl, {
+        method: 'get'
+    }); };
+
     var assignmentComponent = {
         controller: function controller(){
             var ctrl = {
+                loaded:m.prop(false),
                 email_address:m.prop(''),
                 quest:m.prop(''),
                 validity:m.prop(true),
@@ -12608,6 +12614,14 @@
                 loginAction: loginAction,
                 error: m.prop('')
             };
+            check_connectivity()
+                .then(function (status){
+                    if (status)
+                        return window.location.href = '/assign';
+                    console.log('xoxo');
+                    ctrl.loaded(true);
+                    m.redraw();
+                });
             return ctrl;
 
             function loginAction(){
@@ -12628,11 +12642,14 @@
                 ctrl.email_address(e.target.value);
                 ctrl.validity(e.target.validationMessage==='');
             }
-
         },
         view: function view(ctrl){
-            return ctrl.quest()? m('', m.trust(ctrl.quest())) :
 
+            return !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+            ctrl.quest()? m('', m.trust(ctrl.quest())) :
                 m('.container.space.homepage', { config:fullHeight},[
                     m('.row.space.centrify', [
                         m('h1', 'Login'),
@@ -25686,7 +25703,7 @@
             }
 
             function init_set(){
-                return {comparator:'&', comparator_str:'All', name: '', sub_sets: [], data:[empty_rule()]};
+                return {comparator:'&&', comparator_str:'All', name: '', sub_sets: [], data:[empty_rule()]};
             }
 
             function empty_rule(){
@@ -25772,8 +25789,8 @@
                             ),
                         m('.col-sm-2.space',
                             m('select.c-select.form-control.space',{onchange: function (e) {ctrl.update_set_comparator(set, e.target.value, e.target.selectedOptions[0].text);}}, [
-                                m('option', {value:'&', selected:set.comparator==='&'}, 'All'),
-                                m('option', {value:'|', selected:set.comparator==='|'}, 'Any')
+                                m('option', {value:'&&', selected:set.comparator==='&&'}, 'All'),
+                                m('option', {value:'||', selected:set.comparator==='||'}, 'Any')
                             ])
                         ),
                         m('.col-sm-2.space',
