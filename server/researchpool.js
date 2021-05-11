@@ -61,7 +61,7 @@ exports.runAutopause=async function()
 		{
 			await exports.updateStudyPool(poolStudy._id,updateObject);
 		}
-		if(poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
+		if(completesObject!={} && poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
 		{
 			await pauseStudyPool(poolStudy._id);
 		}
@@ -168,7 +168,6 @@ exports.assignStudy = async function(registration_id) {
     }
 
     if (legalStudies.length == 0) {
-        console.log('No studies available');
         return Promise.reject({status: 200, message: 'No studies available.'});
 }
     let totalPriority = 0;
@@ -192,7 +191,6 @@ exports.assignStudy = async function(registration_id) {
         }
     }
     if (result == null){
-        console.log('No studies available');
         return Promise.reject({status:200, message:'No studies available.'});
     }
     // if (!result.experiment_file)
