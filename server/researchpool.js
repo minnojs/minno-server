@@ -44,7 +44,7 @@ exports.runAutopause=async function()
 		{
 			completesObject[completions[x]._id]=completions[x].total;
 		}
-		let updateObject={}
+		let updateObject={};
 		if(completesObject.started)
 		{
 			if(completesObject.completed)
@@ -57,10 +57,11 @@ exports.runAutopause=async function()
 		{
 			updateObject.completes=completesObject.completed;
 		}
-		if(updateObject!={})
+		if(Object.keys(updateObject).length === 0)
 		{
-			await exports.updateStudyPool(poolStudy._id,updateObject);
+			continue;
 		}
+		await exports.updateStudyPool(poolStudy._id,updateObject);
 		if(completesObject!={} && poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
 		{
 			await pauseStudyPool(poolStudy._id);
@@ -117,8 +118,6 @@ exports.removeStudyPool= async function(study_id)
 	removePoolStudy(params);
 }
 updatePoolStudy = async function(change_request) {
-	//console.log(change_request);
-	//console.log("change");
     let newPoolStudy=await PoolStudyController.updatePoolStudy(change_request);
 	updateRunningStudies(newPoolStudy);
 };
