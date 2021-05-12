@@ -23,7 +23,7 @@ exports.updatePoolStudy = async function(study) {
 	updateObject.deploy_id=poolStudy.deploy_id;*/
     //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
 	//return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
-    return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true});
+    return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true}).lean();
 };
 
 function generatePoolStudy(deploy)
@@ -100,16 +100,7 @@ exports.incrementStarts = async function(poolStudyId, count) {
         $inc: {
             'starts': count
         }
-    }, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-
-
-
-    });
+    }).lean();
     return results;
 };
 exports.setStarts = async function(poolStudyId, count) {
@@ -118,16 +109,7 @@ exports.setStarts = async function(poolStudyId, count) {
         _id: poolStudyId
     }, {
         'starts': count
-    }, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-
-
-
-    });
+    }).lean();
     return results;
 };
 exports.incrementCompletes = async function(poolStudyId, count) {
@@ -138,13 +120,7 @@ exports.incrementCompletes = async function(poolStudyId, count) {
         $inc: {
             'completes': count
         }
-    }, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-    });
+    }).lean();
     return results;
 };
 exports.setCompletes = async function(poolStudyId, count) {
@@ -153,14 +129,7 @@ exports.setCompletes = async function(poolStudyId, count) {
             _id: poolStudyId
         }, {
             'completes': count
-        },
-        (err, dataRequests) => {
-            if (err) {
-                throw err;
-            } else {
-                return dataRequests;
-            }
-        });
+        }).lean();
     return results;
 };
 

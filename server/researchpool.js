@@ -177,7 +177,6 @@ exports.assignStudy = async function(registration_id) {
             totalPriority += priority;
         }
     }
-
     let randValue = Math.floor(Math.random() * totalPriority) + 1;
     let result = null;
     for (const element of legalStudies) {
@@ -201,13 +200,10 @@ exports.assignStudy = async function(registration_id) {
     //         // console.log(result);
     //
     //     }
-
-
     return {experiment_file: result.experiment_file.id, version_hash: result.version_hash,pool_id: result._id};
     // else {
     //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
     // }
-
 };
 exports.checkRules = function(target, rules) {
     if (RulesComparator[rules.comparator](rules, target)) {
