@@ -10,7 +10,7 @@ const config = require.main.require('../config'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
 const logger = require('../../logger');
-
+mongoose.set('useFindAndModify', false);
 let fs = require('fs-extra');
 // var convert = require('mongoose_schema-json');
 let archiver = require('archiver-promise');

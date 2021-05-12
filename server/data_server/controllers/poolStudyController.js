@@ -5,7 +5,7 @@ const mongoose = require('mongoose'),
     logger = require('../../logger'),
     PI = require('../../PI'),
     connection = Promise.resolve(require('mongoose').connection);
-
+mongoose.set('useFindAndModify', false);
 
 
 exports.insertPoolStudy = async function(deploy) {
