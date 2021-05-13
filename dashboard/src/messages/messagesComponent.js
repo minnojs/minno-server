@@ -1,7 +1,7 @@
-import {get_pending_studies, get_reviewed_requests, use_code, read_review} from './messagesModel';
+import {get_pending_studies, get_updated_requests, use_code, read_update} from './messagesModel';
 
 import sharingRequestComponent from './sharingRequestsComponent';
-import reviewedRequestsComponent from './reviewedRequestsComponent';
+import updatedRequestsComponent from './updatedRequestsComponent';
 
 export default messagesComponent;
 
@@ -9,7 +9,7 @@ let messagesComponent = {
     controller(){
         const ctrl = {
             has_messages: m.prop(false),
-            reviewed_requests: m.prop(''),
+            updated_requests: m.prop(''),
             pendings: m.prop(''),
             loaded: false,
             loaded2: false,
@@ -27,11 +27,11 @@ let messagesComponent = {
             .catch(response => {
                 ctrl.error(response.message);
             })
-            .then(()=>get_reviewed_requests())
+            .then(()=>get_updated_requests())
             .then((response) => {
 
-                ctrl.reviewed_requests(response.reviewed_requests);
-                ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
+                ctrl.updated_requests(response.updated_requests);
+                ctrl.has_messages(ctrl.updated_requests() && ctrl.updated_requests().length>0);
             })
             .catch(response => {
                 ctrl.error(response.message);
@@ -46,12 +46,12 @@ let messagesComponent = {
         }
 
         function do_read(study_id, deploy_id){
-            read_review(deploy_id)
+            read_update(deploy_id)
             .then(m.route(`/deploy/${study_id}/${deploy_id}`));
         }
         function do_ignore(study_id, deploy_id){
-            read_review(deploy_id)
-                .then(()=>ctrl.reviewed_requests(ctrl.reviewed_requests().filter(study=>study.deploy_id!==deploy_id)))
+            read_update(deploy_id)
+                .then(()=>ctrl.updated_requests(ctrl.updated_requests().filter(study=>study.deploy_id!==deploy_id)))
                 .then(m.redraw);
         }
         return ctrl;
@@ -73,7 +73,7 @@ let messagesComponent = {
                 :
                 m('.container', [
                     !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl}),
-                    m.component(reviewedRequestsComponent, {ctrl}),
+                    m.component(updatedRequestsComponent, {ctrl}),
 
                 ]);
     }

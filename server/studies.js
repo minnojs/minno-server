@@ -35,7 +35,7 @@ function get_reviewed_requests(user_id) {
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.findOne({_id:user_id})
-            .then(user_result =>user_result.reviewed_requests);
+            .then(user_result => user_result.updated_requests);
     });
 }
 

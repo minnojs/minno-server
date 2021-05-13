@@ -1,6 +1,6 @@
-export default reviewedRequestsComponent;
+export default updatedRequestsComponent;
 
-let reviewedRequestsComponent = {
+let updatedRequestsComponent = {
     controller({ctrl}){
 
 
@@ -36,10 +36,12 @@ let reviewedRequestsComponent = {
                             ])
                         ])
                     ]),
-                    ctrl.reviewed_requests().map(request =>
+                    ctrl.updated_requests().map(request =>
                         m('.row.study-row.space', [
                             m('.col-sm-3', [
-                                m('.study-text', `${request.study_name} (v${request.version_id}) - ${request.file_name}`)
+                                // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
+
+                                m('a', {href: '', onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}}, m('.study-text', `${request.study_name} (v${request.version_id}) - ${request.file_name}`))
                             ]),
                             m('.col-sm-2', [
                                 m('.study-text', [
@@ -48,11 +50,11 @@ let reviewedRequestsComponent = {
                                 ])
                             ]),
                             m('.col-sm-3', [
-                                m('.study-text', request.reviewer_comments)
+                                m('.study-text', request.reviewer_comments ? request.reviewer_comments : 'None')
                             ]),
                             m('.col-sm-4', [
-                                m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
-                                m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'ignore'))
+                                // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
+                                m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read'))
                             ]),
                         ]))
                 ])

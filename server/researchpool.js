@@ -1,6 +1,8 @@
 const PoolStudyController = require('./data_server/controllers/poolStudyController');
 const DemographicsStudyController = require('./data_server/controllers/demographicsController');
 const studyController = require('./data_server/controllers/controller');
+const PI_notifications = require('./PI_notifications');
+
 const legalStudyStatus={completed:true,started:true}
 let arrayOfPoolStudies = null;
 const loadPoolStudies = async function() {
@@ -64,6 +66,7 @@ exports.runAutopause=async function()
 		await exports.updateStudyPool(poolStudy._id,updateObject);
 		if(completesObject!={} && poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject))
 		{
+            PI_notifications.update_status(poolStudy.deploy_id, 'auto-paused', 'Something');
 			await pauseStudyPool(poolStudy._id);
 		}
 	}

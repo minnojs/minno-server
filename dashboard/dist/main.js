@@ -23232,23 +23232,23 @@
     };
 
     var pending_url = baseUrl + "/pending";
-    var reviewed_requests_url = baseUrl + "/reviewed";
+    var updated_requests_url = baseUrl + "/updates";
 
     function apiURL$1(code)
     {
         return (collaborationUrl + "/" + (encodeURIComponent(code)));
     }
 
-    function reviewApiURL(id)
+    function updateApiURL(id)
     {
-        return (baseUrl + "/reviewed/" + id);
+        return (baseUrl + "/updates/" + id);
     }
 
     var get_pending_studies = function () { return fetchJson(pending_url, {
         method: 'get'
     }); };
 
-    var get_reviewed_requests = function () { return fetchJson(reviewed_requests_url, {
+    var get_updated_requests = function () { return fetchJson(updated_requests_url, {
         method: 'get'
     }); };
 
@@ -23257,7 +23257,7 @@
         method: 'get'
     }); };
 
-    var read_review = function (id) { return fetchJson(reviewApiURL(id), {
+    var read_update = function (id) { return fetchJson(updateApiURL(id), {
         method: 'post'
     }); };
 
@@ -23318,7 +23318,7 @@
         }
     };
 
-    var reviewedRequestsComponent = {
+    var updatedRequestsComponent = {
         controller: function controller(ref){
             var ctrl = ref.ctrl;
 
@@ -23356,9 +23356,11 @@
                                 ])
                             ])
                         ]),
-                        ctrl.reviewed_requests().map(function (request) { return m('.row.study-row.space', [
+                        ctrl.updated_requests().map(function (request) { return m('.row.study-row.space', [
                                 m('.col-sm-3', [
-                                    m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name)))
+                                    // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
+
+                                    m('a', {href: '', onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}}, m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name))))
                                 ]),
                                 m('.col-sm-2', [
                                     m('.study-text', [
@@ -23367,11 +23369,11 @@
                                     ])
                                 ]),
                                 m('.col-sm-3', [
-                                    m('.study-text', request.reviewer_comments)
+                                    m('.study-text', request.reviewer_comments ? request.reviewer_comments : 'None')
                                 ]),
                                 m('.col-sm-4', [
-                                    m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
-                                    m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'ignore'))
+                                    // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
+                                    m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read'))
                                 ]),
                             ]); })
                     ])
@@ -23384,7 +23386,7 @@
         controller: function controller(){
             var ctrl = {
                 has_messages: m.prop(false),
-                reviewed_requests: m.prop(''),
+                updated_requests: m.prop(''),
                 pendings: m.prop(''),
                 loaded: false,
                 loaded2: false,
@@ -23402,11 +23404,11 @@
                 .catch(function (response) {
                     ctrl.error(response.message);
                 })
-                .then(function (){ return get_reviewed_requests(); })
+                .then(function (){ return get_updated_requests(); })
                 .then(function (response) {
 
-                    ctrl.reviewed_requests(response.reviewed_requests);
-                    ctrl.has_messages(ctrl.reviewed_requests() && ctrl.reviewed_requests().length>0);
+                    ctrl.updated_requests(response.updated_requests);
+                    ctrl.has_messages(ctrl.updated_requests() && ctrl.updated_requests().length>0);
                 })
                 .catch(function (response) {
                     ctrl.error(response.message);
@@ -23421,12 +23423,12 @@
             }
 
             function do_read(study_id, deploy_id){
-                read_review(deploy_id)
+                read_update(deploy_id)
                 .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
             }
             function do_ignore(study_id, deploy_id){
-                read_review(deploy_id)
-                    .then(function (){ return ctrl.reviewed_requests(ctrl.reviewed_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
+                read_update(deploy_id)
+                    .then(function (){ return ctrl.updated_requests(ctrl.updated_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
                     .then(m.redraw);
             }
             return ctrl;
@@ -23448,7 +23450,7 @@
                     :
                     m('.container', [
                         !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl: ctrl}),
-                        m.component(reviewedRequestsComponent, {ctrl: ctrl}),
+                        m.component(updatedRequestsComponent, {ctrl: ctrl}),
 
                     ]);
         }

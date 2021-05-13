@@ -2,6 +2,7 @@ const utils         = require('./utils');
 const connection    = Promise.resolve(require('mongoose').connection);
 const dateFormat    = require('dateformat');
 const versions_comp   = require('./versions');
+const PI_notifications   = require('./PI_notifications');
 const research_pool   = require('./researchpool');
 const Validator = require('node-input-validator');
 const config        = require('../config');
@@ -77,7 +78,7 @@ function read_review(user_id, deploy_id){
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.updateOne({_id: user_id},
-            {$pull: {reviewed_requests: {deploy_id}}});
+            {$pull: {updated_requests: {deploy_id}}});
     });
 }
 
@@ -207,11 +208,14 @@ function update_in_pool(new_deploy) {
         });
 }
 
-function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {
+function send_pause_notification(deploy_id) {
+    console.log('bang');
+}
 
+
+function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {
     if(user_role !== 'du' && user_role !== 'su')
         return Promise.reject({status:400, message:'Error: Permission denied'});
-
     return connection.then(function (db) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
@@ -230,24 +234,26 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
                     set2update.status   = status;
                     set2update.priority = priority;
                     set2update.reviewer_comments = reviewer_comments;
-                    users.updateMany({_id: {$in: study_data.users.map(user=>user.user_id)}},
-                        {$push: {reviewed_requests: {
-                            study_id:request.value.study_id,
-                            study_name:request.value.study_name,
-                            version_id: request.value.version_id,
-                            deploy_id: request.value._id,
-                            file_name: set2update.experiment_file.file_id,
-                            status: status,
-                            reviewer_comments: reviewer_comments
-                        }}});
+                    return PI_notifications.update_status(deploy_id, status, reviewer_comments)
+                        .then(()=>
+                    // users.updateMany({_id: {$in: study_data.users.map(user=>user.user_id)}},
+                    //     {$push: {updated_requests: {
+                    //         study_id:request.value.study_id,
+                    //         study_name:request.value.study_name,
+                    //         version_id: request.value.version_id,
+                    //         deploy_id: request.value._id,
+                    //         file_name: set2update.experiment_file.file_id,
+                    //         status: status,
+                    //         reviewer_comments: reviewer_comments
+                    //     }}});
 
-                    return studies.updateOne({_id:request.value.study_id},
+                    studies.updateOne({_id:request.value.study_id},
                         {$set: {versions:versions}})
                         .then(()=> {
                             if (status==='accept' && version2update.state ==='Develop') {
                                 return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id), 'keep');
                             }
-                        });
+                        }));
                 })
                 .then(get_all_deploys);
         });
@@ -565,4 +571,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};
+module.exports = {login_and_assign, add2pool, pause_study, send_pause_notification, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

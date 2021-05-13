@@ -27,14 +27,14 @@ messagesRouter.route('/pending')
         .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });
 
-messagesRouter.route('/reviewed')
+messagesRouter.route('/updates')
     .get(
         function(req,res){
             return studies.get_reviewed_requests(req.user_id)
-                .then(studies_data=>res.json({reviewed_requests:studies_data}));
+                .then(studies_data=>res.json({updated_requests:studies_data}));
         });
 
-messagesRouter.route('/reviewed/:request_id')
+messagesRouter.route('/updates/:request_id')
     .post(function(req,res)
     {
         return PI.read_review(req.user_id, req.params.request_id)
