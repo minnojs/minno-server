@@ -40,7 +40,9 @@ exports.runAutopause = async function() {
             poolId: poolStudy._id
         };
         let completions = await studyController.getExperimentStatusCount(params);
-        let completesObject = {};
+        let completesObject = {
+            startedSessions: 0
+        };
         for (let x = 0; x < completions.length; x++) {
             completesObject[completions[x]._id] = completions[x].total;
         }
@@ -48,23 +50,34 @@ exports.runAutopause = async function() {
         if (completesObject.started) {
             if (completesObject.completed) {
                 completesObject.started += completesObject.completed;
+
             }
+            completesObject.startedSessions += completesObject.started;
             updateObject.starts = completesObject.started;
         }
         if (completesObject.completed) {
             updateObject.completes = completesObject.completed;
+            completesObject.startedSessions += completesObject.completed;
+            if (completesObject.started) {
+                completesObject.completionRate = completesObject.completed / (completesObject.startedSessions);
+            } else {
+                completesObject.completionRate = 1
+            }
+
         }
         if (Object.keys(updateObject).length === 0) {
             continue;
         }
         await exports.updateStudyPool(poolStudy._id, updateObject);
         if (completesObject.completed && poolStudy.target_number && completesObject.completed >= poolStudy.target_number) {
-			PI_notifications.update_status(poolStudy.deploy_id, 'auto-paused', 'Something');
+            PI_notifications.update_status(poolStudy.deploy_id, 'auto-paused', 'Something');
             await exports.pauseStudyPool(poolStudy._id);
             continue;
         }
-        if (completesObject != {} && poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject)) {
-			PI_notifications.update_status(poolStudy.deploy_id, 'auto-paused', 'Something');
+        if (completesObject != {
+                startedSessions: 0
+            } && poolStudy.pause_rules && poolStudy.pause_rules.comparator && RulesComparator[poolStudy.pause_rules.comparator](poolStudy.pause_rules, completesObject)) {
+            PI_notifications.update_status(poolStudy.deploy_id, 'auto-paused', 'Something');
             await exports.pauseStudyPool(poolStudy._id);
             continue;
         }
