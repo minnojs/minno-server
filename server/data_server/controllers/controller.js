@@ -71,6 +71,36 @@ exports.getExperimentStatusCount = async function(params) {
 	  return results;
 	  
 }
+exports.getExperimentCountByRegistrationId = async function(registrationId) {
+    if (!registrationId) {
+        return null;
+    }
+	var agg = [
+		{ $match : {registrationId:registrationId }},
+	    {$group: {
+	      _id: "$poolId",
+	      // SUCCESS!!! :D
+	      total: {$sum: 1}
+	    }}
+	  ];
+	  const aggregate = experimentSessionSchema.aggregate(agg);
+	  
+	  const results = await aggregate.exec();
+	  return flattenCount(results);
+	  
+}
+let flattenCount= function(results)
+{
+	let flat={};
+	for(const item of results)
+	{
+		if(item._id)
+		{
+			flat[item._id]=item.total;
+		}
+	}
+	return flat;
+}
 /*exports.getExperimentStateCount = async function(params) {
     if (params.studyId < 0 || !params.rulesId) {
         return null;
@@ -109,14 +139,6 @@ exports.getExperimentCompletes = async function(params) {
         studyId: params.studyId,
         state: 'completed',
         rulesId: params.rulesId
-    }, (err, dataRequests) => {
-        if (err) {
-            throw err;
-        } else {
-            return dataRequests;
-        }
-
-
     });
     return results;
 

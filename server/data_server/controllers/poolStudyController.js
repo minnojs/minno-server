@@ -64,6 +64,10 @@ function generatePoolStudy(deploy)
     poolStudy.starts = deploy.starts;}
 	if(deploy.completes){
     poolStudy.completes = deploy.completes;}
+	if(deploy.multiple_sessions)
+	{
+		poolStudy.multiple_sessions=deploy.multiple_sessions;
+	}
     return poolStudy;
 }
 
