@@ -24,6 +24,7 @@ let reviewDeployDialog = {
             update_pause_rules,
             do_deploy,
             target_number:m.prop(''),
+            multiple_sessions:m.prop(''),
             comments:m.prop(''),
             reviewer_comments:m.prop(''),
             priority:m.prop(''),
@@ -199,6 +200,8 @@ let reviewDeployDialog = {
                             ctrl.deploy2show().target_number
                     ]),
                 ]),
+
+
                 m('.row.space',[
                     m('.col-sm-3',[
                         m('strong', 'Priority:'),
@@ -212,6 +215,16 @@ let reviewDeployDialog = {
                             ctrl.deploy2show().priority
                     ])
                 ]),
+
+                m('.row.space',[
+                    m('.col-sm-3',[
+                        m('strong', 'Multiple Sessions:'),
+                    ]),
+                    m('.col-sm-2', {class:!ctrl.deploy2show().changed ? '' : !ctrl.deploy2show().changed.includes('priority') ? '' : 'alert-warning'},[
+                            ctrl.deploy2show().multiple_sessions ? 'Yes' : 'No'
+                    ])
+                ]),
+
                 m('.row.space',[
                     m('.col-sm-3',[
                         m('strong', 'Summary of Rule Logic:'),

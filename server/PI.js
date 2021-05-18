@@ -208,9 +208,6 @@ function update_in_pool(new_deploy) {
         });
 }
 
-function send_pause_notification(deploy_id) {
-    console.log('bang');
-}
 
 
 function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status, user_role) {
@@ -476,6 +473,7 @@ function request_deploy(user_id, study_id, props) {
                         priority:set.priority,
                         planned_procedure: props.planned_procedure,
                         sample_size: props.sample_size,
+                        multiple_sessions: set.multiple_sessions,
                         target_number: set.target_number}));
 
                     const deploys = db.collection('deploys');
@@ -555,6 +553,7 @@ function change_deploy(user_id, study_id, props) {
                         priority:set2update.priority,
                         planned_procedure: deploy2update.planned_procedure,
                         sample_size: deploy2update.sample_size,
+                        multiple_sessions: set2update.multiple_sessions,
                         target_number: set2update.target_number};
 
                     const deploys = db.collection('deploys');

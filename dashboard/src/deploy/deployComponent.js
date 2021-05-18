@@ -22,7 +22,7 @@ let deployDialog = {
             error: m.prop(''),
             target_number: m.prop(''),
             all_rules: m.prop([]),
-            sets: m.prop([{rules: '', experiment_file: '', target_number:'', priority:26}]),
+            sets: m.prop([{rules: '', multiple_sessions: false, experiment_file: '', target_number:'', priority:26}]),
             add_set,
             remove_rule,
             update_rule,
@@ -30,6 +30,7 @@ let deployDialog = {
             update_priority,
             update_target_number,
             update_experiment_file,
+            update_multiple_sessions,
             print_rules,
             check_sets_validity,
             check_form_validity,
@@ -75,6 +76,10 @@ let deployDialog = {
             ctrl.sets()[set_id].priority = priority;
         }
 
+        function update_multiple_sessions(set_id, value){
+            ctrl.sets()[set_id].multiple_sessions = value;
+        }
+
         function update_version(version_id){
             ctrl.version_id = version_id;
             ctrl.version = ctrl.study.versions.find(version=>version.hash === version_id);
@@ -90,7 +95,7 @@ let deployDialog = {
         }
 
         function add_set(){
-            ctrl.sets().push({rules: '', experiment_file: '', target_number:'', priority:26});
+            ctrl.sets().push({rules: '', experiment_file: '', multiple_sessions: false, target_number:'', priority:26});
         }
 
         function load() {
@@ -173,13 +178,16 @@ let deployDialog = {
                     m('.col-sm-2',[
                         ASTERISK, m('strong.space', 'Priority')
                     ]),
+                    m('.col-sm-1',[
+                        ASTERISK, m('strong.space', 'Allow study to be taken multiple times by the same participant')
+                    ]),
                     m('.col-sm-2',[
                         m('strong.space', 'Rule set'),
                         m('p.small.text-muted', ['Create and edit rules sets ',
                             m('a', {href:'?/ruletable', target:'_blank'}, 'Here')
                         ])
                     ]),
-                    m('.col-sm-3',[
+                    m('.col-sm-2',[
                         m('strong.space', 'Summary of Rule Logic')
                     ]),
                 ]),
@@ -205,13 +213,18 @@ let deployDialog = {
                         m('.col-sm-2',[
                             m('input.form-control.space', {value: set.priority, type:'number', min:'0', max:'26', placeholder:'Priority', oninput: e => {ctrl.update_priority(set_id, e.target.value);}})
                         ]),
+                        m('.col-sm-1',[
+                            m('i.fa.fa-fw', {onclick:e=>{ctrl.update_multiple_sessions(set_id, !set.multiple_sessions);},
+                                    class: classNames({'fa-square-o' : !set.multiple_sessions, 'fa-check-square-o' : set.multiple_sessions})
+                                })
+                        ]),
                         m('.col-sm-2',[
                             m('select.c-select.form-control.space',{onchange: e => {ctrl.update_rule(set_id, e.target.value);}}, [
                                 m('option', {value:''}, 'None'),
                                 ctrl.all_rules().map(rule=>m('option', {value:rule.id}, rule.name))
                             ])
                         ]),
-                        m('.col-sm-3',[
+                        m('.col-sm-2',[
                             m('',
                                 set.rules==='' ? 'None' :   ctrl.print_rules(set.rules)
                             )

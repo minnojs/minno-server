@@ -28,6 +28,7 @@ exports.updatePoolStudy = async function(study) {
 
 function generatePoolStudy(deploy)
 {
+
 	let poolStudy={};
 	// if(deploy.running_id)
 	// {
