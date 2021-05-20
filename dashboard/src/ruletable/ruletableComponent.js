@@ -229,7 +229,7 @@ let ruletableComponent = {
                                 m('.input-set.space', [
                                     m('select.c-select.form-control.space',{onchange: e => {ctrl.set_field(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
                                         m('option', {value:'', selected:user_rule.field==='', disabled:true}, 'Condition'),
-                                        ctrl.all_rules.map(rule=> m('option', {value:rule.nameXML, selected:user_rule.field===rule.name}, rule.name))
+                                        ctrl.all_rules.map(rule=> m('option', {value:rule.nameXML, selected:user_rule.field===rule.nameXML}, rule.name))
                                     ])
                                 ])
                             ),
