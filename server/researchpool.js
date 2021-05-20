@@ -52,6 +52,10 @@ exports.runAutopause = async function() {
                 completesObject.started += completesObject.completed;
 
             }
+			else
+			{
+				completesObject.completionRate=0;
+			}
             completesObject.startedSessions += completesObject.started;
             updateObject.starts = completesObject.started;
         }
