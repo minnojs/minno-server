@@ -142,8 +142,9 @@ let editRegistration = {
 
 
 function select_study(ctrl, study_id){
-    ctrl.study_id(study_id);
-    ctrl.study(ctrl.studies().find(study=>study.id==study_id));
+
+    ctrl.study_id(parseInt(study_id));
+    ctrl.study(ctrl.studies().find(study=>study.id===ctrl.study_id()));
     ctrl.study().versions = ctrl.study().versions.filter(version=>version.state==='Published');
     ctrl.version_id('');
     ctrl.experiment_id('');
