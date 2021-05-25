@@ -279,28 +279,39 @@ exports.updateExperimentStatus = async function(sessionId, status, res) {
     }
 }
 
-
+function maybeNumber(string)
+{
+	let result=Number(string);
+	if(result!=NaN)
+	{
+		return result;
+	}
+	else
+	{
+		return string;
+	}
+}
 
 const RulesComparator = {
     '>': function(element, participant) {
-        return participant[element.field] > element.value;
+        return maybeNumber(participant[element.field]) > maybeNumber(element.value);
     },
     '>=': function(element, participant) {
-        return participant[element.field] >= element.value;
+        return maybeNumber(participant[element.field]) >= maybeNumber(element.value);
     },
     '<': function(element, participant) {
-        return participant[element.field] < element.value;
+        return maybeNumber(participant[element.field]) < maybeNumber(element.value);
     },
     '<=': function(element, participant) {
-        return participant[element.field] <= element.value;
+        return maybeNumber(participant[element.field]) <= maybeNumber(element.value);
     },
     '==': function(element, participant) {
-        return element.value == participant[element.field];
+        return maybeNumber(element.value) == maybeNumber(participant[element.field]);
     },
     '!=': function(element, participant) {
-        return !(element.value == participant[element.field]);
+        return !(maybeNumber(element.value) == maybeNumber(participant[element.field]));
     },
-    '&&': function(array, participant) {
+    '&': function(array, participant) {
         if (array.data == null || array.data.length == 0) {
             return true;
         }
@@ -311,7 +322,7 @@ const RulesComparator = {
         }
         return true;
     },
-    '||': function(array, participant) {
+    '|': function(array, participant) {
         if (array.data == null || array.data.length == 0) {
             return true;
         }
