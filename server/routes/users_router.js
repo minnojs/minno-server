@@ -2,6 +2,7 @@ const express     = require('express');
 const users       = require('../users');
 const config      = require('../../config');
 const url         = require('url');
+const urljoin     = require('url-join');
 
 const usersRouter = express.Router();
 
