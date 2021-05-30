@@ -2,6 +2,7 @@ const express     = require('express');
 const studies     = require('../studies');
 const config      = require('../../config');
 const url         = require('url');
+const urljoin     = require('url-join');
 
 const sharingRouter = express.Router();
 
@@ -26,11 +27,11 @@ sharingRouter.route('/:study_id/public')
 sharingRouter.route('/:study_id/link')
     .post(
         function(req, res){
-            const server_url =  config.relative_path === '/' ?  req.headers.origin : new url.URL(req.headers.origin, config.relative_path);
+            const server_url =  config.relative_path === '/' ?  req.headers.origin : urljoin(req.headers.origin, config.relative_path);
             return studies.make_link(req.user_id, parseInt(req.params.study_id), server_url)
                 .then(link=>
                 {
-                    const link_str = new url.URL(server_url+'/dashboard/?/view/'+link);
+                    const link_str = server_url+ '/dashboard/?/view/'+ link;
                     return res.json({link: link_str});
                 });
         })
