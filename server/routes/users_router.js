@@ -16,7 +16,9 @@ usersRouter
 
 usersRouter.route('')
     .get(function(req, res){
-        return users.get_users()
+        const server_url =  config.relative_path === '/' ?  req.headers.origin : urljoin(req.headers.origin, config.relative_path);
+
+        return users.get_users(server_url)
             .then(user_data=>res.json({users:user_data.filter(user=>user.id!==req.user_id)}))
             .catch(err=>
                 res.status(err.status || 500).json({message:err.message}));
