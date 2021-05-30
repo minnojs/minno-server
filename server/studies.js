@@ -542,7 +542,7 @@ function make_public(user_id, study_id, is_public) {
         }));
 }
 
-function make_link(user_id, study_id, server_url) {
+function make_link(user_id, study_id) {
     return has_write_permission(user_id, study_id)
         .then(()=> connection.then(function (db) {
 

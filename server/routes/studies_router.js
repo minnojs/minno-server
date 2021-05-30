@@ -192,8 +192,8 @@ studiesRouter.route('/:study_id/collaboration')
         })
     .post(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-            studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission, req.body.data_permission, server_url)
+            // const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            studies.add_collaboration(req.user_id, parseInt(req.params.study_id), req.body.user_name, req.body.permission, req.body.data_permission, config.server_url)
                 .then(function(data){
                     res.json({data_file:data});
                 })

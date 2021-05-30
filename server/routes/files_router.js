@@ -16,8 +16,8 @@ filesRouter
 
 filesRouter.route('/:study_id').get(
     function(req, res){
-        const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-        files.get_study_files(req.user_id, parseInt(req.params.study_id), server_url)
+        // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+        files.get_study_files(req.user_id, parseInt(req.params.study_id), config.server_url)
              .then(response => res.json(response))
              .catch(function(err){
                  res.status(err.status || 500).json({message:err.message});
@@ -25,8 +25,8 @@ filesRouter.route('/:study_id').get(
     })
     .delete(
         function(req, res){
-            const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-            files.delete_files(req.user_id, parseInt(req.params.study_id), req.body.files, server_url)
+            // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+            files.delete_files(req.user_id, parseInt(req.params.study_id), req.body.files, config.server_url)
             .then(response => res.json(response))
             .catch(function(err){
                 res.status(err.status || 500).json({message:err.message});
@@ -91,8 +91,8 @@ filesRouter.route('/:study_id/file/:file_id')
 filesRouter.route('/:study_id/file/:file_id/move')
     .put(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-            return files.rename_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.path, server_url)
+            // todoR: const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            return files.rename_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.path, config.server_url)
                 .then(file_data=>res.json(file_data))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
 
@@ -101,8 +101,8 @@ filesRouter.route('/:study_id/file/:file_id/move')
 filesRouter.route('/:study_id/file/:file_id/duplicate')
     .post(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-            return files.duplicate_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.new_path, server_url)
+            // const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            return files.duplicate_file(req.user_id, parseInt(req.params.study_id), req.params.file_id, req.body.new_path, config.server_url)
                 .then(data=>res.json(data))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
         });

@@ -27,11 +27,11 @@ sharingRouter.route('/:study_id/public')
 sharingRouter.route('/:study_id/link')
     .post(
         function(req, res){
-            const server_url =  config.relative_path === '/' ?  req.headers.origin : urljoin(req.headers.origin, config.relative_path);
-            return studies.make_link(req.user_id, parseInt(req.params.study_id), server_url)
+            // const server_url =  config.relative_path === '/' ?  req.headers.origin : urljoin(req.headers.origin, config.relative_path);
+            return studies.make_link(req.user_id, parseInt(req.params.study_id))
                 .then(link=>
                 {
-                    const link_str = server_url+ '/dashboard/?/view/'+ link;
+                    const link_str = config.server_url+ '/dashboard/?/view/'+ link;
                     return res.json({link: link_str});
                 });
         })
