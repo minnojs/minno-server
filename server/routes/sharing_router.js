@@ -26,8 +26,7 @@ sharingRouter.route('/:study_id/public')
 sharingRouter.route('/:study_id/link')
     .post(
         function(req, res){
-
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            const server_url =  url.resolve(req.headers.origin, config.relative_path);
             return studies.make_link(req.user_id, parseInt(req.params.study_id), server_url)
                 .then(link=>res.json({link}));
 
