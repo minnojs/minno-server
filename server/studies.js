@@ -548,7 +548,7 @@ function make_link(user_id, study_id, server_url) {
 
             const studies = db.collection('studies');
 
-            const link = utils.clean_url(server_url + '/dashboard/?/view/' + utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000)));
+            const link = utils.sha1(study_id+'*'+Math.floor(Date.now() / 1000));
 
 
             return studies.updateOne({_id: study_id}, {$set: {link}})

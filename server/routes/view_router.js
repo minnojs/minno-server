@@ -13,7 +13,7 @@ viewRouter.route('/:link_id')
         function(req, res){
             const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
-            const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+            const link = req.params.link_id;
 
             return studies.get_id_with_link(link)
                 .then(function(study){

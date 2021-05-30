@@ -26,10 +26,12 @@ sharingRouter.route('/:study_id/public')
 sharingRouter.route('/:study_id/link')
     .post(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
-            return studies.make_link(req.user_id, parseInt(req.params.study_id), server_url)
-                .then(link=>res.json({link}));
-
+            return studies.make_link(req.user_id, parseInt(req.params.study_id), req.headers.origin)
+                .then(link=>
+                {
+                    const link_str = new url.URL(req.headers.origin+'/dashboard/?/view/'+link);
+                    return res.json({link: link_str});
+                });
         })
     .delete(
         function(req, res){
