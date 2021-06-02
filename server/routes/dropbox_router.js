@@ -17,7 +17,7 @@ dropboxRouter
 dropboxRouter.route('')
     .get(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            // todoR const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
             dropbox.get_auth_link(req.user_id, config.server_url)
                 .then(dbx_data=>res.json(dbx_data));
         })
