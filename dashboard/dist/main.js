@@ -20813,9 +20813,9 @@
     }; };
 
     var permissionFilter = function (permission) { return function (study) {
-        if(permission === 'all') return !(study.is_public && study.permission !== 'owner');
+        if(permission === 'all') return study.accessible;
         if(permission === 'public') return study.is_public && !study.is_bank;
-        if(permission === 'collaboration') return study.permission !== 'owner' && !study.is_public;
+        if(permission === 'collaboration') return study.permission !== 'owner' && study.accessible;
         if(permission === 'template') return study.is_template;
         if(permission === 'bank-iat') return study.is_bank && study.bank_type==='iat';
         if(permission === 'bank-cognitive') return study.is_bank && study.bank_type==='cognitive';

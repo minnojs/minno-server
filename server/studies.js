@@ -61,6 +61,7 @@ function get_studies(user_id) {
                     return composeStudy(study, {
                         permission: user_data.deleted ? 'deleted' : user_data.permission,
                         has_data_permission: user_data.permission === 'owner' || user_data.data_permission === 'visible',
+                        accessible: true,
                         study_type:'regular',
                         base_url:study.folder_name,
                         tags: get_tags(user_result, study)
