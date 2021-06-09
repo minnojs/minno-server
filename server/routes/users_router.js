@@ -2,6 +2,7 @@ const express     = require('express');
 const users       = require('../users');
 const config      = require('../../config');
 const url         = require('url');
+const urljoin     = require('url-join');
 
 const usersRouter = express.Router();
 
@@ -16,7 +17,9 @@ usersRouter
 
 usersRouter.route('')
     .get(function(req, res){
-        return users.get_users()
+
+        // todoR: const server_url =  config.relative_path === '/' ?  req.headers.origin : urljoin(req.headers.origin, config.relative_path);
+        return users.get_users(config.server_url)
             .then(user_data=>res.json({users:user_data.filter(user=>user.id!==req.user_id)}))
             .catch(err=>
                 res.status(err.status || 500).json({message:err.message}));
@@ -43,9 +46,9 @@ usersRouter.route('')
 usersRouter.route('/add_user')
     .post(
         function(req, res){
-            const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+            // const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
 
-            return users.insert_new_user(req.body, server_url)
+            return users.insert_new_user(req.body, config.server_url)
                 .then((data)=> data  ? res.json(data) : res.json({}))
                 .catch(err=>
                     res.status(err.status || 500).json({message:err.message}));

@@ -119,7 +119,7 @@ function get_email(user_id) {
 }
 
 
-function get_users() {
+function get_users(server_url) {
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.find({})
@@ -134,8 +134,8 @@ function get_users() {
                         last_name: user.last_name,
                         email:user.email,
                         role:user.role,
-                        activation_code: !user.activation_code ? '' : `/dashboard/?/activation/${user.activation_code}`,
-                        reset_code: !user.reset_code ? '' : `/dashboard/?/reset_password/${user.reset_code}`
+                        activation_code: !user.activation_code ? '' : server_url + `/dashboard/?/activation/${user.activation_code}`,
+                        reset_code: !user.reset_code ? '' : server_url + `/dashboard/?/reset_password/${user.reset_code}`
                     })));
             });
     });

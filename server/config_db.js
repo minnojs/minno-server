@@ -66,7 +66,7 @@ function update_dbx (dbx) {
     return set_dbx(dbx.app_key, dbx.app_secret);
 }
 
-async function update_server(server_data, host, app) {
+async function update_server(server_data, app) {
     if(!server_data.updated)
         return;
     let server_data_obj = {http:{}};
@@ -78,21 +78,20 @@ async function update_server(server_data, host, app) {
     if (server_data.type==='https'){
         server_data_obj = {https: server_data.https};
 		try{
-            const server_url =  url.resolve(host, config.relative_path);
+            // todoR const server_url =  url.resolve(host, config.relative_path);
             await Server.startupHttps(app, server_data_obj);
 
-            await sslCertificate.get(server_url).then(function (certificate) {
+            await sslCertificate.get(config.server_url).then(function (certificate) {
                 const subjectaltname = certificate.subjectaltname;
                 let valid_certification = false;
                 certificate.subjectaltname.split(",").map(a=> {
-                    if(a.includes(server_url))
+                    if(a.includes(config.server_url))
                         valid_certification = true;});
                 is_crashed = !valid_certification;
             })
                 .catch(()=> {
                     is_crashed = true;
             });
-			
 		}
 		catch(e)
 		{

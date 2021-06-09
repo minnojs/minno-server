@@ -35,9 +35,9 @@ router.get('/test/:exp_id/:version_id',function(req, res){
 });
 
 router.get('/view_play/:link_id/:file_id',function(req, res){
-    const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
+    // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
-    const link = utils.clean_url(server_url + '/dashboard/?/view/'+req.params.link_id);
+    const link = utils.clean_url(config.server_url + '/dashboard/?/view/'+req.params.link_id);
 
     return studies.get_id_with_link(link)
         .then(function(study) {
