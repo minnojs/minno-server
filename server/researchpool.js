@@ -332,5 +332,27 @@ const RulesComparator = {
             }
         }
         return false;
+    },
+	    '&&': function(array, participant) {
+        if (array.data == null || array.data.length == 0) {
+            return true;
+        }
+        for (const element of array.data) {
+            if (!RulesComparator[element.comparator](element, participant)) {
+                return false;
+            }
+        }
+        return true;
+    },
+    '||': function(array, participant) {
+        if (array.data == null || array.data.length == 0) {
+            return true;
+        }
+        for (const element of array.data) {
+            if (RulesComparator[element.comparator](element, participant)) {
+                return true;
+            }
+        }
+        return false;
     }
 };
