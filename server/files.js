@@ -342,7 +342,7 @@ function duplicate_file(user_id, study_id, file_id, new_file_id, server_url) {
 
 function upload(user_id, study_id, req) {
     const form = new formidable.IncomingForm();
-    const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
+    // todoR const server_url =  url.resolve(req.protocol + '://' + req.headers.host, config.relative_path);
 
     form.maxFileSize = config.maxFileSize;
     form.multiples = true;
@@ -371,7 +371,7 @@ function upload(user_id, study_id, req) {
             })
             .then(() => Promise.all([
 
-                get_study_files(user_id, study_id, server_url),
+                get_study_files(user_id, study_id, config.server_url),
                 studies_comp.update_modify(study_id)
             ]))
             .then(function([study_data]){ return study_data.files; })

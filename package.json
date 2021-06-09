@@ -85,7 +85,7 @@
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-node-resolve": "^4.0.0",
     "rollup-watch": "^2.4.0",
-    "url-join": "^4.0.0",
+    "url-join": "^4.0.1",
     "whatwg-fetch": "^3.0.0"
   }
 }
