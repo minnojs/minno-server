@@ -43,6 +43,7 @@ let autupause_rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['>','<','==','>=','<=','!='],
         values:['Started sessions'],
+        numeric:true,
         valuesXML:[]
     },
     {
@@ -51,6 +52,7 @@ let autupause_rules = [
         equal:['>','<','=','>=','<=','!='],
         equalXML:['>','<','==','>=','<=','!='],
         values:['Completion rate'],
+        numeric:true,
         valuesXML:[]
     }
 ];
@@ -155,7 +157,8 @@ let rules = [
         nameXML:'ethnicityomb',
         equal:['Is','Is Not'],
         equalXML:['==','!='],
-        values:['Hispanic or Latino','Not Hispanic or Latino','Unknown']
+        values:['Hispanic or Latino','Not Hispanic or Latino','Unknown'],
+        valuesXML:['1','2','3']
     },
     {
         name:'General Occupation',

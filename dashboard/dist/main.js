@@ -24341,6 +24341,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['>','<','==','>=','<=','!='],
             values:['Started sessions'],
+            numeric:true,
             valuesXML:[]
         },
         {
@@ -24349,6 +24350,7 @@
             equal:['>','<','=','>=','<=','!='],
             equalXML:['>','<','==','>=','<=','!='],
             values:['Completion rate'],
+            numeric:true,
             valuesXML:[]
         }
     ];
@@ -24453,7 +24455,8 @@
             nameXML:'ethnicityomb',
             equal:['Is','Is Not'],
             equalXML:['==','!='],
-            values:['Hispanic or Latino','Not Hispanic or Latino','Unknown']
+            values:['Hispanic or Latino','Not Hispanic or Latino','Unknown'],
+            valuesXML:['1','2','3']
         },
         {
             name:'General Occupation',
@@ -25753,8 +25756,10 @@
                 user_rule.comparator_text   = text;
             }
 
-            function set_value(user_rule, value, text){
-                user_rule.value         = value;
+            function set_value(user_rule, value, text, numeric){
+                if ( numeric === void 0 ) numeric = false;
+
+                user_rule.value         = numeric ? parseInt(value) : value;
                 user_rule.value_text    = text;
             }
 
@@ -25869,7 +25874,7 @@
                                     m('.input-set.space', [
                                         !condition_data || !condition_data.values.length ? ctrl.set_value(user_rule, ' ', ' ')  :
                                             condition_data.values.length === 1 ?
-                                                m('input.form-control.space', {value:user_rule.value, onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, placeholder:condition_data.values[0]})
+                                        m('input.form-control.space', {value:user_rule.value, type:condition_data.numeric ? 'number' : 'text', min:'0', onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value);}, onkeyup: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.value, condition_data.numeric);}, placeholder:condition_data.values[0]})
                                                 :
 
                                                 m('select.c-select.form-control.space',{onchange: function (e) {ctrl.set_value(user_rule, e.target.value, e.target.selectedOptions[0].text);}}, [
