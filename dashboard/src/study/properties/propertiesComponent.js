@@ -269,6 +269,42 @@ let propertiesComponent = {
                         )
                     )
                 ]),
+
+
+                m('.row.space',
+                    m('.col-sm-2.space',  m('h4', 'Study actions'))
+                ),
+
+                m('.row.space',
+                    m('.col-sm-12', [
+                        m('.row.', [
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-success.btn-sm', {onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
+                                ),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-success.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
+                                ),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-success.btn-sm', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
+                                ),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-success.btn-sm', {onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
+                                ),
+                                m('.col-sm-1.space',
+                                    m('button.btn.btn-success.btn-sm', {onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
+                                ),
+                                ctrl.study.isReadonly || ctrl.under_develop() ? '' :
+                                    m('.col-sm-1.space',
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                    ),
+                                m('.col-sm-1.space',
+                                    ctrl.study.isReadonly ? '' :
+                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
+                                )
+                            ]
+                        ),
+                    ])
+                ),
                 ctrl.study.invisible ? '' : [
                     m('.row.space',
                         m('.col-sm-12.space',  m('h4', 'Versions'))
@@ -290,7 +326,7 @@ let propertiesComponent = {
                         )
                     )
                 ],
-
+/* TEST
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Actions'))
                 ),
@@ -379,7 +415,11 @@ let propertiesComponent = {
                         ])
                     )
                 ]
+
+ */
             ]);
+
+
     }
 };
 
