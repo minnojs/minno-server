@@ -86,7 +86,7 @@ let studyPrototype = {
                 this.description = study.description;
 
                 this.name = study.study_name;
-                this.type = study.type || 'minno02';
+                this.type = study.type || 'minno03';
                 this.base_url = study.base_url;
                 this.versions = study.versions ? study.versions : [];
                 this.files(files);

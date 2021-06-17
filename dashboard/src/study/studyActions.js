@@ -22,7 +22,7 @@ export let do_create = (type, studies) => {
     let reuse_id = m.prop('');
     let error = m.prop('');
     const isOpenServer = true;
-    const study_type = m.prop('minno02');
+    const study_type = m.prop('minno03');
     const isTemplate = type !== 'regular';
 
     let ask = () => messages.confirm({
@@ -38,9 +38,9 @@ export let do_create = (type, studies) => {
                     m('textarea.form-control',  {oninput: m.withAttr('value', description)})
                 ]),
                 isTemplate || !isOpenServer ? '' : m('.form-group', [
-                    m('label', 'Pick Study Player:'),
+                    m('label', 'Select Study Player:'),
                     m('select.c-select.form-control', { onchange: m.withAttr('value', study_type)}, [
-                        m('option', {value:'minno02'}, 'MinnoJS v0.2'),
+                        m('option', {value:'minno03'}, 'MinnoJS v0.3'),
                         m('option', {value:'html'}, 'JSPysch (run any HTML)')
                     ])
                 ]),

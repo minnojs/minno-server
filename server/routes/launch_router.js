@@ -114,7 +114,7 @@ function displayExperiment(params, res, fingerprint){
                     .then(transformHtml(exp_data,postOnce,postAlways))
                     .then(res.send.bind(res));
 
-                return render(exp_data.type || 'minno02', {
+                return render(exp_data.type || 'minno03', {
                     isDev: postOnce.state === 'Develop' || postOnce.state === undefined,
                     minnojsUrl: config.minnojsUrl,
                     minnojsDevUrl: config.minnojsDevUrl,
