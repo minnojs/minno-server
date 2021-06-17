@@ -12928,7 +12928,7 @@
                     this$1$1.description = study.description;
 
                     this$1$1.name = study.study_name;
-                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.type = study.type || 'minno03';
                     this$1$1.base_url = study.base_url;
                     this$1$1.versions = study.versions ? study.versions : [];
                     this$1$1.files(files);
@@ -19247,7 +19247,7 @@
                     this$1$1.description = study.description;
 
                     this$1$1.name = study.study_name;
-                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.type = study.type || 'minno03';
                     this$1$1.base_url = study.base_url;
                     this$1$1.versions = study.versions ? study.versions : [];
                     this$1$1.files(files);
@@ -20662,7 +20662,7 @@
         var reuse_id = m.prop('');
         var error = m.prop('');
         var isOpenServer = true;
-        var study_type = m.prop('minno02');
+        var study_type = m.prop('minno03');
         var isTemplate = type !== 'regular';
 
         var ask = function () { return messages.confirm({
@@ -20678,9 +20678,9 @@
                         m('textarea.form-control',  {oninput: m.withAttr('value', description)})
                     ]),
                     isTemplate || !isOpenServer ? '' : m('.form-group', [
-                        m('label', 'Pick Study Player:'),
+                        m('label', 'Select Study Player:'),
                         m('select.c-select.form-control', { onchange: m.withAttr('value', study_type)}, [
-                            m('option', {value:'minno02'}, 'MinnoJS v0.2'),
+                            m('option', {value:'minno03'}, 'MinnoJS v0.3'),
                             m('option', {value:'html'}, 'JSPysch (run any HTML)')
                         ])
                     ]),
