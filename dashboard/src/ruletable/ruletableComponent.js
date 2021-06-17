@@ -305,7 +305,7 @@ let ruletableComponent = {
                     ]),
                     m('.col-sm-12', [
                         m('strong', 'How to Use:'),
-                        m('','Create a sets of conditions that define who can take your study. Make sure that all the conditions that are listed in an “All” must be true and that at least one of the conditions listed in an “Any” must be true. The  box below shows the conditions in plain words. A red “Rule is not ready” will appear whenever the rules are not ready to use. Once finished, press the \'Save\' button and the rule will be saved to the study\'s properties.')
+                        m('','Create sets of conditions that define who can take your study. Make sure that all the conditions that are listed in an “All” can be true and that at least one of the conditions listed in an “Any” can be true. The box below shows the conditions in plain words. A red “Rule is not ready” will appear whenever the rules are not ready to use. Once finished, press the \'Save\' button and the rule will be saved to the study\'s properties.')
                     ])
                 ]),
 

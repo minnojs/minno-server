@@ -107,13 +107,15 @@ let poolComponent = {
                         ])
                     ]),
                     m('tbody', [
+
                         list.length === 0
                             ?
                             m('tr.table-info',
                                 m('td.text-xs-center', {colspan: TABLE_WIDTH},
-                                    m('strong', 'Heads up! '), 
+                                    m('strong', ''),
                                     ctrl.loaded()
-                                        ? 'None of your studies is in the Research Pool right now'
+                                        ?
+                                        ctrl.permissionChoice() === 'my' ? 'None of your studies is in the Study pool right now' : 'The pool is empty'
                                         : 'Loading...'
                                 )
                             )

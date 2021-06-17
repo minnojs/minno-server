@@ -134,7 +134,7 @@
       return Boolean(x && typeof x.length !== 'undefined');
     }
 
-    function noop() {}
+    function noop$2() {}
 
     // Polyfill for Function.prototype.bind
     function bind(fn, thisArg) {
@@ -281,7 +281,7 @@
 
     Promise$1.prototype.then = function(onFulfilled, onRejected) {
       // @ts-ignore
-      var prom = new this.constructor(noop);
+      var prom = new this.constructor(noop$2);
 
       handle(this, new Handler(onFulfilled, onRejected, prom));
       return prom;
@@ -518,11 +518,11 @@
     };
 
     Headers.prototype.forEach = function(callback, thisArg) {
-      var this$1 = this;
+      var this$1$1 = this;
 
       for (var name in this.map) {
-        if (this$1.map.hasOwnProperty(name)) {
-          callback.call(thisArg, this$1.map[name], name, this$1);
+        if (this$1$1.map.hasOwnProperty(name)) {
+          callback.call(thisArg, this$1$1.map[name], name, this$1$1);
         }
       }
     };
@@ -929,7 +929,7 @@
 
     var moment = createCommonjsModule(function (module, exports) {
     (function (global, factory) {
-        module.exports = factory();
+        module.exports = factory() ;
     }(commonjsGlobal, (function () {
         var hookCallback;
 
@@ -1045,13 +1045,13 @@
             some = Array.prototype.some;
         } else {
             some = function (fun) {
-                var this$1 = this;
+                var this$1$1 = this;
 
                 var t = Object(this);
                 var len = t.length >>> 0;
 
                 for (var i = 0; i < len; i++) {
-                    if (i in t && fun.call(this$1, t[i], i, t)) {
+                    if (i in t && fun.call(this$1$1, t[i], i, t)) {
                         return true;
                     }
                 }
@@ -1273,15 +1273,15 @@
         }
 
         function set (config) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var prop, i;
             for (i in config) {
                 prop = config[i];
                 if (isFunction(prop)) {
-                    this$1[i] = prop;
+                    this$1$1[i] = prop;
                 } else {
-                    this$1['_' + i] = prop;
+                    this$1$1['_' + i] = prop;
                 }
             }
             this._config = config;
@@ -1761,13 +1761,13 @@
 
 
         function stringSet (units, value) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             if (typeof units === 'object') {
                 units = normalizeObjectUnits(units);
                 var prioritized = getPrioritizedUnits(units);
                 for (var i = 0; i < prioritized.length; i++) {
-                    this$1[prioritized[i].unit](units[prioritized[i].unit]);
+                    this$1$1[prioritized[i].unit](units[prioritized[i].unit]);
                 }
             } else {
                 units = normalizeUnits(units);
@@ -1788,12 +1788,12 @@
             indexOf = Array.prototype.indexOf;
         } else {
             indexOf = function (o) {
-                var this$1 = this;
+                var this$1$1 = this;
 
                 // I know
                 var i;
                 for (i = 0; i < this.length; ++i) {
-                    if (this$1[i] === o) {
+                    if (this$1$1[i] === o) {
                         return i;
                     }
                 }
@@ -1881,7 +1881,7 @@
         }
 
         function handleStrictParse(monthName, format, strict) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var i, ii, mom, llc = monthName.toLocaleLowerCase();
             if (!this._monthsParse) {
@@ -1891,8 +1891,8 @@
                 this._shortMonthsParse = [];
                 for (i = 0; i < 12; ++i) {
                     mom = createUTC([2000, i]);
-                    this$1._shortMonthsParse[i] = this$1.monthsShort(mom, '').toLocaleLowerCase();
-                    this$1._longMonthsParse[i] = this$1.months(mom, '').toLocaleLowerCase();
+                    this$1$1._shortMonthsParse[i] = this$1$1.monthsShort(mom, '').toLocaleLowerCase();
+                    this$1$1._longMonthsParse[i] = this$1$1.months(mom, '').toLocaleLowerCase();
                 }
             }
 
@@ -1924,7 +1924,7 @@
         }
 
         function localeMonthsParse (monthName, format, strict) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var i, mom, regex;
 
@@ -1944,20 +1944,20 @@
             for (i = 0; i < 12; i++) {
                 // make the regex if we don't have it already
                 mom = createUTC([2000, i]);
-                if (strict && !this$1._longMonthsParse[i]) {
-                    this$1._longMonthsParse[i] = new RegExp('^' + this$1.months(mom, '').replace('.', '') + '$', 'i');
-                    this$1._shortMonthsParse[i] = new RegExp('^' + this$1.monthsShort(mom, '').replace('.', '') + '$', 'i');
+                if (strict && !this$1$1._longMonthsParse[i]) {
+                    this$1$1._longMonthsParse[i] = new RegExp('^' + this$1$1.months(mom, '').replace('.', '') + '$', 'i');
+                    this$1$1._shortMonthsParse[i] = new RegExp('^' + this$1$1.monthsShort(mom, '').replace('.', '') + '$', 'i');
                 }
-                if (!strict && !this$1._monthsParse[i]) {
-                    regex = '^' + this$1.months(mom, '') + '|^' + this$1.monthsShort(mom, '');
-                    this$1._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
+                if (!strict && !this$1$1._monthsParse[i]) {
+                    regex = '^' + this$1$1.months(mom, '') + '|^' + this$1$1.monthsShort(mom, '');
+                    this$1$1._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
                 }
                 // test the regex
-                if (strict && format === 'MMMM' && this$1._longMonthsParse[i].test(monthName)) {
+                if (strict && format === 'MMMM' && this$1$1._longMonthsParse[i].test(monthName)) {
                     return i;
-                } else if (strict && format === 'MMM' && this$1._shortMonthsParse[i].test(monthName)) {
+                } else if (strict && format === 'MMM' && this$1$1._shortMonthsParse[i].test(monthName)) {
                     return i;
-                } else if (!strict && this$1._monthsParse[i].test(monthName)) {
+                } else if (!strict && this$1$1._monthsParse[i].test(monthName)) {
                     return i;
                 }
             }
@@ -2045,7 +2045,7 @@
         }
 
         function computeMonthsParse () {
-            var this$1 = this;
+            var this$1$1 = this;
 
             function cmpLenRev(a, b) {
                 return b.length - a.length;
@@ -2056,10 +2056,10 @@
             for (i = 0; i < 12; i++) {
                 // make the regex if we don't have it already
                 mom = createUTC([2000, i]);
-                shortPieces.push(this$1.monthsShort(mom, ''));
-                longPieces.push(this$1.months(mom, ''));
-                mixedPieces.push(this$1.months(mom, ''));
-                mixedPieces.push(this$1.monthsShort(mom, ''));
+                shortPieces.push(this$1$1.monthsShort(mom, ''));
+                longPieces.push(this$1$1.months(mom, ''));
+                mixedPieces.push(this$1$1.months(mom, ''));
+                mixedPieces.push(this$1$1.monthsShort(mom, ''));
             }
             // Sorting makes sure if one month (or abbr) is a prefix of another it
             // will match the longer piece.
@@ -2348,7 +2348,7 @@
         }
 
         function handleStrictParse$1(weekdayName, format, strict) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
             if (!this._weekdaysParse) {
@@ -2358,9 +2358,9 @@
 
                 for (i = 0; i < 7; ++i) {
                     mom = createUTC([2000, 1]).day(i);
-                    this$1._minWeekdaysParse[i] = this$1.weekdaysMin(mom, '').toLocaleLowerCase();
-                    this$1._shortWeekdaysParse[i] = this$1.weekdaysShort(mom, '').toLocaleLowerCase();
-                    this$1._weekdaysParse[i] = this$1.weekdays(mom, '').toLocaleLowerCase();
+                    this$1$1._minWeekdaysParse[i] = this$1$1.weekdaysMin(mom, '').toLocaleLowerCase();
+                    this$1$1._shortWeekdaysParse[i] = this$1$1.weekdaysShort(mom, '').toLocaleLowerCase();
+                    this$1$1._weekdaysParse[i] = this$1$1.weekdays(mom, '').toLocaleLowerCase();
                 }
             }
 
@@ -2414,7 +2414,7 @@
         }
 
         function localeWeekdaysParse (weekdayName, format, strict) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var i, mom, regex;
 
@@ -2433,23 +2433,23 @@
                 // make the regex if we don't have it already
 
                 mom = createUTC([2000, 1]).day(i);
-                if (strict && !this$1._fullWeekdaysParse[i]) {
-                    this$1._fullWeekdaysParse[i] = new RegExp('^' + this$1.weekdays(mom, '').replace('.', '\\.?') + '$', 'i');
-                    this$1._shortWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysShort(mom, '').replace('.', '\\.?') + '$', 'i');
-                    this$1._minWeekdaysParse[i] = new RegExp('^' + this$1.weekdaysMin(mom, '').replace('.', '\\.?') + '$', 'i');
+                if (strict && !this$1$1._fullWeekdaysParse[i]) {
+                    this$1$1._fullWeekdaysParse[i] = new RegExp('^' + this$1$1.weekdays(mom, '').replace('.', '\\.?') + '$', 'i');
+                    this$1$1._shortWeekdaysParse[i] = new RegExp('^' + this$1$1.weekdaysShort(mom, '').replace('.', '\\.?') + '$', 'i');
+                    this$1$1._minWeekdaysParse[i] = new RegExp('^' + this$1$1.weekdaysMin(mom, '').replace('.', '\\.?') + '$', 'i');
                 }
-                if (!this$1._weekdaysParse[i]) {
-                    regex = '^' + this$1.weekdays(mom, '') + '|^' + this$1.weekdaysShort(mom, '') + '|^' + this$1.weekdaysMin(mom, '');
-                    this$1._weekdaysParse[i] = new RegExp(regex.replace('.', ''), 'i');
+                if (!this$1$1._weekdaysParse[i]) {
+                    regex = '^' + this$1$1.weekdays(mom, '') + '|^' + this$1$1.weekdaysShort(mom, '') + '|^' + this$1$1.weekdaysMin(mom, '');
+                    this$1$1._weekdaysParse[i] = new RegExp(regex.replace('.', ''), 'i');
                 }
                 // test the regex
-                if (strict && format === 'dddd' && this$1._fullWeekdaysParse[i].test(weekdayName)) {
+                if (strict && format === 'dddd' && this$1$1._fullWeekdaysParse[i].test(weekdayName)) {
                     return i;
-                } else if (strict && format === 'ddd' && this$1._shortWeekdaysParse[i].test(weekdayName)) {
+                } else if (strict && format === 'ddd' && this$1$1._shortWeekdaysParse[i].test(weekdayName)) {
                     return i;
-                } else if (strict && format === 'dd' && this$1._minWeekdaysParse[i].test(weekdayName)) {
+                } else if (strict && format === 'dd' && this$1$1._minWeekdaysParse[i].test(weekdayName)) {
                     return i;
-                } else if (!strict && this$1._weekdaysParse[i].test(weekdayName)) {
+                } else if (!strict && this$1$1._weekdaysParse[i].test(weekdayName)) {
                     return i;
                 }
             }
@@ -2557,7 +2557,7 @@
 
 
         function computeWeekdaysParse () {
-            var this$1 = this;
+            var this$1$1 = this;
 
             function cmpLenRev(a, b) {
                 return b.length - a.length;
@@ -2568,9 +2568,9 @@
             for (i = 0; i < 7; i++) {
                 // make the regex if we don't have it already
                 mom = createUTC([2000, 1]).day(i);
-                minp = this$1.weekdaysMin(mom, '');
-                shortp = this$1.weekdaysShort(mom, '');
-                longp = this$1.weekdays(mom, '');
+                minp = this$1$1.weekdaysMin(mom, '');
+                shortp = this$1$1.weekdaysShort(mom, '');
+                longp = this$1$1.weekdays(mom, '');
                 minPieces.push(minp);
                 shortPieces.push(shortp);
                 longPieces.push(longp);
@@ -5559,20 +5559,20 @@
     (function (root, factory)
     {
 
-        var moment$$1;
+        var moment$1;
         {
             // CommonJS module
             // Load moment.js as an optional dependency
-            try { moment$$1 = moment; } catch (e) {}
-            module.exports = factory(moment$$1);
+            try { moment$1 = moment; } catch (e) {}
+            module.exports = factory(moment$1);
         }
-    }(commonjsGlobal, function (moment$$1)
+    }(commonjsGlobal, function (moment)
     {
 
         /**
          * feature detection and helper functions
          */
-        var hasMoment = typeof moment$$1 === 'function',
+        var hasMoment = typeof moment === 'function',
 
         hasEventListeners = !!window.addEventListener,
 
@@ -6089,7 +6089,7 @@
                 if (opts.parse) {
                     date = opts.parse(opts.field.value, opts.format);
                 } else if (hasMoment) {
-                    date = moment$$1(opts.field.value, opts.format, opts.formatStrict);
+                    date = moment(opts.field.value, opts.format, opts.formatStrict);
                     date = (date && date.isValid()) ? date.toDate() : null;
                 }
                 else {
@@ -6180,7 +6180,7 @@
 
                 if (!opts.defaultDate) {
                     if (hasMoment && opts.field.value) {
-                        opts.defaultDate = moment$$1(opts.field.value, opts.format).toDate();
+                        opts.defaultDate = moment(opts.field.value, opts.format).toDate();
                     } else {
                         opts.defaultDate = new Date(Date.parse(opts.field.value));
                     }
@@ -6289,7 +6289,7 @@
                   return this._o.toString(this._d, format);
                 }
                 if (hasMoment) {
-                  return moment$$1(this._d).format(format);
+                  return moment(this._d).format(format);
                 }
                 return this._d.toDateString();
             },
@@ -6299,7 +6299,7 @@
              */
             getMoment: function()
             {
-                return hasMoment ? moment$$1(this._d) : null;
+                return hasMoment ? moment(this._d) : null;
             },
 
             /**
@@ -6307,7 +6307,7 @@
              */
             setMoment: function(date, preventOnSelect)
             {
-                if (hasMoment && moment$$1.isMoment(date)) {
+                if (hasMoment && moment.isMoment(date)) {
                     this.setDate(date.toDate(), preventOnSelect);
                 }
             },
@@ -6415,13 +6415,13 @@
             },
 
             adjustCalendars: function() {
-                var this$1 = this;
+                var this$1$1 = this;
 
                 this.calendars[0] = adjustCalendar(this.calendars[0]);
                 for (var c = 1; c < this._o.numberOfMonths; c++) {
-                    this$1.calendars[c] = adjustCalendar({
-                        month: this$1.calendars[0].month + c,
-                        year: this$1.calendars[0].year
+                    this$1$1.calendars[c] = adjustCalendar({
+                        month: this$1$1.calendars[0].month + c,
+                        year: this$1$1.calendars[0].year
                     });
                 }
                 this.draw();
@@ -6521,7 +6521,7 @@
              */
             draw: function(force)
             {
-                var this$1 = this;
+                var this$1$1 = this;
 
                 if (!this._v && !force) {
                     return;
@@ -6550,7 +6550,7 @@
                 randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
 
                 for (var c = 0; c < opts.numberOfMonths; c++) {
-                    html += '<div class="pika-lendar">' + renderTitle(this$1, c, this$1.calendars[c].year, this$1.calendars[c].month, this$1.calendars[0].year, randId) + this$1.render(this$1.calendars[c].year, this$1.calendars[c].month, randId) + '</div>';
+                    html += '<div class="pika-lendar">' + renderTitle(this$1$1, c, this$1$1.calendars[c].year, this$1$1.calendars[c].month, this$1$1.calendars[0].year, randId) + this$1$1.render(this$1$1.calendars[c].year, this$1$1.calendars[c].month, randId) + '</div>';
                 }
 
                 this.el.innerHTML = html;
@@ -6638,7 +6638,7 @@
              */
             render: function(year, month, randId)
             {
-                var this$1 = this;
+                var this$1$1 = this;
 
                 var opts   = this._o,
                     now    = new Date(),
@@ -6668,7 +6668,7 @@
                 for (var i = 0, r = 0; i < cells; i++)
                 {
                     var day = new Date(year, month, 1 + (i - before)),
-                        isSelected = isDate(this$1._d) ? compareDates(day, this$1._d) : false,
+                        isSelected = isDate(this$1$1._d) ? compareDates(day, this$1$1._d) : false,
                         isToday = compareDates(day, now),
                         hasEvent = opts.events.indexOf(day.toDateString()) !== -1 ? true : false,
                         isEmpty = i < before || i >= (days + before),
@@ -6821,7 +6821,7 @@
     		global.m = m;
     	}
     	/* eslint-enable no-undef */
-    })(typeof window !== "undefined" ? window : commonjsGlobal, function factory(global, undefined) { // eslint-disable-line
+    })(typeof window !== "undefined" ? window : commonjsGlobal, function factory(global, undefined$1) { // eslint-disable-line
 
     	m.version = function () {
     		return "v0.2.8"
@@ -7270,8 +7270,8 @@
     		cached.children = build(
     			node,
     			data.tag,
-    			undefined,
-    			undefined,
+    			undefined$1,
+    			undefined$1,
     			data.children,
     			cached.children,
     			false,
@@ -7441,7 +7441,7 @@
     				namespace,
     				configs);
 
-    			if (item !== undefined) {
+    			if (item !== undefined$1) {
     				intact = intact && item.nodes.intact;
     				subArrayCount += getSubArrayCount(item);
     				cached[cacheCount++] = item;
@@ -7510,8 +7510,8 @@
     			return build(
     				node,
     				data.tag,
-    				undefined,
-    				undefined,
+    				undefined$1,
+    				undefined$1,
     				data.children,
     				cached.children,
     				true,
@@ -8094,7 +8094,7 @@
     	var html;
     	var documentNode = {
     		appendChild: function (node) {
-    			if (html === undefined) html = $document.createElement("html");
+    			if (html === undefined$1) html = $document.createElement("html");
     			if ($document.documentElement &&
     					$document.documentElement !== node) {
     				$document.replaceChild(node, $document.documentElement);
@@ -8135,20 +8135,20 @@
     			cell = {tag: "html", attrs: {}, children: cell};
     		}
 
-    		if (cellCache[id] === undefined) clear(node.childNodes);
+    		if (cellCache[id] === undefined$1) clear(node.childNodes);
     		if (forceRecreation === true) reset(root);
 
     		cellCache[id] = build(
     			node,
     			null,
-    			undefined,
-    			undefined,
+    			undefined$1,
+    			undefined$1,
     			cell,
     			cellCache[id],
     			false,
     			0,
     			null,
-    			undefined,
+    			undefined$1,
     			configs);
 
     		forEach(configs, function (config) { config(); });
@@ -8658,7 +8658,7 @@
     						}
     					});
     					str.push(keys.join("&"));
-    				} else if (value !== undefined) {
+    				} else if (value !== undefined$1) {
     					str.push(encodeURIComponent(key) + "=" +
     						encodeURIComponent(value));
     				}
@@ -8694,7 +8694,7 @@
     	function reset(root) {
     		var cacheKey = getCellCacheKey(root);
     		clear(root.childNodes, cellCache[cacheKey]);
-    		cellCache[cacheKey] = undefined;
+    		cellCache[cacheKey] = undefined$1;
     	}
 
     	m.deferred = function () {
@@ -8914,7 +8914,7 @@
     					responseText: resp
     				}
     			});
-    			global[callbackKey] = undefined;
+    			global[callbackKey] = undefined$1;
     		};
 
     		script.onerror = function () {
@@ -8929,7 +8929,7 @@
     					})
     				}
     			});
-    			global[callbackKey] = undefined;
+    			global[callbackKey] = undefined$1;
 
     			return false
     		};
@@ -9212,7 +9212,7 @@
     var collaborationUrl   = urlPrefix + "/collaboration";
     var downloadsAccessUrl = urlPrefix + "/DownloadsAccess";
 
-    var getStatistics = function (query) {
+    var getStatistics$1 = function (query) {
         return fetchJson(statisticsUrl, {method:'post', body: parseQuery(query)})
             .then(function (response) {
                 return response;
@@ -9577,7 +9577,7 @@
         return p;
     };
 
-    var arrayInput = function (args) {
+    var arrayInput$1 = function (args) {
         var identity = function (arg) { return arg; };
         var fixedArgs = Object.assign(args);
         fixedArgs.prop = transformProp({
@@ -9606,11 +9606,11 @@
     var maybeInput = function (args) { return m.component(maybeInputComponent, args); };
     var checkboxInput = function (args) { return m.component(checkboxInputComponent, args); };
     var selectInput = function (args) { return m.component(selectInputComponent, args); };
-    var arrayInput$1 = arrayInput;
+    var arrayInput = arrayInput$1;
 
-    var statisticsForm = function (args) { return m.component(statisticsFormComponent, args); };
-    var colWidth = 3;
-    var SOURCES = {
+    var statisticsForm$1 = function (args) { return m.component(statisticsFormComponent$1, args); };
+    var colWidth$1 = 3;
+    var SOURCES$1 = {
         'Research pool - Current studies'   : 'Pool:Current',
         //    'Research pool - Past studies'      : 'Research:History',
         'All research - Pool and lab'       : 'Research:Any',
@@ -9618,7 +9618,7 @@
         'All studies'                       : 'Both:Any'
     };
 
-    var statisticsFormComponent = {
+    var statisticsFormComponent$1 = {
         controller: function controller(){
             var form = formFactory();
 
@@ -9629,8 +9629,8 @@
             var query = ref$1.query;
 
             return m('.col-sm-12', [
-                selectInput({label: 'Source', prop: query.source, values: SOURCES, form: form, colWidth: colWidth}),
-                textInput({label:'Study', prop: query.study , form: form, colWidth: colWidth}),
+                selectInput({label: 'Source', prop: query.source, values: SOURCES$1, form: form, colWidth: colWidth$1}),
+                textInput({label:'Study', prop: query.study , form: form, colWidth: colWidth$1}),
                 m('div', {style: 'padding: .375rem'},
                     [
                         dateRangePicker({startDate:query.startDate, endDate: query.endDate})
@@ -9644,27 +9644,27 @@
                     ]),
                     m('.col-sm-9.pull-right', [
                         m('.btn-group.btn-group-sm', [
-                            button(query.sortstudy, 'Study'),
-                            button(query.sorttask, 'Task'),
+                            button$1(query.sortstudy, 'Study'),
+                            button$1(query.sorttask, 'Task'),
                             m('a.btn.btn-secondary.statistics-time-button', {class: query.sorttime() !== 'All' ? 'active' : ''}, [
                                 'Time',
                                 m('.time-card', [
                                     m('.card', [
                                         m('.card-header', 'Time filter'),
                                         m('.card-block.c-inputs-stacked', [
-                                            radioButton(query.sorttime, 'None'),
-                                            radioButton(query.sorttime, 'Days'),
-                                            radioButton(query.sorttime, 'Weeks'),
-                                            radioButton(query.sorttime, 'Months'),
-                                            radioButton(query.sorttime, 'Years')
+                                            radioButton$1(query.sorttime, 'None'),
+                                            radioButton$1(query.sorttime, 'Days'),
+                                            radioButton$1(query.sorttime, 'Weeks'),
+                                            radioButton$1(query.sorttime, 'Months'),
+                                            radioButton$1(query.sorttime, 'Years')
                                         ])
                                     ])
                                 ])
                             ])
                         ]),
                         m('.btn-group.btn-group-sm.pull-right', [
-                            button(query.showEmpty, 'Hide Empty', 'Hide Rows with Zero Started Sessions'),
-                            button(query.sortgroup, 'Show Data Group')
+                            button$1(query.showEmpty, 'Hide Empty', 'Hide Rows with Zero Started Sessions'),
+                            button$1(query.sortgroup, 'Show Data Group')
 
                         ])
                     ])
@@ -9693,7 +9693,7 @@
         }
     };
 
-    var button = function (prop, text, title) {
+    var button$1 = function (prop, text, title) {
         if ( title === void 0 ) title = '';
 
         return m('a.btn.btn-secondary', {
@@ -9703,7 +9703,7 @@
     }, text);
     };
 
-    var radioButton = function (prop, text) { return m('label.c-input.c-radio', [
+    var radioButton$1 = function (prop, text) { return m('label.c-input.c-radio', [
         m('input.form-control[type=radio]', {
             onclick: prop.bind(null, text),
             checked: prop() == text
@@ -9727,14 +9727,14 @@
         };
     }
 
-    function formatDate(date){
+    function formatDate$1(date){
         var pad = function (num) { return num < 10 ? '0' + num : num; };
         return ((pad(date.getMonth() + 1)) + "\\" + (pad(date.getDate())) + "\\" + (date.getFullYear()));
     }
 
-    var statisticsTable = function (args) { return m.component(statisticsTableComponent, args); };
+    var statisticsTable$1 = function (args) { return m.component(statisticsTableComponent$1, args); };
 
-    var statisticsTableComponent = {
+    var statisticsTableComponent$1 = {
         controller: function controller(){
             return {sortBy: m.prop()};
         },
@@ -9773,7 +9773,7 @@
                                 m('tr.table-default', [
                                     m('td', row.studyName),
                                     !query.sorttask_sent() ? '' : m('td', row.taskName),
-                                    query.sorttime_sent()==='All' ? '' : m('td', formatDate(new Date(row.date))),
+                                    query.sorttime_sent()==='All' ? '' : m('td', formatDate$1(new Date(row.date))),
                                     m('td', row.starts),
                                     m('td', row.completes),
                                     m('td', row.completion_rate = row.starts===0 ? 0 : (row.completes/row.starts).toFixed(2)),
@@ -9790,7 +9790,7 @@
         'data-sort-by':sortByTxt, class: sortBy() === sortByTxt ? 'active' : ''
     }, text); };
 
-    var statisticsInstructions = function () { return m('.text-muted', [
+    var statisticsInstructions$2 = function () { return m('.text-muted', [
         m('p', 'Choose whether you want participation data from demo studies, research pool, all research studies (including lab studies), or all studies (demo and research).'),
         m('p', 'Enter the study id or any part of the study id (the study name that that appears in an .expt file). Note that the study id search feature is case-sensitive. If you leave this box blank you will get data from all studies.'),
         m('p', 'You can also use the Task box to enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks.'),
@@ -9799,7 +9799,7 @@
         m('p', 'When you choose to show the results by date, you will see all the studies that have at least one session in the requested date range, separated by day, week, month or year. This will also show dates with zero sessions. If you want to hide rows with zero sessions, select the "Hide empty" option.')
     ]); };
 
-    var statisticsComponent = {
+    var statisticsComponent$1 = {
         controller: function controller(){
             var displayHelp = m.prop(false);
             var tableContent = m.prop('');
@@ -9830,7 +9830,7 @@
 
             function submit(){
                 loading(true);
-                getStatistics(query)
+                getStatistics$1(query)
                     .then(tableContent)
                     .catch(function (response) {
                         query.error(response.message);
@@ -9855,28 +9855,28 @@
             return m('.container.statistics', [
             m('h3', 'Statistics'),
             m('.row', [
-                statisticsForm({query: query})
+                statisticsForm$1({query: query})
             ]),
             m('.row', [
                 m('.col-sm-12',[
                     m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return displayHelp(!displayHelp()); }}, ['Toggle help ', m('i.fa.fa-question-circle')]),
                     m('a.btn.btn-primary.pull-right', {onclick:submit}, 'Submit'),
-                    !tableContent()  ? '' : m('a.btn.btn-secondary.pull-right.m-r-1', {config:downloadFile(query.study() ? ((query.study()) + ".csv") : 'stats.csv', tableContent(), query)}, 'Download CSV')
+                    !tableContent()  ? '' : m('a.btn.btn-secondary.pull-right.m-r-1', {config:downloadFile$2(query.study() ? ((query.study()) + ".csv") : 'stats.csv', tableContent(), query)}, 'Download CSV')
                 ])
             ]),
             !displayHelp() ? '' : m('.row', [
-                m('.col-sm-12.p-a-2', statisticsInstructions())
+                m('.col-sm-12.p-a-2', statisticsInstructions$2())
             ]),
             m('.row.m-t-1', [
                 loading()
                     ? m('.loader')
-                    : statisticsTable({tableContent: tableContent, query: query})
+                    : statisticsTable$1({tableContent: tableContent, query: query})
             ])
         ]);
     }
     };
 
-    var downloadFile = function (filename, text, query) { return function (element) {
+    var downloadFile$2 = function (filename, text, query) { return function (element) {
         var json = text.data;
         json = !query.showEmpty() ? json : json.filter(function (row) { return row.starts !== 0; });
 
@@ -9895,10 +9895,10 @@
         element.setAttribute('download', filename);
     }; };
 
-    var getStatistics$1 = function (query) {
+    var getStatistics = function (query) {
         return fetchText(statisticsUrl, {method:'post', body: parseQuery(query)})
             .then(function (response) {
-                var csv = response ? CSVToArray$1(response) : [[]];
+                var csv = response ? CSVToArray(response) : [[]];
                 return {
                     study: query.study(),
                     file: response,
@@ -9925,7 +9925,7 @@
             var firstTask = ref.firstTask;
             var lastTask = ref.lastTask;
 
-            var baseUrl$$1 = (location.origin) + "/implicit";
+            var baseUrl = (location.origin) + "/implicit";
             var post = {
                 db: source().match(/^(.*?):/)[1], // before colon
                 current: source().match(/:(.*?)$/)[1], // after colon
@@ -9953,9 +9953,9 @@
                 threads:'yes',
                 threadsNum:'1',
                 zero: showEmpty(),
-                curl:(baseUrl$$1 + "/research/library/randomStudiesConfig/RandomStudiesConfig.xml"),
-                hurl:(baseUrl$$1 + "/research/library/randomStudiesConfig/HistoryRand.xml"),
-                baseURL:baseUrl$$1
+                curl:(baseUrl + "/research/library/randomStudiesConfig/RandomStudiesConfig.xml"),
+                hurl:(baseUrl + "/research/library/randomStudiesConfig/HistoryRand.xml"),
+                baseURL:baseUrl
             };
             return post;
 
@@ -9973,7 +9973,7 @@
     // This will parse a delimited string into an array of
     // arrays. The default delimiter is the comma, but this
     // can be overriden in the second argument.
-    function CSVToArray$1( strData, strDelimiter ){
+    function CSVToArray( strData, strDelimiter ){
         // Check to see if the delimiter is defined. If not,
         // then default to comma.
         strDelimiter = (strDelimiter || ",");
@@ -10057,9 +10057,9 @@
     }
     /* eslint-enable */
 
-    var statisticsForm$1 = function (args) { return m.component(statisticsFormComponent$1, args); };
-    var colWidth$1 = 3;
-    var SOURCES$1 = {
+    var statisticsForm = function (args) { return m.component(statisticsFormComponent, args); };
+    var colWidth = 3;
+    var SOURCES = {
         'Research pool - Current studies'   : 'Research:Current',
         //    'Research pool - Past studies'      : 'Research:History',
         'All research - Pool and lab'       : 'Research:Any',
@@ -10067,7 +10067,7 @@
         'All studies'                       : 'Both:Any'
     };
 
-    var statisticsFormComponent$1 = {
+    var statisticsFormComponent = {
         controller: function controller(){
             var form = formFactory();
 
@@ -10078,9 +10078,9 @@
             var query = ref$1.query;
 
             return m('.col-sm-12', [
-                selectInput({label: 'Source', prop: query.source, values: SOURCES$1, form: form, colWidth: colWidth$1}),
-                textInput({label:'Study', prop: query.study , form: form, colWidth: colWidth$1}),
-                textInput({label:'Task', prop: query.task , form: form, colWidth: colWidth$1}),
+                selectInput({label: 'Source', prop: query.source, values: SOURCES, form: form, colWidth: colWidth}),
+                textInput({label:'Study', prop: query.study , form: form, colWidth: colWidth}),
+                textInput({label:'Task', prop: query.task , form: form, colWidth: colWidth}),
                 m('div', {style: 'padding: .375rem .75rem'}, dateRangePicker({startDate:query.startDate, endDate: query.endDate})),
                 m('.form-group.row', [
                     m('.col-sm-3', [
@@ -10088,27 +10088,27 @@
                     ]),
                     m('.col-sm-9.pull-right', [
                         m('.btn-group.btn-group-sm', [
-                            button$1(query.sortstudy, 'Study'),
-                            button$1(query.sorttask, 'Task'),
+                            button(query.sortstudy, 'Study'),
+                            button(query.sorttask, 'Task'),
                             m('a.btn.btn-secondary.statistics-time-button', {class: query.sorttime() !== 'None' ? 'active' : ''}, [
                                 'Time',
                                 m('.time-card', [
                                     m('.card', [
                                         m('.card-header', 'Time filter'),
                                         m('.card-block.c-inputs-stacked', [
-                                            radioButton$1(query.sorttime, 'None'),
-                                            radioButton$1(query.sorttime, 'Days'),
-                                            radioButton$1(query.sorttime, 'Weeks'),
-                                            radioButton$1(query.sorttime, 'Months'),
-                                            radioButton$1(query.sorttime, 'Years')
+                                            radioButton(query.sorttime, 'None'),
+                                            radioButton(query.sorttime, 'Days'),
+                                            radioButton(query.sorttime, 'Weeks'),
+                                            radioButton(query.sorttime, 'Months'),
+                                            radioButton(query.sorttime, 'Years')
                                         ])
                                     ])
                                 ])
                             ]),
-                            button$1(query.sortgroup, 'Data Group')
+                            button(query.sortgroup, 'Data Group')
                         ]),
                         m('.btn-group.btn-group-sm.pull-right', [
-                            button$1(query.showEmpty, 'Hide empty', 'Hide Rows with Zero Started Sessions')
+                            button(query.showEmpty, 'Hide empty', 'Hide Rows with Zero Started Sessions')
                         ])
                     ])
                 ]),
@@ -10136,7 +10136,7 @@
         }
     };
 
-    var button$1 = function (prop, text, title) {
+    var button = function (prop, text, title) {
         if ( title === void 0 ) title = '';
 
         return m('a.btn.btn-secondary', {
@@ -10146,7 +10146,7 @@
     }, text);
     };
 
-    var radioButton$1 = function (prop, text) { return m('label.c-input.c-radio', [
+    var radioButton = function (prop, text) { return m('label.c-input.c-radio', [
         m('input.form-control[type=radio]', {
             onclick: prop.bind(null, text),
             checked: prop() == text
@@ -10155,9 +10155,9 @@
         text
     ]); };
 
-    var statisticsTable$1 = function (args) { return m.component(statisticsTableComponent$1, args); };
+    var statisticsTable = function (args) { return m.component(statisticsTableComponent, args); };
 
-    var statisticsTableComponent$1 = {
+    var statisticsTableComponent = {
         controller: function controller(){
             return {sortBy: m.prop()};
         },
@@ -10193,7 +10193,7 @@
         m('p', 'When you choose to show the results by date, you will see all the studies that have at least one session in the requested date range, separated by day, week, month or year. This will also show dates with zero sessions. If you want to hide rows with zero sessions, select the "Hide empty" option.')
     ]); };
 
-    var statisticsComponent$1 = {
+    var statisticsComponent = {
         controller: function controller(){
             var displayHelp = m.prop(false);
             var tableContent = m.prop();
@@ -10219,7 +10219,7 @@
 
             function submit(){
                 loading(true);
-                getStatistics$1(query)
+                getStatistics(query)
                     .then(tableContent)
                     .then(loading.bind(null, false))
                     .then(m.redraw);
@@ -10239,7 +10239,7 @@
             return m('.container.statistics', [
             m('h3', 'Statistics'),
             m('.row', [
-                statisticsForm$1({query: query})
+                statisticsForm({query: query})
             ]),
             m('.row', [
                 m('.col-sm-12',[
@@ -10254,7 +10254,7 @@
             m('.row.m-t-1', [
                 loading()
                     ? m('.loader')
-                    : statisticsTable$1({tableContent: tableContent})
+                    : statisticsTable({tableContent: tableContent})
             ])
         ]);
     }
@@ -10265,7 +10265,7 @@
         element.setAttribute('download', filename);
     }; };
 
-    var STATUS_RUNNING = 'R';
+    var STATUS_RUNNING$1 = 'R';
 
 
     function pool_url()
@@ -10282,11 +10282,11 @@
         var body = Object.assign({
             action:'insertRulesTable',
             creationDate: new Date(),
-            studyStatus: STATUS_RUNNING
+            studyStatus: STATUS_RUNNING$1
         }, study);
 
         return fetchJson(poolUrl, {method: 'post', body: body})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function updateStudy(study){
@@ -10295,7 +10295,7 @@
         }, study);
 
         return  fetchJson(poolUrl, {method: 'post',body:body})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function updateStatus(study, status){
@@ -10304,7 +10304,7 @@
         }, study,{studyStatus: status});
 
         return  fetchJson(poolUrl, {method: 'post',body:body})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
 
@@ -10312,27 +10312,27 @@
 
     function getAllPoolStudies(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getAllPoolStudies'}})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function pause_study(study){
         return fetchJson(pool_study_url(study.deploy_id), {method:'post', body:{status: 'paused'}})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function unpause_study(study){
         return fetchJson(pool_study_url(study._id), {method:'post', body:{status: 'running'}})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function remove_study(study){
         return fetchJson(pool_study_url(study.deploy_id), {method:'delete'})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function getLast100PoolUpdates(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
     function getStudyId(study){
@@ -10345,10 +10345,10 @@
 
     function resetStudy(study){
         return fetchJson(poolUrl, {method:'post', body: Object.assign({action:'resetCompletions'}, study)})
-            .then(interceptErrors);
+            .then(interceptErrors$2);
     }
 
-    function interceptErrors(response){
+    function interceptErrors$2(response){
         if (!response.error){
             return response;
         }
@@ -10668,7 +10668,7 @@
                     m('.form-group', {class:groupClasses(validity.rulesUrl)}, [
                         m('label', 'Rules File URL'),
                         m('input.form-control', {
-                            config: focusConfig,
+                            config: focusConfig$5,
                             placeholder:'Rules file URL',
                             value: study.rulesUrl(),
                             oninput: m.withAttr('value', study.rulesUrl),
@@ -10726,7 +10726,7 @@
         }
     };
 
-    var focusConfig = function (element, isInitialized) {
+    var focusConfig$5 = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
@@ -10734,12 +10734,12 @@
      * Create edit component
      * Promise editMessage({output:Prop})
      */
-    var createMessage = function (args) { return messages.custom({
-        content: m.component(createComponent, Object.assign({close:messages.close}, args)),
+    var createMessage$2 = function (args) { return messages.custom({
+        content: m.component(createComponent$2, Object.assign({close:messages.close}, args)),
         wide: true
     }); };
 
-    var createComponent = {
+    var createComponent$2 = {
         controller: function controller(ref){
             var output = ref.output;
             var close = ref.close;
@@ -10789,7 +10789,7 @@
                     m('.form-group', {class:groupClasses(validity.studyUrl)}, [
                         m('label', 'Study URL'),
                         m('input.form-control', {
-                            config: focusConfig$1,
+                            config: focusConfig$4,
                             placeholder:'Study URL',
                             value: study.studyUrl(),
                             oninput: m.withAttr('value', study.studyUrl),
@@ -10806,11 +10806,11 @@
         }
     };
 
-    var focusConfig$1 = function (element, isInitialized) {
+    var focusConfig$4 = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
-    function play(study){
+    function play$2(study){
         return messages.confirm({
             header: 'Continue Study:',
             content: ("Are you sure you want to continue \"" + (study.studyId) + "\"?")
@@ -10818,9 +10818,9 @@
             .then(function (response) {
                 if(response) {
                     studyPending(study, true)();
-                    return updateStatus(study, STATUS_RUNNING)
-                        .then(function (){ return study.studyStatus = STATUS_RUNNING; })
-                        .catch(reportError('Continue Study'))
+                    return updateStatus(study, STATUS_RUNNING$1)
+                        .then(function (){ return study.studyStatus = STATUS_RUNNING$1; })
+                        .catch(reportError$2('Continue Study'))
                         .then(studyPending(study, false));
                 }
             });
@@ -10836,7 +10836,7 @@
                     studyPending(study, true)();
                     return pause_study(study)
                         .then(function (){ return study.study_status = 'paused'; })
-                        .catch(reportError('Pause Study'))
+                        .catch(reportError$2('Pause Study'))
                         .then(studyPending(study, false));
                 }
             });
@@ -10851,13 +10851,13 @@
                     studyPending(study, true)();
                     return unpause_study(study)
                         .then(function (){ return study.study_status = 'running'; })
-                        .catch(reportError('Unpause Study'))
+                        .catch(reportError$2('Unpause Study'))
                         .then(studyPending(study, false));
                 }
             });
     }
 
-    var remove  = function (study) {
+    var remove$2  = function (study) {
         console.log(study);
         return messages.confirm({
             header: 'Remove Study:',
@@ -10866,37 +10866,37 @@
             .then(function (response) {
                 if(response) {
                     studyPending(study, true)();
-                    return remove_study(study, 'deleted')
+                    return remove_study(study)
                         .then(function (){ return study.study_status = 'removed'; })
-                        .catch(reportError('Remove Study'))
+                        .catch(reportError$2('Remove Study'))
                         .then(studyPending(study, false));
                 }
             });
     };
 
-    var edit  = function (input) {
+    var edit$2  = function (input) {
         var output = m.prop();
         return editMessage({input: input, output: output})
             .then(function (response) {
                 if (response) {
                     studyPending(input, true)();
-                    var study = Object.assign({}, input, unPropify(output()));
+                    var study = Object.assign({}, input, unPropify$2(output()));
                     return updateStudy(study)
                         .then(function () { return Object.assign(input, study); }) // update study in view
-                        .catch(reportError('Study Editor'))
+                        .catch(reportError$2('Study Editor'))
                         .then(studyPending(input, false));
                 }
             });
     };
 
-    var create = function (list) {
+    var create$2 = function (list) {
         var output = m.prop();
-        return createMessage({output: output})
+        return createMessage$2({output: output})
             .then(function (response) {
                 if (response) {
                     spinner.show();
                     getStudyId(output())
-                        .then(function (response) { return Object.assign(unPropify(output()), response); }) // add response data to "newStudy"
+                        .then(function (response) { return Object.assign(unPropify$2(output()), response); }) // add response data to "newStudy"
                         .then(spinner.hide)
                         .then(editNewStudy);
                 }
@@ -10911,12 +10911,12 @@
                             startedSessions: 0,
                             completedSessions: 0,
                             creationDate:new Date(),
-                            studyStatus: STATUS_RUNNING
-                        }, input, unPropify(output()));
+                            studyStatus: STATUS_RUNNING$1
+                        }, input, unPropify$2(output()));
                         return createStudy(study)
                             .then(function () { return list().push(study); })
                             .then(m.redraw)
-                            .catch(reportError('Create Study'));
+                            .catch(reportError$2('Create Study'));
                     }
                 });
         }
@@ -10939,19 +10939,19 @@
                         Object.assign(study, old);
                         return Promise.reject(response);
                     })
-                    .catch(reportError('Restart study'));
+                    .catch(reportError$2('Restart study'));
             }
         });
     };
 
-    var reportError = function (header) { return function (err) { return messages.alert({header: header, content: err.message}); }; };
+    var reportError$2 = function (header) { return function (err) { return messages.alert({header: header, content: err.message}); }; };
 
     var studyPending = function (study, state) { return function () {
         study.$pending = state;
         m.redraw();
     }; };
 
-    var unPropify = function (obj) { return Object.keys(obj).reduce(function (result, key) {
+    var unPropify$2 = function (obj) { return Object.keys(obj).reduce(function (result, key) {
         result[key] = obj[key]();
         return result;
     }, {}); };
@@ -11071,9 +11071,9 @@
         return set.comparator_str + ' {'+ clean_rules.join(', ') +  print_both + sub_sets_data.join(', ')+ '} ' ;
     };
 
-    var TABLE_WIDTH = 8;
+    var TABLE_WIDTH$2 = 8;
 
-    var poolComponent = {
+    var poolComponent$1 = {
         controller: function () {
             function view_rules(e, rules){
                 e.preventDefault();
@@ -11098,7 +11098,7 @@
             }
 
             var ctrl = {
-                view_rules: view_rules, play: play, pause: pause, unpause: unpause, remove: remove, edit: edit, reset: reset, create: create,
+                view_rules: view_rules, play: play$2, pause: pause, unpause: unpause, remove: remove$2, edit: edit$2, reset: reset, create: create$2,
                 canCreate: false,
                 studies: m.prop([]),
                 list: m.prop([]),
@@ -11147,7 +11147,7 @@
                     m('table', {class:'table table-striped table-hover',onclick:sortTable(ctrl.list, ctrl.sortBy)}, [
                         m('thead', [
                             m('tr', [
-                                m('th', {colspan:TABLE_WIDTH - 1}, [
+                                m('th', {colspan:TABLE_WIDTH$2 - 1}, [
                                 ]),
                                 m('th', [
                                     m('a.btn.btn-secondary', {href:'/pool/history', config:m.route}, [
@@ -11156,24 +11156,26 @@
                                 ])
                             ]),
                             m('tr', [
-                                m('th', thConfig('studyName', ctrl.sortBy), 'Study'),
-                                m('th', thConfig('studyUrl', ctrl.sortBy), 'Experiment File'),
+                                m('th', thConfig$4('studyName', ctrl.sortBy), 'Study'),
+                                m('th', thConfig$4('studyUrl', ctrl.sortBy), 'Experiment File'),
                                 m('th', 'Rules'),
                                 m('th', 'Autopause'),
-                                m('th', thConfig('completedSessions', ctrl.sortBy), 'Completion'),
-                                m('th', thConfig('creationDate', ctrl.sortBy), 'Date'),
-                                m('th', thConfig('status', ctrl.sortBy), 'Status'),
+                                m('th', thConfig$4('completedSessions', ctrl.sortBy), 'Completion'),
+                                m('th', thConfig$4('creationDate', ctrl.sortBy), 'Date'),
+                                m('th', thConfig$4('status', ctrl.sortBy), 'Status'),
                                 m('th','Actions')
                             ])
                         ]),
                         m('tbody', [
+
                             list.length === 0
                                 ?
                                 m('tr.table-info',
-                                    m('td.text-xs-center', {colspan: TABLE_WIDTH},
-                                        m('strong', 'Heads up! '), 
+                                    m('td.text-xs-center', {colspan: TABLE_WIDTH$2},
+                                        m('strong', ''),
                                         ctrl.loaded()
-                                            ? 'None of your studies is in the Research Pool right now'
+                                            ?
+                                            ctrl.permissionChoice() === 'my' ? 'None of your studies is in the Study pool right now' : 'The pool is empty'
                                             : 'Loading...'
                                     )
                                 )
@@ -11217,7 +11219,7 @@
                                     ]),
 
                                     // ### Date
-                                    m('td', formatDate(new Date(study.createdDate))),
+                                    m('td', formatDate$1(new Date(study.createdDate))),
 
                                     // ### Status
                                     m('td', [
@@ -11258,10 +11260,10 @@
     };
 
     // @TODO: bad idiom! should change things within the object, not the object itself.
-    var thConfig = function (prop, current) { return ({'data-sort-by':prop, class: current === prop ? 'active' : ''}); };
+    var thConfig$4 = function (prop, current) { return ({'data-sort-by':prop, class: current === prop ? 'active' : ''}); };
 
     var PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
-    var poolComponent$1 = {
+    var poolComponent = {
         controller: function () {
             var ctrl = {
                 list: m.prop([]),
@@ -11292,29 +11294,29 @@
                     m('.col-sm-5',[
                         m('label', m.trust('&nbsp')),
                         m('.text-muted.btn-toolbar', [
-                            dayButtonView(ctrl, 'Last 7 Days', 7),
-                            dayButtonView(ctrl, 'Last 30 Days', 30),
-                            dayButtonView(ctrl, 'Last 90 Days', 90),
-                            dayButtonView(ctrl, 'All time', 3650)
+                            dayButtonView$3(ctrl, 'Last 7 Days', 7),
+                            dayButtonView$3(ctrl, 'Last 30 Days', 30),
+                            dayButtonView$3(ctrl, 'Last 90 Days', 90),
+                            dayButtonView$3(ctrl, 'All time', 3650)
                         ])
                     ])
                 ]) ,
                 m('table', {class:'table table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
                     m('thead', [
                         m('tr', [
-                            m('th', thConfig$1('studyId',ctrl.sortBy), 'ID'),
-                            m('th', thConfig$1('studyUrl',ctrl.sortBy), 'Study'),
-                            m('th', thConfig$1('rulesUrl',ctrl.sortBy), 'Rules'),
-                            m('th', thConfig$1('autopauseUrl',ctrl.sortBy), 'Autopause'),     
-                            m('th', thConfig$1('creationDate',ctrl.sortBy), 'Creation Date'),
-                            m('th', thConfig$1('completedSessions',ctrl.sortBy), 'Completion'),
+                            m('th', thConfig$3('studyId',ctrl.sortBy), 'ID'),
+                            m('th', thConfig$3('studyUrl',ctrl.sortBy), 'Study'),
+                            m('th', thConfig$3('rulesUrl',ctrl.sortBy), 'Rules'),
+                            m('th', thConfig$3('autopauseUrl',ctrl.sortBy), 'Autopause'),     
+                            m('th', thConfig$3('creationDate',ctrl.sortBy), 'Creation Date'),
+                            m('th', thConfig$3('completedSessions',ctrl.sortBy), 'Completion'),
                             m('th','New Status'),
                             m('th','Old Status'),
-                            m('th', thConfig$1('updaterId',ctrl.sortBy), 'Updater')
+                            m('th', thConfig$3('updaterId',ctrl.sortBy), 'Updater')
                         ])
                     ]),
                     m('tbody', [
-                        list().filter(studyFilter(ctrl)).map(function (study) { return m('tr', [
+                        list().filter(studyFilter$1(ctrl)).map(function (study) { return m('tr', [
                             // ### ID
                             m('td', study.studyId),
 
@@ -11336,7 +11338,7 @@
                         
 
                             // ### Date
-                            m('td', formatDate(new Date(study.creationDate))),
+                            m('td', formatDate$1(new Date(study.creationDate))),
                             
                             // ### Target Completionss
                             m('td', [
@@ -11383,9 +11385,9 @@
     };
 
     // @TODO: bad idiom! should change things within the object, not the object itself.
-    var thConfig$1 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
+    var thConfig$3 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
-    function studyFilter(ctrl){
+    function studyFilter$1(ctrl){
         return function (study) { return (includes(study.studyId, ctrl.globalSearch()) ||    includes(study.updaterId, ctrl.globalSearch()) || includes(study.rulesUrl, ctrl.globalSearch())
                 || includes(study.targetCompletions, ctrl.globalSearch()))
             && (new Date(study.creationDate)).getTime() >= ctrl.startDate().getTime()
@@ -11396,14 +11398,14 @@
         }
     }
 
-    var dayButtonView = function (ctrl, name, days) { return m('button.btn.btn-secondary.btn-sm', {onclick: function () {
+    var dayButtonView$3 = function (ctrl, name, days) { return m('button.btn.btn-secondary.btn-sm', {onclick: function () {
         var d = new Date();
         d.setDate(d.getDate() - days);
         ctrl.startDate(d);
         ctrl.endDate(new Date());
     }}, name); };
 
-    var STATUS_RUNNING$1 = 'R';
+    var STATUS_RUNNING = 'R';
     var STATUS_COMPLETE = 'C';
     var STATUS_ERROR = 'X';
 
@@ -11443,7 +11445,7 @@
             var download ={
                 studyId: m.prop(''),
                 db: m.prop('test'),
-                startDate: m.prop(daysAgo(3650)),
+                startDate: m.prop(daysAgo$2(3650)),
                 endDate: m.prop(new Date())
             };
 
@@ -11501,7 +11503,7 @@
                             m('.form-group', {class:groupClasses(validity.studyId)}, [
                                 m('label', 'Study ID'),
                                 m('input.form-control', {
-                                    config: focusConfig$2,
+                                    config: focusConfig$3,
                                     placeholder:'Study Id',
                                     value: download.studyId(),
                                     oninput: m.withAttr('value', download.studyId),
@@ -11525,10 +11527,10 @@
                             m('.form-group', [
                                 dateRangePicker(download),
                                 m('p.text-muted.btn-toolbar', [
-                                    dayButtonView$1(download, 'Last 7 Days', 7),
-                                    dayButtonView$1(download, 'Last 30 Days', 30),
-                                    dayButtonView$1(download, 'Last 90 Days', 90),
-                                    dayButtonView$1(download, 'All time', 3650)
+                                    dayButtonView$2(download, 'Last 7 Days', 7),
+                                    dayButtonView$2(download, 'Last 30 Days', 30),
+                                    dayButtonView$2(download, 'Last 90 Days', 90),
+                                    dayButtonView$2(download, 'All time', 3650)
                                 ])
                             ])
                         ])
@@ -11542,28 +11544,28 @@
         }
     };
 
-    var focusConfig$2 = function (element, isInitialized) {
+    var focusConfig$3 = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
     // helper functions for the day buttons
-    var daysAgo = function (days) {
+    var daysAgo$2 = function (days) {
         var d = new Date();
         d.setDate(d.getDate() - days);
         return d;
     };
-    var equalDates = function (date1, date2) { return date1.getDate() === date2.getDate(); };
-    var activeDate = function (ref, days) {
+    var equalDates$2 = function (date1, date2) { return date1.getDate() === date2.getDate(); };
+    var activeDate$2 = function (ref, days) {
         var startDate = ref.startDate;
         var endDate = ref.endDate;
 
-        return equalDates(startDate(), daysAgo(days)) && equalDates(endDate(), new Date());
+        return equalDates$2(startDate(), daysAgo$2(days)) && equalDates$2(endDate(), new Date());
     };
 
-    var dayButtonView$1 = function (download, name, days) { return m('button.btn.btn-secondary.btn-sm', {
-        class: activeDate(download, days)? 'active' : '',
+    var dayButtonView$2 = function (download, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+        class: activeDate$2(download, days)? 'active' : '',
         onclick: function () {
-            download.startDate(daysAgo(days));
+            download.startDate(daysAgo$2(days));
             download.endDate(new Date());
         }
     }, name); };
@@ -11584,7 +11586,7 @@
         return getAllDownloads()
             .then(list)
             .then(function (response) {
-                if (!cancel() && response.some(function (download) { return download.studyStatus === STATUS_RUNNING$1; })) {
+                if (!cancel() && response.some(function (download) { return download.studyStatus === STATUS_RUNNING; })) {
                     recursiveGetAll({list: list, cancel: cancel, error: error, loaded: loaded});
                 }
             })
@@ -11657,7 +11659,7 @@
                 if (response){
                     var download = unPropify$1(output());
                     list().unshift(Object.assign({
-                        studyStatus: STATUS_RUNNING$1,
+                        studyStatus: STATUS_RUNNING,
                         creationDate: new Date()
                     },download));
                     cancel(true);
@@ -11752,12 +11754,12 @@
                             ? m('tr.table-info', [
                                 m('td.text-xs-center', {colspan: TABLE_WIDTH$1}, 'There are no downloads running yet')
                             ])
-                            : list().filter(studyFilter$1(ctrl)).map(function (download) { return m('tr', [
+                            : list().filter(studyFilter(ctrl)).map(function (download) { return m('tr', [
                                 // ### ID
                                 m('td', download.studyId),
 
                                 // ### Study url
-                                m('td', download.studyStatus == STATUS_RUNNING$1
+                                m('td', download.studyStatus == STATUS_RUNNING
                                     ? m('i.text-muted', 'Loading...')
                                     : download.fileSize
                                         ? m('a', {href:download.studyUrl, download:download.studyId + '.zip', target: '_blank'}, 'Download')
@@ -11775,7 +11777,7 @@
 
                                 // ### Date Added
                                 m('td', [
-                                    formatDate(new Date(download.creationDate)),
+                                    formatDate$1(new Date(download.creationDate)),
                                     '  ',
                                     m('i.fa.fa-info-circle'),
                                     m('.info-box', [
@@ -11783,13 +11785,13 @@
                                             m('.card-header', 'Creation Details'),
                                             m('ul.list-group.list-group-flush',[
                                                 m('li.list-group-item', [
-                                                    m('strong', 'Creation Date: '), formatDate(new Date(download.creationDate))
+                                                    m('strong', 'Creation Date: '), formatDate$1(new Date(download.creationDate))
                                                 ]),
                                                 m('li.list-group-item', [
-                                                    m('strong', 'Start Date: '), formatDate(new Date(download.startDate))
+                                                    m('strong', 'Start Date: '), formatDate$1(new Date(download.startDate))
                                                 ]),
                                                 m('li.list-group-item', [
-                                                    m('strong', 'End Date: '), formatDate(new Date(download.endDate))
+                                                    m('strong', 'End Date: '), formatDate$1(new Date(download.endDate))
                                                 ])
                                             ])
                                         ])
@@ -11819,7 +11821,7 @@
     // @TODO: bad idiom! should change things within the object, not the object itself.
     var thConfig$2 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
-    function studyFilter$1(ctrl){
+    function studyFilter(ctrl){
         var search = ctrl.globalSearch();
         return function (study) { return includes(study.studyId, search) ||
             includes(study.studyUrl, search); };
@@ -11830,7 +11832,7 @@
     }
 
     statusLabelsMap[STATUS_COMPLETE] = m('span.label.label-success', 'Complete');
-    statusLabelsMap[STATUS_RUNNING$1] = m('span.label.label-info', 'Running');
+    statusLabelsMap[STATUS_RUNNING] = m('span.label.label-info', 'Running');
     statusLabelsMap[STATUS_ERROR] = m('span.label.label-danger', 'Error');
 
     var STATUS_APPROVED = true;
@@ -11842,7 +11844,7 @@
         }, dataAccessRequest);
 
         return fetchJson(downloadsAccessUrl, {method: 'post', body: body})
-            .then(interceptErrors$2);
+            .then(interceptErrors);
     }
 
     function deleteDataAccessRequest(dataAccessRequest){
@@ -11851,7 +11853,7 @@
         }, dataAccessRequest);
 
         return  fetchJson(downloadsAccessUrl, {method: 'post',body:body})
-            .then(interceptErrors$2);
+            .then(interceptErrors);
     }
 
     function updateApproved(dataAccessRequest, approved){
@@ -11860,17 +11862,17 @@
         }, dataAccessRequest,{approved: approved});
 
         return  fetchJson(downloadsAccessUrl, {method: 'post',body:body})
-            .then(interceptErrors$2);
+            .then(interceptErrors);
     }
 
     function getAllOpenRequests(){
         return fetchJson(downloadsAccessUrl, {method:'post', body: {action:'getAllOpenRequests'}})
-            .then(interceptErrors$2);
+            .then(interceptErrors);
     }
 
 
 
-    function interceptErrors$2(response){
+    function interceptErrors(response){
         if (!response.error){
             return response;
         }
@@ -11885,12 +11887,12 @@
         return Promise.reject({message: errors[response.error]});
     }
 
-    var createMessage$2 = function (args) { return messages.custom({
-        content: m.component(createComponent$2, Object.assign({close:messages.close}, args)),
+    var createMessage = function (args) { return messages.custom({
+        content: m.component(createComponent, Object.assign({close:messages.close}, args)),
         wide: true
     }); };
 
-    var createComponent$2 = {
+    var createComponent = {
         controller: function controller(ref){
             var output = ref.output;
             var close = ref.close;
@@ -11946,7 +11948,7 @@
                     m('.form-group', {class:groupClasses(validity.studyId)}, [
                         m('label', 'Study Id'),
                         m('input.form-control', {
-                            config: focusConfig$3,
+                            config: focusConfig$2,
                             placeholder:'Study Id',
                             value: downloadAccess.studyId(),
                             oninput: m.withAttr('value', downloadAccess.studyId),
@@ -11965,7 +11967,7 @@
         }
     };
 
-    var focusConfig$3 = function (element, isInitialized) {
+    var focusConfig$2 = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
@@ -12031,7 +12033,7 @@
                     m('.form-group', {class:groupClasses(validity.studyId)}, [
                         m('label', 'Study Id'),
                         m('input.form-control', {
-                            config: focusConfig$4,
+                            config: focusConfig$1,
                             placeholder:'Study Id',
                             value: downloadAccess.studyId(),
                             oninput: m.withAttr('value', downloadAccess.studyId),
@@ -12039,7 +12041,7 @@
                         }),
                         m('label', 'Username'),
                         m('input.form-control', {
-                            config: focusConfig$4,
+                            config: focusConfig$1,
                             placeholder:'Username',
                             value: downloadAccess.username(),
                             oninput: m.withAttr('value', downloadAccess.username),
@@ -12059,7 +12061,7 @@
         }
     };
 
-    var focusConfig$4 = function (element, isInitialized) {
+    var focusConfig$1 = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
@@ -12125,7 +12127,7 @@
                     m('.form-group', {class:groupClasses(validity.studyId)}, [
                         m('label', 'Study Id'),
                         m('input.form-control', {
-                            config: focusConfig$5,
+                            config: focusConfig,
                             placeholder:'Study Id',
                             value: downloadAccess.studyId(),
                             oninput: m.withAttr('value', downloadAccess.studyId),
@@ -12133,7 +12135,7 @@
                         }),
                         m('label', 'Username'),
                         m('input.form-control', {
-                            config: focusConfig$5,
+                            config: focusConfig,
                             placeholder:'Username',
                             value: downloadAccess.username(),
                             oninput: m.withAttr('value', downloadAccess.username),
@@ -12153,7 +12155,7 @@
         }
     };
 
-    var focusConfig$5 = function (element, isInitialized) {
+    var focusConfig = function (element, isInitialized) {
         if (!isInitialized) element.focus();
     };
 
@@ -12167,14 +12169,14 @@
                     return updateApproved(downloadAccess, STATUS_APPROVED)
                         .then(function () { return list(list().filter(function (el) { return el !== downloadAccess; })); })
                         .then(messages.alert({header:'Grant access completed', content: 'Access granted'}))
-                        .catch(reportError$2('Grant Access'))
+                        .catch(reportError('Grant Access'))
                         .then(m.redraw());
                 }
             });
     }
 
 
-    var remove$2  = function (downloadAccess, list) {
+    var remove  = function (downloadAccess, list) {
         return messages.confirm({
             header: 'Delete request:',
             content: ("Are you sure you want to delete the access request for'" + (downloadAccess.studyId) + "'? If access has already been granted you will lose it")
@@ -12185,7 +12187,7 @@
                     return deleteDataAccessRequest(downloadAccess)
                         .then(function () { return list(list().filter(function (el) { return el !== downloadAccess; })); })
                         .then(messages.alert({header:'Deletion complete', content: 'Access has been deleted'}))
-                        .catch(reportError$2('Remove Download Request'))
+                        .catch(reportError('Remove Download Request'))
                         .then(m.redraw());
 
                 }
@@ -12200,10 +12202,10 @@
                     var downloadAccess = Object.assign({
                         approved: STATUS_APPROVED,
                         creationDate: now
-                    }, null, unPropify$2(output()));
+                    }, null, unPropify(output()));
                     return createDataAccessRequest(downloadAccess)
                         .then(messages.alert({header:'Grant access completed', content: 'Access granted'}))
-                        .catch(reportError$2('Grant Access'));
+                        .catch(reportError('Grant Access'));
                 }
             });
     };
@@ -12215,34 +12217,34 @@
                     var now = new Date();
                     var downloadAccess = Object.assign({
                         creationDate: now
-                    }, null, unPropify$2(output()));
+                    }, null, unPropify(output()));
                     return deleteDataAccessRequest(downloadAccess)
                         .then(messages.alert({header:'Revoke access completed', content: 'Access revoked'}))
-                        .catch(reportError$2('Revoke Access'));
+                        .catch(reportError('Revoke Access'));
                 }
             });
     };
-    var create$2 = function (list) {
+    var create = function (list) {
         var output = m.prop();
-        return createMessage$2({output: output})
+        return createMessage({output: output})
             .then(function (response) {
                 if (response) {
                     var now = new Date();
                     var downloadAccess = Object.assign({
                         creationDate: now,
                         approved: 'access pending'
-                    }, null, unPropify$2(output()));
+                    }, null, unPropify(output()));
                     return createDataAccessRequest(downloadAccess)
                         .then(function () { return list().unshift(downloadAccess); })
                         .then(m.redraw)
-                        .catch(reportError$2('Data Access Request'));
+                        .catch(reportError('Data Access Request'));
                 }
             });
     };
 
-    var reportError$2 = function (header) { return function (err) { return messages.alert({header: header, content: err.message}); }; };
+    var reportError = function (header) { return function (err) { return messages.alert({header: header, content: err.message}); }; };
 
-    var unPropify$2 = function (obj) { return Object.keys(obj).reduce(function (result, key) {
+    var unPropify = function (obj) { return Object.keys(obj).reduce(function (result, key) {
         result[key] = obj[key]();
         return result;
     }, {}); };
@@ -12251,7 +12253,7 @@
     var logoutUrl = baseUrl + "/logout";
     var is_logedinUrl = baseUrl + "/is_loggedin";
 
-    var login = function (username, password) { return fetchJson(loginUrl, {
+    var login$1 = function (username, password) { return fetchJson(loginUrl, {
         method: 'post',
         body: {username: username, password: password}
     }); };
@@ -12262,15 +12264,15 @@
         method: 'get'
     }); };
 
-    var TABLE_WIDTH$2 = 6;
+    var TABLE_WIDTH = 6;
 
     var downloadsAccessComponent = {
         controller: function () {
             var ctrl = {
                 play: play$1,
                 loaded: m.prop(false),
-                remove: remove$2,
-                create: create$2,
+                remove: remove,
+                create: create,
                 grant: grant,
                 revoke: revoke,
                 list: m.prop([]),
@@ -12312,7 +12314,7 @@
                     m('table', {class:'table table-striped table-hover',onclick:sortTable(list, ctrl.sortBy)}, [
                         m('thead', [
                             m('tr', [ 
-                                m('th', {colspan: TABLE_WIDTH$2}, [ 
+                                m('th', {colspan: TABLE_WIDTH}, [ 
                                     m('.row', [
                                         m('.col-xs-3.text-xs-left', [
                                             m('button.btn.btn-secondary', {disabled: ctrl.isAdmin, onclick:ctrl.isAdmin || ctrl.create.bind(null, list)}, [
@@ -12337,10 +12339,10 @@
                             ]),
 
                             m('tr', [
-                                m('th', thConfig$3('studyId',ctrl.sortBy), 'ID'),
-                                m('th', thConfig$3('username',ctrl.sortBy), 'Username'),
-                                m('th', thConfig$3('email',ctrl.sortBy), 'Email'),
-                                m('th', thConfig$3('creationDate',ctrl.sortBy), 'Date'),
+                                m('th', thConfig$1('studyId',ctrl.sortBy), 'ID'),
+                                m('th', thConfig$1('username',ctrl.sortBy), 'Username'),
+                                m('th', thConfig$1('email',ctrl.sortBy), 'Email'),
+                                m('th', thConfig$1('creationDate',ctrl.sortBy), 'Date'),
                                 m('th','Status'),
                                 m('th','Actions')
                             ])
@@ -12349,7 +12351,7 @@
                             list().length === 0
                                 ?
                                 m('tr.table-info',
-                                    m('td.text-xs-center', {colspan: TABLE_WIDTH$2},
+                                    m('td.text-xs-center', {colspan: TABLE_WIDTH},
                                         m('strong', 'Heads up! '), 'There are no requests yet'
                                     )
                                 )
@@ -12365,7 +12367,7 @@
                                     m('td', dataRequest.email),
 
                                     // ### Date
-                                    m('td', formatDate(new Date(dataRequest.creationDate))),
+                                    m('td', formatDate$1(new Date(dataRequest.creationDate))),
                                     dataRequest.approved=== STATUS_APPROVED
                                         ?
                                         m('td', {style:'color:green'},'access granted')
@@ -12391,7 +12393,7 @@
     };
 
     // @TODO: bad idiom! should change things within the object, not the object itself.
-    var thConfig$3 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
+    var thConfig$1 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
     function dataRequestFilter(ctrl){
         return function (dataRequest) { return includes(dataRequest.studyId, ctrl.globalSearch()) ||
@@ -12438,7 +12440,7 @@
 
             function loginAction(){
                 if(ctrl.username() && ctrl.password())
-                    login(ctrl.username, ctrl.password)
+                    login$1(ctrl.username, ctrl.password)
                         .then(function () {
                             m.route(!location.hash ? './' : decodeURIComponent(location.hash).substring(1));
                         })
@@ -12480,7 +12482,7 @@
                                 oninput: m.withAttr('value', ctrl.username),
                                 onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.username),
-                                config: getStartValue(ctrl.username)
+                                config: getStartValue$7(ctrl.username)
                             }),
                             m('.space', 'Password'),
                             m('input.form-control', {
@@ -12491,7 +12493,7 @@
                                 oninput: m.withAttr('value', ctrl.password),
                                 onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
                                 onchange: m.withAttr('value', ctrl.password),
-                                config: getStartValue(ctrl.password)
+                                config: getStartValue$7(ctrl.password)
                             }),
                             !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                             m('button.btn.btn-primary.btn-block', {onclick: ctrl.loginAction},'Sign in'),
@@ -12513,7 +12515,7 @@
         }
     };
 
-    function getStartValue(prop){
+    function getStartValue$7(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -12575,7 +12577,7 @@
                                     autofocus:true,
                                     oninput: function (e){ return ctrl.set_email(e); },
                                     onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
-                                    config: getStartValue$1(ctrl.email_address)
+                                    config: getStartValue$6(ctrl.email_address)
                                 }),
                                 !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                                 m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.registrationAction},'Register')
@@ -12586,7 +12588,7 @@
         }
     };
 
-    function getStartValue$1(prop){
+    function getStartValue$6(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -12594,7 +12596,7 @@
 
     var assignmentUrl = baseUrl + "/assignment";
 
-    var login$1 = function (email_address) { return fetchText(assignmentUrl, {
+    var login = function (email_address) { return fetchText(assignmentUrl, {
         method: 'post',
         body: {email_address: email_address}
     }); };
@@ -12625,7 +12627,7 @@
 
             function loginAction(){
                 if(ctrl.email_address())
-                    login$1(ctrl.email_address)
+                    login(ctrl.email_address)
                         .then(function (data) {
                             document.open();
                             document.write(data);
@@ -12663,7 +12665,7 @@
                                     autofocus:true,
                                     oninput: function (e){ return ctrl.set_email(e); },
                                     onkeydown: function (e){(e.keyCode == 13) ? ctrl.loginAction: false;},
-                                    config: getStartValue$2(ctrl.email_address)
+                                    config: getStartValue$5(ctrl.email_address)
                                 }),
                                 !ctrl.error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.error()),
                                 m('button.btn.btn-primary.btn-block.space.double_space', {onclick: ctrl.loginAction},'Login')
@@ -12674,7 +12676,7 @@
         }
     };
 
-    function getStartValue$2(prop){
+    function getStartValue$5(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -12712,7 +12714,7 @@
         },
 
         get: function get(){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchJson(this.apiUrl())
                 .then(function (response) {
@@ -12720,30 +12722,30 @@
                         .replace(/\r\n/g, '\n') // Replace carriage returns 
                         .replace(/([^\n])$/,'$1\n'); //  Make sure all files are unix EOF encoded...
 
-                    this$1.sourceContent(content);
-                    this$1.content(content);
-                    this$1.loaded = true;
-                    this$1.error = false;
-                    this$1.last_modify = response.last_modify;
+                    this$1$1.sourceContent(content);
+                    this$1$1.content(content);
+                    this$1$1.loaded = true;
+                    this$1$1.error = false;
+                    this$1$1.last_modify = response.last_modify;
 
                 })
                 .catch(function (reason) {
-                    this$1.loaded = true;
-                    this$1.error = true;
+                    this$1$1.loaded = true;
+                    this$1$1.error = true;
                     return Promise.reject(reason); // do not swallow error
                 });
         },
 
         save: function save(){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchJson(this.apiUrl(), {
                 method:'put',
                 body: {content: this.content, last_modify:this.last_modify}
             })
                 .then(function (response) {
-                    this$1.sourceContent(this$1.content()); // update source content
-                    this$1.last_modify = response.last_modify;
+                    this$1$1.sourceContent(this$1$1.content()); // update source content
+                    this$1$1.last_modify = response.last_modify;
                     return response;
                 });
         },
@@ -12782,12 +12784,12 @@
         },
 
         require: function require(context){
-            var this$1 = this;
+            var this$1$1 = this;
             if ( context === void 0 ) context = window;
 
             var requirejs = context.requirejs;
             return new Promise(function (resolve, reject) {
-                requirejs([this$1.url], resolve,reject);
+                requirejs([this$1$1.url], resolve,reject);
             });
         },
 
@@ -12846,7 +12848,7 @@
         return file;
 
         function contentProvider (store) {
-            var this$1 = this;
+            var this$1$1 = this;
 
             var prop = function () {
                 var args = [], len = arguments.length;
@@ -12854,7 +12856,7 @@
 
                 if (args.length) {
                     store = args[0];
-                    this$1.type === 'js' && this$1.checkSyntax();
+                    this$1$1.type === 'js' && this$1$1.checkSyntax();
                 }
                 return store;
             };
@@ -12863,7 +12865,7 @@
         }
     };
 
-    var studyPrototype = {
+    var studyPrototype$1 = {
         loaded: false,
         isUploading: false,
         apiURL: function apiURL(path){
@@ -12881,59 +12883,59 @@
         },
 
         get4version: function get4version(version){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchJson(this.apiVersionURL('', version))
                 .then(function (study) {
-                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
-                    var files = this$1.parseFiles(study.files);
-                    this$1.loaded = true;
-                    this$1.isReadonly = study.is_readonly;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_published;
-                    this$1.is_published = study.is_published;
-                    this$1.is_public = study.is_public;
-                    this$1.has_data_permission = study.is_last;
-                    this$1.description = study.description;
+                    this$1$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
+                    var files = this$1$1.parseFiles(study.files);
+                    this$1$1.loaded = true;
+                    this$1$1.isReadonly = study.is_readonly;
+                    this$1$1.istemplate = study.is_template;
+                    this$1$1.is_locked = study.is_published;
+                    this$1$1.is_published = study.is_published;
+                    this$1$1.is_public = study.is_public;
+                    this$1$1.has_data_permission = study.is_last;
+                    this$1$1.description = study.description;
 
-                    this$1.name = study.study_name;
-                    this$1.type = study.type || 'minno02';
-                    this$1.base_url = study.base_url;
-                    this$1.versions = study.versions ? study.versions : [];
+                    this$1$1.name = study.study_name;
+                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.base_url = study.base_url;
+                    this$1$1.versions = study.versions ? study.versions : [];
 
-                    this$1.files(files);
-                    this$1.sort();
+                    this$1$1.files(files);
+                    this$1$1.sort();
                 })
                 .catch(function (reason) {
-                    this$1.error = true;
+                    this$1$1.error = true;
                     return Promise.reject(reason); // do not swallow error
                 });
         },
         get: function get(){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchJson(this.apiURL())
                 .then(function (study) {
-                    var files = this$1.parseFiles(study.files);
-                    this$1.loaded = true;
-                    this$1.isReadonly = study.is_readonly;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_published;
-                    this$1.is_published = study.is_published;
-                    this$1.is_public = study.is_public;
-                    this$1.permission = study.permission;
-                    this$1.has_data_permission = study.has_data_permission;
-                    this$1.description = study.description;
+                    var files = this$1$1.parseFiles(study.files);
+                    this$1$1.loaded = true;
+                    this$1$1.isReadonly = study.is_readonly;
+                    this$1$1.istemplate = study.is_template;
+                    this$1$1.is_locked = study.is_published;
+                    this$1$1.is_published = study.is_published;
+                    this$1$1.is_public = study.is_public;
+                    this$1$1.permission = study.permission;
+                    this$1$1.has_data_permission = study.has_data_permission;
+                    this$1$1.description = study.description;
 
-                    this$1.name = study.study_name;
-                    this$1.type = study.type || 'minno02';
-                    this$1.base_url = study.base_url;
-                    this$1.versions = study.versions ? study.versions : [];
-                    this$1.files(files);
-                    this$1.sort();
+                    this$1$1.name = study.study_name;
+                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.base_url = study.base_url;
+                    this$1$1.versions = study.versions ? study.versions : [];
+                    this$1$1.files(files);
+                    this$1$1.sort();
                 })
                 .catch(function (reason) {
-                    this$1.error = true;
+                    this$1$1.error = true;
                     return Promise.reject(reason); // do not swallow error
                 });
         },
@@ -13019,7 +13021,7 @@
         },
 
         createFile: function createFile(ref){
-            var this$1 = this;
+            var this$1$1 = this;
             var name = ref.name;
             var content = ref.content; if ( content === void 0 ) content = '';
             var isDir = ref.isDir;
@@ -13037,10 +13039,10 @@
             if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
             return fetchJson(this.apiURL('/file'), {method:'post', body: {name: name, content: content, isDir: isDir}})
                 .then(function (response) {
-                    Object.assign(response, {studyId: this$1.id, content: content, path:name, isDir: isDir});
+                    Object.assign(response, {studyId: this$1$1.id, content: content, path:name, isDir: isDir});
                     var file = fileFactory(response);
                     file.loaded = true;
-                    this$1.addFile(file);
+                    this$1$1.addFile(file);
                     return response;
                 })
                 .then(this.sort.bind(this));
@@ -13105,7 +13107,7 @@
         },
 
         uploadFiles: function uploadFiles(ref){
-            var this$1 = this;
+            var this$1$1 = this;
             var path = ref.path;
             var fd = ref.fd;
             var force = ref.force;
@@ -13116,9 +13118,9 @@
 
             return fetchUpload(this.apiURL(("/upload/" + (path === '/' ? '' : encodeURIComponent(path)))), {method:'post', body:fd})
                 .then(this.mergeFiles.bind(this))
-                .then(function () { return this$1.isUploading = false; })
+                .then(function () { return this$1$1.isUploading = false; })
                 .catch(function (err) {
-                    this$1.isUploading = false;
+                    this$1$1.isUploading = false;
                     return Promise.reject(err);
                 });
         },
@@ -13177,14 +13179,14 @@
         }
     };
 
-    var studyFactory =  function (id) {
-        var study = Object.create(studyPrototype);
+    var studyFactory$1 =  function (id) {
+        var study = Object.create(studyPrototype$1);
         Object.assign(study, {
             id      : id,
             files   : m.prop([]),
             loaded  : false,
             error   :false,
-            vm      : viewModelMap({
+            vm      : viewModelMap$1({
                 isOpen: m.prop(false),
                 isChanged: m.prop(false),
                 isChosen: m.prop(0)
@@ -13195,7 +13197,7 @@
     };
 
     // http://lhorie.github.io/mithril-blog/mapping-view-models.html
-    var viewModelMap = function(signature) {
+    var viewModelMap$1 = function(signature) {
         var map = {};
         return function(key) {
             if (!map[key]) {
@@ -13546,9 +13548,9 @@
     }
 
     var playground;
-    var play$2 = function (file,study) { return function () {
+    var play = function (file,study) { return function () {
         var isSaved = study.files().every(function (file) { return !file.hasChanged(); });
-        var open = openNew;
+        var open = openNew ;
         if (isSaved) open();
         else messages.confirm({
             header: 'Play task',
@@ -13571,7 +13573,7 @@
         }
     }; };
 
-    var save = function (file) { return function () {
+    var save$1 = function (file) { return function () {
         file.save()
             .then(m.redraw)
             .catch(function (err) { return messages.alert({
@@ -13732,7 +13734,7 @@
             }); });
     }; };
 
-    var downloadFile$2 = function (study, file) { return function () {
+    var downloadFile = function (study, file) { return function () {
         if (!file.isDir) return downloadLink(file.url, file.name);
 
         study.downloadFiles([file.path])
@@ -13747,7 +13749,7 @@
 
     var ace = function (args) { return m.component(aceComponent, args); };
 
-    var noop$2 = function(){};
+    var noop = function(){};
 
     var aceComponent = {
         controller: function(){
@@ -13827,7 +13829,7 @@
                         commands.addCommand({
                             name: 'save',
                             bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
-                            exec: settings.onSave || noop$2
+                            exec: settings.onSave || noop
                         });
                         
                         if(observer) observer.on('paste',paste );
@@ -13898,7 +13900,7 @@
         };
     }
 
-    var defaults = createCommonjsModule(function (module) {
+    var defaults$5 = createCommonjsModule(function (module) {
     function getDefaults() {
       return {
         baseUrl: null,
@@ -13931,9 +13933,9 @@
       changeDefaults: changeDefaults
     };
     });
-    var defaults_1 = defaults.defaults;
-    var defaults_2 = defaults.getDefaults;
-    var defaults_3 = defaults.changeDefaults;
+    defaults$5.defaults;
+    defaults$5.getDefaults;
+    defaults$5.changeDefaults;
 
     /**
      * Helpers
@@ -13950,7 +13952,7 @@
       "'": '&#39;'
     };
     var getEscapeReplacement = function (ch) { return escapeReplacements[ch]; };
-    function escape(html, encode) {
+    function escape$3(html, encode) {
       if (encode) {
         if (escapeTest.test(html)) {
           return html.replace(escapeReplace, getEscapeReplacement);
@@ -13966,7 +13968,7 @@
 
     var unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig;
 
-    function unescape(html) {
+    function unescape$1(html) {
       // explicitly match decimal, hex, and named HTML entities
       return html.replace(unescapeTest, function (_, n) {
         n = n.toLowerCase();
@@ -14000,11 +14002,11 @@
 
     var nonWordAndColonTest = /[^\w:]/g;
     var originIndependentUrl = /^$|^[a-z][a-z0-9+.-]*:|^[?#]/i;
-    function cleanUrl(sanitize, base, href) {
+    function cleanUrl$1(sanitize, base, href) {
       if (sanitize) {
         var prot;
         try {
-          prot = decodeURIComponent(unescape(href))
+          prot = decodeURIComponent(unescape$1(href))
             .replace(nonWordAndColonTest, '')
             .toLowerCase();
         } catch (e) {
@@ -14038,7 +14040,7 @@
         if (justDomain.test(base)) {
           baseUrls[' ' + base] = base + '/';
         } else {
-          baseUrls[' ' + base] = rtrim(base, '/', true);
+          baseUrls[' ' + base] = rtrim$1(base, '/', true);
         }
       }
       base = baseUrls[' ' + base];
@@ -14059,9 +14061,9 @@
       }
     }
 
-    var noopTest = { exec: function noopTest() {} };
+    var noopTest$1 = { exec: function noopTest() {} };
 
-    function merge(obj) {
+    function merge$2(obj) {
       var arguments$1 = arguments;
 
       var i = 1,
@@ -14080,7 +14082,7 @@
       return obj;
     }
 
-    function splitCells(tableRow, count) {
+    function splitCells$1(tableRow, count) {
       // ensure that every cell-delimiting pipe has a space
       // before it to distinguish it from an escaped pipe
       var row = tableRow.replace(/\|/g, function (match, offset, str) {
@@ -14115,7 +14117,7 @@
     // Remove trailing 'c's. Equivalent to str.replace(/c*$/, '').
     // /c*$/ is vulnerable to REDOS.
     // invert: Remove suffix of non-c chars instead. Default falsey.
-    function rtrim(str, c, invert) {
+    function rtrim$1(str, c, invert) {
       var l = str.length;
       if (l === 0) {
         return '';
@@ -14139,7 +14141,7 @@
       return str.substr(0, l - suffLen);
     }
 
-    function findClosingBracket(str, b) {
+    function findClosingBracket$1(str, b) {
       if (str.indexOf(b[1]) === -1) {
         return -1;
       }
@@ -14161,35 +14163,35 @@
       return -1;
     }
 
-    function checkSanitizeDeprecation(opt) {
+    function checkSanitizeDeprecation$1(opt) {
       if (opt && opt.sanitize && !opt.silent) {
         console.warn('marked(): sanitize and sanitizer parameters are deprecated since version 0.7.0, should not be used and will be removed in the future. Read more here: https://marked.js.org/#/USING_ADVANCED.md#options');
       }
     }
 
     var helpers = {
-      escape: escape,
-      unescape: unescape,
+      escape: escape$3,
+      unescape: unescape$1,
       edit: edit$1,
-      cleanUrl: cleanUrl,
+      cleanUrl: cleanUrl$1,
       resolveUrl: resolveUrl,
-      noopTest: noopTest,
-      merge: merge,
-      splitCells: splitCells,
-      rtrim: rtrim,
-      findClosingBracket: findClosingBracket,
-      checkSanitizeDeprecation: checkSanitizeDeprecation
+      noopTest: noopTest$1,
+      merge: merge$2,
+      splitCells: splitCells$1,
+      rtrim: rtrim$1,
+      findClosingBracket: findClosingBracket$1,
+      checkSanitizeDeprecation: checkSanitizeDeprecation$1
     };
 
-    var defaults$1 = defaults.defaults;
-    var rtrim$1 = helpers.rtrim;
-    var splitCells$1 = helpers.splitCells;
-    var escape$1 = helpers.escape;
-    var findClosingBracket$1 = helpers.findClosingBracket;
+    var defaults$4 = defaults$5.defaults;
+    var rtrim = helpers.rtrim;
+    var splitCells = helpers.splitCells;
+    var escape$2 = helpers.escape;
+    var findClosingBracket = helpers.findClosingBracket;
 
     function outputLink(cap, link, raw) {
       var href = link.href;
-      var title = link.title ? escape$1(link.title) : null;
+      var title = link.title ? escape$2(link.title) : null;
 
       if (cap[0].charAt(0) !== '!') {
         return {
@@ -14203,7 +14205,7 @@
         return {
           type: 'image',
           raw: raw,
-          text: escape$1(cap[1]),
+          text: escape$2(cap[1]),
           href: href,
           title: title
         };
@@ -14215,7 +14217,7 @@
      */
     var Tokenizer_1 = (function () {
       function Tokenizer(options) {
-        this.options = options || defaults$1;
+        this.options = options || defaults$4;
       }
 
       Tokenizer.prototype.space = function space (src) {
@@ -14248,7 +14250,7 @@
               raw: cap[0],
               codeBlockStyle: 'indented',
               text: !this.options.pedantic
-                ? rtrim$1(text, '\n')
+                ? rtrim(text, '\n')
                 : text
             };
           }
@@ -14284,7 +14286,7 @@
         if (cap) {
           var item = {
             type: 'table',
-            header: splitCells$1(cap[1].replace(/^ *| *\| *$/g, '')),
+            header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
             align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
             cells: cap[3] ? cap[3].replace(/\n$/, '').split('\n') : [],
             raw: cap[0]
@@ -14307,7 +14309,7 @@
 
             l = item.cells.length;
             for (i = 0; i < l; i++) {
-              item.cells[i] = splitCells$1(item.cells[i], item.header.length);
+              item.cells[i] = splitCells(item.cells[i], item.header.length);
             }
 
             return item;
@@ -14339,7 +14341,7 @@
       };
 
       Tokenizer.prototype.list = function list (src) {
-        var this$1 = this;
+        var this$1$1 = this;
 
         var cap = this.rules.block.list.exec(src);
         if (cap) {
@@ -14382,7 +14384,7 @@
             // list item contains. Hacky.
             if (~item.indexOf('\n ')) {
               space -= item.length;
-              item = !this$1.options.pedantic
+              item = !this$1$1.options.pedantic
                 ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
                 : item.replace(/^ {1,4}/gm, '');
             }
@@ -14390,9 +14392,9 @@
             // Determine whether the next list item belongs here.
             // Backpedal if it does not belong in this list.
             if (i !== l - 1) {
-              b = this$1.rules.block.bullet.exec(itemMatch[i + 1])[0];
+              b = this$1$1.rules.block.bullet.exec(itemMatch[i + 1])[0];
               if (bull.length > 1 ? b.length === 1
-                : (b.length > 1 || (this$1.options.smartLists && b !== bull))) {
+                : (b.length > 1 || (this$1$1.options.smartLists && b !== bull))) {
                 addBack = itemMatch.slice(i + 1).join('\n');
                 list.raw = list.raw.substring(0, list.raw.length - addBack.length);
                 i = l - 1;
@@ -14443,7 +14445,7 @@
             raw: cap[0],
             pre: !this.options.sanitizer
               && (cap[1] === 'pre' || cap[1] === 'script' || cap[1] === 'style'),
-            text: this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$1(cap[0])) : cap[0]
+            text: this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$2(cap[0])) : cap[0]
           };
         }
       };
@@ -14467,7 +14469,7 @@
         if (cap) {
           var item = {
             type: 'table',
-            header: splitCells$1(cap[1].replace(/^ *| *\| *$/g, '')),
+            header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
             align: cap[2].replace(/^ *|\| *$/g, '').split(/ *\| */),
             cells: cap[3] ? cap[3].replace(/\n$/, '').split('\n') : []
           };
@@ -14491,7 +14493,7 @@
 
             l = item.cells.length;
             for (i = 0; i < l; i++) {
-              item.cells[i] = splitCells$1(
+              item.cells[i] = splitCells(
                 item.cells[i].replace(/^ *\| *| *\| *$/g, ''),
                 item.header.length);
             }
@@ -14543,7 +14545,7 @@
           return {
             type: 'escape',
             raw: cap[0],
-            text: escape$1(cap[1])
+            text: escape$2(cap[1])
           };
         }
       };
@@ -14572,7 +14574,7 @@
             text: this.options.sanitize
               ? (this.options.sanitizer
                 ? this.options.sanitizer(cap[0])
-                : escape$1(cap[0]))
+                : escape$2(cap[0]))
               : cap[0]
           };
         }
@@ -14581,7 +14583,7 @@
       Tokenizer.prototype.link = function link (src) {
         var cap = this.rules.inline.link.exec(src);
         if (cap) {
-          var lastParenIndex = findClosingBracket$1(cap[2], '()');
+          var lastParenIndex = findClosingBracket(cap[2], '()');
           if (lastParenIndex > -1) {
             var start = cap[0].indexOf('!') === 0 ? 5 : 4;
             var linkLen = start + cap[1].length + lastParenIndex;
@@ -14659,7 +14661,7 @@
           return {
             type: 'codespan',
             raw: cap[0],
-            text: escape$1(cap[2].trim(), true)
+            text: escape$2(cap[2].trim(), true)
           };
         }
       };
@@ -14690,10 +14692,10 @@
         if (cap) {
           var text, href;
           if (cap[2] === '@') {
-            text = escape$1(this.options.mangle ? mangle(cap[1]) : cap[1]);
+            text = escape$2(this.options.mangle ? mangle(cap[1]) : cap[1]);
             href = 'mailto:' + text;
           } else {
-            text = escape$1(cap[1]);
+            text = escape$2(cap[1]);
             href = text;
           }
 
@@ -14714,22 +14716,22 @@
       };
 
       Tokenizer.prototype.url = function url (src, mangle) {
-        var this$1 = this;
+        var this$1$1 = this;
 
         var cap;
         if (cap = this.rules.inline.url.exec(src)) {
           var text, href;
           if (cap[2] === '@') {
-            text = escape$1(this.options.mangle ? mangle(cap[0]) : cap[0]);
+            text = escape$2(this.options.mangle ? mangle(cap[0]) : cap[0]);
             href = 'mailto:' + text;
           } else {
             // do extended autolink path validation
             var prevCapZero;
             do {
               prevCapZero = cap[0];
-              cap[0] = this$1.rules.inline._backpedal.exec(cap[0])[0];
+              cap[0] = this$1$1.rules.inline._backpedal.exec(cap[0])[0];
             } while (prevCapZero !== cap[0]);
-            text = escape$1(cap[0]);
+            text = escape$2(cap[0]);
             if (cap[1] === 'www.') {
               href = 'http://' + text;
             } else {
@@ -14757,9 +14759,9 @@
         if (cap) {
           var text;
           if (inRawBlock) {
-            text = this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$1(cap[0])) : cap[0];
+            text = this.options.sanitize ? (this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape$2(cap[0])) : cap[0];
           } else {
-            text = escape$1(this.options.smartypants ? smartypants(cap[0]) : cap[0]);
+            text = escape$2(this.options.smartypants ? smartypants(cap[0]) : cap[0]);
           }
           return {
             type: 'text',
@@ -14772,14 +14774,14 @@
       return Tokenizer;
     }());
 
-    var noopTest$1 = helpers.noopTest;
-    var edit$2 = helpers.edit;
+    var noopTest = helpers.noopTest;
+    var edit = helpers.edit;
     var merge$1 = helpers.merge;
 
     /**
      * Block-Level Grammar
      */
-    var block = {
+    var block$1 = {
       newline: /^\n+/,
       code: /^( {4}[^\n]+\n*)+/,
       fences: /^ {0,3}(`{3,}(?=[^`\n]*\n)|~{3,})([^\n]*)\n(?:|([\s\S]*?)\n)(?: {0,3}\1[~`]* *(?:\n+|$)|$)/,
@@ -14798,8 +14800,8 @@
         + '|</(?!script|pre|style)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:\\n{2,}|$)' // (7) closing tag
         + ')',
       def: /^ {0,3}\[(label)\]: *\n? *<?([^\s>]+)>?(?:(?: +\n? *| *\n *)(title))? *(?:\n+|$)/,
-      nptable: noopTest$1,
-      table: noopTest$1,
+      nptable: noopTest,
+      table: noopTest,
       lheading: /^([^\n]+)\n {0,3}(=+|-+) *(?:\n+|$)/,
       // regex template, placeholders will be replaced according to different paragraph
       // interruption rules of commonmark and the original markdown spec:
@@ -14807,64 +14809,64 @@
       text: /^[^\n]+/
     };
 
-    block._label = /(?!\s*\])(?:\\[\[\]]|[^\[\]])+/;
-    block._title = /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/;
-    block.def = edit$2(block.def)
-      .replace('label', block._label)
-      .replace('title', block._title)
+    block$1._label = /(?!\s*\])(?:\\[\[\]]|[^\[\]])+/;
+    block$1._title = /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/;
+    block$1.def = edit(block$1.def)
+      .replace('label', block$1._label)
+      .replace('title', block$1._title)
       .getRegex();
 
-    block.bullet = /(?:[*+-]|\d{1,9}\.)/;
-    block.item = /^( *)(bull) ?[^\n]*(?:\n(?!\1bull ?)[^\n]*)*/;
-    block.item = edit$2(block.item, 'gm')
-      .replace(/bull/g, block.bullet)
+    block$1.bullet = /(?:[*+-]|\d{1,9}\.)/;
+    block$1.item = /^( *)(bull) ?[^\n]*(?:\n(?!\1bull ?)[^\n]*)*/;
+    block$1.item = edit(block$1.item, 'gm')
+      .replace(/bull/g, block$1.bullet)
       .getRegex();
 
-    block.list = edit$2(block.list)
-      .replace(/bull/g, block.bullet)
+    block$1.list = edit(block$1.list)
+      .replace(/bull/g, block$1.bullet)
       .replace('hr', '\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))')
-      .replace('def', '\\n+(?=' + block.def.source + ')')
+      .replace('def', '\\n+(?=' + block$1.def.source + ')')
       .getRegex();
 
-    block._tag = 'address|article|aside|base|basefont|blockquote|body|caption'
+    block$1._tag = 'address|article|aside|base|basefont|blockquote|body|caption'
       + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption'
       + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe'
       + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option'
       + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr'
       + '|track|ul';
-    block._comment = /<!--(?!-?>)[\s\S]*?-->/;
-    block.html = edit$2(block.html, 'i')
-      .replace('comment', block._comment)
-      .replace('tag', block._tag)
+    block$1._comment = /<!--(?!-?>)[\s\S]*?-->/;
+    block$1.html = edit(block$1.html, 'i')
+      .replace('comment', block$1._comment)
+      .replace('tag', block$1._tag)
       .replace('attribute', / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/)
       .getRegex();
 
-    block.paragraph = edit$2(block._paragraph)
-      .replace('hr', block.hr)
+    block$1.paragraph = edit(block$1._paragraph)
+      .replace('hr', block$1.hr)
       .replace('heading', ' {0,3}#{1,6} ')
       .replace('|lheading', '') // setex headings don't interrupt commonmark paragraphs
       .replace('blockquote', ' {0,3}>')
       .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
       .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
       .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
-      .replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
+      .replace('tag', block$1._tag) // pars can be interrupted by type (6) html blocks
       .getRegex();
 
-    block.blockquote = edit$2(block.blockquote)
-      .replace('paragraph', block.paragraph)
+    block$1.blockquote = edit(block$1.blockquote)
+      .replace('paragraph', block$1.paragraph)
       .getRegex();
 
     /**
      * Normal Block Grammar
      */
 
-    block.normal = merge$1({}, block);
+    block$1.normal = merge$1({}, block$1);
 
     /**
      * GFM Block Grammar
      */
 
-    block.gfm = merge$1({}, block.normal, {
+    block$1.gfm = merge$1({}, block$1.normal, {
       nptable: '^ *([^|\\n ].*\\|.*)\\n' // Header
         + ' *([-:]+ *\\|[-| :]*)' // Align
         + '(?:\\n((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)', // Cells
@@ -14873,38 +14875,38 @@
         + '(?:\\n *((?:(?!\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)' // Cells
     });
 
-    block.gfm.nptable = edit$2(block.gfm.nptable)
-      .replace('hr', block.hr)
+    block$1.gfm.nptable = edit(block$1.gfm.nptable)
+      .replace('hr', block$1.hr)
       .replace('heading', ' {0,3}#{1,6} ')
       .replace('blockquote', ' {0,3}>')
       .replace('code', ' {4}[^\\n]')
       .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
       .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
       .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
-      .replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+      .replace('tag', block$1._tag) // tables can be interrupted by type (6) html blocks
       .getRegex();
 
-    block.gfm.table = edit$2(block.gfm.table)
-      .replace('hr', block.hr)
+    block$1.gfm.table = edit(block$1.gfm.table)
+      .replace('hr', block$1.hr)
       .replace('heading', ' {0,3}#{1,6} ')
       .replace('blockquote', ' {0,3}>')
       .replace('code', ' {4}[^\\n]')
       .replace('fences', ' {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n')
       .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
       .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
-      .replace('tag', block._tag) // tables can be interrupted by type (6) html blocks
+      .replace('tag', block$1._tag) // tables can be interrupted by type (6) html blocks
       .getRegex();
 
     /**
      * Pedantic grammar (original John Gruber's loose markdown specification)
      */
 
-    block.pedantic = merge$1({}, block.normal, {
-      html: edit$2(
+    block$1.pedantic = merge$1({}, block$1.normal, {
+      html: edit(
         '^ *(?:comment *(?:\\n|\\s*$)'
         + '|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)' // closed tag
         + '|<tag(?:"[^"]*"|\'[^\']*\'|\\s[^\'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))')
-        .replace('comment', block._comment)
+        .replace('comment', block$1._comment)
         .replace(/tag/g, '(?!(?:'
           + 'a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub'
           + '|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)'
@@ -14912,11 +14914,11 @@
         .getRegex(),
       def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,
       heading: /^ *(#{1,6}) *([^\n]+?) *(?:#+ *)?(?:\n+|$)/,
-      fences: noopTest$1, // fences not supported
-      paragraph: edit$2(block.normal._paragraph)
-        .replace('hr', block.hr)
+      fences: noopTest, // fences not supported
+      paragraph: edit(block$1.normal._paragraph)
+        .replace('hr', block$1.hr)
         .replace('heading', ' *#{1,6} *[^\n]')
-        .replace('lheading', block.lheading)
+        .replace('lheading', block$1.lheading)
         .replace('blockquote', ' {0,3}>')
         .replace('|fences', '')
         .replace('|list', '')
@@ -14927,10 +14929,10 @@
     /**
      * Inline-Level Grammar
      */
-    var inline = {
+    var inline$1 = {
       escape: /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/,
       autolink: /^<(scheme:[^\s\x00-\x1f<>]*|email)>/,
-      url: noopTest$1,
+      url: noopTest,
       tag: '^comment'
         + '|^</[a-zA-Z][\\w:-]*\\s*>' // self-closing tag
         + '|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>' // open tag
@@ -14944,63 +14946,63 @@
       em: /^_([^\s_])_(?!_)|^_([^\s_<][\s\S]*?[^\s_])_(?!_|[^\spunctuation])|^_([^\s_<][\s\S]*?[^\s])_(?!_|[^\spunctuation])|^\*([^\s*<\[])\*(?!\*)|^\*([^\s<"][\s\S]*?[^\s\[\*])\*(?![\]`punctuation])|^\*([^\s*"<\[][\s\S]*[^\s])\*(?!\*)/,
       code: /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/,
       br: /^( {2,}|\\)\n(?!\s*$)/,
-      del: noopTest$1,
+      del: noopTest,
       text: /^(`+|[^`])(?:[\s\S]*?(?:(?=[\\<!\[`*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/
     };
 
     // list of punctuation marks from common mark spec
     // without ` and ] to workaround Rule 17 (inline code blocks/links)
-    inline._punctuation = '!"#$%&\'()*+\\-./:;<=>?@\\[^_{|}~';
-    inline.em = edit$2(inline.em).replace(/punctuation/g, inline._punctuation).getRegex();
+    inline$1._punctuation = '!"#$%&\'()*+\\-./:;<=>?@\\[^_{|}~';
+    inline$1.em = edit(inline$1.em).replace(/punctuation/g, inline$1._punctuation).getRegex();
 
-    inline._escapes = /\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g;
+    inline$1._escapes = /\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g;
 
-    inline._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/;
-    inline._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/;
-    inline.autolink = edit$2(inline.autolink)
-      .replace('scheme', inline._scheme)
-      .replace('email', inline._email)
+    inline$1._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/;
+    inline$1._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/;
+    inline$1.autolink = edit(inline$1.autolink)
+      .replace('scheme', inline$1._scheme)
+      .replace('email', inline$1._email)
       .getRegex();
 
-    inline._attribute = /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/;
+    inline$1._attribute = /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/;
 
-    inline.tag = edit$2(inline.tag)
-      .replace('comment', block._comment)
-      .replace('attribute', inline._attribute)
+    inline$1.tag = edit(inline$1.tag)
+      .replace('comment', block$1._comment)
+      .replace('attribute', inline$1._attribute)
       .getRegex();
 
-    inline._label = /(?:\[[^\[\]]*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
-    inline._href = /<(?:\\[<>]?|[^\s<>\\])*>|[^\s\x00-\x1f]*/;
-    inline._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/;
+    inline$1._label = /(?:\[[^\[\]]*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
+    inline$1._href = /<(?:\\[<>]?|[^\s<>\\])*>|[^\s\x00-\x1f]*/;
+    inline$1._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/;
 
-    inline.link = edit$2(inline.link)
-      .replace('label', inline._label)
-      .replace('href', inline._href)
-      .replace('title', inline._title)
+    inline$1.link = edit(inline$1.link)
+      .replace('label', inline$1._label)
+      .replace('href', inline$1._href)
+      .replace('title', inline$1._title)
       .getRegex();
 
-    inline.reflink = edit$2(inline.reflink)
-      .replace('label', inline._label)
+    inline$1.reflink = edit(inline$1.reflink)
+      .replace('label', inline$1._label)
       .getRegex();
 
     /**
      * Normal Inline Grammar
      */
 
-    inline.normal = merge$1({}, inline);
+    inline$1.normal = merge$1({}, inline$1);
 
     /**
      * Pedantic Inline Grammar
      */
 
-    inline.pedantic = merge$1({}, inline.normal, {
+    inline$1.pedantic = merge$1({}, inline$1.normal, {
       strong: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
       em: /^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/,
-      link: edit$2(/^!?\[(label)\]\((.*?)\)/)
-        .replace('label', inline._label)
+      link: edit(/^!?\[(label)\]\((.*?)\)/)
+        .replace('label', inline$1._label)
         .getRegex(),
-      reflink: edit$2(/^!?\[(label)\]\s*\[([^\]]*)\]/)
-        .replace('label', inline._label)
+      reflink: edit(/^!?\[(label)\]\s*\[([^\]]*)\]/)
+        .replace('label', inline$1._label)
         .getRegex()
     });
 
@@ -15008,8 +15010,8 @@
      * GFM Inline Grammar
      */
 
-    inline.gfm = merge$1({}, inline.normal, {
-      escape: edit$2(inline.escape).replace('])', '~|])').getRegex(),
+    inline$1.gfm = merge$1({}, inline$1.normal, {
+      escape: edit(inline$1.escape).replace('])', '~|])').getRegex(),
       _extended_email: /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/,
       url: /^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/,
       _backpedal: /(?:[^?!.,:;*_~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_~)]+(?!$))+/,
@@ -15017,29 +15019,29 @@
       text: /^(`+|[^`])(?:[\s\S]*?(?:(?=[\\<!\[`*~]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))|(?= {2,}\n|[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))/
     });
 
-    inline.gfm.url = edit$2(inline.gfm.url, 'i')
-      .replace('email', inline.gfm._extended_email)
+    inline$1.gfm.url = edit(inline$1.gfm.url, 'i')
+      .replace('email', inline$1.gfm._extended_email)
       .getRegex();
     /**
      * GFM + Line Breaks Inline Grammar
      */
 
-    inline.breaks = merge$1({}, inline.gfm, {
-      br: edit$2(inline.br).replace('{2,}', '*').getRegex(),
-      text: edit$2(inline.gfm.text)
+    inline$1.breaks = merge$1({}, inline$1.gfm, {
+      br: edit(inline$1.br).replace('{2,}', '*').getRegex(),
+      text: edit(inline$1.gfm.text)
         .replace('\\b_', '\\b_| {2,}\\n')
         .replace(/\{2,\}/g, '*')
         .getRegex()
     });
 
-    var rules = {
-      block: block,
-      inline: inline
+    var rules$1 = {
+      block: block$1,
+      inline: inline$1
     };
 
-    var defaults$2 = defaults.defaults;
-    var block$1 = rules.block;
-    var inline$1 = rules.inline;
+    var defaults$3 = defaults$5.defaults;
+    var block = rules$1.block;
+    var inline = rules$1.inline;
 
     /**
      * smartypants text replacement
@@ -15089,28 +15091,28 @@
       function Lexer(options) {
         this.tokens = [];
         this.tokens.links = Object.create(null);
-        this.options = options || defaults$2;
+        this.options = options || defaults$3;
         this.options.tokenizer = this.options.tokenizer || new Tokenizer_1();
         this.tokenizer = this.options.tokenizer;
         this.tokenizer.options = this.options;
 
-        var rules$$1 = {
-          block: block$1.normal,
-          inline: inline$1.normal
+        var rules = {
+          block: block.normal,
+          inline: inline.normal
         };
 
         if (this.options.pedantic) {
-          rules$$1.block = block$1.pedantic;
-          rules$$1.inline = inline$1.pedantic;
+          rules.block = block.pedantic;
+          rules.inline = inline.pedantic;
         } else if (this.options.gfm) {
-          rules$$1.block = block$1.gfm;
+          rules.block = block.gfm;
           if (this.options.breaks) {
-            rules$$1.inline = inline$1.breaks;
+            rules.inline = inline.breaks;
           } else {
-            rules$$1.inline = inline$1.gfm;
+            rules.inline = inline.gfm;
           }
         }
-        this.tokenizer.rules = rules$$1;
+        this.tokenizer.rules = rules;
       }
 
       var staticAccessors = { rules: {} };
@@ -15120,8 +15122,8 @@
        */
       staticAccessors.rules.get = function () {
         return {
-          block: block$1,
-          inline: inline$1
+          block: block,
+          inline: inline
         };
       };
 
@@ -15152,7 +15154,7 @@
        * Lexing
        */
       Lexer.prototype.blockTokens = function blockTokens (src, tokens, top) {
-        var this$1 = this;
+        var this$1$1 = this;
         if ( tokens === void 0 ) tokens = [];
         if ( top === void 0 ) top = true;
 
@@ -15161,7 +15163,7 @@
 
         while (src) {
           // newline
-          if (token = this$1.tokenizer.space(src)) {
+          if (token = this$1$1.tokenizer.space(src)) {
             src = src.substring(token.raw.length);
             if (token.type) {
               tokens.push(token);
@@ -15170,71 +15172,71 @@
           }
 
           // code
-          if (token = this$1.tokenizer.code(src, tokens)) {
+          if (token = this$1$1.tokenizer.code(src, tokens)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // fences
-          if (token = this$1.tokenizer.fences(src)) {
+          if (token = this$1$1.tokenizer.fences(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // heading
-          if (token = this$1.tokenizer.heading(src)) {
+          if (token = this$1$1.tokenizer.heading(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // table no leading pipe (gfm)
-          if (token = this$1.tokenizer.nptable(src)) {
+          if (token = this$1$1.tokenizer.nptable(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // hr
-          if (token = this$1.tokenizer.hr(src)) {
+          if (token = this$1$1.tokenizer.hr(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // blockquote
-          if (token = this$1.tokenizer.blockquote(src)) {
+          if (token = this$1$1.tokenizer.blockquote(src)) {
             src = src.substring(token.raw.length);
-            token.tokens = this$1.blockTokens(token.text, [], top);
+            token.tokens = this$1$1.blockTokens(token.text, [], top);
             tokens.push(token);
             continue;
           }
 
           // list
-          if (token = this$1.tokenizer.list(src)) {
+          if (token = this$1$1.tokenizer.list(src)) {
             src = src.substring(token.raw.length);
             l = token.items.length;
             for (i = 0; i < l; i++) {
-              token.items[i].tokens = this$1.blockTokens(token.items[i].text, [], false);
+              token.items[i].tokens = this$1$1.blockTokens(token.items[i].text, [], false);
             }
             tokens.push(token);
             continue;
           }
 
           // html
-          if (token = this$1.tokenizer.html(src)) {
+          if (token = this$1$1.tokenizer.html(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // def
-          if (top && (token = this$1.tokenizer.def(src))) {
+          if (top && (token = this$1$1.tokenizer.def(src))) {
             src = src.substring(token.raw.length);
-            if (!this$1.tokens.links[token.tag]) {
-              this$1.tokens.links[token.tag] = {
+            if (!this$1$1.tokens.links[token.tag]) {
+              this$1$1.tokens.links[token.tag] = {
                 href: token.href,
                 title: token.title
               };
@@ -15243,28 +15245,28 @@
           }
 
           // table (gfm)
-          if (token = this$1.tokenizer.table(src)) {
+          if (token = this$1$1.tokenizer.table(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // lheading
-          if (token = this$1.tokenizer.lheading(src)) {
+          if (token = this$1$1.tokenizer.lheading(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // top-level paragraph
-          if (top && (token = this$1.tokenizer.paragraph(src))) {
+          if (top && (token = this$1$1.tokenizer.paragraph(src))) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // text
-          if (token = this$1.tokenizer.text(src)) {
+          if (token = this$1$1.tokenizer.text(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
@@ -15272,7 +15274,7 @@
 
           if (src) {
             var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
-            if (this$1.options.silent) {
+            if (this$1$1.options.silent) {
               console.error(errMsg);
               break;
             } else {
@@ -15285,7 +15287,7 @@
       };
 
       Lexer.prototype.inline = function inline$1 (tokens) {
-        var this$1 = this;
+        var this$1$1 = this;
 
         var i,
           j,
@@ -15302,7 +15304,7 @@
             case 'text':
             case 'heading': {
               token.tokens = [];
-              this$1.inlineTokens(token.text, token.tokens);
+              this$1$1.inlineTokens(token.text, token.tokens);
               break;
             }
             case 'table': {
@@ -15315,7 +15317,7 @@
               l2 = token.header.length;
               for (j = 0; j < l2; j++) {
                 token.tokens.header[j] = [];
-                this$1.inlineTokens(token.header[j], token.tokens.header[j]);
+                this$1$1.inlineTokens(token.header[j], token.tokens.header[j]);
               }
 
               // cells
@@ -15325,24 +15327,23 @@
                 token.tokens.cells[j] = [];
                 for (k = 0; k < row.length; k++) {
                   token.tokens.cells[j][k] = [];
-                  this$1.inlineTokens(row[k], token.tokens.cells[j][k]);
+                  this$1$1.inlineTokens(row[k], token.tokens.cells[j][k]);
                 }
               }
 
               break;
             }
             case 'blockquote': {
-              this$1.inline(token.tokens);
+              this$1$1.inline(token.tokens);
               break;
             }
             case 'list': {
               l2 = token.items.length;
               for (j = 0; j < l2; j++) {
-                this$1.inline(token.items[j].tokens);
+                this$1$1.inline(token.items[j].tokens);
               }
               break;
             }
-            default:
           }
         }
 
@@ -15353,7 +15354,7 @@
        * Lexing/Compiling
        */
       Lexer.prototype.inlineTokens = function inlineTokens (src, tokens, inLink, inRawBlock) {
-        var this$1 = this;
+        var this$1$1 = this;
         if ( tokens === void 0 ) tokens = [];
         if ( inLink === void 0 ) inLink = false;
         if ( inRawBlock === void 0 ) inRawBlock = false;
@@ -15362,14 +15363,14 @@
 
         while (src) {
           // escape
-          if (token = this$1.tokenizer.escape(src)) {
+          if (token = this$1$1.tokenizer.escape(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // tag
-          if (token = this$1.tokenizer.tag(src, inLink, inRawBlock)) {
+          if (token = this$1$1.tokenizer.tag(src, inLink, inRawBlock)) {
             src = src.substring(token.raw.length);
             inLink = token.inLink;
             inRawBlock = token.inRawBlock;
@@ -15378,79 +15379,79 @@
           }
 
           // link
-          if (token = this$1.tokenizer.link(src)) {
+          if (token = this$1$1.tokenizer.link(src)) {
             src = src.substring(token.raw.length);
             if (token.type === 'link') {
-              token.tokens = this$1.inlineTokens(token.text, [], true, inRawBlock);
+              token.tokens = this$1$1.inlineTokens(token.text, [], true, inRawBlock);
             }
             tokens.push(token);
             continue;
           }
 
           // reflink, nolink
-          if (token = this$1.tokenizer.reflink(src, this$1.tokens.links)) {
+          if (token = this$1$1.tokenizer.reflink(src, this$1$1.tokens.links)) {
             src = src.substring(token.raw.length);
             if (token.type === 'link') {
-              token.tokens = this$1.inlineTokens(token.text, [], true, inRawBlock);
+              token.tokens = this$1$1.inlineTokens(token.text, [], true, inRawBlock);
             }
             tokens.push(token);
             continue;
           }
 
           // strong
-          if (token = this$1.tokenizer.strong(src)) {
+          if (token = this$1$1.tokenizer.strong(src)) {
             src = src.substring(token.raw.length);
-            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            token.tokens = this$1$1.inlineTokens(token.text, [], inLink, inRawBlock);
             tokens.push(token);
             continue;
           }
 
           // em
-          if (token = this$1.tokenizer.em(src)) {
+          if (token = this$1$1.tokenizer.em(src)) {
             src = src.substring(token.raw.length);
-            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            token.tokens = this$1$1.inlineTokens(token.text, [], inLink, inRawBlock);
             tokens.push(token);
             continue;
           }
 
           // code
-          if (token = this$1.tokenizer.codespan(src)) {
+          if (token = this$1$1.tokenizer.codespan(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // br
-          if (token = this$1.tokenizer.br(src)) {
+          if (token = this$1$1.tokenizer.br(src)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // del (gfm)
-          if (token = this$1.tokenizer.del(src)) {
+          if (token = this$1$1.tokenizer.del(src)) {
             src = src.substring(token.raw.length);
-            token.tokens = this$1.inlineTokens(token.text, [], inLink, inRawBlock);
+            token.tokens = this$1$1.inlineTokens(token.text, [], inLink, inRawBlock);
             tokens.push(token);
             continue;
           }
 
           // autolink
-          if (token = this$1.tokenizer.autolink(src, mangle)) {
+          if (token = this$1$1.tokenizer.autolink(src, mangle)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // url (gfm)
-          if (!inLink && (token = this$1.tokenizer.url(src, mangle))) {
+          if (!inLink && (token = this$1$1.tokenizer.url(src, mangle))) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
           }
 
           // text
-          if (token = this$1.tokenizer.inlineText(src, inRawBlock, smartypants)) {
+          if (token = this$1$1.tokenizer.inlineText(src, inRawBlock, smartypants)) {
             src = src.substring(token.raw.length);
             tokens.push(token);
             continue;
@@ -15458,7 +15459,7 @@
 
           if (src) {
             var errMsg = 'Infinite loop on byte: ' + src.charCodeAt(0);
-            if (this$1.options.silent) {
+            if (this$1$1.options.silent) {
               console.error(errMsg);
               break;
             } else {
@@ -15475,16 +15476,16 @@
       return Lexer;
     }());
 
-    var defaults$3 = defaults.defaults;
-    var cleanUrl$1 = helpers.cleanUrl;
-    var escape$2 = helpers.escape;
+    var defaults$2 = defaults$5.defaults;
+    var cleanUrl = helpers.cleanUrl;
+    var escape$1 = helpers.escape;
 
     /**
      * Renderer
      */
     var Renderer_1 = (function () {
       function Renderer(options) {
-        this.options = options || defaults$3;
+        this.options = options || defaults$2;
       }
 
       Renderer.prototype.code = function code (code, infostring, escaped) {
@@ -15499,15 +15500,15 @@
 
         if (!lang) {
           return '<pre><code>'
-            + (escaped ? code : escape$2(code, true))
+            + (escaped ? code : escape$1(code, true))
             + '</code></pre>';
         }
 
         return '<pre><code class="'
           + this.options.langPrefix
-          + escape$2(lang, true)
+          + escape$1(lang, true)
           + '">'
-          + (escaped ? code : escape$2(code, true))
+          + (escaped ? code : escape$1(code, true))
           + '</code></pre>\n';
       };
 
@@ -15607,11 +15608,11 @@
       };
 
       Renderer.prototype.link = function link (href, title, text) {
-        href = cleanUrl$1(this.options.sanitize, this.options.baseUrl, href);
+        href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
         if (href === null) {
           return text;
         }
-        var out = '<a href="' + escape$2(href) + '"';
+        var out = '<a href="' + escape$1(href) + '"';
         if (title) {
           out += ' title="' + title + '"';
         }
@@ -15620,7 +15621,7 @@
       };
 
       Renderer.prototype.image = function image (href, title, text) {
-        href = cleanUrl$1(this.options.sanitize, this.options.baseUrl, href);
+        href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
         if (href === null) {
           return text;
         }
@@ -15698,7 +15699,7 @@
        * Convert string to unique id
        */
       Slugger.prototype.slug = function slug (value) {
-        var this$1 = this;
+        var this$1$1 = this;
 
         var slug = value
           .toLowerCase()
@@ -15712,8 +15713,8 @@
         if (this.seen.hasOwnProperty(slug)) {
           var originalSlug = slug;
           do {
-            this$1.seen[originalSlug]++;
-            slug = originalSlug + '-' + this$1.seen[originalSlug];
+            this$1$1.seen[originalSlug]++;
+            slug = originalSlug + '-' + this$1$1.seen[originalSlug];
           } while (this.seen.hasOwnProperty(slug));
         }
         this.seen[slug] = 0;
@@ -15724,15 +15725,15 @@
       return Slugger;
     }());
 
-    var defaults$4 = defaults.defaults;
-    var unescape$1 = helpers.unescape;
+    var defaults$1 = defaults$5.defaults;
+    var unescape = helpers.unescape;
 
     /**
      * Parsing & Compiling
      */
     var Parser_1 = (function () {
       function Parser(options) {
-        this.options = options || defaults$4;
+        this.options = options || defaults$1;
         this.options.renderer = this.options.renderer || new Renderer_1();
         this.renderer = this.options.renderer;
         this.renderer.options = this.options;
@@ -15752,7 +15753,7 @@
        * Parse Loop
        */
       Parser.prototype.parse = function parse (tokens, top) {
-        var this$1 = this;
+        var this$1$1 = this;
         if ( top === void 0 ) top = true;
 
         var out = '',
@@ -15783,19 +15784,19 @@
               continue;
             }
             case 'hr': {
-              out += this$1.renderer.hr();
+              out += this$1$1.renderer.hr();
               continue;
             }
             case 'heading': {
-              out += this$1.renderer.heading(
-                this$1.parseInline(token.tokens),
+              out += this$1$1.renderer.heading(
+                this$1$1.parseInline(token.tokens),
                 token.depth,
-                unescape$1(this$1.parseInline(token.tokens, this$1.textRenderer)),
-                this$1.slugger);
+                unescape(this$1$1.parseInline(token.tokens, this$1$1.textRenderer)),
+                this$1$1.slugger);
               continue;
             }
             case 'code': {
-              out += this$1.renderer.code(token.text,
+              out += this$1$1.renderer.code(token.text,
                 token.lang,
                 token.escaped);
               continue;
@@ -15807,12 +15808,12 @@
               cell = '';
               l2 = token.header.length;
               for (j = 0; j < l2; j++) {
-                cell += this$1.renderer.tablecell(
-                  this$1.parseInline(token.tokens.header[j]),
+                cell += this$1$1.renderer.tablecell(
+                  this$1$1.parseInline(token.tokens.header[j]),
                   { header: true, align: token.align[j] }
                 );
               }
-              header += this$1.renderer.tablerow(cell);
+              header += this$1$1.renderer.tablerow(cell);
 
               body = '';
               l2 = token.cells.length;
@@ -15822,20 +15823,20 @@
                 cell = '';
                 l3 = row.length;
                 for (k = 0; k < l3; k++) {
-                  cell += this$1.renderer.tablecell(
-                    this$1.parseInline(row[k]),
+                  cell += this$1$1.renderer.tablecell(
+                    this$1$1.parseInline(row[k]),
                     { header: false, align: token.align[k] }
                   );
                 }
 
-                body += this$1.renderer.tablerow(cell);
+                body += this$1$1.renderer.tablerow(cell);
               }
-              out += this$1.renderer.table(header, body);
+              out += this$1$1.renderer.table(header, body);
               continue;
             }
             case 'blockquote': {
-              body = this$1.parse(token.tokens);
-              out += this$1.renderer.blockquote(body);
+              body = this$1$1.parse(token.tokens);
+              out += this$1$1.renderer.blockquote(body);
               continue;
             }
             case 'list': {
@@ -15852,7 +15853,7 @@
 
                 itemBody = '';
                 if (item.task) {
-                  checkbox = this$1.renderer.checkbox(checked);
+                  checkbox = this$1$1.renderer.checkbox(checked);
                   if (loose) {
                     if (item.tokens[0].type === 'text') {
                       item.tokens[0].text = checkbox + ' ' + item.tokens[0].text;
@@ -15870,34 +15871,34 @@
                   }
                 }
 
-                itemBody += this$1.parse(item.tokens, loose);
-                body += this$1.renderer.listitem(itemBody, task, checked);
+                itemBody += this$1$1.parse(item.tokens, loose);
+                body += this$1$1.renderer.listitem(itemBody, task, checked);
               }
 
-              out += this$1.renderer.list(body, ordered, start);
+              out += this$1$1.renderer.list(body, ordered, start);
               continue;
             }
             case 'html': {
               // TODO parse inline content if parameter markdown=1
-              out += this$1.renderer.html(token.text);
+              out += this$1$1.renderer.html(token.text);
               continue;
             }
             case 'paragraph': {
-              out += this$1.renderer.paragraph(this$1.parseInline(token.tokens));
+              out += this$1$1.renderer.paragraph(this$1$1.parseInline(token.tokens));
               continue;
             }
             case 'text': {
-              body = token.tokens ? this$1.parseInline(token.tokens) : token.text;
+              body = token.tokens ? this$1$1.parseInline(token.tokens) : token.text;
               while (i + 1 < l && tokens[i + 1].type === 'text') {
                 token = tokens[++i];
-                body += '\n' + (token.tokens ? this$1.parseInline(token.tokens) : token.text);
+                body += '\n' + (token.tokens ? this$1$1.parseInline(token.tokens) : token.text);
               }
-              out += top ? this$1.renderer.paragraph(body) : body;
+              out += top ? this$1$1.renderer.paragraph(body) : body;
               continue;
             }
             default: {
               var errMsg = 'Token with "' + token.type + '" type was not found.';
-              if (this$1.options.silent) {
+              if (this$1$1.options.silent) {
                 console.error(errMsg);
                 return;
               } else {
@@ -15914,7 +15915,7 @@
        * Parse Inline Tokens
        */
       Parser.prototype.parseInline = function parseInline (tokens, renderer) {
-        var this$1 = this;
+        var this$1$1 = this;
 
         renderer = renderer || this.renderer;
         var out = '',
@@ -15934,7 +15935,7 @@
               break;
             }
             case 'link': {
-              out += renderer.link(token.href, token.title, this$1.parseInline(token.tokens, renderer));
+              out += renderer.link(token.href, token.title, this$1$1.parseInline(token.tokens, renderer));
               break;
             }
             case 'image': {
@@ -15942,11 +15943,11 @@
               break;
             }
             case 'strong': {
-              out += renderer.strong(this$1.parseInline(token.tokens, renderer));
+              out += renderer.strong(this$1$1.parseInline(token.tokens, renderer));
               break;
             }
             case 'em': {
-              out += renderer.em(this$1.parseInline(token.tokens, renderer));
+              out += renderer.em(this$1$1.parseInline(token.tokens, renderer));
               break;
             }
             case 'codespan': {
@@ -15958,7 +15959,7 @@
               break;
             }
             case 'del': {
-              out += renderer.del(this$1.parseInline(token.tokens, renderer));
+              out += renderer.del(this$1$1.parseInline(token.tokens, renderer));
               break;
             }
             case 'text': {
@@ -15967,7 +15968,7 @@
             }
             default: {
               var errMsg = 'Token with "' + token.type + '" type was not found.';
-              if (this$1.options.silent) {
+              if (this$1$1.options.silent) {
                 console.error(errMsg);
                 return;
               } else {
@@ -15982,12 +15983,12 @@
       return Parser;
     }());
 
-    var merge$2 = helpers.merge;
-    var checkSanitizeDeprecation$1 = helpers.checkSanitizeDeprecation;
-    var escape$3 = helpers.escape;
-    var getDefaults = defaults.getDefaults;
-    var changeDefaults = defaults.changeDefaults;
-    var defaults$5 = defaults.defaults;
+    var merge = helpers.merge;
+    var checkSanitizeDeprecation = helpers.checkSanitizeDeprecation;
+    var escape = helpers.escape;
+    var getDefaults = defaults$5.getDefaults;
+    var changeDefaults = defaults$5.changeDefaults;
+    var defaults = defaults$5.defaults;
 
     /**
      * Marked
@@ -16008,8 +16009,8 @@
           opt = null;
         }
 
-        opt = merge$2({}, marked.defaults, opt || {});
-        checkSanitizeDeprecation$1(opt);
+        opt = merge({}, marked.defaults, opt || {});
+        checkSanitizeDeprecation(opt);
         var highlight = opt.highlight;
         var tokens,
           pending,
@@ -16072,14 +16073,14 @@
         return;
       }
       try {
-        opt = merge$2({}, marked.defaults, opt || {});
-        checkSanitizeDeprecation$1(opt);
+        opt = merge({}, marked.defaults, opt || {});
+        checkSanitizeDeprecation(opt);
         return Parser_1.parse(Lexer_1.lex(src, opt), opt);
       } catch (e) {
         e.message += '\nPlease report this to https://github.com/markedjs/marked.';
         if ((opt || marked.defaults).silent) {
           return '<p>An error occurred:</p><pre>'
-            + escape$3(e.message + '', true)
+            + escape(e.message + '', true)
             + '</pre>';
         }
         throw e;
@@ -16092,21 +16093,21 @@
 
     marked.options =
     marked.setOptions = function(opt) {
-      merge$2(marked.defaults, opt);
+      merge(marked.defaults, opt);
       changeDefaults(marked.defaults);
       return marked;
     };
 
     marked.getDefaults = getDefaults;
 
-    marked.defaults = defaults$5;
+    marked.defaults = defaults;
 
     /**
      * Use Extension
      */
 
     marked.use = function(extension) {
-      var opts = merge$2({}, extension);
+      var opts = merge({}, extension);
       if (extension.renderer) {
         var renderer = marked.defaults.renderer || new Renderer_1();
         var loop = function ( prop ) {
@@ -16460,7 +16461,7 @@
         return errors;
     }
 
-    function validate(script){
+    function validate$1(script){
         var type = script.type && script.type.toLowerCase();
         switch (type){
             case 'pip' : return pipValidator.apply(null, arguments);
@@ -16471,7 +16472,7 @@
         }
     }
 
-    var validate$1 = function (args) { return m.component(validateComponent, args); };
+    var validate = function (args) { return m.component(validateComponent, args); };
 
     var validateComponent = {
         controller: function (args) {
@@ -16488,7 +16489,7 @@
                     return file.require();
                 })
                 .then(function (script) {
-                    ctrl.validations(validate(script, file.url));
+                    ctrl.validations(validate$1(script, file.url));
                     m.endComputation();
                 })
                 .catch(function () {
@@ -16589,20 +16590,20 @@
         });
     }
 
-    var copyUrlContent = function (url) { return function () { return m.component(copyComponent, getAbsoluteUrl(url)); }; };
+    var copyUrlContent = function (url) { return function () { return m.component(copyComponent, getAbsoluteUrl$1(url)); }; };
 
 
     var copyUrl = function (url, launch) { return function () {
         messages.alert({
             header: 'Copy URL',
-            content: m.component(copyComponent, getAbsoluteUrl(url), launch),
+            content: m.component(copyComponent, getAbsoluteUrl$1(url), launch),
             okText: 'Done'});
     }; };
 
     var copyComponent = {
         controller: function (url) {
             var copyFail = m.prop(false);
-            var autoCopy = function () { return copy(url).catch(function () { return copyFail(true); }).then(m.redraw); };
+            var autoCopy = function () { return copy$1(url).catch(function () { return copyFail(true); }).then(m.redraw); };
             return {autoCopy: autoCopy, copyFail: copyFail};
         },
         view: function (ref, url, launch) {
@@ -16627,13 +16628,13 @@
     }
     };
 
-    function getAbsoluteUrl(url) {
+    function getAbsoluteUrl$1(url) {
         var a = document.createElement('a');
         a.href=url;
         return a.href;
     }
 
-    function copy(text){
+    function copy$1(text){
         return new Promise(function (resolve, reject) {
             var input = document.createElement('input');
             input.value = text;
@@ -16822,7 +16823,7 @@
         switch (type) {
             case 'message' : return messageComponent;
             case 'pip' : return pipComponent;
-            case 'quest' : return questComponent;
+            case 'quest' : return questComponent$1;
             case 'time' : return timeComponent;
             default :
                 throw new Error(("Unknown task type: " + type));
@@ -16900,7 +16901,7 @@
         }
     };
 
-    var questComponent = {
+    var questComponent$1 = {
         controller: function controller$4(ref){
             var task = ref.task;
 
@@ -16959,7 +16960,7 @@
         }
     };
 
-    var questComponent$1 = {
+    var questComponent = {
         controller: function controller(ref){
             var output = ref.output;
             var close = ref.close;
@@ -17107,7 +17108,7 @@
             var props = quest();
             return m('div', [
                 checkboxInput({label: 'autoSubmit', prop: props.autoSubmit, description: 'Submit on double click', form: form}),
-                arrayInput$1({label: 'answers', prop: props.answers, rows:7,  form: form, isArea:true, help: 'Each row here represents an answer option', required:true}),
+                arrayInput({label: 'answers', prop: props.answers, rows:7,  form: form, isArea:true, help: 'Each row here represents an answer option', required:true}),
                 maybeInput({label:'help', help: 'If and when to display the help text (use templates to control the when part)', prop: props.help,form: form, dflt: '<%= pagesMeta.number < 3 %>'}),
                 props.help()
                     ? textInput({label:'helpText',  help: 'The instruction text for using this type of question', prop: props.helpText,form: form, isArea: true})
@@ -17146,7 +17147,7 @@
                 props.steps()
                     ? '' 
                     : checkboxInput({label: 'hidePips', prop: props.hidePips, description: 'Hide the markers for the individual steps',form: form}),
-                arrayInput$1({label:'labels', prop: props.labels, help: 'A list of labels for the slider range', isArea: true, rows:5, form: form}),
+                arrayInput({label:'labels', prop: props.labels, help: 'A list of labels for the slider range', isArea: true, rows:5, form: form}),
                 maybeInput({label:'help', help: 'If and when to display the help text (use templates to control the when part)', prop: props.help,form: form, dflt: '<%= pagesMeta.number < 3 %>'}),
                 props.help()
                     ? textInput({label:'helpText',  help: 'The instruction text for using this type of question', prop: props.helpText,form: form, isArea: true})
@@ -17170,7 +17171,7 @@
 
     var taskSnippet = snippetRunner(taskComponent);
     var pageSnippet = snippetRunner(pageComponent);
-    var questSnippet = snippetRunner(questComponent$1);
+    var questSnippet = snippetRunner(questComponent);
 
     function clearUnused(obj){
         return Object.keys(obj).reduce(function (result, key) {
@@ -17295,7 +17296,7 @@
             m('.btn-group.btn-group-sm.pull-xs-right', [
 
                 !/^minno/.test(study.type) ? '' : [
-                    !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play$2(file, study), title:'Play this task'},[
+                    !isJs ? '' :  m('a.btn.btn-secondary', {onclick: play(file, study), title:'Play this task'},[
                         m('strong.fa.fa-play')
                     ]),
 
@@ -17314,12 +17315,12 @@
                 ],
 
                 study.type !== 'html' ? '' : [
-                    !isHtml ? '' :  m('a.btn.btn-secondary', {onclick: play$2(file,study), title:'Play this task'},[
+                    !isHtml ? '' :  m('a.btn.btn-secondary', {onclick: play(file,study), title:'Play this task'},[
                         m('strong.fa.fa-play')
                     ]),
                 ],
 
-                m('a.btn.btn-secondary', {onclick: hasChanged && save(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly || study.is_published})},[
+                m('a.btn.btn-secondary', {onclick: hasChanged && save$1(file), title:'Save (ctrl+s)',class: classNames({'btn-danger-outline' : hasChanged, 'disabled': !hasChanged || study.isReadonly || study.is_published})},[
                     m('strong.fa.fa-save')
                 ])
             ])
@@ -17346,7 +17347,7 @@
             var file = ref.file;
             var study = ref.study;
 
-            var observer$$1 = ctrl.observer;
+            var observer = ctrl.observer;
             var err = ctrl.err;
             var mode = ctrl.mode;
 
@@ -17358,8 +17359,8 @@
             ]);
 
             return m('.editor', [
-                textMenuView({mode: mode, file: file, study: study, observer: observer$$1}),
-                textContent(ctrl, {key: file.id, file: file, observer: observer$$1, study: study})
+                textMenuView({mode: mode, file: file, study: study, observer: observer}),
+                textContent(ctrl, {key: file.id, file: file, observer: observer, study: study})
             ]);
         }
     };
@@ -17367,15 +17368,15 @@
     var textContent = function (ctrl, ref) {
         var file = ref.file;
         var study = ref.study;
-        var observer$$1 = ref.observer;
+        var observer = ref.observer;
 
         var textMode = modeMap[file.type] || 'javascript';
         switch (ctrl.mode()){
             case 'edit' : return ace({
                 content:file.content,
-                observer: observer$$1,
+                observer: observer,
                 settings: {
-                    onSave: save(file), 
+                    onSave: save$1(file), 
                     mode: textMode,
                     jshintOptions: jshintOptions,
                     isReadonly: study.isReadonly||study.is_locked||study.is_published,
@@ -17383,7 +17384,7 @@
                     position: file.position
                 }
             });
-            case 'validator': return validate$1({file: file});
+            case 'validator': return validate({file: file});
 
 
             case 'view': return m('.markdown', {config: fullHeight},[
@@ -17420,7 +17421,7 @@
     }
 
 
-    var save$1 = function (study_id, file_id, responses, stimuli, conditions, constants) { return fetchJson(url(study_id, file_id), {
+    var save = function (study_id, file_id, responses, stimuli, conditions, constants) { return fetchJson(url(study_id, file_id), {
         method: 'put',
         body: {responses: responses, stimuli: stimuli, conditions: conditions, constants: constants}
     }); };
@@ -18187,7 +18188,7 @@
             }
             function do_save(){
                 ctrl.err([]);
-                save$1(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
+                save(m.route.param('studyId'), m.route.param('fileId'), possible_responses().filter(function (response){ return !!response.key; }), possible_stimuli, possible_conditions, constants)
                     .then(study.get())
                     .then(function (){ return ctrl.notifications.show_success("Experiment successfully saved"); })
                     .then(m.redraw);
@@ -18426,7 +18427,7 @@
 
                 m('h4', 'Basic Select'),
                 checkboxInput({label: 'autoSubmit', description: 'Submit upon second click', prop: basicSelect.autoSubmit, form: form}),
-                arrayInput$1({label: 'answers', prop: (basicSelect.answers), rows:7,  form: form, isArea:true, help: 'Each row here represents an answer option', required:true}),
+                arrayInput({label: 'answers', prop: (basicSelect.answers), rows:7,  form: form, isArea:true, help: 'Each row here represents an answer option', required:true}),
                 checkboxInput({label: 'numericValues', description: 'Responses are recorded as numbers', prop: basicSelect.numericValues, form: form}),
                 maybeInput({label:'help', help: 'If and when to display the help text (use templates to control the when part)', prop: basicSelect.help,form: form}),
                 basicSelect.help()
@@ -18436,7 +18437,7 @@
                 m('h4', 'Sequence'),
                 checkboxInput({label: 'Randomize', description: 'Randomize questions', prop: script.randomize, form: form}),
                 maybeInput({label: 'Choose', help:'Set a number of questions to choose from the pool. If this option is not selected all questions will be used.', form: form, prop: script.times}),
-                arrayInput$1({label: 'questions', prop: script.questionList, toArr: function (stem, index) { return ({stem: stem, name: ("q" + index), inherit:'basicSelect'}); }, fromArr: function (q) { return q.stem; }, rows:20,  form: form, isArea:true, help: 'Each row here represents a questions', required:true}),
+                arrayInput({label: 'questions', prop: script.questionList, toArr: function (stem, index) { return ({stem: stem, name: ("q" + index), inherit:'basicSelect'}); }, fromArr: function (q) { return q.stem; }, rows:20,  form: form, isArea:true, help: 'Each row here represents a questions', required:true}),
                 m('.row', [
                     m('.col-cs-12.text-xs-right', [
                         !form.showValidation() || form.isValid()
@@ -18557,7 +18558,7 @@
             if (!isReadonly) menu.push({separator:true});
             menu = menu.concat([
                 {icon:'fa-refresh', text: 'Refresh/Reset', action: resetFile(file), disabled: isReadonly || file.content() == file.sourceContent()},
-                {icon:'fa-download', text:'Download', action: downloadFile$2(study, file)},
+                {icon:'fa-download', text:'Download', action: downloadFile(study, file)},
                 {icon:'fa-link', text: 'Copy URL', action: copyUrl(file.url)},
 
                 !isExpt ?  {icon:'fa-desktop', text:'Make Experiment', action: update_experiment(file, study, notifications, false), disabled: isReadonly }
@@ -18781,7 +18782,7 @@
                     class: classNames({
                         open : vm.isOpen()
                     }),
-                    onclick: file.isDir ? toggleOpen(vm) : select(file, study),
+                    onclick: file.isDir ? toggleOpen(vm) : select$1(file, study),
                     oncontextmenu: fileContext(file, study, notifications),
                     config: file.isDir ? uploadConfig({onchange:uploadFiles(file.path, study)}) : null
                 },
@@ -18802,7 +18803,7 @@
                     m('a', {class:classNames({'text-primary': file.exp_data && !file.exp_data.inactive})}, [
                         // checkbox
                         m('i.fa.fa-fw', {
-                            onclick: choose({file: file,study: study}),
+                            onclick: choose$1({file: file,study: study}),
                             class: classNames({
                                 'fa-check-square-o': vm.isChosen() === 1,
                                 'fa-square-o': vm.isChosen() === 0,
@@ -18839,7 +18840,7 @@
     }; };
 
     // select specific file and display it
-    var select = function (file, study) { return function (e) {
+    var select$1 = function (file, study) { return function (e) {
         e.stopPropagation();
         e.preventDefault();
         if (study.version)
@@ -18857,7 +18858,7 @@
     }; };
 
     // checkmark a file/folder
-    var choose = function (ref) {
+    var choose$1 = function (ref) {
         var file = ref.file;
         var study = ref.study;
 
@@ -18928,7 +18929,7 @@
             m('h5', [
                 m('small', [
                     m('i.fa.fa-fw', {
-                        onclick: choose$1(chooseState, study),
+                        onclick: choose(chooseState, study),
                         class: classNames({
                             'fa-check-square-o': chooseState === 1,
                             'fa-square-o': chooseState === 0,
@@ -18958,7 +18959,7 @@
         return hash;
     }, {}); };
 
-    function choose$1(currentState, study){
+    function choose(currentState, study){
         return function () { return study.files().forEach(function (file) { return study.vm(file.id).isChosen(currentState === 1 ? 0 : 1); }); };
     }
 
@@ -19003,22 +19004,22 @@
         ]);
     };
 
-    var notifications= createNotifications();
+    var notifications$2= createNotifications();
 
     var sidebarComponent = {
         view: function (ctrl , ref) {
             var study = ref.study;
 
-            return m('.sidebar', {config: config}, [
-                m('div', notifications.view()),
+            return m('.sidebar', {config: config$1}, [
+                m('div', notifications$2.view()),
 
-                sidebarButtons({study: study}, notifications),
-                filesList({study: study}, notifications)
+                sidebarButtons({study: study}, notifications$2),
+                filesList({study: study}, notifications$2)
             ]);
         }
     };
 
-    function config(el, isInitialized, ctx){
+    function config$1(el, isInitialized, ctx){
         if (!isInitialized) el.addEventListener('scroll', listen, false);
         el.scrollTop = ctx.scrollTop || 0;
 
@@ -19047,7 +19048,7 @@
             var left = ref$1.left; if ( left === void 0 ) left = '';
             var right = ref$1.right; if ( right === void 0 ) right = '';
 
-            return m('.split-pane', {config: config$1(parentWidth, parentOffset, leftWidth)}, [
+            return m('.split-pane', {config: config(parentWidth, parentOffset, leftWidth)}, [
                 m('.split-pane-col-left', {style: {flexBasis: leftWidth() + 'px'}}, left),
                 m('.split-pane-divider', {onmousedown: onmousedown(parentOffset, leftWidth)}),
                 m('.split-pane-col-right', right)
@@ -19055,7 +19056,7 @@
         }
     };
 
-    var config$1 = function (parentWidth, parentLeft, leftWidth) { return function (element, isInitialized, ctx) {
+    var config = function (parentWidth, parentLeft, leftWidth) { return function (element, isInitialized, ctx) {
         if (!isInitialized){
             update();
             if (leftWidth() === undefined) leftWidth(parentWidth()/6);
@@ -19085,34 +19086,34 @@
         }
     }; };
 
-    var study;
-    var editorLayoutComponent = {
+    var study$1;
+    var editorLayoutComponent$1 = {
         controller: function (){
             var version = parseInt(m.route.param('version_id'));
             var id = m.route.param('studyId');
-            if (!study || (study.id !== id)){
-                study = studyFactory(id);
+            if (!study$1 || (study$1.id !== id)){
+                study$1 = studyFactory$1(id);
                 !version
                     ?
-                    study
+                    study$1
                         .get()
-                        .catch(function (err){ return study.err = err.message; })
+                        .catch(function (err){ return study$1.err = err.message; })
                         .then(m.redraw)
                     :
-                    study
+                    study$1
                         .get4version(version)
-                        .catch(function (err){ return study.err = err.message; })
+                        .catch(function (err){ return study$1.err = err.message; })
                         .then(m.redraw);
 
             }
-            var ctrl = {study: study, onunload: onunload};
+            var ctrl = {study: study$1, onunload: onunload};
 
             window.addEventListener('beforeunload', beforeunload);
 
             return ctrl;
 
             function hasUnsavedData(){
-                return study.files().some(function (f) { return f.content() !== f.sourceContent(); });
+                return study$1.files().some(function (f) { return f.content() !== f.sourceContent(); });
             }
 
             function beforeunload(event) {
@@ -19128,7 +19129,7 @@
                     window.removeEventListener('beforeunload', beforeunload);
                 }
 
-                if (leavingEditor) study = null;
+                if (leavingEditor) study$1 = null;
             }
         },
         view: function (ref) {
@@ -19141,7 +19142,7 @@
                     :
                     !study.loaded ? '' :
                         splitPane({
-                            leftWidth: leftWidth,
+                            leftWidth: leftWidth$2,
                             left: m.component(sidebarComponent, {study: study}),
                             right: m.route.param('resource') === 'wizard'
                                 ? m.component(wizardComponent, {study: study})
@@ -19153,7 +19154,7 @@
 
     // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
     // Essentially this is a global variable
-    function leftWidth(val){
+    function leftWidth$2(val){
         if (arguments.length) localStorage.fileSidebarWidth = val;
         return localStorage.fileSidebarWidth;
     }
@@ -19181,7 +19182,7 @@
         return [file].concat(flattenFiles(file.files));
     }
 
-    var studyPrototype$1 = {
+    var studyPrototype = {
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
@@ -19193,68 +19194,68 @@
         },
 
         get4version: function get4version(version){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchJson(this.apiVersionURL(version))
                 .then(function (study) {
-                    this$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
+                    this$1$1.version = study.versions.filter(function (version_obj){ return version_obj.id === parseInt(version); })[0];
                     var files = flattenFiles(study.files)
-                        .map(assignStudyId(this$1.id))
+                        .map(assignStudyId(this$1$1.id))
                         .map(assignViewStudy())
                         .map(assignVersionId(version))
                         .map(fileFactory);
-                    this$1.loaded = true;
-                    this$1.isReadonly = true;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = true;
-                    this$1.is_published = study.is_published;
-                    this$1.is_public = study.is_public;
-                    this$1.has_data_permission = false;
-                    this$1.description = study.description;
-                    this$1.version_id = version;
-                    this$1.name = study.study_name;
-                    this$1.type = study.type || 'minno02';
-                    this$1.base_url = study.base_url;
-                    this$1.versions = study.versions ? study.versions : [];
+                    this$1$1.loaded = true;
+                    this$1$1.isReadonly = true;
+                    this$1$1.istemplate = study.is_template;
+                    this$1$1.is_locked = true;
+                    this$1$1.is_published = study.is_published;
+                    this$1$1.is_public = study.is_public;
+                    this$1$1.has_data_permission = false;
+                    this$1$1.description = study.description;
+                    this$1$1.version_id = version;
+                    this$1$1.name = study.study_name;
+                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.base_url = study.base_url;
+                    this$1$1.versions = study.versions ? study.versions : [];
 
-                    this$1.files(files);
-                    this$1.sort();
+                    this$1$1.files(files);
+                    this$1$1.sort();
                 })
                 .catch(function (reason) {
-                    this$1.error = true;
+                    this$1$1.error = true;
                     return Promise.reject(reason); // do not swallow error
                 });
         },
 
         get: function get(){
-            var this$1 = this;
+            var this$1$1 = this;
 
             return fetchFullJson(this.apiURL())
                 .then(function (study) {
                     // const files = this.parseFiles(study.files);
                     var files = flattenFiles(study.files)
-                        .map(assignStudyId(this$1.id))
+                        .map(assignStudyId(this$1$1.id))
                         .map(assignViewStudy())
                         .map(fileFactory);
-                    this$1.loaded = true;
-                    this$1.isReadonly = study.is_readonly;
-                    this$1.istemplate = study.is_template;
-                    this$1.is_locked = study.is_locked || study.is_published;
-                    this$1.is_published = study.is_published;
-                    this$1.is_public = study.is_public;
-                    this$1.has_data_permission = study.has_data_permission;
-                    this$1.description = study.description;
+                    this$1$1.loaded = true;
+                    this$1$1.isReadonly = study.is_readonly;
+                    this$1$1.istemplate = study.is_template;
+                    this$1$1.is_locked = study.is_locked || study.is_published;
+                    this$1$1.is_published = study.is_published;
+                    this$1$1.is_public = study.is_public;
+                    this$1$1.has_data_permission = study.has_data_permission;
+                    this$1$1.description = study.description;
 
-                    this$1.name = study.study_name;
-                    this$1.type = study.type || 'minno02';
-                    this$1.base_url = study.base_url;
-                    this$1.versions = study.versions ? study.versions : [];
-                    this$1.files(files);
-                    this$1.sort();
+                    this$1$1.name = study.study_name;
+                    this$1$1.type = study.type || 'minno02';
+                    this$1$1.base_url = study.base_url;
+                    this$1$1.versions = study.versions ? study.versions : [];
+                    this$1$1.files(files);
+                    this$1$1.sort();
 
                 })
                 .catch(function (reason) {
-                    this$1.error = true;
+                    this$1$1.error = true;
                     throw(reason);
                     // if(reason.status==404)
                     //
@@ -19317,7 +19318,7 @@
             }
         },
         createFile: function createFile(ref){
-            var this$1 = this;
+            var this$1$1 = this;
             var name = ref.name;
             var content = ref.content; if ( content === void 0 ) content = '';
             var isDir = ref.isDir;
@@ -19336,10 +19337,10 @@
             if (!dirExists) return Promise.reject({message: ("The directory \"" + basePath + "\" does not exist")});
             return fetchJson(this.apiURL('/file'), {method:'post', body: {name: name, content: content, isDir: isDir}})
                 .then(function (response) {
-                    Object.assign(response, {studyId: this$1.id, content: content, path:name, isDir: isDir});
+                    Object.assign(response, {studyId: this$1$1.id, content: content, path:name, isDir: isDir});
                     var file = fileFactory(response);
                     file.loaded = true;
-                    this$1.addFile(file);
+                    this$1$1.addFile(file);
                     return response;
                 })
                 .then(this.sort.bind(this));
@@ -19386,8 +19387,8 @@
         }
     };
 
-    var studyFactory$1 =  function (code) {
-        var study = Object.create(studyPrototype$1);
+    var studyFactory =  function (code) {
+        var study = Object.create(studyPrototype);
         Object.assign(study, {
             code    : code,
             id      : study.id,
@@ -19395,7 +19396,7 @@
             files   : m.prop([]),
             loaded  : false,
             error   :false,
-            vm      : viewModelMap$1({
+            vm      : viewModelMap({
                 isOpen: m.prop(false),
                 isChanged: m.prop(false),
                 isChosen: m.prop(0)
@@ -19406,7 +19407,7 @@
     };
 
     // http://lhorie.github.io/mithril-blog/mapping-view-models.html
-    var viewModelMap$1 = function(signature) {
+    var viewModelMap = function(signature) {
         var map = {};
         return function(key) {
             if (!map[key]) {
@@ -19417,29 +19418,29 @@
         };
     };
 
-    var study$1;
+    var study;
 
-    var editorLayoutComponent$1 = {
+    var editorLayoutComponent = {
         controller: function (){
 
             var code = m.route.param('code');
             var version_id = m.route.param('version_id');
-            if (!study$1 || (study$1.code !== code)){
-                study$1 = studyFactory$1(code);
+            if (!study || (study.code !== code)){
+                study = studyFactory(code);
                 !version_id
                     ?
-                    study$1
+                    study
                         .get()
-                        .catch(function (err){ return study$1.err = err.message; })
+                        .catch(function (err){ return study.err = err.message; })
                         .then(m.redraw)
                     :
-                    study$1
+                    study
                         .get4version(version_id)
-                        .catch(function (err){ return study$1.err = err.message; })
+                        .catch(function (err){ return study.err = err.message; })
                         .then(m.redraw);
             }
 
-            var ctrl = {study: study$1, onunload: onunload};
+            var ctrl = {study: study, onunload: onunload};
             return ctrl;
         },
         view: function (ref) {
@@ -19646,7 +19647,7 @@
                     placeholder: 'Filter Tags',
                     value: tagName(),
                     oninput: m.withAttr('value', tagName),
-                    config: focus_it
+                    config: focus_it$6
                 }),
                 m('span.input-group-btn', [
                     m('button.btn.btn-secondary', {onclick: create_tag(study_id, tagName, tags, error), disabled: !tagName()}, [
@@ -19690,10 +19691,10 @@
     }
 
 
-    var focus_it = function (element, isInitialized) {
+    var focus_it$6 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function formatDate$1(date_str){
+    function formatDate(date_str){
         return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
     }
 
@@ -19712,7 +19713,7 @@
 
             function update_version(version_id){
                 ctrl.version_id(Array.isArray(version_id) ?  version_id : version_id.split(',') );
-                update_exps(ctrl);
+                update_exps$1(ctrl);
             }
 
 
@@ -19747,9 +19748,9 @@
             load_studies()
                 .then(function (response) {
                     ctrl.studies(response.studies);
-                    ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name));
+                    ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$2));
                 })
-                .then(function (){ return load_exps(ctrl); })
+                .then(function (){ return load_exps$1(ctrl); })
                 .then(function (){ return load_requests(ctrl); })
             ;
             return {ctrl: ctrl, close: close};
@@ -19761,7 +19762,7 @@
             return m('div', [
             m('.card-block', [
                 m('.input-group', [m('strong', 'Study name'),
-                    m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
+                    m('select.c-select.form-control',{onchange: function (e) { return select_study$2(ctrl, e.target.value); }}, [
                         ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                     ])
                 ]),
@@ -19780,7 +19781,7 @@
                         m('.input-group', [m('strong', 'Version id'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate$1(version.creation_date)) + " (" + (version.state) + ")")); })
+                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ]),
@@ -19810,10 +19811,10 @@
                         m('.form-group', [
                             dateRangePicker(ctrl.dates),
                             m('p.text-muted.btn-toolbar', [
-                                dayButtonView$2(ctrl.dates, 'Last 7 Days', 7),
-                                dayButtonView$2(ctrl.dates, 'Last 30 Days', 30),
-                                dayButtonView$2(ctrl.dates, 'Last 90 Days', 90),
-                                dayButtonView$2(ctrl.dates, 'All time', 3650)
+                                dayButtonView$1(ctrl.dates, 'Last 7 Days', 7),
+                                dayButtonView$1(ctrl.dates, 'Last 30 Days', 30),
+                                dayButtonView$1(ctrl.dates, 'Last 90 Days', 90),
+                                dayButtonView$1(ctrl.dates, 'All time', 3650)
                             ])
                         ])
                     ])
@@ -19881,7 +19882,7 @@
 
         return equalDates$1(startDate(), daysAgo$1(days)) && equalDates$1(endDate(), new Date());
     };
-    var dayButtonView$2 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+    var dayButtonView$1 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
 
         class: activeDate$1(dates, days)? 'active' : '',
         onclick: function () {
@@ -19892,21 +19893,21 @@
 
 
 
-    function sort_studies_by_name(study1, study2){
+    function sort_studies_by_name$2(study1, study2){
         return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
     }
 
 
 
-    function select_study(ctrl, study_id){
+    function select_study$2(ctrl, study_id){
         ctrl.study_id(study_id);
         ctrl.loaded.bind(null, false);
         var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
         ctrl.versions = new_study.versions;
-        load_exps(ctrl);
+        load_exps$1(ctrl);
         load_requests(ctrl);
     }
-    function update_exps(ctrl){
+    function update_exps$1(ctrl){
         var experiments2show =  [];
         ctrl.version_id().map(function (id){
             var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
@@ -19918,10 +19919,10 @@
         m.redraw();
     }
 
-    function load_exps(ctrl){
+    function load_exps$1(ctrl){
         ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
         ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
-        update_exps(ctrl);
+        update_exps$1(ctrl);
         m.redraw();
     }
 
@@ -19954,7 +19955,7 @@
                 m('tbody',
                     ctrl.requests().map(function (download) { return m('tr', [
                         m('td', [
-                            formatDate(new Date(download.creation_date)),
+                            formatDate$1(new Date(download.creation_date)),
                             '  ',
                             m('i.fa.fa-info-circle'),
                             m('.info-box.info-box4data',[
@@ -19970,7 +19971,7 @@
                                             m('strong', 'Creation Date: ')
                                         ]),
                                         m('.col-xs-7',[
-                                            formatDate(new Date(download.creation_date))
+                                            formatDate$1(new Date(download.creation_date))
                                         ])
                                     ]),
 
@@ -19979,13 +19980,13 @@
                                             m('strong', 'Start Date: ')
                                         ),
                                         m('.col-xs-3',
-                                            formatDate(new Date(download.start_date))
+                                            formatDate$1(new Date(download.start_date))
                                         ),
                                         m('.col-xs-3',
                                             m('strong', 'End Date: ')
                                         ),
                                         m('.col-xs-2',
-                                            formatDate(new Date(download.end_date))
+                                            formatDate$1(new Date(download.end_date))
                                         )
                                     ]),
                                     m('.row-xs-10.list-group-item2', [
@@ -20048,7 +20049,7 @@
         return bytes.toFixed(1)+' '+units[u];
     }
 
-    var statisticsInstructions$2 = function () { return m('.text-muted', [
+    var statisticsInstructions = function () { return m('.text-muted', [
         m('p', 'Choose whether you want participation data from demo studies, research pool, all research studies (including lab studies), or all studies (demo and research).'),
         m('p', 'Enter the study id or any part of the study id (the study name that that appears in an .expt file). Note that the study id search feature is case-sensitive. If you leave this box blank you will get data from all studies.'),
         m('p', 'You can also use the Task box to enter a task name or part of a task name (e.g., realstart) if you only want participation data from certain tasks.'),
@@ -20088,8 +20089,8 @@
                 link: m.prop(''),
                 error: m.prop(null),
                 dates: {
-                    startDate: m.prop(daysAgo$2(3650)),
-                    endDate: m.prop(daysAgo$2(0))
+                    startDate: m.prop(daysAgo(3650)),
+                    endDate: m.prop(daysAgo(0))
                 }
             };
 
@@ -20100,7 +20101,7 @@
 
             function update_version(version_id){
                 ctrl.version_id(Array.isArray(version_id) ?  version_id : version_id.split(',') );
-                update_exps$1(ctrl);
+                update_exps(ctrl);
             }
 
             load_studies()
@@ -20108,7 +20109,7 @@
                     ctrl.studies(response.studies);
                     ctrl.studies(ctrl.studies().filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$1));
                 })
-                .then(function (){ return load_exps$1(ctrl); })
+                .then(function (){ return load_exps(ctrl); })
 
                 .then(m.redraw);
             return {ctrl: ctrl, close: close};
@@ -20144,7 +20145,7 @@
                         m('.input-group', [m('strong', 'Version id'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate$1(version.creation_date)) + " (" + (version.state) + ")")); })
+                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ])
@@ -20154,10 +20155,10 @@
                         m('.form-group', [
                             dateRangePicker(ctrl.dates),
                             m('p.text-muted.btn-toolbar', [
-                                dayButtonView$3(ctrl.dates, 'Last 7 Days', 7),
-                                dayButtonView$3(ctrl.dates, 'Last 30 Days', 30),
-                                dayButtonView$3(ctrl.dates, 'Last 90 Days', 90),
-                                dayButtonView$3(ctrl.dates, 'All time', 3650)
+                                dayButtonView(ctrl.dates, 'Last 7 Days', 7),
+                                dayButtonView(ctrl.dates, 'Last 30 Days', 30),
+                                dayButtonView(ctrl.dates, 'Last 90 Days', 90),
+                                dayButtonView(ctrl.dates, 'All time', 3650)
                             ]),
                             m('small.text-muted',  'The data for the study statistics by day is saved in 24 hour increments by date in USA eastern time (EST).')
                         ])
@@ -20187,7 +20188,7 @@
                 ]),
 
                 !ctrl.displayHelp() ? '' : m('.row', [
-                    m('.col-sm-12.p-a-2', statisticsInstructions$2())
+                    m('.col-sm-12.p-a-2', statisticsInstructions())
                 ]),
 
             ]),
@@ -20203,7 +20204,7 @@
     };
 
 
-    function update_exps$1(ctrl){
+    function update_exps(ctrl){
         var experiments2show =  [];
         ctrl.version_id().map(function (id){
             var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
@@ -20215,10 +20216,10 @@
         m.redraw();
     }
 
-    function load_exps$1(ctrl){
+    function load_exps(ctrl){
         ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
         ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
-        update_exps$1(ctrl);
+        update_exps(ctrl);
         m.redraw();
     }
 
@@ -20261,23 +20262,23 @@
 
 
     // helper functions for the day buttons
-    var daysAgo$2 = function (days) {
+    var daysAgo = function (days) {
         var d = new Date();
         d.setDate(d.getDate() - days);
         return d;
     };
-    var equalDates$2 = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
-    var activeDate$2 = function (ref, days) {
+    var equalDates = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
+    var activeDate = function (ref, days) {
         var startDate = ref.startDate;
         var endDate = ref.endDate;
 
-        return equalDates$2(startDate(), daysAgo$2(days)) && equalDates$2(endDate(), new Date());
+        return equalDates(startDate(), daysAgo(days)) && equalDates(endDate(), new Date());
     };
-    var dayButtonView$3 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+    var dayButtonView = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
 
-        class: activeDate$2(dates, days)? 'active' : '',
+        class: activeDate(dates, days)? 'active' : '',
         onclick: function () {
-            dates.startDate(daysAgo$2(days));
+            dates.startDate(daysAgo(days));
             dates.endDate(new Date());
         }
     }, name); };
@@ -20305,7 +20306,7 @@
         ctrl.loaded.bind(null, false);
         var new_study = ctrl.studies().filter(function (study){ return study.id==study_id; })[0];
         ctrl.versions = new_study.versions;
-        load_exps$1(ctrl);
+        load_exps(ctrl);
     }
 
     function show_stat(ctrl){
@@ -20330,8 +20331,8 @@
                         stat2show.map(function (data) { return m('tr', [
                             m('td',data.version),
                             m('td',data.descriptiveId),
-                            m('td',formatDate(new Date(data['#earliest_session']))),
-                            m('td',formatDate(new Date(data['#latest_session']))),
+                            m('td',formatDate$1(new Date(data['#earliest_session']))),
+                            m('td',formatDate$1(new Date(data['#latest_session']))),
                             m('td', data['#totalsessions'])
                         ]); })
                     )])
@@ -20392,10 +20393,10 @@
         body: {is_public: is_public}
     }); };
 
-    function sharing_dialog (args) { return m.component(sharing_dialog$1, args); }
+    function sharingComponent (args) { return m.component(sharing_dialog, args); }
     // export default collaborationComponent;
 
-    var sharing_dialog$1 = {
+    var sharing_dialog = {
         controller: function controller(ref){
             var study_id = ref.study_id;
             var close = ref.close;
@@ -20467,7 +20468,7 @@
                     header:'Add a Collaborator',
                     content: m.component({view: function () { return m('p', [
                         m('p', 'Enter collaborator\'s user name:'),
-                        m('input.form-control', {placeholder: 'User name', config: focus_it$1, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                        m('input.form-control', {placeholder: 'User name', config: focus_it$5, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
 
                         m('p.space', 'Select user\'s study file access:'),
                         m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
@@ -20613,8 +20614,8 @@
                                 [m('i.fa.fa-fw.fa-remove'), '  Revoke public link']
                             ),
                             m('label.input-group.space',[
-                                m('.input-group-addon', {onclick: function() {copy$1(getAbsoluteUrl$1(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
-                                m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl$1(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
+                                m('.input-group-addon', {onclick: function() {copy(getAbsoluteUrl(ctrl.link()));}}, m('i.fa.fa-fw.fa-copy')),
+                                m('input.form-control', { value: !ctrl.link() ? '' : getAbsoluteUrl(ctrl.link()), onchange: m.withAttr('value', ctrl.link)})
                             ])
                         ])
                     ),
@@ -20627,16 +20628,16 @@
         }
     };
 
-    var focus_it$1 = function (element, isInitialized) {
+    var focus_it$5 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function getAbsoluteUrl$1(url) {
+    function getAbsoluteUrl(url) {
         var a = document.createElement('a');
         a.href=url;
         return a.href;
     }
 
-    function copy$1(text){
+    function copy(text){
         return new Promise(function (resolve, reject) {
             var input = document.createElement('input');
             input.value = text;
@@ -20670,7 +20671,7 @@
                 view: function () { return m('p', [
                     m('.form-group', [
                         m('label', 'Enter Study Name:'),
-                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$2})
+                        m('input.form-control',  {oninput: m.withAttr('value', study_name), config: focus_it$4})
                     ]),
                     m('.form-group', [
                         m('label', 'Enter Study Description:'),
@@ -20698,7 +20699,7 @@
         ask();
     };
 
-    var focus_it$2 = function (element, isInitialized) {
+    var focus_it$4 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var mainComponent = {
@@ -20877,7 +20878,7 @@
                                         ])
                                     ]),
                                     m('.col-sm-3', [
-                                        m('.study-text', formatDate(new Date(study.last_modified)))
+                                        m('.study-text', formatDate$1(new Date(study.last_modified)))
                                     ]),
                                     m('.col-sm-4', [
                                         study.tags.map(function (tag){ return m('span.study-tag',  {style: {'background-color': '#' + tag.color}}, tag.text); })
@@ -20944,7 +20945,7 @@
         return (PIUrl + "/deploy_request");
     }
 
-    function deploy_url(deploy_id)
+    function deploy_url$1(deploy_id)
     {
         return (PIUrl + "/deploy_request/" + deploy_id);
     }
@@ -20958,7 +20959,7 @@
 
     function deploy2pool(deploy_id)
     {
-        return fetchJson(deploy_url(deploy_id), {
+        return fetchJson(deploy_url$1(deploy_id), {
             method: 'post',
             body:{}
         });
@@ -20966,7 +20967,7 @@
 
     function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, status)
     {
-        return fetchJson(deploy_url(deploy_id), {
+        return fetchJson(deploy_url$1(deploy_id), {
             method: 'put',
             body:{priority: priority, pause_rules: pause_rules, reviewer_comments: reviewer_comments, status: status}
         });
@@ -20988,7 +20989,7 @@
 
     function get_deploy(deploy_id)
     {
-        return fetchJson(deploy_url(deploy_id));
+        return fetchJson(deploy_url$1(deploy_id));
     }
 
     function get_deploys(){
@@ -21051,7 +21052,7 @@
         });
     };
 
-    var thConfig$4 = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
+    var thConfig = function (prop, current) { return ({'data-sort-by':prop, class: current() === prop ? 'active' : ''}); };
 
     var deployComponent = {
         controller: function controller(){
@@ -21149,18 +21150,18 @@
                     m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
                         m('thead',[
                             m('tr', [
-                                m('th', thConfig$4('creation_date', ctrl.sortBy), 'Creation date'),
-                                m('th', thConfig$4('experiment_file', ctrl.sortBy), 'Study details'),
-                                m('th', thConfig$4('user_name', ctrl.sortBy), 'Researcher name'),
-                                m('th', thConfig$4('target_number', ctrl.sortBy), 'Target number'),
-                                m('th', thConfig$4('priority', ctrl.sortBy), 'Priority'),
-                                m('th', thConfig$4('status', ctrl.sortBy), 'Status'),
+                                m('th', thConfig('creation_date', ctrl.sortBy), 'Creation date'),
+                                m('th', thConfig('experiment_file', ctrl.sortBy), 'Study details'),
+                                m('th', thConfig('user_name', ctrl.sortBy), 'Researcher name'),
+                                m('th', thConfig('target_number', ctrl.sortBy), 'Target number'),
+                                m('th', thConfig('priority', ctrl.sortBy), 'Priority'),
+                                m('th', thConfig('status', ctrl.sortBy), 'Status'),
                                 m('th', '')
                             ])
                         ]),
                         m('tbody',
                             list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
-                                    m('td', formatDate$1(request.creation_date)),
+                                    m('td', formatDate(request.creation_date)),
                                     m('td',
                                         m('', [
                                             request.study_name,  ' (' ,
@@ -21194,12 +21195,12 @@
         }
     };
 
-    function deploy_url$1(study_id)
+    function deploy_url(study_id)
     {
         return (PIUrl + "/deploy/" + (encodeURIComponent(study_id)));
     }
 
-    var deploy = function (study_id, ctrl) { return fetchJson(deploy_url$1(study_id), {
+    var deploy = function (study_id, ctrl) { return fetchJson(deploy_url(study_id), {
         method: 'post',
         body: {props:{version_id:ctrl.version_id, sets: ctrl.sets, launch_confirmation: ctrl.launch_confirmation, planned_procedure: ctrl.planned_procedure, sample_size:ctrl.sample_size, comments: ctrl.comments}}
     }); };
@@ -21296,7 +21297,7 @@
             }
 
             function load() {
-                ctrl.study = studyFactory(m.route.param('studyId'));
+                ctrl.study = studyFactory$1(m.route.param('studyId'));
                 return ctrl.study.get()
                     .then(function (){
                         get_rules()
@@ -21317,7 +21318,7 @@
             function submit(){
                 return check_form_validity() ? false :
                     deploy(ctrl.study.id, ctrl)
-                        .then(function (deploy$$1) { return ctrl.sent = true; })
+                        .then(function (deploy) { return ctrl.sent = true; })
                         .catch(function (response) {
                             ctrl.error(response.message);
                         })
@@ -21330,7 +21331,7 @@
 
             if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
+                m('h5', ['The request to review was successfully submitted!', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
             ]);
             return !ctrl.loaded()
                 ?
@@ -21542,7 +21543,7 @@
                         m('.col-sm-12.text-sm-right',[
                             m('button.btn.btn-secondary', {onclick:function (){ return m.route( ("/properties/" + (ctrl.study.id))); }}, 'Cancel'),
                             m('button.btn.btn-primary', {disabled: ctrl.check_form_validity(), onclick: submit}, 'Request Deploy'),
-                            !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'All mandatory fields have to be filled')
+                            !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'The form is incomplete')
                         ])
                     ]),
                 ]);
@@ -21665,7 +21666,7 @@
                             m('strong', 'Creation Date:')
                         ]),
                         m('.col-sm-9',[
-                            formatDate$1(ctrl.deploy2show().creation_date)
+                            formatDate(ctrl.deploy2show().creation_date)
                         ]),
                     ]),
                     m('.row.space',[
@@ -21901,7 +21902,7 @@
                         .then(function (registration){
                             if(registration)
                             {
-                                select_study$2(ctrl, registration.study_id);
+                                select_study(ctrl, registration.study_id);
                                 select_version(ctrl, registration.version_id);
                                 select_experiment(ctrl, registration.experiment_id);
                             }
@@ -21942,7 +21943,7 @@
                     m('.row',[
                         m('.col-sm-2',  m('strong', 'Study name')),
                         m('.col-sm-2', [
-                            m('select.c-select.form-control',{onchange: function (e) { return select_study$2(ctrl, e.target.value); }}, [
+                            m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
                                 m('option', {disabled:true, selected:!ctrl.study()}, 'Select Study'),
                                 ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                             ])
@@ -22007,7 +22008,7 @@
     };
 
 
-    function select_study$2(ctrl, study_id){
+    function select_study(ctrl, study_id){
 
         ctrl.study_id(parseInt(study_id));
         ctrl.study(ctrl.studies().find(function (study){ return study.id===ctrl.study_id(); }));
@@ -22091,7 +22092,7 @@
                                     m('label', 'User name:'),
                                     m('input.form-control', {
                                         type:'text',
-                                        config: focus_it$4,
+                                        config: focus_it$2,
                                         placeholder: 'User name',
                                         value: ctrl.username(),
                                         oninput: m.withAttr('value', ctrl.username),
@@ -22106,7 +22107,7 @@
                                         value: ctrl.first_name(),
                                         oninput: m.withAttr('value', ctrl.first_name),
                                         onchange: m.withAttr('value', ctrl.first_name),
-                                        config: getStartValue$3(ctrl.first_name)
+                                        config: getStartValue$4(ctrl.first_name)
                                     })
                                 ),
                                 m('fieldset.form-group',
@@ -22117,7 +22118,7 @@
                                         value: ctrl.last_name(),
                                         oninput: m.withAttr('value', ctrl.last_name),
                                         onchange: m.withAttr('value', ctrl.last_name),
-                                        config: getStartValue$3(ctrl.last_name)
+                                        config: getStartValue$4(ctrl.last_name)
                                     }
                                     ))
                                 ,m('fieldset.form-group',
@@ -22128,7 +22129,7 @@
                                         value: ctrl.email(),
                                         oninput: m.withAttr('value', ctrl.email),
                                         onchange: m.withAttr('value', ctrl.email),
-                                        config: getStartValue$3(ctrl.email)
+                                        config: getStartValue$4(ctrl.email)
                                     })
                                 )
                             ]),
@@ -22141,13 +22142,13 @@
         }
     };
 
-    function getStartValue$3(prop){
+    function getStartValue$4(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
     }
 
-    var focus_it$4 = function (element, isInitialized) {
+    var focus_it$2 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function users_url()
@@ -22935,16 +22936,16 @@
     var present_templates_url = baseUrl + "/present_templates";
     var dropbox_url = baseUrl + "/dropbox";
 
-    function apiURL(code)
+    function apiURL$3(code)
     {   
         return (change_password_url + "/" + (encodeURIComponent(code)));
     }
 
-    var is_recovery_code = function (code) { return fetchJson(apiURL(code), {
+    var is_recovery_code = function (code) { return fetchJson(apiURL$3(code), {
         method: 'get'
     }); };
 
-    var set_password = function (code, password, confirm) { return fetchJson(apiURL(code), {
+    var set_password$1 = function (code, password, confirm) { return fetchJson(apiURL$3(code), {
         method: 'post',
         body: {password: password, confirm: confirm}
     }); };
@@ -23004,7 +23005,7 @@
                     value: ctrl.email(),
                     oninput: m.withAttr('value', ctrl.email),
                     onchange: m.withAttr('value', ctrl.email),
-                    config: getStartValue$4(ctrl.email)
+                    config: getStartValue$3(ctrl.email)
                 })
             ])
             ,
@@ -23015,7 +23016,7 @@
 
     ]); };
 
-    function getStartValue$4(prop){
+    function getStartValue$3(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -23031,7 +23032,7 @@
                     value: ctrl.password(),
                     oninput: m.withAttr('value', ctrl.password),
                     onchange: m.withAttr('value', ctrl.password),
-                    config: getStartValue$5(ctrl.password)
+                    config: getStartValue$2(ctrl.password)
                 }),
                 m('label.space', 'Confirm password:'),
                 m('input.form-control', {
@@ -23040,7 +23041,7 @@
                     value: ctrl.confirm(),
                     oninput: m.withAttr('value', ctrl.confirm),
                     onchange: m.withAttr('value', ctrl.confirm),
-                    config: getStartValue$5(ctrl.confirm)
+                    config: getStartValue$2(ctrl.confirm)
                 })
             ]),
             !ctrl.password_error() ? '' : m('.alert.alert-warning', m('strong', 'Error: '), ctrl.password_error()),
@@ -23048,7 +23049,7 @@
         ])
     ]); };
 
-    function getStartValue$5(prop){
+    function getStartValue$2(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -23214,7 +23215,7 @@
             }
 
             function do_set_password(){
-                set_password('', ctrl.password, ctrl.confirm)
+                set_password$1('', ctrl.password, ctrl.confirm)
                     .then(function () {
                         ctrl.password_changed = true;
                     })
@@ -23261,7 +23262,7 @@
     var pending_url = baseUrl + "/pending";
     var updated_requests_url = baseUrl + "/updates";
 
-    function apiURL$1(code)
+    function apiURL$2(code)
     {
         return (collaborationUrl + "/" + (encodeURIComponent(code)));
     }
@@ -23280,7 +23281,7 @@
     }); };
 
 
-    var use_code = function (code) { return fetchJson(apiURL$1(code), {
+    var use_code = function (code) { return fetchJson(apiURL$2(code), {
         method: 'get'
     }); };
 
@@ -23541,7 +23542,7 @@
                                         value: ctrl.subject(),
                                         oninput: m.withAttr('value', ctrl.subject),
                                         onchange: m.withAttr('value', ctrl.subject),
-                                        config: getStartValue$6(ctrl.subject)
+                                        config: getStartValue$1(ctrl.subject)
                                     }
                                     )),
                                 m('fieldset.form-group',
@@ -23551,7 +23552,7 @@
                                         value: ctrl.body(),
                                         oninput: m.withAttr('value', ctrl.body),
                                         onchange: m.withAttr('value', ctrl.body),
-                                        config: getStartValue$6(ctrl.body)
+                                        config: getStartValue$1(ctrl.body)
                                     }
                                     )),
                                 m('fieldset.form-group',
@@ -23592,22 +23593,22 @@
         }
     };
 
-    function getStartValue$6(prop){
+    function getStartValue$1(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
     }
 
-    function apiURL$2(code)
+    function apiURL$1(code)
     {   
         return (activationUrl + "/" + (encodeURIComponent(code)));
     }
 
-    var is_activation_code = function (code) { return fetchJson(apiURL$2(code), {
+    var is_activation_code = function (code) { return fetchJson(apiURL$1(code), {
         method: 'get'
     }); };
 
-    var set_password$1 = function (code, password, confirm) { return fetchJson(apiURL$2(code), {
+    var set_password = function (code, password, confirm) { return fetchJson(apiURL$1(code), {
         method: 'post',
         body: {password: password, confirm: confirm}
     }); };
@@ -23631,7 +23632,7 @@
             return ctrl;
 
             function do_set_password(){
-                set_password$1(m.route.param('code'), ctrl.password, ctrl.confirm)
+                set_password(m.route.param('code'), ctrl.password, ctrl.confirm)
                     .then(function () {
                         ctrl.activated = true;
                     })
@@ -23658,12 +23659,12 @@
         }
     };
 
-    function apiURL$3(code)
+    function apiURL(code)
     {   
         return (collaborationUrl + "/" + (encodeURIComponent(code)));
     }
 
-    var is_collaboration_code = function (code) { return fetchJson(apiURL$3(code), {
+    var is_collaboration_code = function (code) { return fetchJson(apiURL(code), {
         method: 'get'
     }); };
 
@@ -23710,7 +23711,7 @@
             return ctrl;
             
             function do_set_password(){
-                set_password(ctrl.code(), ctrl.password, ctrl.confirm)
+                set_password$1(ctrl.code(), ctrl.password, ctrl.confirm)
                     .then(function () {
                         ctrl.password_changed = true;
                     })
@@ -23792,7 +23793,7 @@
                                     value: ctrl.username(),
                                     oninput: m.withAttr('value', ctrl.username),
                                     onchange: m.withAttr('value', ctrl.username),
-                                    config: getStartValue$7(ctrl.username)
+                                    config: getStartValue(ctrl.username)
                                 })
                             ]),
 
@@ -23804,7 +23805,7 @@
         }
     };
 
-    function getStartValue$7(prop){
+    function getStartValue(prop){
         return function (element, isInit) {// !isInit && prop(element.value);
             if (!isInit) setTimeout(function (){ return prop(element.value); }, 30);
         };
@@ -23851,7 +23852,7 @@
                     ]),
                     m('tbody', [
                         deploy2show.map(function (deploy){ return deploy.sets.filter(function (set){ return set.status!=='accept2' && set.status!=='running2'; }).map(function (set){ return m('tr', [
-                                    m('td', formatDate$1(deploy.creation_date)),
+                                    m('td', formatDate(deploy.creation_date)),
                                     m('td', !set.experiment_file ? '' : set.experiment_file.descriptive_id),
                                     m('td', set.target_number),
                                     m('td', set.priority),
@@ -23945,7 +23946,8 @@
             }
 
             function show_delete(){
-                return messages.confirm({header:'Delete study', content:'Are you sure?'})
+                return messages.confirm({header:'Delete study', content:
+                        m('strong', 'Are you sure? This will delete the study and all its files permanently. You will no longer have access to the study’s data')})
                     .then(function (response) {
                         if (response) delete_study(ctrl.study.id)
                             .then(function (){ return ctrl.study.deleted=true; })
@@ -23960,7 +23962,7 @@
             function show_sharing() {
                 var study_id = ctrl.study.id;
                 var close = messages.close;
-                messages.custom({header: 'Statistics', wide: true, content: sharing_dialog({study_id: study_id, close: close})});
+                messages.custom({header: 'Statistics', wide: true, content: sharingComponent({study_id: study_id, close: close})});
             }
 
             function show_tags() {
@@ -24091,7 +24093,7 @@
                 var ask = function () { return messages.confirm({
                     header:'New Name',
                     content: m('div', [
-                        m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$5,value: study_name(), onchange: m.withAttr('value', study_name)}),
+                        m('input.form-control', {placeholder: 'Enter Study Name', config: focus_it$1,value: study_name(), onchange: m.withAttr('value', study_name)}),
                         !error() ? '' : m('p.alert.alert-danger', error())
                     ])
                 }).then(function (response) { return response && duplicate(); }); };
@@ -24108,7 +24110,7 @@
 
             var study;
             function load() {
-                ctrl.study = studyFactory(m.route.param('studyId'));
+                ctrl.study = studyFactory$1(m.route.param('studyId'));
                 return ctrl.study.get()
                     .then(function (){
                         ctrl.study_name(ctrl.study.name);
@@ -24166,6 +24168,49 @@
                             )
                         )
                     ]),
+
+
+                    m('.row.space',
+                        m('.col-sm-2.space',  m('h4', 'Study actions'))
+                    ),
+
+                    m('.row.space',
+                        m('.col-sm-12', [
+                            m('.row.', [
+                                    m('.col-sm-1.space',
+
+                                    m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
+                                    ),
+                                    m('.col-sm-1.space',
+                                        m('button.btn.btn-success.btn-sm', {title: 'Share the study with other users, or make the study public', onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
+                                    ),
+
+                                    m('.col-sm-1.space',
+                                        m('button.btn.btn-success.btn-sm', {title: 'Add tags to identify the study', onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
+                                    ),
+                                    m('.col-sm-1.space',
+                                        m('button.btn.btn-success.btn-sm', {title: 'Download the study data', onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
+                                    ),
+                                    m('.col-sm-1.space',
+                                        m('button.btn.btn-success.btn-sm', {title: 'Get information about study completion', onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
+                                    ),
+
+                                    m('.col-sm-2.space',
+                                        m('button.btn.btn-success.btn-sm', {title: 'Is the study ready for PI’s research pool? Request a review', onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }, disabled: ctrl.study.isReadonly}, 'Request Review')
+                                    ),
+
+                                    ctrl.study.isReadonly || ctrl.under_develop() ? '' :
+                                        m('.col-sm-1.space',
+                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                        ),
+                                    m('.col-sm-1.space',
+                                        ctrl.study.isReadonly ? '' :
+                                            m('button.btn.btn-danger.btn-sm', {title: 'Delete the study permanently', onclick:ctrl.show_delete}, 'Delete')
+                                    )
+                                ]
+                            ),
+                        ])
+                    ),
                     ctrl.study.invisible ? '' : [
                         m('.row.space',
                             m('.col-sm-12.space',  m('h4', 'Versions'))
@@ -24175,12 +24220,17 @@
                             m('.col-sm-7.space',
                                 m('table.table',
                                     ctrl.study.versions.map(function (version, id){ return m('tr', [
-                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate$1(version.creation_date)) + ")")]),
-                                            m('td', m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));}}, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'Review')),
+                                            m('td', [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
+                                            m('td', [
+                                                    m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View'),
+                                                    m('.card.info-box.card-header', version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files'),
+                                                ]
+                                            ),
+
                                             ctrl.study.isReadonly ? ''     :
                                                 m('td', m('button.btn.btn-primary.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
                                             ctrl.study.isReadonly || !version.deploys ? '' :
-                                                m('td', m('button.btn.btn-primary.btn-sm.px-5', {onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Deploy requests')),
+                                                m('td', m('button.btn.btn-primary.btn-sm.px-5', {title: 'See your requests to approve the study’s deployment', onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Requests')),
                                             version.state!=='Develop' ? '' :
                                                 m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
                                         ]); }
@@ -24189,9 +24239,9 @@
                             )
                         )
                     ],
-
+    /* TEST */
                     m('.row.space',
-                        m('.col-sm-2.space',  m('h4', 'Actions'))
+                        m('.col-sm-2.space',  m('h4', 'Study actions'))
                     ),
 
                     m('.row.frame.space',
@@ -24199,7 +24249,7 @@
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Duplicate study'),
-                                    m('.small', 'This will allows you to...')
+                                    m('.small', 'Duplicate the files and folder of the most recent version to create a new study')
                                 ]),
                                 m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
@@ -24208,7 +24258,7 @@
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Share study'),
-                                    m('.small', 'This will allows you to...')
+                                    m('.small', 'Share the study with other users, or make the study public')
                                 ]),
                                 m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
@@ -24219,11 +24269,11 @@
                                 m('.col-sm-12', [
                                     m('.row',
                                         m('.col-sm-9.space',[
-                                            m('strong', 'Request deploy'),
-                                            m('.small', 'This will allows you to...')
+                                            m('strong', 'Request Review'),
+                                            m('.small', 'Is the study ready for PI’s research pool? Request a review')
                                         ]),
                                         m('.col-sm-3.space.text-sm-right',[
-                                            m('button.btn.btn-primary.btn-sm', {onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }, disabled: ctrl.study.isReadonly}, 'Deploy')])
+                                            m('button.btn.btn-primary.btn-sm', {onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }, disabled: ctrl.study.isReadonly}, 'Request Review')])
                                     )
                                 ])
                             ),
@@ -24231,7 +24281,7 @@
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Study\'s tags' ),
-                                    m('.small', 'This will allows you to...')
+                                    m('.small', 'Add tags to identify the study')
                                 ]),
                                 m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
@@ -24240,7 +24290,7 @@
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Data'),
-                                    m('.small', 'This will allows you to...')
+                                    m('.small', 'Download the study data')
                                 ]),
                                 m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
@@ -24249,7 +24299,7 @@
                             m('.row.',
                                 m('.col-sm-10.space',[
                                     m('strong', 'Statistics'),
-                                    m('.small', 'This will allows you to...')
+                                    m('.small', 'Get information about study completion')
                                 ]),
                                 m('.col-sm-2.space.text-sm-right',
                                     m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
@@ -24284,7 +24334,10 @@
                                 //     )
                                 // ),
                                 m('.row.space',
-                                    m('.col-sm-11.space',  m('strong', 'Delete study')),
+                                    m('.col-sm-11.space',[
+                                        m('strong', 'Delete study'),
+                                        m('.small', 'Delete the study permanently')
+                                    ]),
                                     m('.col-sm-1.space.text-sm-right',
                                         m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
                                     )
@@ -24292,11 +24345,15 @@
                             ])
                         )
                     ]
+
+     /**/
                 ]);
+
+
         }
     };
 
-    var focus_it$5 = function (element, isInitialized) {
+    var focus_it$1 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function generate_years() {
@@ -24306,7 +24363,7 @@
             .fill(start)
             .map(function (year, index) { return year + index; });
     }
-    function sort_studies_by_name$2(study1, study2){
+    function sort_studies_by_name(study1, study2){
         return study1.name.toLowerCase() === study2.name.toLowerCase() ? 0 : study1.name.toLowerCase() > study2.name.toLowerCase() ? 1 : -1;
     }
 
@@ -24317,10 +24374,10 @@
 
         return load_studies()
             .then(function (response) {
-                var studies = response.studies.filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name$2);
+                var studies = response.studies.filter(function (study){ return study.has_data_permission; }).sort(sort_studies_by_name);
                 if (deployer)
                     return JSON.parse(JSON.stringify(autupause_rules));
-                var full_rules = JSON.parse(JSON.stringify(rules$1));
+                var full_rules = JSON.parse(JSON.stringify(rules));
                 full_rules.push({
                     name:'Did not Start or Complete Study',
                     nameXML:'study',
@@ -24355,7 +24412,7 @@
         }
     ];
 
-    var rules$1 = [
+    var rules = [
 
         {
             name:'Sex',
@@ -25618,7 +25675,7 @@
         }
     ];
 
-    var notifications$2= createNotifications();
+    var notifications= createNotifications();
 
     var ruletableComponent = {
         controller: function controller(){
@@ -25627,7 +25684,7 @@
                 sets: m.prop([]),
                 sets2show:m.prop([]),
                 new_set: m.prop(''),
-                notifications: notifications$2,
+                notifications: notifications,
                 error: m.prop(''),
                 loaded:m.prop(false),
                 filter_sets: filter_sets,
@@ -25922,7 +25979,7 @@
                         ]),
                         m('.col-sm-12', [
                             m('strong', 'How to Use:'),
-                            m('','Create a sets of conditions that define who can take your study. Make sure that all the conditions that are listed in an “All” must be true and that at least one of the conditions listed in an “Any” must be true. The  box below shows the conditions in plain words. A red “Rule is not ready” will appear whenever the rules are not ready to use. Once finished, press the \'Save\' button and the rule will be saved to the study\'s properties.')
+                            m('','Create sets of conditions that define who can take your study. Make sure that all the conditions that are listed in an “All” can be true and that at least one of the conditions listed in an “Any” can be true. The box below shows the conditions in plain words. A red “Rule is not ready” will appear whenever the rules are not ready to use. Once finished, press the \'Save\' button and the rule will be saved to the study\'s properties.')
                         ])
                     ]),
 
@@ -26029,7 +26086,7 @@
                     m('label.form-control-label', 'Tag name')
                 ]),
                 m('.col-sm-9', [
-                    m('input.form-control', {placeholder: 'text', config: focus_it$6, value: tag_text(), oninput: m.withAttr('value', tag_text)})
+                    m('input.form-control', {placeholder: 'text', config: focus_it, value: tag_text(), oninput: m.withAttr('value', tag_text)})
                 ])
             ]),
 
@@ -26092,7 +26149,7 @@
         return m('button',  {style: {'background-color': ("#" + color)}, onclick: prop.bind(null, color)}, ' A ');
     }
 
-    var focus_it$6 = function (element, isInitialized) {
+    var focus_it = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     var tagsComponent = {
@@ -26351,11 +26408,11 @@
 
             return m('.study',  [
                 !loaded ? m('.loader') : splitPane({
-                    leftWidth: leftWidth$2,
+                    leftWidth: leftWidth,
                     left:m('div.translate-page', [
                         m('h5', m('a.no-decoration',  (" " + (study_name())))),
                         m('.files', [
-                            m('ul', pages().map(function (page) { return m('li.file-node',{onclick: select$1(templateId, page)}, [
+                            m('ul', pages().map(function (page) { return m('li.file-node',{onclick: select(templateId, page)}, [
                                 m('a.wholerow',{
                                     unselectable:'on',
                                     class:classNames({
@@ -26432,7 +26489,7 @@
 
     // a clone of m.prop that users localStorage so that width changes persist across sessions as well as files.
     // Essentially this is a global variable
-    function leftWidth$2(val){
+    function leftWidth(val){
         if (arguments.length) localStorage.fileSidebarWidth = val;
         return localStorage.fileSidebarWidth;
     }
@@ -26457,7 +26514,7 @@
         return string.changed==true;
     }; };
 
-    var select$1 = function (templateId, page) { return function (e) {
+    var select = function (templateId, page) { return function (e) {
         e.stopPropagation();
         e.preventDefault();
         m.route(("/translate/" + templateId + "/" + (page.pageName)));
@@ -26494,27 +26551,27 @@
         '/assignment': assignmentComponent,
 
         '/studies' : mainComponent,
-        '/studies/statistics_old' : statisticsComponent$1,
-        '/studies/statistics' : statisticsComponent,
+        '/studies/statistics_old' : statisticsComponent,
+        '/studies/statistics' : statisticsComponent$1,
 
-        '/view/:code': editorLayoutComponent$1,
-        '/view/:code/version/:version_id': editorLayoutComponent$1,
+        '/view/:code': editorLayoutComponent,
+        '/view/:code/version/:version_id': editorLayoutComponent,
 
-        '/view/:code/file/:fileId': editorLayoutComponent$1,
-        '/view/:code/version/:version_id/file/:fileId': editorLayoutComponent$1,
+        '/view/:code/file/:fileId': editorLayoutComponent,
+        '/view/:code/version/:version_id/file/:fileId': editorLayoutComponent,
 
 
 
-        '/editor/:studyId': editorLayoutComponent,
-        '/editor/:studyId/:version_id': editorLayoutComponent,
-        '/editor/:studyId/:resource/:fileId': editorLayoutComponent,
-        '/editor/:studyId/:version_id/:resource/:fileId': editorLayoutComponent,
+        '/editor/:studyId': editorLayoutComponent$1,
+        '/editor/:studyId/:version_id': editorLayoutComponent$1,
+        '/editor/:studyId/:resource/:fileId': editorLayoutComponent$1,
+        '/editor/:studyId/:version_id/:resource/:fileId': editorLayoutComponent$1,
 
-        '/pool': poolComponent,
-        '/pool/history': poolComponent$1,
+        '/pool': poolComponent$1,
+        '/pool/history': poolComponent,
         '/downloads': downloadsComponent,
         '/downloadsAccess': downloadsAccessComponent,
-        '/sharing/:studyId': sharing_dialog,
+        '/sharing/:studyId': sharingComponent,
         '/properties/:studyId': propertiesComponent,
         '/ruletable': ruletableComponent,
         '/autupauseruletable': ruletableComponent

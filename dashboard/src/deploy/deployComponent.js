@@ -130,7 +130,7 @@ let deployDialog = {
     view({ctrl, submit}){
         if (ctrl.sent) return m('.deploy.centrify',[
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-            m('h5', ['The Deploy form was sent successfully ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
+            m('h5', ['The request to review was successfully submitted!', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
         ]);
         return !ctrl.loaded()
             ?
@@ -344,7 +344,7 @@ let deployDialog = {
                     m('.col-sm-12.text-sm-right',[
                         m('button.btn.btn-secondary', {onclick:()=>m.route( `/properties/${ctrl.study.id}`)}, 'Cancel'),
                         m('button.btn.btn-primary', {disabled: ctrl.check_form_validity(), onclick: submit}, 'Request Deploy'),
-                        !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'All mandatory fields have to be filled')
+                        !ctrl.check_form_validity() ? '' : m('p.small.text-danger.font-weight-bold', 'The form is incomplete')
                     ])
                 ]),
             ]);
