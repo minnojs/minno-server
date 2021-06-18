@@ -13476,7 +13476,7 @@
 
 
     var update_experiment = function (file, study, notifications, update) { return function () {
-        var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
+        var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.name.split('.').slice(0, -1).join('.'));
         var error = m.prop('');
 
         var ask = function () { return messages.confirm({
@@ -13498,14 +13498,14 @@
             }
             if(update)
                 return study.update_experiment(file, descriptive_id())
-                    .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully renamed to '" + (descriptive_id()) + "'")); })
+                    .then(function (){ return notifications.show_success(("Experiment '" + (file.exp_data.descriptive_id) + "' renamed successfully to '" + (descriptive_id()))); })
                     .then(function (){file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
                     .catch(function (e) {
                         error(e.message);
                         return ask();
                     });
             return study.make_experiment(file, descriptive_id())
-                .then(function (){ return notifications.show_success(("'" + (file.name) + "' is successfully created with descriptive id: '" + (descriptive_id()) + "'")); })
+                .then(function (){ return notifications.show_success(("Experiment '" + (descriptive_id()) + "' created successfully")); })
                 .then(function (){ return m.redraw(); })
                 .catch(function (e) {
                     error(e.message);
@@ -13523,7 +13523,7 @@
         })
             .then(function (response) {
                 if (response) study.delete_experiment(file);})
-            .then(function (){ return notifications.show_success(("The experiment that associated with '" + (file.name) + "' successfully deleted")); })
+            .then(function (){ return notifications.show_success(("Experiment '" + (file.exp_data.descriptive_id) + "' removed successfully")); })
 
             .then(function (){delete file.exp_data; m.redraw();});
 
@@ -21788,9 +21788,10 @@
                                 )
                             ]),
                             m('.col-sm-2',[
+
                                 !ctrl.is_review() || !ctrl.is_pending()
                                     ?
-                                    ctrl.deploy2show().pause_rules.name
+                                    ctrl.deploy2show().pause_rules.name ? ctrl.deploy2show().pause_rules.name : ''
                                     :
                                     m('select.c-select.form-control',{onchange: function (e) {ctrl.update_pause_rules(e.target.value);}}, [
                                         ctrl.deployer_rules().map(function (rule){ return m('option', {value:rule.id, selected:ctrl.pause_rules && ctrl.pause_rules.name===rule.name}, rule.name); }

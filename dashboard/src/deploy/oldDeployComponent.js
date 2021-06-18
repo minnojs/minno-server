@@ -243,9 +243,10 @@ let reviewDeployDialog = {
                             )
                         ]),
                         m('.col-sm-2',[
+
                             !ctrl.is_review() || !ctrl.is_pending()
                                 ?
-                                ctrl.deploy2show().pause_rules.name
+                                ctrl.deploy2show().pause_rules.name ? ctrl.deploy2show().pause_rules.name : ''
                                 :
                                 m('select.c-select.form-control',{onchange: e => {ctrl.update_pause_rules(e.target.value);}}, [
                                     ctrl.deployer_rules().map(rule=>
