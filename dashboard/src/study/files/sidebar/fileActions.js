@@ -88,7 +88,7 @@ export let renameFile = (file, study, notifications) => () => {
 
 
 export let update_experiment = (file, study, notifications, update) => () => {
-    let descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.path);
+    let descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.name.split('.').slice(0, -1).join('.'));
     let error = m.prop('');
 
     const ask = () => messages.confirm({
@@ -110,14 +110,14 @@ export let update_experiment = (file, study, notifications, update) => () => {
         }
         if(update)
             return study.update_experiment(file, descriptive_id())
-                .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully renamed to '${descriptive_id()}'`))
+                .then(()=>notifications.show_success(`Experiment '${file.exp_data.descriptive_id}' renamed successfully to '${descriptive_id()}`))
                 .then(()=>{file.exp_data.descriptive_id=descriptive_id(); m.redraw();})
                 .catch(e => {
                     error(e.message);
                     return ask();
                 });
         return study.make_experiment(file, descriptive_id())
-            .then(()=>notifications.show_success(`'${file.name}' is successfully created with descriptive id: '${descriptive_id()}'`))
+            .then(()=>notifications.show_success(`Experiment '${descriptive_id()}' created successfully`))
             .then(()=>m.redraw())
             .catch(e => {
                 error(e.message);
@@ -135,7 +135,7 @@ export let delete_experiment = (file, study, notifications) => () => {
     })
         .then(response => {
             if (response) study.delete_experiment(file);})
-        .then(()=>notifications.show_success(`The experiment that associated with '${file.name}' successfully deleted`))
+        .then(()=>notifications.show_success(`Experiment '${file.exp_data.descriptive_id}' removed successfully`))
 
         .then(()=>{delete file.exp_data; m.redraw();});
 
