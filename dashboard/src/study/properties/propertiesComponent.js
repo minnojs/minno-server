@@ -280,8 +280,7 @@ let propertiesComponent = {
                     m('.col-sm-12', [
                         m('.row.', [
                                 m('.col-sm-1.space',
-
-                                m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
+                                    m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
                                 ),
                                 m('.col-sm-1.space',
                                     m('button.btn.btn-success.btn-sm', {title: 'Share the study with other users, or make the study public', onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
@@ -317,9 +316,13 @@ let propertiesComponent = {
                                 ctrl.study.versions.map((version, id)=>
                                     m('tr', [
                                         m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
-                                        m('td', m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);}, title:version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files' }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
+
+                                        m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
                                         ctrl.study.isReadonly ? ''     :
-                                            m('td', m('button.btn.btn-primary.btn-sm', {onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability), title: version.availability ? 'Terminate the launch link' : 'Activate the launch link'},  version.availability ? 'Activate' : 'Inactivate')),
+                                            m('td',
+                                                m('button.btn.btn-primary.btn-sm', {title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)},  version.availability ? 'Activate' : 'Inactivate')
+                                            ),
+
                                         version.state!=='Develop' ? '' :
                                             m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
                                     ])
