@@ -23902,6 +23902,7 @@
                 description:m.prop(),
                 users:m.prop(),
                 is_public:m.prop(),
+                is_running:m.prop(false),
                 link:m.prop(''),
                 user_name:m.prop(''),
                 permission:m.prop('can edit'),
@@ -24118,6 +24119,7 @@
                         ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state==='Develop');
                         ctrl.description(ctrl.study.description);
                         ctrl.study.invisible = ctrl.study.permission === 'invisible';
+                        ctrl.is_running(ctrl.study.versions.filter(function (version){ return version.deploys && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }); }); }));
                         if(ctrl.study.invisible)
                             ctrl.study.isReadonly = true;
                         ctrl.loaded(true);
@@ -24179,8 +24181,7 @@
                         m('.col-sm-12', [
                             m('.row.', [
                                     m('.col-sm-1.space',
-
-                                    m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
+                                        m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
                                     ),
                                     m('.col-sm-1.space',
                                         m('button.btn.btn-success.btn-sm', {title: 'Share the study with other users, or make the study public', onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
@@ -24206,7 +24207,7 @@
                                         ),
                                     m('.col-sm-1.space',
                                         ctrl.study.isReadonly ? '' :
-                                            m('button.btn.btn-danger.btn-sm', {title: 'Delete the study permanently', onclick:ctrl.show_delete}, 'Delete')
+                                            m('button.btn.btn-danger.btn-sm', {disabled: ctrl.is_running, title: 'Delete the study permanently', onclick:ctrl.show_delete}, 'Delete')
                                     )
                                 ]
                             ),
@@ -24221,17 +24222,17 @@
                             m('.col-sm-7.space',
                                 m('table.table',
                                     ctrl.study.versions.map(function (version, id){ return m('tr', [
-                                            m('td', [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
-                                            m('td', [
-                                                    m('button.btn.btn-primary.btn-sm', {onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View'),
-                                                    m('.card.info-box.card-header', version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files'),
-                                                ]
-                                            ),
 
+                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
+
+                                            m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
                                             ctrl.study.isReadonly ? ''     :
-                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }}, version.availability ? 'Active' : 'Inactive')),
+                                                m('td',
+                                                    m('button.btn.btn-primary.btn-sm', {disabled: version.deploys && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }); }), title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }},  version.availability ? 'Activate' : 'Inactivate')
+                                                ),
                                             ctrl.study.isReadonly || !version.deploys ? '' :
-                                                m('td', m('button.btn.btn-primary.btn-sm.px-5', {title: 'See your requests to approve the study’s deployment', onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Requests')),
+                                                m('td', m('button.btn.btn-primary.btn-sm.px-5', { title: 'See your requests to approve the study’s deployment', onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Requests')),
+
                                             version.state!=='Develop' ? '' :
                                                 m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
                                         ]); }
@@ -24340,7 +24341,7 @@
                                         m('.small', 'Delete the study permanently')
                                     ]),
                                     m('.col-sm-1.space.text-sm-right',
-                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_delete}, 'Delete')
+                                        m('button.btn.btn-danger.btn-sm', {/*disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), */onclick:ctrl.show_delete}, 'Delete')
                                     )
                                 ),
                             ])
