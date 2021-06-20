@@ -23039,6 +23039,7 @@
                 recovery(ctrl.username)
                     .catch(function (response) {
                         ctrl.error(response.message);
+                        m.redraw();
                     })
                     .then(function (res){ return ctrl.message(res.message); })
                     .then(function (){ctrl.sent = true; m.redraw();});
