@@ -23928,9 +23928,24 @@
             };
 
             function show_change_availability(study, version_id, availability){
-                study.versions.map(function (version){ return version.availability = version.hash === version_id ? !version.availability : version.availability; });
-                m.redraw();
-                change_version_availability(m.route.param('studyId'), version_id, availability);
+            console.log(availability);
+                return messages.confirm({header:'Are you sure?', content:
+                    availability
+                        ?
+                        'This will reactivate the launch link. Anyone with that link will be able to start the study.'
+
+                        :
+                        'This will inactivate the launch link. It will be impossible to launch the study from that link. You can re-activate the link later.'
+
+                })
+                    .then(function (response) {
+                        if (response) {
+
+                            study.versions.map(function (version) { return version.availability = version.hash === version_id ? !version.availability : version.availability; });
+                            m.redraw();
+                            change_version_availability(m.route.param('studyId'), version_id, availability);
+                        }});
+
             }
             function save(){
                 if (ctrl.study.name!==ctrl.study_name())
