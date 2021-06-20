@@ -17,6 +17,7 @@ let recoveryComponent = {
             recovery(ctrl.username)
                 .catch(response => {
                     ctrl.error(response.message);
+                    m.redraw();
                 })
                 .then(res=>ctrl.message(res.message))
                 .then(()=>{ctrl.sent = true; m.redraw();});

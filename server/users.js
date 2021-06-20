@@ -257,17 +257,23 @@ function reset_password_request(user_name, server_url)
     return connection.then(function (db) {
         const users = db.collection('users');
         const reset_code = utils.sha1(user_name + Math.floor(Date.now() / 1000));
-        return users.findOneAndUpdate({$or: [{user_name: user_name}, {email: user_name}]}, {$set: {reset_code: reset_code}})
-            .then(function(user_data)
-            {
-                return config_db.get_gmail().then(function (gmail_details) {
-                    if (!gmail_details)
-                        return ({message: 'Recovery request successfully sent to administrator'});
-
-                    sender.send_mail(user_data.value.email, 'Restore password', 'reset_password.ejs', {url: server_url+'/dashboard/?/reset_password/'+reset_code});
-                    return ({message: 'Recovery request successfully sent!'});
-                });
+        return users.findOne({$or: [{user_name: user_name}, {email: user_name}]})
+            .then(user=>{
+                if(!user)
+                    return Promise.reject({status:400, message: 'Could not find user name or email. Failed to recover your password.'});
+                return users.updateOne({_id:user._id},{$set: {reset_code: reset_code}})
+                    .then(function()
+                    {
+                        return config_db.get_gmail().then(function (gmail_details) {
+                            if (!gmail_details)
+                                return ({message: 'Sent your request to the admin’s email account. You can contact the admin as well, to alert them that you sent this request'});
+                            sender.send_mail(user.email, 'Restore password', 'reset_password.ejs', {url: server_url+'/dashboard/?/reset_password/'+reset_code});
+                            return ({message: 'Check your email. We sent you a link to choose a new password!'});
+                        });
+                    });
             });
+
+
     });
 }
 
