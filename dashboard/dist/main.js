@@ -24258,7 +24258,7 @@
                             )
                         )
                     ],
-    /* TEST */
+    /* TEST
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Study actions'))
                     ),
@@ -24292,7 +24292,7 @@
                                             m('.small', 'Is the study ready for PI’s research pool? Request a review')
                                         ]),
                                         m('.col-sm-3.space.text-sm-right',[
-                                            m('button.btn.btn-primary.btn-sm', {onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }, disabled: ctrl.study.isReadonly}, 'Request Review')])
+                                            m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`), disabled: ctrl.study.isReadonly}, 'Request Review')])
                                     )
                                 ])
                             ),
@@ -24358,7 +24358,7 @@
                                         m('.small', 'Delete the study permanently')
                                     ]),
                                     m('.col-sm-1.space.text-sm-right',
-                                        m('button.btn.btn-danger.btn-sm', {/*disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), */onclick:ctrl.show_delete}, 'Delete')
+                                        m('button.btn.btn-danger.btn-sm', {disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), onclick:ctrl.show_delete}, 'Delete')
                                     )
                                 ),
                             ])

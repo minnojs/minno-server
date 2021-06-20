@@ -380,7 +380,7 @@ let propertiesComponent = {
                         )
                     )
                 ],
-/* TEST */
+/* TEST
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Study actions'))
                 ),
@@ -480,7 +480,7 @@ let propertiesComponent = {
                                     m('.small', 'Delete the study permanently')
                                 ]),
                                 m('.col-sm-1.space.text-sm-right',
-                                    m('button.btn.btn-danger.btn-sm', {/*disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), */onclick:ctrl.show_delete}, 'Delete')
+                                    m('button.btn.btn-danger.btn-sm', {disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), onclick:ctrl.show_delete}, 'Delete')
                                 )
                             ),
                         ])
