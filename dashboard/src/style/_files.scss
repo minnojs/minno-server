@@ -1,7 +1,7 @@
 // List Icons
 // -------------------------
-
-$fa-li-width:         (30em / 14) !default;
+@use "sass:math";
+$fa-li-width: math.div(30em , 14) !default;
 $files-row-height:    24px;
 
 .files {

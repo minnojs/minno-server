@@ -3,7 +3,7 @@ import bubel from 'rollup-plugin-buble';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import includePaths from 'rollup-plugin-includepaths';
-import { uglify } from 'rollup-plugin-uglify';
+import { terser } from 'rollup-plugin-terser';
 
 const production = process.env.NODE_ENV == 'production';
 const banner = `/**
@@ -26,6 +26,6 @@ export default {
         // load paths without a leading slash of src
         includePaths({ paths: ['dashboard/src'] }),
         bubel(),
-        production && uglify({output:{comments:'some' }}) // minify, but only in production
+        production && terser() // minify, but only in production
     ]
 };
