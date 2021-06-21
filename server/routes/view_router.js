@@ -15,12 +15,10 @@ viewRouter.route('/:link_id/version/:version_id')
             // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
 
             const link = req.params.link_id;
-
             return studies.get_id_with_link(link)
                 .then(function(study){
                     if(!study)
                         return res.status(400).json('Error: code doesn\'t exist');
-
                     const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
                     return files.get_study_files(owner_id, parseInt(study._id), config.server_url)
                             .then(function(response){
@@ -37,11 +35,11 @@ viewRouter.route('/:link_id/version/:version_id')
     .post(
         function(req, res){
             // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-            const link = utils.clean_url(config.server_url + '/dashboard/?/view/'+req.params.link_id);
+            const link = req.params.link_id;
             return studies.get_id_with_link(link)
                 .then(function (study) {
                     if(!study)
-                        return res.status(400).json('Error: code doesn\'t exist');
+                        return res.status(400).json('Error: code doesn\'t exist2');
                     const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
                     return files.download_files(owner_id, study._id, req.body.files)
                         .then(response=>res.json(response))
@@ -55,7 +53,7 @@ viewRouter.route('/:link_id/file/:file_id')
     .get(
         function(req, res) {
             // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-            const link = utils.clean_url(config.server_url + '/dashboard/?/view/'+req.params.link_id);
+            const link = req.params.link_id;
             return studies.get_id_with_link(link)
                 .then(function (study) {
                     if(!study)
