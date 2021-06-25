@@ -425,7 +425,7 @@ function ensure_study_not_exist(user_id, study_name) {
 function insert_obj(user_id, study_props) {
     if (!study_props.name)
         return Promise.reject({status:500, message: 'Error: creating a new study requires the study name'});
-    if (['minno03', 'html'].indexOf(study_props.type) === -1)
+    if (['minno02', 'minno03', 'html'].indexOf(study_props.type) === -1)
         return Promise.reject({status:500, message: `Error: unknown study type ${study_props.type}`});
     if (!study_props.folder_name)
         return Promise.reject({status:500, message: 'Error: creating a new study requires the study folder_name'});
