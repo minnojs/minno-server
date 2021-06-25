@@ -140,7 +140,7 @@ let deployDialog = {
                 m('.row',[
                     m('.col-sm-12', [
                         m('h3', [
-                            'Request Deploy ',
+                            'Request Research Pool Approval ',
                             m('small', `${ctrl.study.name}`)
                         ]),
                     ])
@@ -171,7 +171,7 @@ let deployDialog = {
 
 
                     m('.col-sm-2',[
-                        ASTERISK, m('strong.space', 'Experiment File')
+                        ASTERISK, m('strong.space', 'Experiment Name')
                     ]),
                     m('.col-sm-2',[
                         ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions')]),
@@ -233,7 +233,7 @@ let deployDialog = {
                 ),
                 ctrl.sets() === 1 ? '' : m('.row.double_space',[
                     m('.col-sm-12.text-sm-right',[
-                        m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: ()=>ctrl.add_set()}, 'Add set')
+                        m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: ()=>ctrl.add_set()}, 'Add Experiment')
                     ])
                 ]),
                 m('.row.space',[

@@ -11137,7 +11137,7 @@
                         m('.col-sm-2',
                             m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
                         ),
-                        m('.col-sm-2',
+                        m('.col-sm-3',
                             m('select.c-select.form-control', {onchange: function (e) { return ctrl.permissionChoice(e.target.value); }}, [
                                 m('option', {value:'my'}, 'Show only my studies'),
                                 m('option', {value:'all'}, 'Show all studies')
@@ -21341,7 +21341,7 @@
                     m('.row',[
                         m('.col-sm-12', [
                             m('h3', [
-                                'Request Deploy ',
+                                'Request Research Pool Approval ',
                                 m('small', ("" + (ctrl.study.name)))
                             ]),
                         ])
@@ -21372,7 +21372,7 @@
 
 
                         m('.col-sm-2',[
-                            ASTERISK, m('strong.space', 'Experiment File')
+                            ASTERISK, m('strong.space', 'Experiment Name')
                         ]),
                         m('.col-sm-2',[
                             ASTERISK, m('strong.space', 'Target Number of Completed Study Sessions')]),
@@ -21432,7 +21432,7 @@
                     ),
                     ctrl.sets() === 1 ? '' : m('.row.double_space',[
                         m('.col-sm-12.text-sm-right',[
-                            m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: function (){ return ctrl.add_set(); }}, 'Add set')
+                            m('button.btn.btn-primary', {disabled: ctrl.check_sets_validity(), onclick: function (){ return ctrl.add_set(); }}, 'Add Experiment')
                         ])
                     ]),
                     m('.row.space',[
@@ -24219,7 +24219,7 @@
 
                                     ctrl.study.isReadonly || ctrl.under_develop() ? '' :
                                         m('.col-sm-1.space',
-                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                            m('button.btn.btn-danger.btn-sm', {title: 'Create a new version, to allow editing the study further', onclick:ctrl.show_create_version}, 'New Version')
                                         ),
                                     m('.col-sm-1.space',
                                         ctrl.study.isReadonly ? '' :
@@ -24229,36 +24229,8 @@
                             ),
                         ])
                     ),
-                    ctrl.study.invisible ? '' : [
-                        m('.row.space',
-                            m('.col-sm-12.space',  m('h4', 'Versions'))
-                        ),
 
-                        m('.row.space',
-                            m('.col-sm-7.space',
-                                m('table.table',
-                                    ctrl.study.versions.map(function (version, id){ return m('tr', [
-
-                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
-
-                                            m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
-
-                                            ctrl.study.isReadonly ? ''     :
-                                                m('td',
-                                                    m('button.btn.btn-primary.btn-sm', {disabled: version.deploys && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0, title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }},  version.availability ? 'Activate' : 'Inactivate')
-                                                ),
-                                            ctrl.study.isReadonly || !version.deploys ? '' :
-                                                m('td', m('button.btn.btn-primary.btn-sm.px-5', { title: 'See your requests to approve the study’s deployment', onclick: function (){ return ctrl.present_deploys(version.deploys, version.id); }}, 'Requests')),
-
-                                            version.state!=='Develop' ? '' :
-                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-                                        ]); }
-                                    )
-                                )
-                            )
-                        )
-                    ],
-    /* TEST
+                    /* TEST */
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Study actions'))
                     ),
@@ -24292,7 +24264,7 @@
                                             m('.small', 'Is the study ready for PI’s research pool? Request a review')
                                         ]),
                                         m('.col-sm-3.space.text-sm-right',[
-                                            m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`), disabled: ctrl.study.isReadonly}, 'Request Review')])
+                                            m('button.btn.btn-primary.btn-sm', {onclick:function (){ return m.route( ("/deploy/" + (ctrl.study.id))); }, disabled: ctrl.study.isReadonly}, 'Request Review')])
                                     )
                                 ])
                             ),
@@ -24337,6 +24309,7 @@
                                     m('.row.',
                                         m('.col-sm-11.space',[
                                             m('strong', 'Create a new version'),
+                                            m('.small', 'Create a new version, to allow editing the study further')
                                         ]),
                                         m('.col-sm-1.space.text-sm-right',
                                             m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
@@ -24358,14 +24331,39 @@
                                         m('.small', 'Delete the study permanently')
                                     ]),
                                     m('.col-sm-1.space.text-sm-right',
-                                        m('button.btn.btn-danger.btn-sm', {disabled: version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running')), onclick:ctrl.show_delete}, 'Delete')
+                                        m('button.btn.btn-danger.btn-sm', {disabled: ctrl.is_running(), onclick:ctrl.show_delete}, 'Delete')
                                     )
                                 ),
                             ])
                         )
-                    ]
+                    ],
 
-     /**/
+                    /**/
+                    ctrl.study.invisible ? '' : [
+                        m('.row.space',
+                            m('.col-sm-12.space',  m('h4', 'Versions'))
+                        ),
+                        m('.row.space',
+                            m('.col-sm-7.space',
+                                m('table.table',
+                                    ctrl.study.versions.map(function (version, id){ return m('tr', [
+                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
+
+                                            m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
+                                            ctrl.study.isReadonly ? ''     :
+                                                m('td',
+                                                    m('button.btn.btn-primary.btn-sm', {title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }},  version.availability ? 'Inactivate' : 'Activate')
+                                                ),
+
+                                            version.state!=='Develop' ? '' :
+                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
+                                        ]); }
+                                    )
+                                )
+                            )
+                        )
+                    ],
+
                 ]);
 
 

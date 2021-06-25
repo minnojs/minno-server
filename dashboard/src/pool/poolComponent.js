@@ -77,7 +77,7 @@ let poolComponent = {
                     m('.col-sm-2',
                         m('input.form-control', {placeholder: 'Global Search ...', oninput: m.withAttr('value', ctrl.globalSearch)})
                     ),
-                    m('.col-sm-2',
+                    m('.col-sm-3',
                         m('select.c-select.form-control', {onchange: e => ctrl.permissionChoice(e.target.value)}, [
                             m('option', {value:'my'}, 'Show only my studies'),
                             m('option', {value:'all'}, 'Show all studies')
