@@ -23383,7 +23383,7 @@
                                     ),
                                     ctrl.study.isReadonly || ctrl.under_develop() ? '' :
                                         m('.col-sm-1.space',
-                                            m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
+                                            m('button.btn.btn-danger.btn-sm', {title: 'Create a new version, to allow editing the study further', onclick:ctrl.show_create_version}, 'New Version')
                                         ),
                                     m('.col-sm-1.space',
                                         ctrl.study.isReadonly ? '' :
@@ -23393,31 +23393,8 @@
                             ),
                         ])
                     ),
-                    ctrl.study.invisible ? '' : [
-                        m('.row.space',
-                            m('.col-sm-12.space',  m('h4', 'Versions'))
-                        ),
-                        m('.row.space',
-                            m('.col-sm-7.space',
-                                m('table.table',
-                                    ctrl.study.versions.map(function (version, id){ return m('tr', [
-                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
 
-                                            m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
-                                            ctrl.study.isReadonly ? ''     :
-                                                m('td',
-                                                    m('button.btn.btn-primary.btn-sm', {title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }},  version.availability ? 'Activate' : 'Inactivate')
-                                                ),
-
-                                            version.state!=='Develop' ? '' :
-                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-                                        ]); }
-                                    )
-                                )
-                            )
-                        )
-                    ],
-    /* TEST */
+                    /* TEST */
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Study actions'))
                     ),
@@ -23482,6 +23459,7 @@
                                     m('.row.',
                                         m('.col-sm-11.space',[
                                             m('strong', 'Create a new version'),
+                                            m('.small', 'Create a new version, to allow editing the study further')
                                         ]),
                                         m('.col-sm-1.space.text-sm-right',
                                             m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
@@ -23508,9 +23486,34 @@
                                 ),
                             ])
                         )
-                    ]
+                    ],
 
-     /**/
+                    /**/
+                    ctrl.study.invisible ? '' : [
+                        m('.row.space',
+                            m('.col-sm-12.space',  m('h4', 'Versions'))
+                        ),
+                        m('.row.space',
+                            m('.col-sm-7.space',
+                                m('table.table',
+                                    ctrl.study.versions.map(function (version, id){ return m('tr', [
+                                            m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), (" (" + (formatDate(version.creation_date)) + ")")]),
+
+                                            m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(("/editor/" + (ctrl.study.id) + "/" + (ctrl.study.versions.length===id+1 ? '': version.id)));} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
+                                            ctrl.study.isReadonly ? ''     :
+                                                m('td',
+                                                    m('button.btn.btn-primary.btn-sm', {title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: function (){ return ctrl.show_change_availability(ctrl.study, version.hash, !version.availability); }},  version.availability ? 'Inactivate' : 'Activate')
+                                                ),
+
+                                            version.state!=='Develop' ? '' :
+                                                m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
+                                        ]); }
+                                    )
+                                )
+                            )
+                        )
+                    ],
+
                 ]);
 
 
