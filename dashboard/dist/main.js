@@ -23931,6 +23931,8 @@
             };
 
             function show_change_availability(study, version_id, availability){
+                if (study.versions.find(function (version) { return version.hash === version_id && (version.availability === availability || version.deploys && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0); }))
+                    return false;
                 return messages.confirm({header:'Are you sure?', content:
                     availability
                         ?

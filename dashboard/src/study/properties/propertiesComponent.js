@@ -53,6 +53,8 @@ let propertiesComponent = {
         };
 
         function show_change_availability(study, version_id, availability){
+            if (study.versions.find(version => version.hash === version_id && (version.availability === availability || version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running').length>0).length>0)))
+                return false;
             return messages.confirm({header:'Are you sure?', content:
                 availability
                     ?
