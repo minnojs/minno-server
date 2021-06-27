@@ -10,6 +10,7 @@ import data_dialog from '../../downloads/dataComp';
 import stat_dialog from '../open_statistics/statComp';
 import studyTagsComponent from '../../tags/studyTagsComponent';
 import {update_tags_in_study} from '../../tags/tagsModel';
+import dropdown from 'utils/dropdown';
 
 export default propertiesComponent;
 const notifications= createNotifications();
@@ -18,6 +19,7 @@ let propertiesComponent = {
     controller(){
         let ctrl = {
             notifications,
+            presented_version:m.prop(),
             study_name:m.prop(),
             under_develop:m.prop(false),
             description:m.prop(),
@@ -32,6 +34,7 @@ let propertiesComponent = {
             pub_error:m.prop(''),
             share_error:m.prop(''),
             study,
+            update_presented_version,
             save,
             lock,
             show_tags,
@@ -46,7 +49,6 @@ let propertiesComponent = {
         };
 
         function show_change_availability(study, version_id, availability){
-        console.log(availability);
             return messages.confirm({header:'Are you sure?', content:
                 availability
                     ?
@@ -59,7 +61,7 @@ let propertiesComponent = {
                 .then(response => {
                     if (response) {
 
-                        study.versions.map(version => version.availability = version.hash === version_id ? !version.availability : version.availability);
+                        study.versions.map(version => version.availability = version.hash === version_id ? availability : version.availability);
                         m.redraw();
                         change_version_availability(m.route.param('studyId'), version_id, availability);
                     }});
@@ -134,6 +136,12 @@ let propertiesComponent = {
             messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
                 .then(m.redraw);
         }
+
+
+        function update_presented_version(version_id) {
+            ctrl.presented_version(ctrl.study.versions.find(version=>version.id===parseInt(version_id)));
+        }
+
 
         function show_statistics() {
             let study_id = ctrl.study.id;
@@ -236,6 +244,7 @@ let propertiesComponent = {
                     ctrl.under_develop(ctrl.study.versions[ctrl.study.versions.length-1].state==='Develop');
                     ctrl.description(ctrl.study.description);
                     ctrl.study.invisible = ctrl.study.permission === 'invisible';
+                    ctrl.presented_version(ctrl.study.versions[ctrl.study.versions.length-1]);
                     if(ctrl.study.invisible)
                         ctrl.study.isReadonly = true;
                     ctrl.loaded(true);
@@ -285,8 +294,56 @@ let propertiesComponent = {
                         )
                     )
                 ]),
+                ctrl.study.invisible ? '' : [
+                    m('.row.space',
+                        m('.col-sm-12.space',  m('h4', 'Versions'))
+                    ),
+                    m('.row.space',
+                        m('.col-sm-3',
+                            m('select.c-select.form-control',{onchange: e => ctrl.update_presented_version(e.target.value)}, [
+                                ctrl.study.versions.sort((e1, e2)=> e2.id-e1.id).map((version, id)=>
+                                    m('option', {value:version.id}, ['v', version.id, ` (${formatDate(version.creation_date)})`]))
+                            ])
+                        ),
+                        m('.col-sm-2',
+                            m('button.btn.btn-primary.btn-sm.btn-block.space',
+                                {
+                                    title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',
+                                    onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===ctrl.presented_version().id ? '': ctrl.presented_version().id}`);}
+                                },
+                                ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View'
+                            )
+                        ),
 
 
+                        ctrl.presented_version().state!=='Develop' ? '' :
+                            m('.col-sm-2',
+                                m('button.btn.btn-primary.btn-sm.btn-block.space', {onclick:ctrl.show_publish}, 'Publish')
+                        ),
+                        m('.col-sm-2',
+                            dropdown({toggleSelector:'button.btn.btn-block.btn-secondary.dropdown-toggle', toggleContent: [ctrl.presented_version().availability ? m('i.fa.fa-check') : m('i.fa.fa-ban'), ctrl.presented_version().availability ? ' Active' : ' Inactive'], elements:[
+                                    m('h2.dropdown-header', 'Activate / Inactivate this version'),
+                                    m('button.dropdown-item.dropdown-onclick', {class: ctrl.presented_version().availability ? 'disabled' : ''},[
+                                        m('', { onclick: ()=>ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, true)}, [
+                                            m('strong', 'Active'),
+                                            m('strong.pull-right', m('i.fa.fa-check', {style: {color:'green'}})),
+                                            m('.small', 'Activate the launch link')
+                                        ])
+                                    ]),
+                                    m('button.dropdown-item.dropdown-onclick', {class: !ctrl.presented_version().availability ? 'disabled' : ''},[
+                                        m('', {onclick: ()=>ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, false)}, [
+                                            m('strong', 'Inactive'),
+                                            m('strong.pull-right', m('i.fa.fa-ban', {style: {color:'red'}})),
+                                            m('.small', 'Terminate the launch link')
+                                        ])
+                                    ])
+                                ]})
+                        )
+                    )
+                ],
+
+
+/* Yoav
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Study actions'))
                 ),
@@ -321,10 +378,10 @@ let propertiesComponent = {
                         ),
                     ])
                 ),
-
+*/
                 /* TEST */
                 m('.row.space',
-                    m('.col-sm-2.space',  m('h4', 'Study actions'))
+                    m('.col-sm-2.space',  m('h4', 'Commands'))
                 ),
 
                 m('.row.frame.space',
@@ -414,34 +471,9 @@ let propertiesComponent = {
                             ),
                         ])
                     )
-                ],
+                ]
 
                 /**/
-                ctrl.study.invisible ? '' : [
-                    m('.row.space',
-                        m('.col-sm-12.space',  m('h4', 'Versions'))
-                    ),
-                    m('.row.space',
-                        m('.col-sm-7.space',
-                            m('table.table',
-                                ctrl.study.versions.map((version, id)=>
-                                    m('tr', [
-                                        m('td',  [m('strong', {class:version.availability ? '' : 'text-muted'}, ['v', version.id]), ` (${formatDate(version.creation_date)})`]),
-
-                                        m('td', m('button.btn.btn-primary.btn-sm', {title: version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files', onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===id+1 ? '': version.id}`);} }, version.state==='Develop' && !ctrl.study.isReadonly ? 'Edit' : 'View')),
-                                        ctrl.study.isReadonly ? ''     :
-                                            m('td',
-                                                m('button.btn.btn-primary.btn-sm', {title: version.availability ? 'Terminate the launch link' : 'Activate the launch link', onclick: ()=>ctrl.show_change_availability(ctrl.study, version.hash, !version.availability)},  version.availability ? 'Inactivate' : 'Activate')
-                                            ),
-
-                                        version.state!=='Develop' ? '' :
-                                            m('td', m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_publish}, 'Publish'))
-                                    ])
-                                )
-                            )
-                        )
-                    )
-                ],
 
             ]);
 
