@@ -24235,7 +24235,7 @@
                                                 m('.small', 'Activate the launch link')
                                             ])
                                         ]),
-                                        m('button.dropdown-item.dropdown-onclick', {disabled: ctrl.presented_version().deploys && ctrl.presented_version().deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0, class: !ctrl.presented_version().availability ? 'disabled' : ''},[
+                                        m('button.dropdown-item.dropdown-onclick', {class: ctrl.presented_version().deploys && ctrl.presented_version().deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0 || !ctrl.presented_version().availability ? 'disabled' : ''},[
                                             m('', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, false); }}, [
                                                 m('strong', 'Inactive'),
                                                 m('strong.pull-right', m('i.fa.fa-ban', {style: {color:'red'}})),
