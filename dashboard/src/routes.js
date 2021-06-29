@@ -67,6 +67,8 @@ let routes = {
     '/massMail':  massMailComponent,
 
     '/deploy/:studyId': deployComponent,
+    '/deploy/:studyId/v/:versionId': deployComponent,
+
     '/deploy/:studyId/:deployId': oldDeployComponent,
     '/review/:deployId': oldDeployComponent,
     '/edit_registration': editRegistrationComponent,

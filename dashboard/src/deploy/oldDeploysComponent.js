@@ -15,7 +15,7 @@ let oldDeploysDialog = {
             m('.row',[
                 m('.col-sm-12', [
                     m('h3', [
-                        'Old Deploy Requests',
+                        'Deploy Requests',
                         m('small', ` (v${ctrl.version_id})`)
                     ]),
                 ])

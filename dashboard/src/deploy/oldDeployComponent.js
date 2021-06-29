@@ -79,8 +79,11 @@ let reviewDeployDialog = {
         }
 
         function load() {
+
             get_deploy(m.route.param('deployId'))
             .then(request=> {
+                if (!request)
+                    return m.route() === `/review/${m.route.param('deployId')}`  ? m.route('/deployList') : m.route( `/properties/${m.route.param('studyId')}`);
                 ctrl.version_id = request.version_id;
                 ctrl.deploy2show(request);
                 ctrl.is_review(m.route() === `/review/${m.route.param('deployId')}`);

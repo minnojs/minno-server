@@ -321,7 +321,7 @@ let propertiesComponent = {
                 ]),
                 ctrl.study.invisible ? '' : [
                     m('.row.space',
-                        m('.col-sm-12.space',  m('h4', 'Versions'))
+                        m('.col-sm-12',  m('h4', 'Versions'))
                     ),
                     m('.row.space',
                         m('.col-sm-3',
@@ -331,7 +331,7 @@ let propertiesComponent = {
                             ])
                         ),
                         m('.col-sm-2',
-                            m('button.btn.btn-primary.btn-sm.btn-block.space',
+                            m('button.btn.btn-primary.btn-md.btn-block.space',
                                 {
                                     title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',
                                     onclick: function(){m.route(`/editor/${ctrl.study.id}/${ctrl.study.versions.length===ctrl.presented_version().id ? '': ctrl.presented_version().id}`);}
@@ -343,15 +343,17 @@ let propertiesComponent = {
 
                         ctrl.presented_version().state!=='Develop' ? '' :
                             m('.col-sm-2',
-                                m('button.btn.btn-primary.btn-sm.btn-block.space', {onclick:ctrl.show_publish}, 'Publish')
+                                m('button.btn.btn-primary.btn-md.btn-block.space', {onclick:ctrl.show_publish}, 'Publish')
                         ),
                         ctrl.study.isReadonly || !ctrl.presented_version().deploys ? '' :
                             m('.col-sm-2',
-
-                                m('button.btn.btn-primary.btn-sm.btn-block.space', {onclick: ()=>ctrl.present_deploys(ctrl.presented_version().deploys, ctrl.presented_version().id)}, 'Requests')
-                        ),
+                                m('button.btn.btn-primary.btn-md.btn-block.space', {onclick: ()=>ctrl.present_deploys(ctrl.presented_version().deploys, ctrl.presented_version().id)}, 'Requests')
+                            ),
                         m('.col-sm-2',
-                            dropdown({toggleSelector:'button.btn.btn-block.btn-secondary.dropdown-toggle', toggleContent: [ctrl.presented_version().availability ? m('i.fa.fa-check') : m('i.fa.fa-ban'), ctrl.presented_version().availability ? ' Active' : ' Inactive'], elements:[
+                                m('button.btn.btn-primary.btn-md.btn-block.space', {onclick:()=>m.route( `/deploy/${ctrl.study.id}/v/${ctrl.presented_version().id}`)}, 'Request Review')
+                            ),
+                        m('.col-sm-2',
+                            dropdown({toggleSelector:'button.btn.btn-md.btn-block.btn-secondary.dropdown-toggle', toggleContent: [ctrl.presented_version().availability ? m('i.fa.fa-check') : m('i.fa.fa-ban'), ctrl.presented_version().availability ? ' Active' : ' Inactive'], elements:[
                                     m('h2.dropdown-header', 'Activate / Inactivate this version'),
                                     m('button.dropdown-item.dropdown-onclick', {class: ctrl.presented_version().availability ? 'disabled' : ''},[
                                         m('', { onclick: ()=>ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, true)}, [
@@ -417,68 +419,71 @@ let propertiesComponent = {
 */
                 /* TEST */
                 m('.row.space',
-                    m('.col-sm-2.space',  m('h4', 'Commands'))
+                    m('.col-sm-2.space',  m('h4', 'Study Actions'))
                 ),
 
                 m('.row.frame.space',
                     m('.col-sm-12', [
                         m('.row.',
-                            m('.col-sm-10.space',[
-                                m('strong', 'Duplicate study'),
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-block.btn-md', {onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate Study'))
+                        ),
+                        m('.row.',
+                            m('.col-sm-10',
                                 m('.small', 'Duplicate the files and folder of the most recent version to create a new study')
-                            ]),
-                            m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
+                            )
+                        ),
+
+                        m('.row.',
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-md.btn-block', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Share study')
                             )
                         ),
                         m('.row.',
-                            m('.col-sm-10.space',[
-                                m('strong', 'Share study'),
+                            m('.col-sm-10',
                                 m('.small', 'Share the study with other users, or make the study public')
-                            ]),
-                            m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
                             )
                         ),
 
                         m('.row',
-                            m('.col-sm-12', [
-                                m('.row',
-                                    m('.col-sm-9.space',[
-                                        m('strong', 'Request Review'),
-                                        m('.small', 'Is the study ready for PI’s research pool? Request a review')
-                                    ]),
-                                    m('.col-sm-3.space.text-sm-right',[
-                                        m('button.btn.btn-primary.btn-sm', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`), disabled: ctrl.study.isReadonly}, 'Request Review')])
-                                )
-                            ])
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-md.btn-block', {onclick:()=>m.route( `/deploy/${ctrl.study.id}`), disabled: ctrl.study.isReadonly}, 'Request Review')
+                            )
+                        ),
+                        m('.row',
+                            m('.col-sm-10',
+                                m('.small', 'Is the study ready for PI’s research pool? Request a review')
+                            )
                         ),
 
                         m('.row.',
-                            m('.col-sm-10.space',[
-                                m('strong', 'Study\'s tags' ),
-                                m('.small', 'Add tags to identify the study')
-                            ]),
-                            m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-md.btn-block', {onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
                             )
                         ),
                         m('.row.',
-                            m('.col-sm-10.space',[
-                                m('strong', 'Data'),
+                            m('.col-sm-10',
                                 m('.small', 'Download the study data')
-                            ]),
-                            m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
                             )
                         ),
                         m('.row.',
-                            m('.col-sm-10.space',[
-                                m('strong', 'Statistics'),
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-md.btn-block', {onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
+                            )
+                        ),
+                        m('.row.',
+                            m('.col-sm-10',
                                 m('.small', 'Get information about study completion')
-                            ]),
-                            m('.col-sm-2.space.text-sm-right',
-                                m('button.btn.btn-primary.btn-sm', {onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
+                            )
+                        ),
+                        m('.row.',
+                            m('.col-sm-2.space',
+                                m('button.btn.btn-primary.btn-md.btn-block', {onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Study\'s tags')
+                            )
+                        ),
+                        m('.row.',
+                            m('.col-sm-10',
+                                m('.small', 'Add tags to identify the study')
                             )
                         ),
                     ])
@@ -489,36 +494,30 @@ let propertiesComponent = {
                     ),
                     m('.row.danger_zone.space',
                         m('.col-sm-12', [
-
                             ctrl.under_develop() ? '' :
-                                m('.row.',
-                                    m('.col-sm-11.space',[
-                                        m('strong', 'Create a new version'),
-                                        m('.small', 'Create a new version, to allow editing the study further')
-                                    ]),
-                                    m('.col-sm-1.space.text-sm-right',
-                                        m('button.btn.btn-danger.btn-sm', {onclick:ctrl.show_create_version}, 'Create')
-                                    )
-                                ),
-                            // m('.row.',
-                            //     m('.col-sm-11.space',[
-                            //         m('strong', 'Lock study'),
-                            //         m('.small', 'This will prevent you from modifying the study until you unlock the study again. When a study is locked, you cannot add files, delete files, rename files, edit files, rename the study, or delete the study.')
-                            //     ]),
-                            //
-                            //     m('.col-sm-1.space.text-sm-right',
-                            //         m('label.switch', [m('input[type=checkbox].input_switch', {checked:ctrl.study.is_locked, onclick:ctrl.lock}), m('span.slider.round')])
-                            //     )
-                            // ),
-                            m('.row.space',
-                                m('.col-sm-11.space',[
-                                    m('strong', 'Delete study'),
-                                    m('.small', 'Delete the study permanently')
-                                ]),
-                                m('.col-sm-1.space.text-sm-right',
-                                    m('button.btn.btn-danger.btn-sm', {disabled: ctrl.is_running(), onclick:ctrl.show_delete}, 'Delete')
+
+                                [
+                                    m('.row.',
+                                        m('.col-sm-2.space',
+                                            m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_create_version}, 'New Version')
+                                        )
+                                    ),
+                                    m('.row.',
+                                        m('.col-sm-10',
+                                            m('.small', 'Create a new version, to allow editing the study further')
+                                        )
+                                    ),
+                            ],
+                            m('.row',
+                                m('.col-sm-2.space',
+                                    m('button.btn.btn-danger.btn-md.btn-block', {disabled: ctrl.is_running(), onclick:ctrl.show_delete}, 'Delete study')
                                 )
                             ),
+                            m('.row',
+                                m('.col-sm-10',
+                                    m('.small', 'Delete the study permanently')
+                                )
+                            )
                         ])
                     )
                 ]

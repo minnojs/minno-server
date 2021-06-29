@@ -105,8 +105,12 @@ let deployDialog = {
                     get_rules()
                         .then(response => ctrl.all_rules(response.sets ? response.sets : []))
                         .then(()=> {
+
                             ctrl.versions(ctrl.study.versions);
-                            ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];
+                            if(m.route.param('versionId'))
+                                ctrl.version = ctrl.study.versions.find(version=>version.id === parseInt(m.route.param('versionId')));
+                            if(!m.route.param('versionId') || !ctrl.version)
+                                ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];
                             ctrl.version_id = ctrl.version.hash;
                             ctrl.exps = ctrl.version.experiments;
                         })
