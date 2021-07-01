@@ -11182,7 +11182,7 @@
                                 :
                                 list.map(function (study) { return m('tr', [
                                     // ### ID
-                                    m('td', study.study_name),
+                                    m('td', ((study.study_name) + " (v" + (study.version_id) + ")")),
                                     m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (study.experiment_file.id) + "/" + (study.version_hash))}, study.experiment_file.descriptive_id)),
 
 
