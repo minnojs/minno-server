@@ -308,7 +308,7 @@ let propertiesComponent = {
                                     m('option', {value:version.id}, ['v', version.id, ` (${formatDate(version.creation_date)})`]))
                             ])
                         ),
-                        m('.col-sm-2',
+                        m('.col-sm-1',
                             m('button.btn.btn-primary.btn-md.btn-block.space',
                                 {
                                     title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',

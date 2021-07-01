@@ -23378,7 +23378,7 @@
                                     ctrl.study.versions.sort(function (e1, e2){ return e2.id-e1.id; }).map(function (version, id){ return m('option', {value:version.id}, ['v', version.id, (" (" + (formatDate(version.creation_date)) + ")")]); })
                                 ])
                             ),
-                            m('.col-sm-2',
+                            m('.col-sm-1',
                                 m('button.btn.btn-primary.btn-md.btn-block.space',
                                     {
                                         title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',
