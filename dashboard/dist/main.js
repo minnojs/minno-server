@@ -24769,7 +24769,7 @@
             function set_value(user_rule, value, text, numeric){
                 if ( numeric === void 0 ) numeric = false;
 
-                user_rule.value         = numeric ? parseInt(value) : value;
+                user_rule.value         = numeric ? parseFloat(value) : value;
                 user_rule.value_text    = text;
             }
 

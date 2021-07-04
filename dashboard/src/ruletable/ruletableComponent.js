@@ -143,7 +143,7 @@ let ruletableComponent = {
         }
 
         function set_value(user_rule, value, text, numeric = false){
-            user_rule.value         = numeric ? parseInt(value) : value;
+            user_rule.value         = numeric ? parseFloat(value) : value;
             user_rule.value_text    = text;
         }
 
