@@ -79,7 +79,7 @@ PIRouter.route('/deploy_request')
 PIRouter.route('/deploy_request/:deploy_id')
     .post(
         function(req, res){
-            return PI.add2pool(req.params.deploy_id)
+            return PI.add2pool(req.user_id, req.params.deploy_id)
                 .then(research_pool.addPoolStudy(req.params.deploy_id))
 
                 .then(deploy=>res.json(deploy))

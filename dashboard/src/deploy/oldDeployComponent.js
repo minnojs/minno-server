@@ -51,6 +51,7 @@ let reviewDeployDialog = {
 
         function change_edit_mode(mode){
             ctrl.edit_mode(mode);
+            ctrl.error('');
             if(mode)
                 ctrl.target_number(ctrl.deploy2show().target_number);
             m.redraw();
@@ -74,7 +75,11 @@ let reviewDeployDialog = {
 
         function do_deploy(){
             return deploy2pool(ctrl.deploy2show()._id)
-                .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)));
+                .then((deploy=>m.route(`/deploy/${ctrl.deploy2show().study_id}/${deploy._id}`)))
+
+                .catch(err=>ctrl.error(err.message))
+                .then(m.redraw)
+                ;
 
         }
 

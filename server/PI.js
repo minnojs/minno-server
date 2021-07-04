@@ -1,3 +1,4 @@
+
 const utils         = require('./utils');
 const connection    = Promise.resolve(require('mongoose').connection);
 const dateFormat    = require('dateformat');
@@ -9,6 +10,7 @@ const config        = require('../config');
 const path          = require('path');
 const urljoin       = require('url-join');
 const join          = require('path').join;
+
 
 const {has_write_permission} = require('./studies');
 
@@ -175,16 +177,23 @@ function add_study2pool(deploy) {
 }
 
 
-function add2pool(deploy_id) {
+function add2pool(user_id, deploy_id) {
     return get_deploy(deploy_id)
         .then(deploy=>{
-            if(deploy.running_id)
-                return update_in_pool(deploy);
-            deploy.deploy_id = deploy._id;
-            return research_pool.addPoolStudy(deploy)
-                .then(()=>add_study2pool(deploy));
-        })
-    .then(()=>get_deploy(deploy_id));
+            return has_write_permission(user_id, deploy.study_id)
+                .then(({study_data})=>
+                {
+                    if (!study_data.versions.find(version=>version.id===deploy.version_id).availability)
+                        return Promise.reject({status:400, message:'Version is inactive'});
+                    if(deploy.running_id)
+                        return update_in_pool(deploy)
+                            .then(()=>get_deploy(deploy_id));
+                    deploy.deploy_id = deploy._id;
+                    return research_pool.addPoolStudy(deploy)
+                        .then(()=>add_study2pool(deploy))
+                        .then(()=>get_deploy(deploy_id));
+                });
+        });
 }
 
 function update_in_pool(new_deploy) {

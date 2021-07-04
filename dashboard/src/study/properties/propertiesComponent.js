@@ -53,7 +53,7 @@ let propertiesComponent = {
         };
 
         function show_change_availability(study, version_id, availability){
-            if (study.versions.find(version => version.hash === version_id && (version.availability === availability || version.deploys && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running').length>0).length>0)))
+            if (study.versions.find(version => version.hash === version_id && (version.availability === availability || version.deploys && !availability && version.deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running').length>0).length>0)))
                 return false;
             return messages.confirm({header:'Are you sure?', content:
                 availability
@@ -330,7 +330,7 @@ let propertiesComponent = {
                                     m('option', {value:version.id}, ['v', version.id, ` (${formatDate(version.creation_date)})`]))
                             ])
                         ),
-                        m('.col-sm-2',
+                        m('.col-sm-1',
                             m('button.btn.btn-primary.btn-md.btn-block.space',
                                 {
                                     title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',

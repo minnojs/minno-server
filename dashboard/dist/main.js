@@ -21335,7 +21335,7 @@
 
             if (ctrl.sent) return m('.deploy.centrify',[
                 m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-                m('h5', ['The request to review was successfully submitted!', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
+                m('h5', ['The request to review was successfully submitted! ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
             ]);
             return !ctrl.loaded()
                 ?
@@ -21599,6 +21599,7 @@
 
             function change_edit_mode(mode){
                 ctrl.edit_mode(mode);
+                ctrl.error('');
                 if(mode)
                     ctrl.target_number(ctrl.deploy2show().target_number);
                 m.redraw();
@@ -21622,7 +21623,11 @@
 
             function do_deploy(){
                 return deploy2pool(ctrl.deploy2show()._id)
-                    .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }));
+                    .then((function (deploy){ return m.route(("/deploy/" + (ctrl.deploy2show().study_id) + "/" + (deploy._id))); }))
+
+                    .catch(function (err){ return ctrl.error(err.message); })
+                    .then(m.redraw)
+                    ;
 
             }
 
@@ -23938,7 +23943,7 @@
             };
 
             function show_change_availability(study, version_id, availability){
-                if (study.versions.find(function (version) { return version.hash === version_id && (version.availability === availability || version.deploys && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0); }))
+                if (study.versions.find(function (version) { return version.hash === version_id && (version.availability === availability || version.deploys && !availability && version.deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0); }))
                     return false;
                 return messages.confirm({header:'Are you sure?', content:
                     availability
@@ -24214,7 +24219,7 @@
                                     ctrl.study.versions.sort(function (e1, e2){ return e2.id-e1.id; }).map(function (version, id){ return m('option', {value:version.id}, ['v', version.id, (" (" + (formatDate(version.creation_date)) + ")")]); })
                                 ])
                             ),
-                            m('.col-sm-2',
+                            m('.col-sm-1',
                                 m('button.btn.btn-primary.btn-md.btn-block.space',
                                     {
                                         title: ctrl.presented_version().state==='Develop' && !ctrl.study.isReadonly ? 'Edit the study files' : 'View the study files',

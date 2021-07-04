@@ -134,7 +134,7 @@ let deployDialog = {
     view({ctrl, submit}){
         if (ctrl.sent) return m('.deploy.centrify',[
             m('i.fa.fa-thumbs-up.fa-5x.m-b-1'),
-            m('h5', ['The request to review was successfully submitted!', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
+            m('h5', ['The request to review was successfully submitted! ', m('a', {href:'/properties/'+ctrl.study.id, config: m.route}, 'Back to study')]),
         ]);
         return !ctrl.loaded()
             ?
