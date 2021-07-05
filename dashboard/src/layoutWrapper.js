@@ -126,7 +126,7 @@ let layout = route => {
                     }},
                 'admin':{text: 'Admin', href:false,
                     su:true,
-                    subs:{'deployList': {text: m('i.fa.fa-list', ' Deploy List'), href: '/deployList'},
+                    subs:{'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
                         'registration': {text: m('i.fa.fa-sign-in', ' Registration page'), href: '/edit_registration'},
                         'removalList': {text: 'Removal List', href:'/removalList'},
                         'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},

@@ -318,7 +318,8 @@ let reviewDeployDialog = {
                                 !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: ()=>ctrl.change_edit_mode(false)}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: ()=>ctrl.save_deploy()}, m('i.fa.fa-save', ' Save'))]
                             ]
                     ])
-                ]),
+                ])
+
             ]);
     }
 };

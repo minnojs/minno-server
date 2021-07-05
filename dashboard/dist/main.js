@@ -21146,50 +21146,51 @@
                             ])
                         ),
                     ]),
+                    m('.row.space', [
+                        m('table.table table-nowrap table-striped table-hover.space', {onclick:sortTable(list, ctrl.sortBy)}, [
+                            m('thead',[
+                                m('tr', [
+                                    m('th', thConfig('creation_date', ctrl.sortBy), 'Creation date'),
+                                    m('th', thConfig('experiment_file', ctrl.sortBy), 'Study details'),
+                                    m('th', thConfig('user_name', ctrl.sortBy), 'Researcher name'),
+                                    m('th', thConfig('target_number', ctrl.sortBy), 'Target number'),
+                                    m('th', thConfig('priority', ctrl.sortBy), 'Priority'),
+                                    m('th', thConfig('status', ctrl.sortBy), 'Status'),
+                                    m('th', '')
+                                ])
+                            ]),
+                            m('tbody',
+                                list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
+                                        m('td', formatDate(request.creation_date)),
+                                        m('td',
+                                            m('', [
+                                                request.study_name,  ' (' ,
+                                                m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (request.experiment_file.id) + "/" + (request.version_hash))}, request.experiment_file.descriptive_id),
+                                                ')'
+                                            ])
+                                        ),
 
-                    m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
-                        m('thead',[
-                            m('tr', [
-                                m('th', thConfig('creation_date', ctrl.sortBy), 'Creation date'),
-                                m('th', thConfig('experiment_file', ctrl.sortBy), 'Study details'),
-                                m('th', thConfig('user_name', ctrl.sortBy), 'Researcher name'),
-                                m('th', thConfig('target_number', ctrl.sortBy), 'Target number'),
-                                m('th', thConfig('priority', ctrl.sortBy), 'Priority'),
-                                m('th', thConfig('status', ctrl.sortBy), 'Status'),
-                                m('th', '')
-                            ])
-                        ]),
-                        m('tbody',
-                            list().map(function (request){ return m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
-                                    m('td', formatDate(request.creation_date)),
-                                    m('td',
-                                        m('', [
-                                            request.study_name,  ' (' ,
-                                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (request.experiment_file.id) + "/" + (request.version_hash))}, request.experiment_file.descriptive_id),
-                                            ')'
-                                        ])
-                                    ),
+                                        m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
+                                        m('td', request.target_number),
+                                        m('td',
+                                            request.status ? request.priority :
+                                                m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: function (e){ return ctrl.update_priority(request, e.target.value); }, onchange: function (e){ return ctrl.update_priority(request, e.target.value); }})
+                                        ),
+                                        m('td', [
 
-                                    m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
-                                    m('td', request.target_number),
-                                    m('td',
-                                        request.status ? request.priority :
-                                            m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: function (e){ return ctrl.update_priority(request, e.target.value); }, onchange: function (e){ return ctrl.update_priority(request, e.target.value); }})
-                                    ),
-                                    m('td', [
+                                            request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                            request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                                            request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
+                                        m('td',
+                                            m('.btn-group', [
+                                                m('a', {href:("/review/" + (request._id)), config: m.route}, 'Full details')
 
-                                        request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
-                                        request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                        request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
-                                    m('td',
-                                        m('.btn-group', [
-                                            m('a', {href:("/review/" + (request._id)), config: m.route}, 'Full details')
-
-                                        ])
-                                    )
-                                ]); }
+                                            ])
+                                        )
+                                    ]); }
+                                )
                             )
-                        )
+                        ])
                     ])
                 ]);
         }
@@ -21866,7 +21867,8 @@
                                     !ctrl.edit_mode() ?  '' : [m('button.btn.btn-secondary', {onclick: function (){ return ctrl.change_edit_mode(false); }}, 'Cancel'), ' ', m('button.btn.btn-primary.btn-md', {disabled: !ctrl.was_changed(), title:'Accept', onclick: function (){ return ctrl.save_deploy(); }}, m('i.fa.fa-save', ' Save'))]
                                 ]
                         ])
-                    ]),
+                    ])
+
                 ]);
         }
     };
@@ -25654,7 +25656,7 @@
                         }},
                     'admin':{text: 'Admin', href:false,
                         su:true,
-                        subs:{'deployList': {text: m('i.fa.fa-list', ' Deploy List'), href: '/deployList'},
+                        subs:{'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
                             'registration': {text: m('i.fa.fa-sign-in', ' Registration page'), href: '/edit_registration'},
                             'removalList': {text: 'Removal List', href:'/removalList'},
                             'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},

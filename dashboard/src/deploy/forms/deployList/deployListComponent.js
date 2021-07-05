@@ -100,51 +100,52 @@ let deployComponent = {
                         ])
                     ),
                 ]),
-
-                m('table.table table-nowrap table-striped table-hover', {onclick:sortTable(list, ctrl.sortBy)}, [
-                    m('thead',[
-                        m('tr', [
-                            m('th', thConfig('creation_date', ctrl.sortBy), 'Creation date'),
-                            m('th', thConfig('experiment_file', ctrl.sortBy), 'Study details'),
-                            m('th', thConfig('user_name', ctrl.sortBy), 'Researcher name'),
-                            m('th', thConfig('target_number', ctrl.sortBy), 'Target number'),
-                            m('th', thConfig('priority', ctrl.sortBy), 'Priority'),
-                            m('th', thConfig('status', ctrl.sortBy), 'Status'),
-                            m('th', '')
-                        ])
-                    ]),
-                    m('tbody',
-                        list().map(request=>
-                            m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
-                                m('td', formatDate(request.creation_date)),
-                                m('td',
-                                    m('', [
-                                        request.study_name,  ' (' ,
-                                        m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${request.experiment_file.id}/${request.version_hash}`}, request.experiment_file.descriptive_id),
-                                        ')'
-                                    ])
-                                ),
-
-                                m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
-                                m('td', request.target_number),
-                                m('td',
-                                    request.status ? request.priority :
-                                        m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: e=>ctrl.update_priority(request, e.target.value), onchange: e=>ctrl.update_priority(request, e.target.value)})
-                                ),
-                                m('td', [
-
-                                    request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
-                                    request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                    request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
-                                m('td',
-                                    m('.btn-group', [
-                                        m('a', {href:`/review/${request._id}`, config: m.route}, 'Full details')
-
-                                    ])
-                                )
+                m('.row.space', [
+                    m('table.table table-nowrap table-striped table-hover.space', {onclick:sortTable(list, ctrl.sortBy)}, [
+                        m('thead',[
+                            m('tr', [
+                                m('th', thConfig('creation_date', ctrl.sortBy), 'Creation date'),
+                                m('th', thConfig('experiment_file', ctrl.sortBy), 'Study details'),
+                                m('th', thConfig('user_name', ctrl.sortBy), 'Researcher name'),
+                                m('th', thConfig('target_number', ctrl.sortBy), 'Target number'),
+                                m('th', thConfig('priority', ctrl.sortBy), 'Priority'),
+                                m('th', thConfig('status', ctrl.sortBy), 'Status'),
+                                m('th', '')
                             ])
+                        ]),
+                        m('tbody',
+                            list().map(request=>
+                                m('tr',{class:[request.status==='reject' ?  'table-danger' : request.status==='accept' ? 'table-success' : '']},[
+                                    m('td', formatDate(request.creation_date)),
+                                    m('td',
+                                        m('', [
+                                            request.study_name,  ' (' ,
+                                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${request.experiment_file.id}/${request.version_hash}`}, request.experiment_file.descriptive_id),
+                                            ')'
+                                        ])
+                                    ),
+
+                                    m('td', [request.user_name, ' (',  m('a', {href:'mailto:'+request.email}, request.email), ')']),
+                                    m('td', request.target_number),
+                                    m('td',
+                                        request.status ? request.priority :
+                                            m('input.form-control.space', {value: request.priority,  placeholder:'priority', onkeyup: e=>ctrl.update_priority(request, e.target.value), onchange: e=>ctrl.update_priority(request, e.target.value)})
+                                    ),
+                                    m('td', [
+
+                                        request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                        request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
+                                        request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
+                                    m('td',
+                                        m('.btn-group', [
+                                            m('a', {href:`/review/${request._id}`, config: m.route}, 'Full details')
+
+                                        ])
+                                    )
+                                ])
+                            )
                         )
-                    )
+                    ])
                 ])
             ]);
     }
