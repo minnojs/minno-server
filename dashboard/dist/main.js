@@ -24964,21 +24964,21 @@
                             m('.col-sm-2', [
                                 m('', set.name)
                             ]),
-                            m('.col-sm-7',
+                            m('.col-sm-8',
                                 ctrl.print_rules(set)
                             ),
-                            m('.col-sm-3', [
+                            m('.col-sm-2', [
                                 m('btn-group', [
 
-                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.edit_set(set); }}, [
+                                    m('a.btn.btn-sm.btn-secondary.btn-block', {onclick:function (){ return ctrl.edit_set(set); }}, [
                                         m('i.fa.fa-edit'),
                                         ' Edit'
                                     ]),
-                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.download_set(set); }}, [
-                                        m('i.fa.fa-download'),
-                                        ' Export'
-                                    ]),
-                                    m('a.btn.btn-sm.btn-secondary', {onclick:function (){ return ctrl.remove(set.id); }}, [
+                                    // m('a.btn.btn-sm.btn-secondary', {onclick:()=>ctrl.download_set(set)}, [
+                                    //     m('i.fa.fa-download'),
+                                    //     ' Export'
+                                    // ]),
+                                    m('a.btn.btn-sm.btn-secondary.btn-block', {onclick:function (){ return ctrl.remove(set.id); }}, [
                                         m('i.fa.fa-remove'),
                                         ' Remove'
                                     ])
