@@ -1,4 +1,15 @@
-import {updateStudy, pause_study, unpause_study, remove_study, createStudy, updateStatus, getStudyId, resetStudy, STATUS_RUNNING} from './poolModel';
+import {
+    updateStudy,
+    pause_study,
+    unpause_study,
+    remove_study,
+    createStudy,
+    updateStatus,
+    getStudyId,
+    resetStudy,
+    STATUS_RUNNING,
+    get_deploy
+} from './poolModel';
 import messages from 'utils/messagesComponent';
 import spinner from 'utils/spinnerComponent';
 import editMessage from './poolEditComponent';
@@ -53,19 +64,25 @@ export function unpause(study){
 }
 
 export let remove  = (study) => {
-    console.log(study);
-    return messages.confirm({
-        header: 'Remove Study:',
-        content: `Are you sure you want to remove2 "${study.study_name}" from the pool?`
-    })
-        .then(response => {
-            if(response) {
-                studyPending(study, true)();
-                return remove_study(study, 'deleted')
-                    .then(()=>study.study_status = 'removed')
-                    .catch(reportError('Remove Study'))
-                    .then(studyPending(study, false));
-            }
+    return get_deploy(study)
+        .then(deploy=>{
+            let content = `Are you sure you want to remove "${study.study_name}" from the pool?`;
+            if (deploy.status!=='running')
+                content = `${content} This study has ${status!=='running2' ? 'a pending change request' : 'an approved change request'}. You will not be able to update the study with the change if it is no longer in the pool. Remove it only if you know you do not want to update it. Otherwise, consider using "pause" instead of "remove"`;
+
+            return messages.confirm({
+                header: 'Remove Study:',
+                content: content
+            })
+            .then(response => {
+                if(response) {
+                    studyPending(study, true)();
+                    return remove_study(study, 'deleted')
+                        .then(()=>study.study_status = 'removed')
+                        .catch(reportError('Remove Study'))
+                        .then(studyPending(study, false));
+                }
+            });
         });
 };
 

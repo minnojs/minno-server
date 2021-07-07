@@ -84,6 +84,7 @@ function read_review(user_id, deploy_id){
     });
 }
 
+
 function pause_study(deploy_id, status) {
 
     return connection.then(function (db) {

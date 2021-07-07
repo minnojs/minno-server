@@ -3,6 +3,7 @@ const PI          = require('../PI');
 const demographicsController   = require('../data_server/controllers/demographicsController');
 const research_pool = require('../researchpool');
 const PIRouter = express.Router();
+const config      = require('../../config');
 
 module.exports = PIRouter;
 
@@ -11,7 +12,7 @@ PIRouter.route('/registration')
 	.post(
 		function(req, res){
 			return PI.registration(req.body.email_address)
-				.then(data=> res.redirect('/launch_registration/'+data._id))
+				.then(data=> res.redirect(config.server_url+'/launch_registration/'+data._id))
 				.catch(err=>res.status(err.status || 500).json({message:err.message}));
 		})
 	.put(function(req, res){

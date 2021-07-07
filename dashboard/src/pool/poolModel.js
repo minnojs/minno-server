@@ -69,6 +69,10 @@ export function remove_study(study){
         .then(interceptErrors);
 }
 
+export function get_deploy(study){
+    return fetchJson(pool_study_url(study.deploy_id)).then(interceptErrors);
+}
+
 export function getLast100PoolUpdates(){
     return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
         .then(interceptErrors);

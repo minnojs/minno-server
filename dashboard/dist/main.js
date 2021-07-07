@@ -10330,6 +10330,10 @@
             .then(interceptErrors$2);
     }
 
+    function get_deploy$1(study){
+        return fetchJson(pool_study_url(study.deploy_id)).then(interceptErrors$2);
+    }
+
     function getLast100PoolUpdates(){
         return fetchJson(pool_url(), {method:'post', body: {action:'getLast100PoolUpdates'}})
             .then(interceptErrors$2);
@@ -10858,19 +10862,25 @@
     }
 
     var remove$2  = function (study) {
-        console.log(study);
-        return messages.confirm({
-            header: 'Remove Study:',
-            content: ("Are you sure you want to remove2 \"" + (study.study_name) + "\" from the pool?")
-        })
-            .then(function (response) {
-                if(response) {
-                    studyPending(study, true)();
-                    return remove_study(study)
-                        .then(function (){ return study.study_status = 'removed'; })
-                        .catch(reportError$2('Remove Study'))
-                        .then(studyPending(study, false));
-                }
+        return get_deploy$1(study)
+            .then(function (deploy){
+                var content = "Are you sure you want to remove \"" + (study.study_name) + "\" from the pool?";
+                if (deploy.status!=='running')
+                    content = content + " This study has " + (status!=='running2' ? 'a pending change request' : 'an approved change request') + ". You will not be able to update the study with the change if it is no longer in the pool. Remove it only if you know you do not want to update it. Otherwise, consider using \"pause\" instead of \"remove\"";
+
+                return messages.confirm({
+                    header: 'Remove Study:',
+                    content: content
+                })
+                .then(function (response) {
+                    if(response) {
+                        studyPending(study, true)();
+                        return remove_study(study)
+                            .then(function (){ return study.study_status = 'removed'; })
+                            .catch(reportError$2('Remove Study'))
+                            .then(studyPending(study, false));
+                    }
+                });
             });
     };
 

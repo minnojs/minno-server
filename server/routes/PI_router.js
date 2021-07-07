@@ -22,6 +22,12 @@ PIRouter.route('/research_pool')
         });
 
 PIRouter.route('/research_pool/:deploy_id')
+    .get(
+        function(req, res){
+            return PI.get_deploy(req.params.deploy_id)
+                .then(data=>res.json(data))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+        })
     .post(
         function(req, res){
             return PI.pause_study(req.params.deploy_id, req.body.status)
