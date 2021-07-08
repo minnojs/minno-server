@@ -12604,15 +12604,14 @@
         };
     }
 
-    var assignmentUrl = baseUrl + "/assignment";
-    console.log(assignmentUrl);
+    var assignmentUrl = "../assignment";
+    console.log(baseUrl);
     var login = function (email_address) { return fetchText(assignmentUrl, {
         method: 'post',
         body: {email_address: email_address}
     }); };
 
     var check_connectivity = function () { return fetchJson(assignmentUrl, {
-
         method: 'get'
     }); };
 

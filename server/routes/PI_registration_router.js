@@ -29,11 +29,15 @@ PIRouter.route('/registration')
 
 PIRouter.post('/assignment', function(req, res){
 	if (req.session.participant_data)
-		return res.redirect('/assign/');
+		return res.redirect(config.server_url+'/assign/');
 	return PI.login_and_assign(req.body.email_address)
 		.then(participant_data => {
+			if (!participant_data)
+				return res.status(400).json({message:'Email doesn\'t exist'});
 			req.session.participant_data = participant_data;
-			res.redirect('/assign/');
+			console.log(participant_data);
+
+			res.redirect(config.server_url+'/assign/');
 		})
 		.catch(err=>res.status(err.status || 500).json({message:err.message}));
 });

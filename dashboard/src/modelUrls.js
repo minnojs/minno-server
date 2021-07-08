@@ -21,3 +21,4 @@ export const downloadsUrl       = `${urlPrefix}/DashboardData`;
 export const activationUrl      = `${urlPrefix}/activation`;
 export const collaborationUrl   = `${urlPrefix}/collaboration`;
 export const downloadsAccessUrl = `${urlPrefix}/DownloadsAccess`;
+export const assignmentUrl = `${urlPrefix}/assignment`;

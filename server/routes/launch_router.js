@@ -98,7 +98,7 @@ router.route('/assign/')
         function(req, res){
             //     res.redirect('/launch/' + result.experiment_file.id + '/' + result.version_hash + '/' + registration_id);
             if (!req.session.participant_data)
-                return res.redirect('/dashboard/?/assignment');
+                return res.redirect(config.server_url+'/dashboard/?/assignment');
             return PI.assign_study(req.session.participant_data._id)
                 // .then(result=>res.redirect('/launch/' + result.experiment_file + '/' + result.version_hash+ '/' + req.session.participant_data._id + '/' +result.pool_id))
                 .then(displayExperiment(req.query, res, req.fingerprint))
