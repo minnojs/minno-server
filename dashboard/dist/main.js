@@ -12605,13 +12605,14 @@
     }
 
     var assignmentUrl = baseUrl + "/assignment";
-
+    console.log(assignmentUrl);
     var login = function (email_address) { return fetchText(assignmentUrl, {
         method: 'post',
         body: {email_address: email_address}
     }); };
 
     var check_connectivity = function () { return fetchJson(assignmentUrl, {
+
         method: 'get'
     }); };
 
@@ -12629,7 +12630,7 @@
             check_connectivity()
                 .then(function (status){
                     if (status === true)
-                        return window.location.href = '/assign';
+                        return window.location.href = '../assign';
                     ctrl.loaded(true);
                     m.redraw();
                 });
