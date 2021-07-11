@@ -21147,6 +21147,8 @@
                                 m('option', {value:'pending', selected:ctrl.filter_by()==='pending'}, 'Pending'),
                                 m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
                                 m('option', {value:'reject', selected:ctrl.filter_by()==='reject'}, 'Rejected'),
+                                m('option', {value:'running', selected:ctrl.filter_by()==='running'}, 'Running'),
+                                m('option', {value:'removed', selected:ctrl.filter_by()==='removed'}, 'Removed'),
                                 m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
                             ])
                         ),
@@ -21189,8 +21191,13 @@
                                         m('td', [
 
                                             request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
+                                            request.status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                                            request.status !== 'running2' ? '' : m('strong.text-success', 'Running (changed)'),
+                                            request.status !== 'accept2' ? '' : m('strong.text-success', 'Accept (changed)'),
                                             request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
-                                            request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending')]),
+                                            request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
+                                            request.status !== 'removed' ? '' : m('strong.text-secondary', 'Removed')
+                                        ]),
                                         m('td',
                                             m('.btn-group', [
                                                 m('a', {href:("/review/" + (request._id)), config: m.route}, 'Full details')
