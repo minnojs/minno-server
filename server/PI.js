@@ -226,11 +226,11 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
     return connection.then(function (db) {
         const deploys = db.collection('deploys');
         const studies = db.collection('studies');
-        const users = db.collection('users');
 
         return deploys.findOneAndUpdate({_id: deploy_id},
             {$set: {priority, status, pause_rules, reviewer_comments}}
         ).then(request=>{
+
             return studies.findOne({_id:request.value.study_id})
                 .then(study_data=>
                 {
@@ -243,24 +243,13 @@ function update_deploy(deploy_id, priority, pause_rules, reviewer_comments, stat
                     set2update.reviewer_comments = reviewer_comments;
                     return PI_notifications.update_status(deploy_id, status, reviewer_comments)
                         .then(()=>
-                    // users.updateMany({_id: {$in: study_data.users.map(user=>user.user_id)}},
-                    //     {$push: {updated_requests: {
-                    //         study_id:request.value.study_id,
-                    //         study_name:request.value.study_name,
-                    //         version_id: request.value.version_id,
-                    //         deploy_id: request.value._id,
-                    //         file_name: set2update.experiment_file.file_id,
-                    //         status: status,
-                    //         reviewer_comments: reviewer_comments
-                    //     }}});
-
-                    studies.updateOne({_id:request.value.study_id},
-                        {$set: {versions:versions}})
-                        .then(()=> {
-                            if (status==='accept' && version2update.state ==='Develop') {
-                                return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id), 'keep');
-                            }
-                        }));
+                            studies.updateOne({_id:request.value.study_id},
+                                {$set: {versions:versions}})
+                                .then(()=> {
+                                    if (status==='accept' && version2update.state ==='Develop') {
+                                        return versions_comp.publish_version(study_data.users.find(user => user.permission === 'owner').user_id, parseInt(request.value.study_id), 'keep');
+                                    }
+                                }));
                 })
                 .then(get_all_deploys);
         });

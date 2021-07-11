@@ -100,8 +100,6 @@ exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-    //console.log(deploy);
-    //console.log("insert");
     if (deploy.running_id) {
         for (let x = 0; x < arrayOfPoolStudies.length; x++) {
             if (arrayOfPoolStudies[x].deploy_id == deploy.deploy_id) { //update instead of insert if running_id exists
