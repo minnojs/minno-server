@@ -10866,7 +10866,7 @@
             .then(function (deploy){
                 var content = "Are you sure you want to remove \"" + (study.study_name) + "\" from the pool?";
                 if (deploy.status!=='running')
-                    content = content + " This study has " + (status!=='running2' ? 'a pending change request' : 'an approved change request') + ". You will not be able to update the study with the change if it is no longer in the pool. Remove it only if you know you do not want to update it. Otherwise, consider using \"pause\" instead of \"remove\"";
+                    content = content + " This study has a change request. You will not be able to update the study with the change if it is no longer in the pool. Remove it only if you know you do not want to update it. Otherwise, consider using \"pause\" instead of \"remove\"";
 
                 return messages.confirm({
                     header: 'Remove Study:',
