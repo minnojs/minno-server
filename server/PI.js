@@ -273,9 +273,13 @@ function get_deploy(deploy_id) {
 function edit_registration(study_id, version_id, experiment_id) {
     return connection.then(function (db) {
         const config_data = db.collection('config');
-        return config_data.updateOne({var: 'registration'},
-            {$set: {study_id, version_id, experiment_id}}, {upsert: true})
-            .then(() => ('registration successfully updated'));
+        const studies = db.collection('studies');
+        return studies.findOne({_id:study_id})
+            .then(study=>
+                config_data.updateOne({var: 'registration'},
+                    {$set: {study_id, version_id, experiment_id, study}}, {upsert: true})
+                    .then(() => ('registration successfully updated'))
+            );
     });
 }
 function get_all_participants() {
@@ -426,8 +430,7 @@ function get_registration_url (id) {
 function get_registration() {
     return connection.then(function (db) {
         const config_data = db.collection('config');
-        return config_data.findOne({var: 'registration'})
-            .then(data=>data);
+        return config_data.findOne({var: 'registration'});
     });
 }
 

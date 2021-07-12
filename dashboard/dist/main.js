@@ -21913,6 +21913,8 @@
                 notifications: createNotifications(),
 
                 study: m.prop(''),
+                used_study_id: m.prop(''),
+                study_id_alert: m.prop(false),
                 study_id: m.prop(''),
                 version:m.prop(),
                 version_id: m.prop(''),
@@ -21934,6 +21936,12 @@
                         .then(function (registration){
                             if(registration)
                             {
+                                if(!ctrl.studies().find(function (study){ return study.id===registration.study_id; }))
+                                {
+                                    registration.study.id = registration.study._id;
+                                    ctrl.studies().push(registration.study) ;
+                                }
+                                ctrl.used_study_id(registration.study_id);
                                 select_study(ctrl, registration.study_id);
                                 select_version(ctrl, registration.version_id);
                                 select_experiment(ctrl, registration.experiment_id);
@@ -21975,7 +21983,7 @@
                     m('.row',[
                         m('.col-sm-2',  m('strong', 'Study name')),
                         m('.col-sm-2', [
-                            m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
+                            m('select.c-select.form-control#study',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
                                 m('option', {disabled:true, selected:!ctrl.study()}, 'Select Study'),
                                 ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
                             ])
@@ -22039,14 +22047,30 @@
         }
     };
 
-
-    function select_study(ctrl, study_id){
-
+    function do_select_study(ctrl, study_id){
         ctrl.study_id(parseInt(study_id));
         ctrl.study(ctrl.studies().find(function (study){ return study.id===ctrl.study_id(); }));
+
         ctrl.study().versions = ctrl.study().versions.filter(function (version){ return version.state==='Published'; });
         ctrl.version_id('');
         ctrl.experiment_id('');
+    }
+
+    function select_study(ctrl, study_id){
+        var prev_id =  ctrl.study().id;
+
+        if (!ctrl.study_id_alert() && !!prev_id && study_id!==ctrl.used_study_id())
+            return messages.confirm({
+                header: 'WARNING!',
+                content: 'Are you sure you want to change the current registration study? New participants in the research pool will complete this study upon registration. Assignment of new participants to studies according to the predefined rules will rely on the data recorded with the new registration study'
+            })
+            .then(function (response){
+                if (!response)
+                    return  document.getElementById('study').value = prev_id;
+                ctrl.study_id_alert(true);
+                return do_select_study(ctrl, study_id);
+            });
+        return do_select_study(ctrl, study_id);
     }
 
     function select_version(ctrl, version_id){
