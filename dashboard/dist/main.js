@@ -11192,7 +11192,13 @@
                                 :
                                 list.map(function (study) { return m('tr', [
                                     // ### ID
-                                    m('td', ((study.study_name) + " (v" + (study.version_id) + ")")),
+                                    m('td',
+                                        m('strong', {class:[
+                                            study.study_status === 'running' ?  'text-success'
+                                                : study.study_status === 'paused' ?  'text-warning':
+                                                'text-danger'
+                                            ]}, ((study.study_name) + " (v" + (study.version_id) + ")"))
+                                    ),
                                     m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (study.experiment_file.id) + "/" + (study.version_hash))}, study.experiment_file.descriptive_id)),
 
 
@@ -11215,7 +11221,7 @@
                                                 m('.card-header', 'Completion Details'),
                                                 m('ul.list-group.list-group-flush',[
                                                     m('li.list-group-item', [
-                                                        m('strong', 'Target Completions: '), study.completes
+                                                        m('strong', 'Target Completions: '), study.target_number
                                                     ]),
                                                     m('li.list-group-item', [
                                                         m('strong', 'Started Sessions: '), study.starts
@@ -11233,11 +11239,9 @@
 
                                     // ### Status
                                     m('td', [
-                                        {
-                                            running: m('span.label.label-success', 'Running'),
-                                            paused: m('span.label.label-info', 'Paused'),
-                                            reject: m('span.label.label-danger', 'Stopped')
-                                        }[study.study_status]
+                                        study.study_status !== 'running' ? '' : m('strong.text-success', 'Running'),
+                                        study.study_status !== 'paused' ? '' : m('strong.text-warning', 'Paused'),
+                                        study.study_status !== 'stopped' ? '' : m('strong.text-danger', 'Stopped')
                                     ]),
 
                                     // ### Actions
