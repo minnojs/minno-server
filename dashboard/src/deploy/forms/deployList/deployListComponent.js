@@ -92,6 +92,7 @@ let deployComponent = {
                             m('option', {value:'accept', selected:ctrl.filter_by()==='accept'}, 'Accepted'),
                             m('option', {value:'reject', selected:ctrl.filter_by()==='reject'}, 'Rejected'),
                             m('option', {value:'running', selected:ctrl.filter_by()==='running'}, 'Running'),
+                            m('option', {value:'paused', selected:ctrl.filter_by()==='paused'}, 'Paused'),
                             m('option', {value:'removed', selected:ctrl.filter_by()==='removed'}, 'Removed'),
                             m('option', {value:'all', selected:ctrl.filter_by()==='all'}, 'All')
                         ])
@@ -141,6 +142,7 @@ let deployComponent = {
                                         request.status !== 'accept2' ? '' : m('strong.text-success', 'Accept (changed)'),
                                         request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject'),
                                         request.status !== 'pending' ? '' : m('strong.text-secondary', 'Pending'),
+                                        request.status !== 'paused' ? '' : m('strong.text-warning', 'Paused'),
                                         request.status !== 'removed' ? '' : m('strong.text-secondary', 'Removed')
                                     ]),
                                     m('td',
