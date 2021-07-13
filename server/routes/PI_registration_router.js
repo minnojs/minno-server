@@ -12,7 +12,11 @@ PIRouter.route('/registration')
 	.post(
 		function(req, res){
 			return PI.registration(req.body.email_address)
-				.then(data=> res.redirect(config.server_url+'/launch_registration/'+data._id))
+				.then(participant_data=>
+				{
+					req.session.participant_data = participant_data;
+					return res.redirect(config.server_url+'/launch_registration/'+participant_data._id);
+				})
 				.catch(err=>res.status(err.status || 500).json({message:err.message}));
 		})
 	.put(function(req, res){
@@ -35,7 +39,6 @@ PIRouter.post('/assignment', function(req, res){
 			if (!participant_data)
 				return res.status(400).json({message:'Email doesn\'t exist'});
 			req.session.participant_data = participant_data;
-			console.log(participant_data);
 
 			res.redirect(config.server_url+'/assign/');
 		})
