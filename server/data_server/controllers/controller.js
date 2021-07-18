@@ -160,6 +160,8 @@ exports.updateExperimentStatus = async function(params) {
 
 
     });
+	console.log("status updated");
+	console.log(results);
     return results;
 };
 

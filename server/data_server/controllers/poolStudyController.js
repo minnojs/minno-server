@@ -15,6 +15,8 @@ exports.insertPoolStudy = async function(deploy) {
 };
 exports.updatePoolStudy = async function(study) {
     let poolStudy = generatePoolStudy(study);
+	console.log(study);
+	console.log(poolStudy);
 	/*let updateObject={};
 	if(!poolStudy.deploy_id)
 	{
