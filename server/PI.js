@@ -572,4 +572,4 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review,pause_study};
+module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review};

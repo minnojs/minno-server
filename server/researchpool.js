@@ -1,13 +1,11 @@
 const PoolStudyController = require('./data_server/controllers/poolStudyController');
 const DemographicsStudyController = require('./data_server/controllers/demographicsController');
 const studyController = require('./data_server/controllers/controller');
-const PI_notifications = require('./PI_notifications');
-const PI_API = require('./PI.js');
 const Rules=require('./researchrules');
 const legalStudyStatus = {
     completed: true,
     started: true
-}
+};
 let arrayOfPoolStudies = null;
 const loadPoolStudies = async function() {
     arrayOfPoolStudies = await PoolStudyController.getAllPoolStudies();
@@ -20,12 +18,21 @@ exports.getPoolStudies = async function() {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
     }
-	for(let study of arrayOfPoolStudies)
+    /*for(let study of arrayOfPoolStudies)
 	    {
 	        await removePoolStudy(study);
-	    }
+	    }*/
     return arrayOfPoolStudies;
 };
+async function updatePoolStudy(change_request) {
+    if (!change_request || Object.keys(change_request).length < 2 || !change_request._id) {
+        return;
+    }
+    let newPoolStudy = await PoolStudyController.updatePoolStudy(change_request);
+    if (newPoolStudy) {
+        updateRunningStudies(newPoolStudy);
+    }
+}
 exports.addPoolStudy = async function(deploy) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
@@ -41,37 +48,43 @@ exports.addPoolStudy = async function(deploy) {
     let newPoolStudy = await PoolStudyController.insertPoolStudy(deploy);
     arrayOfPoolStudies.push(newPoolStudy);
 };
+
 exports.updateStudyPool = async function(study_id, params) {
     params._id = study_id;
     return await updatePoolStudy(params);
-}
+};
 exports.pauseStudyPool = async function(study_id) {
     let params = {
-        study_status: "paused"
+        study_status: 'paused'
     };
     return await exports.updateStudyPool(study_id, params);
-}
+};
 exports.unpauseStudyPool = async function(study_id) {
     let params = {
-        study_status: "running"
+        study_status: 'running'
     };
     return await exports.updateStudyPool(study_id, params);
+};
+async function removePoolStudy(poolStudy) {
+    if (!arrayOfPoolStudies) {
+        await loadPoolStudies();
+    }
+    for (let x = 0; x < arrayOfPoolStudies.length; x++) {
+        if (arrayOfPoolStudies[x]._id == poolStudy._id) {
+            arrayOfPoolStudies.splice(x, 1);
+            await PoolStudyController.deletePoolStudy(poolStudy);
+            return true;
+        }
+    }
+    return false;
 }
 exports.removeStudyPool = async function(study_id) {
     let params = {
         _id: study_id
     };
     return await removePoolStudy(params);
-}
-updatePoolStudy = async function(change_request) {
-    if (!change_request || Object.keys(change_request).length < 2 || !change_request._id) {
-        return;
-    }
-    let newPoolStudy = await PoolStudyController.updatePoolStudy(change_request);
-    if (newPoolStudy) {
-        updateRunningStudies(newPoolStudy);
-    }
 };
+
 
 function updateRunningStudies(newStudy) {
     for (let x = 0; x < arrayOfPoolStudies.length; x++) {
@@ -85,19 +98,7 @@ function updateRunningStudies(newStudy) {
         return true;
     }
 }
-removePoolStudy = async function(poolStudy) {
-    if (!arrayOfPoolStudies) {
-        await loadPoolStudies();
-    }
-    for (let x = 0; x < arrayOfPoolStudies.length; x++) {
-        if (arrayOfPoolStudies[x]._id == poolStudy._id) {
-            arrayOfPoolStudies.splice(x, 1);
-            await PoolStudyController.deletePoolStudy(poolStudy);
-            return true;
-        }
-    }
-    return false;
-};
+
 exports.assignStudy = async function(registration_id) {
     if (!arrayOfPoolStudies) {
         await loadPoolStudies();
@@ -181,13 +182,13 @@ exports.checkRules = function(target, rules) {
 exports.updateExperimentStatus = async function(sessionId, status, res) {
     if (!legalStudyStatus[status]) {
         res.status(500).json({
-            message: "missing or illegal study status"
+            message: 'missing or illegal study status'
         });
         return;
     }
     if (!sessionId || sessionId < 0) {
         res.status(500).json({
-            message: "missing or illegal sessionId"
+            message: 'missing or illegal sessionId'
         });
         return;
     }
@@ -196,30 +197,13 @@ exports.updateExperimentStatus = async function(sessionId, status, res) {
         status: status
     };
     try {
-        let result = await studyController.updateExperimentStatus(params);
+        await studyController.updateExperimentStatus(params);
         res.status(200).json({
-            message: "success"
+            message: 'success'
         });
     } catch (err) {
         res.status(500).json({
             message: err.message
         });
     }
-}
-
-function maybeNumber(string)
-{
-	let result=Number(string);
-	if(result!=NaN)
-	{
-		return result;
-	}
-	else
-	{
-		return string;
-	}
-}
-
-//console.log("rulescom "+Rules.RulesComparator['>']({value:"0.5",field:"test"}, {test:"0.5"}));
-//exports.runAutopause();
-//PI_API.pause_study(123, 'paused');
+};

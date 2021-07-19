@@ -15,68 +15,66 @@ exports.insertPoolStudy = async function(deploy) {
 };
 exports.updatePoolStudy = async function(study) {
     let poolStudy = generatePoolStudy(study);
-	console.log(study);
-	console.log(poolStudy);
-	/*let updateObject={};
+    /*let updateObject={};
 	if(!poolStudy.deploy_id)
 	{
 		throw 'cannot update research pool with a deploy_id';
 	}
 	updateObject.deploy_id=poolStudy.deploy_id;*/
     //let updateObject={priority:study.priority, target_number:study.target_number, pause_rules:study.pause_rules};
-	//return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
+    //return await PoolStudy.findOneAndUpdate(updateObject, poolStudy);
     return await PoolStudy.findByIdAndUpdate(study._id, poolStudy,{new: true}).lean();
 };
 
 function generatePoolStudy(deploy)
 {
 
-	let poolStudy={};
-	// if(deploy.running_id)
-	// {
-	// 	deploy._id=deploy.running_id;
-	// }
-	if(deploy.study_id){
-    poolStudy.study_id = deploy.study_id;}
-	if(deploy.version_id){
-    poolStudy.version_id = deploy.version_id;}
+    let poolStudy={};
+    // if(deploy.running_id)
+    // {
+    // 	deploy._id=deploy.running_id;
+    // }
+    if(deploy.study_id){
+        poolStudy.study_id = deploy.study_id;}
+    if(deploy.version_id){
+        poolStudy.version_id = deploy.version_id;}
     poolStudy._id = deploy._id;//mongoose.Types.ObjectId(deploy._id);
-	if(deploy.priority){
-    poolStudy.priority = deploy.priority;}
-	if(deploy.email){
-    poolStudy.email = deploy.email;}
-	if(deploy.experiment_file){
-    poolStudy.experiment_file = deploy.experiment_file;}
-	if(deploy.rules){
-    poolStudy.rules = deploy.rules;}
-	if(deploy.target_number){
-    poolStudy.target_number = deploy.target_number;}
-	if(deploy.pause_rules){
-    poolStudy.pause_rules = deploy.pause_rules;}
-	if(deploy.version_hash){
-    poolStudy.version_hash = deploy.version_hash;}
-	if(deploy.study_name){
-    poolStudy.study_name = deploy.study_name;}
-	if(deploy.user_name){
-    poolStudy.user_name = deploy.user_name;}
-	if(deploy.study_status){
-	poolStudy.study_status = deploy.study_status;}
-	if(deploy.deploy_id){
-    poolStudy.deploy_id = deploy.deploy_id;}
-	if(deploy.starts){
-    poolStudy.starts = deploy.starts;}
-	if(deploy.completes){
-    poolStudy.completes = deploy.completes;}
-	if(deploy.multiple_sessions)
-	{
-		poolStudy.multiple_sessions=deploy.multiple_sessions;
-	}
+    if(deploy.priority){
+        poolStudy.priority = deploy.priority;}
+    if(deploy.email){
+        poolStudy.email = deploy.email;}
+    if(deploy.experiment_file){
+        poolStudy.experiment_file = deploy.experiment_file;}
+    if(deploy.rules){
+        poolStudy.rules = deploy.rules;}
+    if(deploy.target_number){
+        poolStudy.target_number = deploy.target_number;}
+    if(deploy.pause_rules){
+        poolStudy.pause_rules = deploy.pause_rules;}
+    if(deploy.version_hash){
+        poolStudy.version_hash = deploy.version_hash;}
+    if(deploy.study_name){
+        poolStudy.study_name = deploy.study_name;}
+    if(deploy.user_name){
+        poolStudy.user_name = deploy.user_name;}
+    if(deploy.study_status){
+        poolStudy.study_status = deploy.study_status;}
+    if(deploy.deploy_id){
+        poolStudy.deploy_id = deploy.deploy_id;}
+    if(deploy.starts){
+        poolStudy.starts = deploy.starts;}
+    if(deploy.completes){
+        poolStudy.completes = deploy.completes;}
+    if(deploy.multiple_sessions)
+    {
+        poolStudy.multiple_sessions=deploy.multiple_sessions;
+    }
     return poolStudy;
 }
 
 
 exports.getAllPoolStudies = async function() {
-	//await PoolStudy.deleteMany({});
+    //await PoolStudy.deleteMany({});
     let results = await PoolStudy.find({}).lean();
     return results;
 };
@@ -133,10 +131,10 @@ exports.incrementCompletes = async function(poolStudyId, count) {
 exports.setCompletes = async function(poolStudyId, count) {
 
     let results = await PoolStudy.findOneAndUpdate({
-            _id: poolStudyId
-        }, {
-            'completes': count
-        }).lean();
+        _id: poolStudyId
+    }, {
+        'completes': count
+    }).lean();
     return results;
 };
 

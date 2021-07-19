@@ -1,14 +1,14 @@
 function maybeNumber(string)
 {
-	let result=Number(string);
-	if(result!=NaN)
-	{
-		return result;
-	}
-	else
-	{
-		return string;
-	}
+    let result=Number(string);
+    if(result!=NaN)
+    {
+        return result;
+    }
+    else
+    {
+        return string;
+    }
 }
 
 exports.RulesComparator = {

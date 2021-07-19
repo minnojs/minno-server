@@ -7,11 +7,9 @@ let glxServers = null;
 const config = require('../config');
 const Path = require('path');
 const logger = require('./logger');
-const autoPause=require('./researchautopause')
 exports.greenlockError = false;
 //const configDb = require('./config_db');
 const sslChecker = require('ssl-checker');
-autoPause.startAutopause();
 let keepAliveTimeout = config.keepAliveTimeout;
 if (typeof keepAliveTimeout == 'undefined') {
     keepAliveTimeout = 1800000;

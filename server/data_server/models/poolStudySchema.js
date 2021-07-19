@@ -8,10 +8,10 @@ let poolStudySchema = new Schema({
         type: Date,
         default: Date.now
     },
-	_id: {
-		type: String,//mongoose.ObjectId,
-		required: [true, 'An ID is required for pool studies']
-	},
+    _id: {
+        type: String,//mongoose.ObjectId,
+        required: [true, 'An ID is required for pool studies']
+    },
     deploy_id: {
         type: String,//mongoose.ObjectId,
         required: [true, 'An ID is required for pool studies']
@@ -32,7 +32,7 @@ let poolStudySchema = new Schema({
         type: Number,
         default: 0
     },
-	target_number: {
+    target_number: {
         type: Number,
         default: 0
     },
