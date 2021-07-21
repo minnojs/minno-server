@@ -9,7 +9,7 @@ const mongoose = require('mongoose'),
 exports.insertDemographics = async function(req,res) {
     let reqBody = req.body;
     reqBody = sanitizeMongoJson(reqBody);
-	reqBody.demographics=reqBody.data[0].demographics.DATASET.demographics;
+    reqBody.demographics=reqBody.data[0].demographics.DATASET.demographics;
 	
     let newData = new Demographics(reqBody);
 
@@ -30,10 +30,10 @@ exports.getUserDemographics = async function(registrationId) {
     let results = await Demographics.findOne({
         registrationId: registrationId
     }).lean();
-	if(!results)
-	{
-		return null;
-	}
+    if(!results)
+    {
+        return null;
+    }
     return results.demographics;
 };
 let sanitizeMongoJson = function(mongoJson) {

@@ -33,7 +33,8 @@ const urljoin    = require('url-join');
 const bodyParser = require('body-parser');
 const app        = express();
 
-
+const autoPause=require('./researchautopause');
+autoPause.startAutopause();
 
 
 module.exports = {app};

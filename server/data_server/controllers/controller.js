@@ -58,10 +58,10 @@ exports.getExperimentStatusCount = async function(params) {
     if (!params.poolId) {
         return null;
     }
-	var agg = [
-		{ $match : {poolId:params.poolId }},
+    let agg = [
+        { $match : {poolId:params.poolId }},
 	    {$group: {
-	      _id: "$status",
+	      _id: '$status',
 	      // SUCCESS!!! :D
 	      total: {$sum: 1}
 	    }}
@@ -70,15 +70,15 @@ exports.getExperimentStatusCount = async function(params) {
 	  const results = await aggregate.exec();
 	  return results;
 	  
-}
+};
 exports.getExperimentCountByRegistrationId = async function(registrationId) {
     if (!registrationId) {
         return null;
     }
-	var agg = [
-		{ $match : {registrationId:registrationId }},
+    let agg = [
+        { $match : {registrationId:registrationId }},
 	    {$group: {
-	      _id: "$poolId",
+	      _id: '$poolId',
 	      // SUCCESS!!! :D
 	      total: {$sum: 1}
 	    }}
@@ -88,19 +88,19 @@ exports.getExperimentCountByRegistrationId = async function(registrationId) {
 	  const results = await aggregate.exec();
 	  return flattenCount(results);
 	  
-}
+};
 let flattenCount= function(results)
 {
-	let flat={};
-	for(const item of results)
-	{
-		if(item._id)
-		{
-			flat[item._id]=item.total;
-		}
-	}
-	return flat;
-}
+    let flat={};
+    for(const item of results)
+    {
+        if(item._id)
+        {
+            flat[item._id]=item.total;
+        }
+    }
+    return flat;
+};
 /*exports.getExperimentStateCount = async function(params) {
     if (params.studyId < 0 || !params.rulesId) {
         return null;
