@@ -85,7 +85,7 @@ let stat_dialog = {
                     m('.input-group', [m('strong', 'Version id'),
                         m('select.c-select.form-control',{onchange: e => ctrl.update_version(e.target.value)}, [
                             ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                            ctrl.versions.map(version=> m('option', {selected:true, value:version.hash}, `V${version.id} - ${formatDate_str(version.creation_date)} (${version.state})`))
+                            ctrl.versions.map(version=> m('option', {selected:version.id===ctrl.versions.length, value:version.hash}, `V${version.id} - ${formatDate_str(version.creation_date)} (${version.state})`))
                         ])
                     ])
                 ])
