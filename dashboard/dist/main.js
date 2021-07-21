@@ -19795,7 +19795,7 @@
                         m('.input-group', [m('strong', 'Version id'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
+                                ctrl.versions.map(function (version){ return m('option', {selected:version.id===ctrl.versions.length, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ]),
@@ -20159,7 +20159,7 @@
                         m('.input-group', [m('strong', 'Version id'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.update_version(e.target.value); }}, [
                                 ctrl.versions.length<=1 ? '' : m('option', {value:ctrl.all_versions()}, 'All versions'),
-                                ctrl.versions.map(function (version){ return m('option', {selected:true, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
+                                ctrl.versions.map(function (version){ return m('option', {selected:version.id===ctrl.versions.length, value:version.hash}, ("V" + (version.id) + " - " + (formatDate(version.creation_date)) + " (" + (version.state) + ")")); })
                             ])
                         ])
                     ])
