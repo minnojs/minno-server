@@ -1,7 +1,7 @@
 function maybeNumber(string)
 {
     let result=Number(string);
-    if(result!=NaN)
+    if(!Number.isNaN(result))
     {
         return result;
     }
@@ -29,6 +29,19 @@ exports.RulesComparator = {
     },
     '!=': function(element, participant) {
         return !(maybeNumber(element.value) == maybeNumber(participant[element.field]));
+    },
+    'in': function(element, participant) {
+		if(Array.isArray(participant[element.field]))
+		{
+			if(participant[element.field].includes(element.value))
+			{
+				return true
+			}
+		}
+    return false;
+    },
+     '!in': function(element, participant) {
+		 return !exports.RulesComparator['in'](element,participant);
     },
     '&': function(array, participant) {
         if (array.data == null || array.data.length == 0) {

@@ -10,6 +10,7 @@ let arrayOfPoolStudies = null;
 const loadPoolStudies = async function() {
     arrayOfPoolStudies = await PoolStudyController.getAllPoolStudies();
 
+
 };
 exports.setPoolStudies = function(array_of_poolstudies) {
     arrayOfPoolStudies = array_of_poolstudies;
@@ -104,7 +105,7 @@ exports.assignStudy = async function(registration_id) {
         await loadPoolStudies();
     }
     let user_demographics = await DemographicsStudyController.getUserDemographics(registration_id);
-    if (!user_demographics) {
+    if (!user_demographics) { //TODO: maybe send them to fill out demographics?
         return Promise.reject({
             status: 200,
             message: 'No studies available.'
@@ -114,12 +115,17 @@ exports.assignStudy = async function(registration_id) {
     let previousStudies = await studyController.getExperimentCountByRegistrationId(registration_id);
     let legalStudies = [];
     for (const element of arrayOfPoolStudies) {
+        if (element.study_status != 'running') {
+            continue;
+        }
         if (previousStudies[element._id] && !element.multiple_sessions) {
             continue;
         }
-        if (element.rules && element.rules.comparator && Rules.RulesComparator[element.rules.comparator](element.rules, user_demographics)) {
-            legalStudies.push(element);
-        } else if (element && element.priority) {
+        if (element && element.rules && element.rules.comparator ) {
+			if(Rules.RulesComparator[element.rules.comparator](element.rules, user_demographics)){
+        		legalStudies.push(element);}
+		
+        } else if (element && element.priority ) {
             legalStudies.push(element); //study without rules gets assigned to everyone
         }
     }

@@ -25,9 +25,9 @@ function get_all_rules(deployer=false)
             let full_rules = JSON.parse(JSON.stringify(rules));
             full_rules.push({
                 name:'Did not Start or Complete Study',
-                nameXML:'study',
+                nameXML:"takenStudies",
                 equal:['Study name'],
-                equalXML:['Study name'],
+                equalXML:['!in'],
                 values:studies.map(study=>study.name),
                 valuesXML:studies.map(study=>study.id)
             });
