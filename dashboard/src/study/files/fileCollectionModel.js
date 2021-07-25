@@ -24,10 +24,10 @@ const studyPrototype = {
                 this.loaded = true;
                 this.isReadonly = study.is_readonly;
                 this.istemplate = study.is_template;
-                this.is_locked = study.is_published;
+                this.is_locked = study.is_published || !study.is_last;
                 this.is_published = study.is_published;
                 this.is_public = study.is_public;
-                this.has_data_permission = study.is_last;
+                this.has_data_permission = study.has_data_permission;
                 this.description = study.description;
 
                 this.name = study.study_name;

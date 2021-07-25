@@ -27,7 +27,7 @@ function get_all_rules(deployer=false)
                 name:'Did not Start or Complete Study',
                 nameXML:'study',
                 equal:['Study name'],
-                equalXML:['Study name'],
+                equalXML:'=',
                 values:studies.map(study=>study.name),
                 valuesXML:studies.map(study=>study.id)
             });

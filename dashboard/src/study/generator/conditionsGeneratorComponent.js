@@ -6,8 +6,9 @@ let conditions_view = args => m.component(conditionsGeneratorComponent, args);
 export default conditions_view;
 
 let conditionsGeneratorComponent = {
-    controller({mode, possible_conditions, possible_stimuli, possible_responses, imgs}){
+    controller({is_locked, mode, possible_conditions, possible_stimuli, possible_responses, imgs}){
         let ctrl = {
+            is_locked,
             mode,
             num_of_conditions:0,
             do_add_condition,
@@ -53,23 +54,24 @@ let conditionsGeneratorComponent = {
                     m('row.col-sm-12',
                         m('.col-sm-2',
                             m('label.input-group.space', [
-                                m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                                m('input.form-control', {disabled: ctrl.is_locked(), value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
                             ])
                         ),
                         m('.col-sm-2',
                             m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
+                                m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
                             ])
                         ),
                         m('.col-sm-2',
                             m('label.input-group.space', [
-                                m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
+                                m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
                             ])
                         )
                     ),
-                    stimuli_sets_view({condition, possible_stimuli, possible_responses, imgs})
+                    stimuli_sets_view({is_locked: ctrl.is_locked, condition, possible_stimuli, possible_responses, imgs})
                 ];}),
-            m('.row.space',
+            ctrl.is_locked() ? '' :
+                m('.row.space',
                 m('.col-sm-13', [
                     m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
                         [m('i.fa.fa-plus'), '  add condition']

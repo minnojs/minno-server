@@ -240,7 +240,7 @@ let ruletableComponent = {
                                         !condition_data.equal.length ? ctrl.set_comparator(user_rule, ' ', ' ') :
                                             condition_data.equal.length === 1
                                                 ?
-                                                [ctrl.set_comparator(user_rule, ' ', ' '),
+                                                [ctrl.set_comparator(user_rule, condition_data.equalXML, ' '),
                                                     m('select.c-select.form-control.space', {disabled:true, onchange: e => {ctrl.set_comparator(user_rule, e.target.value, e.target.value);}}, [
                                                         m('option', {disabled:true, selected:true}, condition_data.equal[0]+':'),
                                                     ])

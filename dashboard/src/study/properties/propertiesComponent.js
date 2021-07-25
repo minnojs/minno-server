@@ -206,10 +206,7 @@ let propertiesComponent = {
             });
 
             let publish= () => publish_study(ctrl.study.id, version_name, update_url)
-                .then(()=>ctrl.study.versions[ctrl.study.versions.length-1].state='Published')
-                .then(()=>ctrl.study.is_published = true)
-                .then(()=>ctrl.under_develop(false))
-
+                .then(()=> window.location.reload(true))
                 .catch(e => {
                     error(e.message);
                     ask();

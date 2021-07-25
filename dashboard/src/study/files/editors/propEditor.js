@@ -12,9 +12,10 @@ const propEditor = args => m.component(propEditorComponent, args);
 
 const propEditorComponent = {
     controller: function({file, study}){
-
         let ctrl = {
             err : m.prop([]),
+            is_locked:m.prop(study.is_locked),
+
             notifications: createNotifications(),
 
             mode : m.prop('constants'),
@@ -100,15 +101,16 @@ const propEditorComponent = {
                 m('div', ctrl.notifications.view()),
                 m('.btn-toolbar.editor-menu', [
                     m('.btn-group.btn-group-sm.pull-xs-left', [
-                        m('a.btn.btn-secondary', { title:'Save', onclick:()=>ctrl.update_mode('constants'),
+
+                        m('a.btn.btn-secondary', {onclick:()=>ctrl.update_mode('constants'),
                             class: ctrl.modeClass('constants')},[
                             m('strong', 'Constants')
                         ]),
-                        m('a.btn.btn-secondary', { title:'Save', onclick:()=>ctrl.update_mode('stimuli'),
+                        m('a.btn.btn-secondary', {onclick:()=>ctrl.update_mode('stimuli'),
                             class: ctrl.modeClass('stimuli')},[
                             m('strong', 'Stimuli')
                         ]),
-                        m('a.btn.btn-secondary', { title:'Save', onclick:()=>ctrl.update_mode('conditions'),
+                        m('a.btn.btn-secondary', {onclick:()=>ctrl.update_mode('conditions'),
                             class: ctrl.modeClass('conditions')},[
                             m('strong', 'Conditions')
                         ])
@@ -116,12 +118,13 @@ const propEditorComponent = {
                     ]),
 
                 ]),
-                responses_view({mode: ctrl.mode, possible_responses}),
-                constants_view({mode: ctrl.mode, constants, imgs}),
-                stimuli_view({mode: ctrl.mode, possible_stimuli, possible_conditions}),
-                conditions_view({mode: ctrl.mode, possible_conditions, possible_stimuli, possible_responses, imgs}),
+                responses_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_responses}),
+                constants_view({is_locked:ctrl.is_locked, mode: ctrl.mode, constants, imgs}),
+                stimuli_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_stimuli, possible_conditions}),
+                conditions_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_conditions, possible_stimuli, possible_responses, imgs}),
 
                 ctrl.err().length === 0 ? '' : m('.row.space.alert.alert-danger', ctrl.err()),
+                ctrl.is_locked() ? '' :
 
                 m('.row.space.central_panel',
                     m('.col-sm-12.', [
