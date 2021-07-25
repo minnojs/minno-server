@@ -16,11 +16,12 @@ exports.startAutopause= async function(){
     
 exports.runAutopause = async function() {
     let arrayOfPoolStudies=await Pool.getPoolStudies();
-    for (let poolStudy of arrayOfPoolStudies) {
+	let arrayCopy=[...arrayOfPoolStudies];
+    for (let poolStudy of arrayCopy) {
         if (poolStudy.study_status != 'running') {
             continue;
         }
-        const params = {
+        let params = {
             poolId: poolStudy._id
         };
         let completions = await studyController.getExperimentStatusCount(params);

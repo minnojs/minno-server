@@ -24517,9 +24517,9 @@
                 var full_rules = JSON.parse(JSON.stringify(rules));
                 full_rules.push({
                     name:'Did not Start or Complete Study',
-                    nameXML:'study',
+                    nameXML:"takenStudies",
                     equal:['Study name'],
-                    equalXML:'=',
+                    equalXML:['!in'],
                     values:studies.map(function (study){ return study.name; }),
                     valuesXML:studies.map(function (study){ return study.id; })
                 });
