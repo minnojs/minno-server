@@ -12582,10 +12582,10 @@
                     this$1$1.loaded = true;
                     this$1$1.isReadonly = study.is_readonly;
                     this$1$1.istemplate = study.is_template;
-                    this$1$1.is_locked = study.is_published;
+                    this$1$1.is_locked = study.is_published || !study.is_last;
                     this$1$1.is_published = study.is_published;
                     this$1$1.is_public = study.is_public;
-                    this$1$1.has_data_permission = study.is_last;
+                    this$1$1.has_data_permission = study.has_data_permission;
                     this$1$1.description = study.description;
 
                     this$1$1.name = study.study_name;
@@ -17225,10 +17225,12 @@
 
     var responsesGeneratorComponent = {
         controller: function controller(ref){
+            var is_locked = ref.is_locked;
             var mode = ref.mode;
             var possible_responses = ref.possible_responses;
 
             var ctrl = {
+                is_locked: is_locked,
                 mode: mode,
                 possible_responses: possible_responses,
                 update_possible_response:update_possible_response,
@@ -17270,7 +17272,7 @@
                         return m('row', [
                             m('.col-sm-2',
                                 m('label.input-group.space',  [
-                                    m('input.form-control.col-sm-1', {value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                    m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
                                     id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
                                 ])
                             )
@@ -17278,8 +17280,6 @@
                     })
                 ])
             ]);
-
-
         }
     };
 
@@ -17288,11 +17288,13 @@
 
     var constantsGeneratorComponent = {
         controller: function controller(ref){
+            var is_locked = ref.is_locked;
             var mode = ref.mode;
             var constants = ref.constants;
             var imgs = ref.imgs;
 
             var ctrl = {
+                is_locked: is_locked,
                 mode: mode,
                 constants: constants,
                 imgs: imgs,
@@ -17312,15 +17314,15 @@
                     m('.col-sm-5',[
                         m('.row', [
                             m('.col-sm-2', 'Fixation'),
-                            m('.col-sm-3', m('input.form-control', { type:'number', min:'0', value: ctrl.constants.durations.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_constant('durations', 'fixation', this.value);}}))
+                            m('.col-sm-3', m('input.form-control', {disabled: ctrl.is_locked(), type:'number', min:'0', value: ctrl.constants.durations.fixation(), placeholder: 'Fixation', onchange:function(){ctrl.update_constant('durations', 'fixation', this.value);}}))
                         ]),
                         m('.row', [
                             m('.col-sm-2', 'ITI'),
-                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value);}}))
+                            m('.col-sm-3', m('input.form-control', {disabled: ctrl.is_locked(), type:'number', min:'0', value: ctrl.constants.durations.iti(), placeholder: 'ITI', onchange:function(){ctrl.update_constant('durations', 'iti', this.value);}}))
                         ]),
                         m('.row', [
                             m('.col-sm-2', 'Feedback'),
-                            m('.col-sm-3', m('input.form-control', {type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value);}}))
+                            m('.col-sm-3', m('input.form-control', {disabled: ctrl.is_locked(), type:'number', min:'0', value: ctrl.constants.durations.feedback(), placeholder: 'Feedback', onchange:function(){ctrl.update_constant('durations', 'feedback', this.value);}}))
                         ]),
                     ]),
 
@@ -17331,7 +17333,7 @@
                         m('.row', [
                             m('.col-sm-3', 'Beginning of experiment'),
                             m('.col-sm-5',
-                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'welcome', this.value);}}, [
+                                m('select.form-control', {disabled: ctrl.is_locked(), onchange:function(){ctrl.update_constant('instructions',  'welcome', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.welcome() === ''},  'Select image'),
                                     m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.welcome() === img.path},  img.path); })
@@ -17341,7 +17343,7 @@
                         m('.row', [
                             m('.col-sm-3', 'Ending of practice'),
                             m('.col-sm-5',
-                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'start', this.value);}}, [
+                                m('select.form-control', {disabled: ctrl.is_locked(), onchange:function(){ctrl.update_constant('instructions',  'start', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.start() === ''},  'Select image'),
                                     m('option',{value:'None',  selected: ctrl.constants.instructions.start() === 'None'},  'None'),
 
@@ -17352,7 +17354,7 @@
                         m('.row', [
                             m('.col-sm-3', 'Ending of experiment'),
                             m('.col-sm-5',
-                                m('select.form-control', {onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
+                                m('select.form-control', {disabled: ctrl.is_locked(), onchange:function(){ctrl.update_constant('instructions',  'end', this.value);}}, [
                                     m('option',{value:'', disabled: true, selected: ctrl.constants.instructions.end() === ''},  'Select image'),
                                     m('option',{value:'None',  selected: ctrl.constants.instructions.end() === 'None'},  'None'),
                                     ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: ctrl.constants.instructions.end() === img.path},  img.path); })
@@ -17366,15 +17368,15 @@
                     m('.col-sm-7',[
                         m('.row', [
                             m('.col-sm-2', 'Correct'),
-                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.correct(), placeholder: 'Correct', onchange:function(){ctrl.update_constant('feedback',  'correct', this.value);}}))
+                            m('.col-sm-5', m('input.form-control', {disabled: ctrl.is_locked(), value: ctrl.constants.feedback.correct(), placeholder: 'Correct', onchange:function(){ctrl.update_constant('feedback',  'correct', this.value);}}))
                         ]),
                         m('.row', [
                             m('.col-sm-2', 'Incorrect'),
-                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.incorrect(), placeholder: 'Incorrect', onchange:function(){ctrl.update_constant('feedback', 'incorrect', this.value);}}))
+                            m('.col-sm-5', m('input.form-control', {disabled: ctrl.is_locked(), value: ctrl.constants.feedback.incorrect(), placeholder: 'Incorrect', onchange:function(){ctrl.update_constant('feedback', 'incorrect', this.value);}}))
                         ]),
                         m('.row', [
                             m('.col-sm-2', 'No response'),
-                            m('.col-sm-5', m('input.form-control', {value: ctrl.constants.feedback.noresponse(), placeholder: 'No response', onchange:function(){ctrl.update_constant('feedback', 'noresponse', this.value);}}))
+                            m('.col-sm-5', m('input.form-control', {disabled: ctrl.is_locked(), value: ctrl.constants.feedback.noresponse(), placeholder: 'No response', onchange:function(){ctrl.update_constant('feedback', 'noresponse', this.value);}}))
                         ]),
                     ]),
                 ]),
@@ -17387,11 +17389,13 @@
 
     var stimuliGeneratorComponent = {
         controller: function controller(ref){
+            var is_locked = ref.is_locked;
             var mode = ref.mode;
             var possible_stimuli = ref.possible_stimuli;
             var possible_conditions = ref.possible_conditions;
 
             var ctrl = {
+                is_locked: is_locked,
                 mode: mode,
                 default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
                 num_of_stimuli:0,
@@ -17526,24 +17530,27 @@
                     return m('row.col-sm-12', [
                         m('.col-sm-2',
                             m('label.input-group.space', [
-                                m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                                m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
                             ])
                         ),
                         m('.col-sm-2',
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'without_response'); },
                                     checked: stimulus.response === 'without_response',
                                 }), m('span.c-indicator'), ' Without response'
                             ])),
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_response'); },
                                     checked: stimulus.response === 'with_response',
                                 }), m('span.c-indicator'), ' With response'
                             ])),
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'response', 'with_stop_response'); },
                                     checked: stimulus.response === 'with_stop_response',
                                 }), m('span.c-indicator'), ' With stop response'
@@ -17554,10 +17561,11 @@
                                 ctrl.default_css.map(function (css){ return m('.col',
                                         m('label.c-input.checkbox',  [
                                             m('input[type=checkbox]', {
+                                                disabled: ctrl.is_locked(),
                                                 onchange:  function (){ return ctrl.update_stimulus_css_field(id, css); },
                                                 checked: stimulus.css[css],
                                             }),
-                                            m('span', css)
+                                            m('span', ' ' + css)
                                         ])
                                     ); }
                                 )
@@ -17566,12 +17574,14 @@
                         m('.col-sm-1',
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'image'); },
                                     checked: stimulus.media_type==='image',
                                 }), m('span.c-indicator'), ' Image'
                             ])),
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'media_type', 'text'); },
                                     checked: stimulus.media_type==='text',
                                 }), m('span.c-indicator'), ' Text'
@@ -17580,37 +17590,41 @@
                         m('.col-sm-1',[
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', false); },
                                     checked: !stimulus.default_times,
                                 }), m('span.c-indicator'), ' Variable'
                             ])),
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'default_times', true); },
                                     checked: stimulus.default_times,
                                 }), m('span.c-indicator'), ' Fixed'
                             ])),
                             m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
                                 m('label.input-group', [
-                                    'Onset', m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
+                                    'Onset', m('input.form-control', {disabled:!stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
                                 ])
                             ),
                             m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
                                 m('label.input-group', [
                                     'Offset',
-                                    m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                    m('input.form-control', {disabled:!stimulus.default_times || ctrl.is_locked(), type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
                                 ])
                             )
                         ]),
                         m('.col-sm-2',
                             id===0 ? '' : m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'); },
                                     checked: stimulus.relative_to === 'trial_onset',
                                 }), m('span.c-indicator'), " Trial onset"
                             ])),
                             id===0 ? '' : m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
+                                    disabled: ctrl.is_locked(),
                                     onclick: function (){ return ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'); },
                                     checked: stimulus.relative_to === 'last_offset',
                                 }), m('span.c-indicator'), (" " + (id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name) + " offset")
@@ -17627,6 +17641,7 @@
                                 ]))
                         )]);
                 }),
+                ctrl.is_locked() ? '' :
                 m('.row.space',
                     m('.col-sm-12', [
                         m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},
@@ -17644,12 +17659,14 @@
 
     var stimuliSetsGeneratorComponent = {
         controller: function controller(ref){
+            var is_locked = ref.is_locked;
             var condition = ref.condition;
             var possible_stimuli = ref.possible_stimuli;
             var possible_responses = ref.possible_responses;
             var imgs = ref.imgs;
 
             var ctrl = {
+                is_locked: is_locked,
                 imgs: imgs,
                 condition: condition,
                 possible_stimuli: possible_stimuli,
@@ -17732,27 +17749,27 @@
                                     m('label.input-group.space', [
                                         stimulus.media_type === 'image'
                                             ?
-                                            m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
+                                            m('select.form-control', {disabled: ctrl.is_locked(), onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
                                                 m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
                                                 ctrl.imgs().map(function (img){ return m('option',{value:img.path, selected: stimulus.media === img.path},  img.path); })
                                             ])
                                             :
-                                            m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
+                                            m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
                                     ])
                                 ),
                                 m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
                                     m('row', [
-                                        'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
+                                        'Onset ', m('input.form-control', {disabled:stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
                                     ]),
                                     m('row', [
-                                        'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
+                                        'Offset ', m('input.form-control', {disabled:stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
                                     ])
                                 ]),
                                 m('.col-sm-2',
 
                                     stimulus.css2use.length===0 ? '-' :
                                         stimulus.css2use.map(function (css2use){ return m('row', [
-                                            css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
+                                            css2use, m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
                                         ]); })
                                 ),
                                 m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
@@ -17760,6 +17777,7 @@
                                             m('.col-sm-2', response.key.length !==1 ? '' :
                                                 m('div', m('label.c-input.c-radio', [
                                                     m('input[type=radio]', {
+                                                        disabled: ctrl.is_locked(),
                                                         onclick: function (){ return ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id); },
                                                         checked: stimulus.response_key === key_id,
                                                     }), m('span.c-indicator'), (" " + (response.key))
@@ -17776,6 +17794,7 @@
                             ]);
                         });
                     }),
+                    ctrl.is_locked() ? '' :
                     m('.row.space',
                         m('.col-sm-12', [
                             m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},
@@ -17792,6 +17811,7 @@
 
     var conditionsGeneratorComponent = {
         controller: function controller(ref){
+            var is_locked = ref.is_locked;
             var mode = ref.mode;
             var possible_conditions = ref.possible_conditions;
             var possible_stimuli = ref.possible_stimuli;
@@ -17799,6 +17819,7 @@
             var imgs = ref.imgs;
 
             var ctrl = {
+                is_locked: is_locked,
                 mode: mode,
                 num_of_conditions:0,
                 do_add_condition: do_add_condition,
@@ -17850,23 +17871,24 @@
                         m('row.col-sm-12',
                             m('.col-sm-2',
                                 m('label.input-group.space', [
-                                    m('input.form-control', {value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
+                                    m('input.form-control', {disabled: ctrl.is_locked(), value: condition.condition_name, placeholder: 'condition name', onchange:function(){ctrl.update_condition_name(condition_id,  this.value);}}),
                                 ])
                             ),
                             m('.col-sm-2',
                                 m('label.input-group.space', [
-                                    m('input.form-control.col-sm-1', {value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
+                                    m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: condition.repetitions[0], type:'number', min:'0', placeholder: 'Trials in practice', onchange:function(){ctrl.update_repetitions(condition_id,  0, this.value);}}),
                                 ])
                             ),
                             m('.col-sm-2',
                                 m('label.input-group.space', [
-                                    m('input.form-control.col-sm-1', {value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
+                                    m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: condition.repetitions[1], type:'number', min:'0', placeholder: 'Trials in experiment', onchange:function(){ctrl.update_repetitions(condition_id,  1, this.value);}}),
                                 ])
                             )
                         ),
-                        stimuli_sets_view({condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs})
+                        stimuli_sets_view({is_locked: ctrl.is_locked, condition: condition, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs})
                     ];}),
-                m('.row.space',
+                ctrl.is_locked() ? '' :
+                    m('.row.space',
                     m('.col-sm-13', [
                         m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_condition},
                             [m('i.fa.fa-plus'), '  add condition']
@@ -17913,9 +17935,10 @@
             var file = ref.file;
             var study = ref.study;
 
-
             var ctrl = {
                 err : m.prop([]),
+                is_locked:m.prop(study.is_locked),
+
                 notifications: createNotifications(),
 
                 mode : m.prop('constants'),
@@ -18008,15 +18031,16 @@
                     m('div', ctrl.notifications.view()),
                     m('.btn-toolbar.editor-menu', [
                         m('.btn-group.btn-group-sm.pull-xs-left', [
-                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('constants'); },
+
+                            m('a.btn.btn-secondary', {onclick:function (){ return ctrl.update_mode('constants'); },
                                 class: ctrl.modeClass('constants')},[
                                 m('strong', 'Constants')
                             ]),
-                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('stimuli'); },
+                            m('a.btn.btn-secondary', {onclick:function (){ return ctrl.update_mode('stimuli'); },
                                 class: ctrl.modeClass('stimuli')},[
                                 m('strong', 'Stimuli')
                             ]),
-                            m('a.btn.btn-secondary', { title:'Save', onclick:function (){ return ctrl.update_mode('conditions'); },
+                            m('a.btn.btn-secondary', {onclick:function (){ return ctrl.update_mode('conditions'); },
                                 class: ctrl.modeClass('conditions')},[
                                 m('strong', 'Conditions')
                             ])
@@ -18024,12 +18048,13 @@
                         ]),
 
                     ]),
-                    responses_view({mode: ctrl.mode, possible_responses: possible_responses}),
-                    constants_view({mode: ctrl.mode, constants: constants, imgs: imgs}),
-                    stimuli_view({mode: ctrl.mode, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
-                    conditions_view({mode: ctrl.mode, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
+                    responses_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_responses: possible_responses}),
+                    constants_view({is_locked:ctrl.is_locked, mode: ctrl.mode, constants: constants, imgs: imgs}),
+                    stimuli_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_stimuli: possible_stimuli, possible_conditions: possible_conditions}),
+                    conditions_view({is_locked:ctrl.is_locked, mode: ctrl.mode, possible_conditions: possible_conditions, possible_stimuli: possible_stimuli, possible_responses: possible_responses, imgs: imgs}),
 
                     ctrl.err().length === 0 ? '' : m('.row.space.alert.alert-danger', ctrl.err()),
+                    ctrl.is_locked() ? '' :
 
                     m('.row.space.central_panel',
                         m('.col-sm-12.', [
@@ -23274,10 +23299,7 @@
                 }); };
 
                 var publish= function () { return publish_study(ctrl.study.id, version_name, update_url)
-                    .then(function (){ return ctrl.study.versions[ctrl.study.versions.length-1].state='Published'; })
-                    .then(function (){ return ctrl.study.is_published = true; })
-                    .then(function (){ return ctrl.under_develop(false); })
-
+                    .then(function (){ return window.location.reload(true); })
                     .catch(function (e) {
                         error(e.message);
                         ask();

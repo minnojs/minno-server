@@ -3,8 +3,9 @@ let stimuli_sets_view = args => m.component(stimuliSetsGeneratorComponent, args)
 export default stimuli_sets_view;
 
 let stimuliSetsGeneratorComponent = {
-    controller({condition, possible_stimuli, possible_responses, imgs}){
+    controller({is_locked, condition, possible_stimuli, possible_responses, imgs}){
         let ctrl = {
+            is_locked,
             imgs,
             condition,
             possible_stimuli,
@@ -87,27 +88,27 @@ let stimuliSetsGeneratorComponent = {
                                 m('label.input-group.space', [
                                     stimulus.media_type === 'image'
                                         ?
-                                        m('select.form-control', {onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
+                                        m('select.form-control', {disabled: ctrl.is_locked(), onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}, [
                                             m('option',{value:'', disabled: true, selected: stimulus.media === ''},  'Select image'),
                                             ctrl.imgs().map(img=>m('option',{value:img.path, selected: stimulus.media === img.path},  img.path))
                                         ])
                                         :
-                                        m('input.form-control', {value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
+                                        m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.media, placeholder: 'media', onchange:function(){ctrl.update_stimulus_media(set_id, stimulus_id, this.value);}}),
                                 ])
                             ),
                             m('.col-sm-2', {class: !stimulus.default_times ? '' : 'disable_properties'},[
                                 m('row', [
-                                    'Onset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
+                                    'Onset ', m('input.form-control', {disabled:stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset'})
                                 ]),
                                 m('row', [
-                                    'Offset ', m('input.form-control', {disabled:stimulus.default_times, type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
+                                    'Offset ', m('input.form-control', {disabled:stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.offset, placeholder: 'Offset'})
                                 ])
                             ]),
                             m('.col-sm-2',
 
                                 stimulus.css2use.length===0 ? '-' :
                                     stimulus.css2use.map(css2use=> m('row', [
-                                        css2use, m('input.form-control', {value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
+                                        css2use, m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.css_data[css2use], placeholder: css2use, onchange:function(){ctrl.update_stimulus_css(set_id, stimulus_id, css2use, this.value);}})
                                     ]))
                             ),
                             m('.col-sm-2', stimulus.response === 'without_response' ? '-' :
@@ -116,6 +117,7 @@ let stimuliSetsGeneratorComponent = {
                                         m('.col-sm-2', response.key.length !==1 ? '' :
                                             m('div', m('label.c-input.c-radio', [
                                                 m('input[type=radio]', {
+                                                    disabled: ctrl.is_locked(),
                                                     onclick: ()=>ctrl.toggle_stimulus_response(set_id, stimulus_id, key_id),
                                                     checked: stimulus.response_key === key_id,
                                                 }), m('span.c-indicator'), ` ${response.key}`
@@ -132,6 +134,7 @@ let stimuliSetsGeneratorComponent = {
                         ]);
                     });
                 }),
+                ctrl.is_locked() ? '' :
                 m('.row.space',
                     m('.col-sm-12', [
                         m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:function(){ctrl.add_stimuli_set();}},

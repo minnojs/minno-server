@@ -4,8 +4,9 @@ let responses_view = args => m.component(responsesGeneratorComponent, args);
 
 
 let responsesGeneratorComponent = {
-    controller({mode, possible_responses}){
+    controller({is_locked, mode, possible_responses}){
         let ctrl = {
+            is_locked,
             mode,
             possible_responses,
             update_possible_response:update_possible_response,
@@ -47,7 +48,7 @@ let responsesGeneratorComponent = {
                     return m('row', [
                         m('.col-sm-2',
                             m('label.input-group.space',  [
-                                m('input.form-control.col-sm-1', {value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
+                                m('input.form-control.col-sm-1', {disabled: ctrl.is_locked(), value: response.key, placeholder: 'key', onchange:function(){ctrl.update_possible_response(id, this.value);}, onkeyup:function(){ctrl.update_possible_response(id, this.value);}}),
                                 id===0 || (!response.key && id === (ctrl.possible_responses().length-1)) ? '' : m('.input-group-addon', {onclick:function(){ctrl.delete_possible_response(id);}}, m('i.fa.fa-fw.fa-close'))
                             ])
                         )
@@ -55,8 +56,6 @@ let responsesGeneratorComponent = {
                 })
             ])
         ]);
-
-
     }
 };
 

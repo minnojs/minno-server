@@ -4,8 +4,9 @@ let stimuli_view = args => m.component(stimuliGeneratorComponent, args);
 
 
 let stimuliGeneratorComponent = {
-    controller({mode, possible_stimuli, possible_conditions}){
+    controller({is_locked, mode, possible_stimuli, possible_conditions}){
         let ctrl = {
+            is_locked,
             mode,
             default_css : ['top', 'bottom', 'left', 'right',  'color', 'fontSize'],
             num_of_stimuli:0,
@@ -140,24 +141,27 @@ let stimuliGeneratorComponent = {
                 return m('row.col-sm-12', [
                     m('.col-sm-2',
                         m('label.input-group.space', [
-                            m('input.form-control', {value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
+                            m('input.form-control', {disabled: ctrl.is_locked(), value: stimulus.stimulus_name, placeholder: 'stimulus name', onchange:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}, onkeyup:function(){ctrl.update_stimulus_field(id, 'stimulus_name', this.value);}})
                         ])
                     ),
                     m('.col-sm-2',
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'response', 'without_response'),
                                 checked: stimulus.response === 'without_response',
                             }), m('span.c-indicator'), ' Without response'
                         ])),
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'response', 'with_response'),
                                 checked: stimulus.response === 'with_response',
                             }), m('span.c-indicator'), ' With response'
                         ])),
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'response', 'with_stop_response'),
                                 checked: stimulus.response === 'with_stop_response',
                             }), m('span.c-indicator'), ' With stop response'
@@ -169,10 +173,11 @@ let stimuliGeneratorComponent = {
                                 m('.col',
                                     m('label.c-input.checkbox',  [
                                         m('input[type=checkbox]', {
+                                            disabled: ctrl.is_locked(),
                                             onchange:  ()=> ctrl.update_stimulus_css_field(id, css),
                                             checked: stimulus.css[css],
                                         }),
-                                        m('span', css)
+                                        m('span', ' ' + css)
                                     ])
                                 )
                             )
@@ -181,12 +186,14 @@ let stimuliGeneratorComponent = {
                     m('.col-sm-1',
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'media_type', 'image'),
                                 checked: stimulus.media_type==='image',
                             }), m('span.c-indicator'), ' Image'
                         ])),
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'media_type', 'text'),
                                 checked: stimulus.media_type==='text',
                             }), m('span.c-indicator'), ' Text'
@@ -195,37 +202,41 @@ let stimuliGeneratorComponent = {
                     m('.col-sm-1',[
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'default_times', false),
                                 checked: !stimulus.default_times,
                             }), m('span.c-indicator'), ' Variable'
                         ])),
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'default_times', true),
                                 checked: stimulus.default_times,
                             }), m('span.c-indicator'), ' Fixed'
                         ])),
                         m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
                             m('label.input-group', [
-                                'Onset', m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
+                                'Onset', m('input.form-control', {disabled:!stimulus.default_times || ctrl.is_locked(), type:'number', min:'0', value: stimulus.onset, placeholder: 'Onset', onchange:function(){ctrl.update_stimulus_field(id, 'onset', this.value);}})
                             ])
                         ),
                         m('.row', {class: stimulus.default_times ? '' : 'disable_properties'},
                             m('label.input-group', [
                                 'Offset',
-                                m('input.form-control', {disabled:!stimulus.default_times, type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
+                                m('input.form-control', {disabled:!stimulus.default_times || ctrl.is_locked(), type:'number', min:'-1', value: stimulus.offset, placeholder: 'Offset', onchange:function(){ctrl.update_stimulus_field(id, 'offset', this.value);}})
                             ])
                         )
                     ]),
                     m('.col-sm-2',
                         id===0 ? '' : m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'relative_to', 'trial_onset'),
                                 checked: stimulus.relative_to === 'trial_onset',
                             }), m('span.c-indicator'), ` Trial onset`
                         ])),
                         id===0 ? '' : m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
+                                disabled: ctrl.is_locked(),
                                 onclick: ()=>ctrl.update_stimulus_field(id, 'relative_to', 'last_offset'),
                                 checked: stimulus.relative_to === 'last_offset',
                             }), m('span.c-indicator'), ` ${id==0 ?'' : ctrl.possible_stimuli()[id-1].stimulus_name} offset`
@@ -242,6 +253,7 @@ let stimuliGeneratorComponent = {
                             ]))
                     )]);
             }),
+            ctrl.is_locked() ? '' :
             m('.row.space',
                 m('.col-sm-12', [
                     m('button.btn.btn-primary.btn-sm.m-r-1', {onclick:ctrl.do_add_stimulus},

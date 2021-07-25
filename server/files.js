@@ -84,6 +84,7 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
         const last_version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
         if (!version_id)
             version_id = last_version_id;
+
         const version_data = study_data.versions.filter(version=>version.id === version_id)[0];
         if (!version_data)
             return Promise.reject({status:400, message: 'Version does not exist!'});
