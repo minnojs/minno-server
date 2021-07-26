@@ -75,6 +75,7 @@ function get_experiment_url (req, test=false) {
                     .then(function(counter_data){
                         const session_id = counter_data.value.seq;
                         return {
+                            study_id: study_data._id,
                             version_data: version_data,
                             exp_id:req.params.exp_id,
                             descriptive_id: exp_data.descriptive_id,
