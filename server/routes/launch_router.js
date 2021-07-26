@@ -100,6 +100,7 @@ function displayExperiment(params, res, fingerprint){
                 }, postAlways); // post the post always stuff too - so that we can connect them...
                 const experimentSessionData=
                 {
+                    study_id: exp_data.study_id,
                     descriptiveId: exp_data.descriptive_id,
                     version:version_data.version,
                     state:version_data.state,
