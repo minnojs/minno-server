@@ -31,9 +31,9 @@ exports.RulesComparator = {
         return !(maybeNumber(element.value) == maybeNumber(participant[element.field]));
     },
     'in': function(element, participant) {
-		if(Array.isArray(participant[element.field]))
+		if(element.field)
 		{
-			if(participant[element.field].includes(element.value))
+			if(element.field[element.value])
 			{
 				return true
 			}

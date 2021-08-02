@@ -78,7 +78,8 @@ exports.getExperimentCountByRegistrationId = async function(registrationId) {
     let agg = [
         { $match : {registrationId:registrationId }},
 	    {$group: {
-	      _id: '$poolId',
+	      _id: {id: '$poolId',
+			studyId:'$studyId'},
 	      // SUCCESS!!! :D
 	      total: {$sum: 1}
 	    }}
@@ -94,10 +95,18 @@ let flattenCount= function(results)
     let flat={};
     for(const item of results)
     {
-        if(item._id)
+		if(!item._id)
+		{
+			continue;
+		}
+        if(item._id.id)
         {
-            flat[item._id]=item.total;
+            flat[item._id.id]=item.total;
         }
+		if(item._id.studyId)
+		{
+			flat[item._id.studyId]=item.total;
+		}
     }
     return flat;
 };
