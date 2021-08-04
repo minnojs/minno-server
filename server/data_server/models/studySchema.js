@@ -9,7 +9,7 @@ let CounterSchema = Schema({
 let counter = mongoose.model('counter', CounterSchema);
 
 let studySchema = new Schema({
-    studyId: {
+    exptId: {
         type: String,
         required: [true,'A studyID is required for data posts']
     },
@@ -30,7 +30,7 @@ let studySchema = new Schema({
 });
 studySchema.pre('save', function(next) {
     let doc = this;
-    counter.findByIdAndUpdate({_id: 'studyId'}, {$inc: { seq: 1} }, function(error, counter)   {
+    counter.findByIdAndUpdate({_id: 'exptId'}, {$inc: { seq: 1} }, function(error, counter)   {
         if(error)
             return next(error);
         doc.studyId = counter.seq;

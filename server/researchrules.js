@@ -33,7 +33,7 @@ exports.RulesComparator = {
     'in': function(element, participant) {
 		if(element.field)
 		{
-			if(element.field[element.value])
+			if(participant[element.field][element.value])
 			{
 				return true
 			}
@@ -44,6 +44,7 @@ exports.RulesComparator = {
 		 return !exports.RulesComparator['in'](element,participant);
     },
     '&': function(array, participant) {
+		
         if (array.data == null || array.data.length == 0) {
             return true;
         }

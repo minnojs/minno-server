@@ -112,15 +112,14 @@ exports.assignStudy = async function(registration_id) {
         });
     }
 
-    let previousStudies = await studyController.getExperimentCountByRegistrationId(registration_id);
+    let previousStudies = await studyController.getStudyCountByRegistrationId(registration_id);
     let legalStudies = [];
 	user_demographics['takenStudies']=previousStudies;
-	console.log(previousStudies);
     for (const element of arrayOfPoolStudies) {
         if (element.study_status != 'running') {
             continue;
         }
-        if (previousStudies[element._id] && !element.multiple_sessions) {
+        if (previousStudies[element.study_id] && !element.multiple_sessions) {
             continue;
         }
         if (element && element.rules && element.rules.comparator ) {

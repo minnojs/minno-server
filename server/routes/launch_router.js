@@ -119,14 +119,13 @@ function displayExperiment(params, res, fingerprint){
                 const render = promisify(res.render,res);
                 const dataUrl = urljoin(config.relative_path, 'data');
                 const {version_data = {}} = exp_data;
-
                 res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
                 res.header('Expires', '-1');
                 res.header('Pragma', 'no-cache');
 
                 const postAlways = {
                     sessionId:exp_data.session_id,
-                    studyId:exp_data.exp_id,
+                    exptId:exp_data.exp_id,
                     versionId:version_data.hash
                 };
 
@@ -137,13 +136,12 @@ function displayExperiment(params, res, fingerprint){
                 }, postAlways); // post the post always stuff too - so that we can connect them...
                 const experimentSessionData=
                 {
-                    study_id: exp_data.study_id,
+                    studyId: exp_data.study_id,
                     descriptiveId: exp_data.descriptive_id,
-                    version:version_data.version,
                     state:version_data.state,
                     sessionId:exp_data.session_id,
                     taskName:'_session_data',
-                    studyId:exp_data.exp_id,
+                    exptId:exp_data.exp_id,
                     versionId:version_data.hash,
                     data:[fingerprint],
 					

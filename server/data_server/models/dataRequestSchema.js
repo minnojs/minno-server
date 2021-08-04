@@ -2,9 +2,9 @@
 let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 let dataRequestSchema = new Schema({
-    studyId: {
+    exptId: {
         type: String,
-        required: [true,'A studyId is required']
+        required: [true,'A exptId is required']
     },
     requestId: {
         type: String,

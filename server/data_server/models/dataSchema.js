@@ -7,9 +7,9 @@ let dataSchema = new Schema({
         type: String,
         required: [true,'A sessionID is required for data posts']
     },
-    studyId: {
+    exptId: {
         type: String,
-        required: [true,'A studyID is required for data posts']
+        required: [true,'A exptID is required for data posts']
     },
     createdDate: {
         type: Date,
