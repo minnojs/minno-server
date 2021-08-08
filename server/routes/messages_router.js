@@ -37,7 +37,8 @@ messagesRouter.route('/updates')
 messagesRouter.route('/updates/:request_id')
     .post(function(req,res)
     {
-        return PI.read_review(req.user_id, req.params.request_id)
+        const creation_date = req.body.creation_date;
+        return PI.read_review(req.user_id, req.params.request_id, creation_date)
             .then(study_data=>res.json({study_id: study_data.study_id}))
             .catch(err=>res.status(err.status || 500).json({message:err.message}));
     });

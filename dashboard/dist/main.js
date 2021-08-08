@@ -19734,7 +19734,7 @@
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
     function formatDate(date_str){
-        return ((date_str.substr(6, 2)) + "/" + (date_str.substr(4, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
+        return ((date_str.substr(4, 2)) + "/" + (date_str.substr(6, 2)) + "/" + (date_str.substr(0, 4)) + " " + (date_str.substr(9, 2)) + ":" + (date_str.substr(11, 2)) + ":" + (date_str.substr(13, 2)));
     }
 
     function data_dialog (args) { return m.component(data_dialog$1, args); }
@@ -23372,8 +23372,9 @@
         method: 'get'
     }); };
 
-    var read_update = function (id) { return fetchJson(updateApiURL(id), {
-        method: 'post'
+    var read_update = function (id, creation_date) { return fetchJson(updateApiURL(id), {
+        method: 'post',
+        body:{creation_date: creation_date}
     }); };
 
     var sharingRequestComponent = {
@@ -23450,10 +23451,14 @@
                 m('.card.studies-card', [
                     m('.card-block', [
                         m('.row', {key: '@@notid@@'}, [
+                            m('.col-sm-2', [
+                                m('.form-control-static',[
+                                    m('strong', 'Creation date   ')
+                            ])]),
                             m('.col-sm-3', [
                                 m('.form-control-static',[
                                     m('strong', 'Study name ')
-                                ])]),
+                            ])]),
                             m('.col-sm-2', [
                                 m('.form-control-static',[
                                     m('strong', 'Status ')
@@ -23465,30 +23470,30 @@
                                     m('strong', 'Reviewer Comments ')
                                 ])
                             ]),
-                            m('.col-sm-4', [
+                            m('.col-sm-2', [
                                 m('.form-control-static',[
                                     m('strong', 'Action ')
                                 ])
                             ])
                         ]),
                         ctrl.updated_requests().map(function (request) { return m('.row.study-row.space', [
-                                m('.col-sm-3', [
-                                    // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
-
-                                    m('a', {href: '', onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}}, m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name))))
+                                m('.col-sm-2.space', [
+                                    formatDate(request.creation_date)
                                 ]),
-                                m('.col-sm-2', [
+                                m('.col-sm-3.space', [
+                                    m('a', {href: '', onclick:function() {ctrl.do_read(request.study_id, request.deploy_id, request.creation_date);}}, m('.study-text', ((request.study_name) + " (v" + (request.version_id) + ") - " + (request.file_name))))
+                                ]),
+                                m('.col-sm-2.space', [
                                     m('.study-text', [
                                         request.status !== 'accept' ? '' : m('strong.text-success', 'Accept'),
                                         request.status !== 'reject' ? '' : m('strong.text-danger', 'Reject')
                                     ])
                                 ]),
-                                m('.col-sm-3', [
+                                m('.col-sm-3.space', [
                                     m('.study-text', request.reviewer_comments ? request.reviewer_comments : 'None')
                                 ]),
-                                m('.col-sm-4', [
-                                    // m('.study-text', m('button.btn.btn-primary', {onclick:function() {ctrl.do_read(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'See request')),
-                                    m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id);}},  m('i.fa.fa-envelope-open'), 'Mark as read'))
+                                m('.col-sm-2', [
+                                    m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id, request.creation_date);}},  m('i.fa.fa-envelope-open'), 'Mark as read'))
                                 ]),
                             ]); })
                     ])
@@ -23537,12 +23542,12 @@
                     .then(m.redraw);
             }
 
-            function do_read(study_id, deploy_id){
-                read_update(deploy_id)
+            function do_read(study_id, deploy_id, creation_date){
+                read_update(deploy_id, creation_date)
                 .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
             }
-            function do_ignore(study_id, deploy_id){
-                read_update(deploy_id)
+            function do_ignore(study_id, deploy_id, creation_date){
+                read_update(deploy_id, creation_date)
                     .then(function (){ return ctrl.updated_requests(ctrl.updated_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
                     .then(m.redraw);
             }

@@ -45,12 +45,12 @@ let messagesComponent = {
                 .then(m.redraw);
         }
 
-        function do_read(study_id, deploy_id){
-            read_update(deploy_id)
+        function do_read(study_id, deploy_id, creation_date){
+            read_update(deploy_id, creation_date)
             .then(m.route(`/deploy/${study_id}/${deploy_id}`));
         }
-        function do_ignore(study_id, deploy_id){
-            read_update(deploy_id)
+        function do_ignore(study_id, deploy_id, creation_date){
+            read_update(deploy_id, creation_date)
                 .then(()=>ctrl.updated_requests(ctrl.updated_requests().filter(study=>study.deploy_id!==deploy_id)))
                 .then(m.redraw);
         }

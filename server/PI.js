@@ -76,11 +76,11 @@ function update_set(user_id, rules, deployer = false, user_role) {
 }
 
 
-function read_review(user_id, deploy_id){
+function read_review(user_id, deploy_id, creation_date){
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.updateOne({_id: user_id},
-            {$pull: {updated_requests: {deploy_id}}});
+            {$pull: {updated_requests: {deploy_id, creation_date}}});
     });
 }
 

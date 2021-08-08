@@ -27,6 +27,7 @@ export let use_code = (code) => fetchJson(apiURL(code), {
     method: 'get'
 });
 
-export let read_update = (id) => fetchJson(updateApiURL(id), {
-    method: 'post'
+export let read_update = (id, creation_date) => fetchJson(updateApiURL(id), {
+    method: 'post',
+    body:{creation_date}
 });
