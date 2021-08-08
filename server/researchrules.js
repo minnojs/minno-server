@@ -31,9 +31,9 @@ exports.RulesComparator = {
         return !(maybeNumber(element.value) == maybeNumber(participant[element.field]));
     },
     'in': function(element, participant) {
-		if(Array.isArray(participant[element.field]))
+		if(element.field)
 		{
-			if(participant[element.field].includes(element.value))
+			if(participant[element.field][element.value])
 			{
 				return true
 			}
@@ -44,6 +44,7 @@ exports.RulesComparator = {
 		 return !exports.RulesComparator['in'](element,participant);
     },
     '&': function(array, participant) {
+		
         if (array.data == null || array.data.length == 0) {
             return true;
         }

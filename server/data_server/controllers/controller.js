@@ -71,14 +71,14 @@ exports.getExperimentStatusCount = async function(params) {
 	  return results;
 	  
 };
-exports.getExperimentCountByRegistrationId = async function(registrationId) {
+exports.getStudyCountByRegistrationId = async function(registrationId) {
     if (!registrationId) {
         return null;
     }
     let agg = [
         { $match : {registrationId:registrationId }},
 	    {$group: {
-	      _id: '$poolId',
+	      _id: {id: '$studyId'},
 	      // SUCCESS!!! :D
 	      total: {$sum: 1}
 	    }}
@@ -94,19 +94,27 @@ let flattenCount= function(results)
     let flat={};
     for(const item of results)
     {
-        if(item._id)
+		if(!item._id)
+		{
+			continue;
+		}
+        if(item._id.id)
         {
-            flat[item._id]=item.total;
+            flat[item._id.id]=item.total;
         }
+		if(item._id.exptId)
+		{
+			flat[item._id.exptId]=item.total;
+		}
     }
     return flat;
 };
 /*exports.getExperimentStateCount = async function(params) {
-    if (params.studyId < 0 || !params.rulesId) {
+    if (params.exptId < 0 || !params.rulesId) {
         return null;
     }
 	let findBy={
-        studyId: params.studyId,
+        exptId: params.exptId,
         state: 'started',
         rulesId: params.poolId,
 		createdDate:{}
@@ -132,11 +140,11 @@ let flattenCount= function(results)
 
 };*/
 exports.getExperimentCompletes = async function(params) {
-    if (params.studyId < 0 || !params.rulesId) {
+    if (params.exptId < 0 || !params.rulesId) {
         return null;
     }
     let results = await experimentSessionSchema.countDocuments({
-        studyId: params.studyId,
+        exptId: params.exptId,
         state: 'completed',
         rulesId: params.rulesId
     });
@@ -163,11 +171,11 @@ exports.updateExperimentStatus = async function(params) {
     return results;
 };
 
-exports.getDownloadRequests = function(studyIds) {
+exports.getDownloadRequests = function(exptIds) {
     return new Promise(function(resolve, reject) {
         DataRequest.find({
             requestId: {
-                $in: studyIds
+                $in: exptIds
             }
         }, (err, dataRequests) => {
             if (err) {
@@ -184,15 +192,15 @@ exports.getDownloadRequests = function(studyIds) {
 additionalColumns: an array with strings of additional fields to include in the output
 dateSize: How to group date fields.  'day' 'month' 'year' are the options.  defaults 'day'
 **/
-exports.getStatistics = async function(studyId, versionId, startDate, endDate, dateSize, additionalColumns) {
-    if (typeof studyId == 'undefined' || !studyId)
-        throw new Error('Error: studyId must be specified');
+exports.getStatistics = async function(exptId, versionId, startDate, endDate, dateSize, additionalColumns) {
+    if (typeof exptId == 'undefined' || !exptId)
+        throw new Error('Error: exptId must be specified');
     let findObject = {};
     let pos = 0;
-    findObject.studyId = studyId;
-    if (Array.isArray(studyId)) {
-        findObject.studyId = {};
-        findObject.studyId.$in = studyId;
+    findObject.exptId = exptId;
+    if (Array.isArray(exptId)) {
+        findObject.exptId = {};
+        findObject.exptId.$in = exptId;
     }
     if (typeof startDate !== 'undefined' && startDate) {
         findObject.createdDate = {};
@@ -269,11 +277,11 @@ exports.getStatistics = async function(studyId, versionId, startDate, endDate, d
 };
 
 exports.getData2 = function(req, res) {
-    res.send(exports.getData(req.get('studyId')));
+    res.send(exports.getData(req.get('exptId')));
 };
-exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate, versionId) {
-    if (typeof studyId == 'undefined' || !studyId)
-        throw new Error('Error: studyId must be specified');
+exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, endDate, versionId) {
+    if (typeof exptId == 'undefined' || !exptId)
+        throw new Error('Error: exptId must be specified');
     let findObject = {};
     let files = {};
     let dataMaps = {};
@@ -282,10 +290,10 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let fileConfig = {};
     let dataCount = 0;
     let useDataArray = true;
-    findObject.studyId = studyId;
-    if (Array.isArray(studyId)) {
-        findObject.studyId = {};
-        findObject.studyId.$in = studyId;
+    findObject.exptId = exptId;
+    if (Array.isArray(exptId)) {
+        findObject.exptId = {};
+        findObject.exptId.$in = exptId;
     }
     if (typeof startDate !== 'undefined' && startDate) {
         findObject.createdDate = {};
@@ -460,7 +468,7 @@ let mapToRow = function(dataMap, newMap) {
 };
 exports.newStudyInstance = function(req, res) {
     let study = {
-        studyId: req.params.studyId,
+        exptId: req.params.exptId,
         conditions: req.params.conditions,
         userAgent: req.headers['user-agent'],
         referrer: req.header('Referer')

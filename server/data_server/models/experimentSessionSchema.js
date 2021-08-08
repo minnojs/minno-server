@@ -11,6 +11,10 @@ let experimentSessionSchema = new Schema({
         type: String,
         required: [true,'A studyID is required']
     },
+    exptId: {
+        type: String,
+        required: [true,'A exptID is required']
+    },
     versionId: {
         type: String,
         required: [true,'A version is required']

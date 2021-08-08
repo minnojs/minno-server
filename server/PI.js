@@ -348,7 +348,6 @@ function assign_study (registration_id) {
                             return Promise.reject({status: 400, message: 'Error: Experiment doesn\'t exist'});
 
                         const version_folder = path.join(study_data.folder_name, 'v' + version_data.id);
-
                         const url = urljoin(config.relative_path, 'users', version_folder, exp_data.file_id);
                         const base_url = urljoin(config.relative_path, 'users', version_folder, '/');
                         const file_path = join(config.user_folder, version_folder, exp_data.file_id);
@@ -360,6 +359,7 @@ function assign_study (registration_id) {
                                 const session_id = counter_data.value.seq;
                                 return {
                                     registration_id,
+									study_id:study_data._id,
                                     pool_id:study_details.pool_id,
                                     version_data: version_data,
                                     exp_id: study_details.experiment_file,
