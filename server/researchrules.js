@@ -44,48 +44,91 @@ exports.RulesComparator = {
 		 return !exports.RulesComparator['in'](element,participant);
     },
     '&': function(array, participant) {
-		
-        if (array.data == null || array.data.length == 0) {
+        if ((array.data == null || array.data.length == 0) && (array.sub_sets == null || array.sub_sets.length == 0) ) {
             return true;
         }
+		if(array.data)
+		{
         for (const element of array.data) {
             if (!exports.RulesComparator[element.comparator](element, participant)) {
                 return false;
             }
         }
+	}
+	if(array.sub_sets)
+		{
+        for (const element of array.sub_sets) {
+            if (!exports.RulesComparator[element.comparator](element, participant)) {
+                return false;
+            }
+        }
+	}
         return true;
     },
     '|': function(array, participant) {
-        if (array.data == null || array.data.length == 0) {
+        if ((array.data == null || array.data.length == 0) && (array.sub_sets == null || array.sub_sets.length == 0) ) {
             return true;
         }
+		if(array.data)
+		{
         for (const element of array.data) {
             if (exports.RulesComparator[element.comparator](element, participant)) {
                 return true;
             }
         }
+	}
+	if(array.sub_sets)
+	{
+    for (const element of array.sub_sets) {
+        if (exports.RulesComparator[element.comparator](element, participant)) {
+            return true;
+        }
+    }
+}
         return false;
     },
 	    '&&': function(array, participant) {
-        if (array.data == null || array.data.length == 0) {
+        if ((array.data == null || array.data.length == 0) && (array.sub_sets == null || array.sub_sets.length == 0) ) {
             return true;
         }
+		if(array.data)
+		{
         for (const element of array.data) {
             if (!exports.RulesComparator[element.comparator](element, participant)) {
                 return false;
             }
         }
+	}
+	if(array.sub_sets)
+		{
+        for (const element of array.sub_sets) {
+            if (!exports.RulesComparator[element.comparator](element, participant)) {
+                return false;
+            }
+        }
+	}
         return true;
     },
     '||': function(array, participant) {
-        if (array.data == null || array.data.length == 0) {
+        if ((array.data == null || array.data.length == 0) && (array.sub_sets == null || array.sub_sets.length == 0) ) {
             return true;
         }
+		if(array.data)
+		{
         for (const element of array.data) {
             if (exports.RulesComparator[element.comparator](element, participant)) {
                 return true;
             }
         }
+	}
+	if(array.sub_sets)
+	{
+    for (const element of array.sub_sets) {
+        if (exports.RulesComparator[element.comparator](element, participant)) {
+            return true;
+        }
+    }
+}
         return false;
     }
 };
