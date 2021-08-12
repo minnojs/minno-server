@@ -59,7 +59,7 @@ let updatedRequestsComponent = {
                                 m('.study-text', request.reviewer_comments ? request.reviewer_comments : 'None')
                             ]),
                             m('.col-sm-2', [
-                                m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id, request.creation_date);}},  m('i.fa.fa-envelope-open'), 'Mark as read'))
+                                m('.study-text', m('button.btn.btn-secondary', {onclick:function() {ctrl.do_ignore(request.study_id, request.deploy_id, request.creation_date);}},  m('i.fa.fa-envelope-open'), 'Delete message'))
                             ]),
                         ]))
                 ])

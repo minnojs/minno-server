@@ -191,7 +191,8 @@ function insert_new_user({username, first_name, last_name, email, role, password
             const counters   = db.collection('counters');
             return users.findOne({$or: [{user_name}, {email}]})
                 .then(function(user_data){
-                    if (user_data) return Promise.reject({status:400, message: 'User already exists'});
+                    if (user_data && user_data.user_name===user_name) return Promise.reject({status:400, message: 'User already exists'});
+                    if (user_data && user_data.email===email) return Promise.reject({status:400, message: 'This email address is already used by another user'});
                 })
                 .then(() => fs.ensureDir(userFolder))
 
