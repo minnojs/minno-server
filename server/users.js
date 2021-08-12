@@ -321,19 +321,19 @@ function connect(user_name, pass) {
         const studies  = db.collection('studies');
 
 
-        let query = {user_name, pass: utils.sha1(pass)};
+        let query = {$or: [{user_name:user_name}, {email:user_name}], pass: utils.sha1(pass)};
 
         if (!user_name.includes('#'))
             return user_obj();
 
         const users_names = user_name.split('#');
-        query = {user_name: users_names[0], pass: utils.sha1(pass)};
+        query = {$or: [{user_name:users_names[0]}, {email:users_names[0]}], pass: utils.sha1(pass)};
 
         return user_obj()
             .then(function(user_data){
                 if(user_data.role!=='su')
                     return Promise.reject({status: 400, message: 'ERROR: wrong user name / password'});
-                query = {user_name: users_names[1]};
+                query = {$or: [{user_name:users_names[1]}, {email:users_names[1]}]};
                 return user_obj();
             });
 
