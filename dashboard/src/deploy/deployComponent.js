@@ -283,7 +283,7 @@ let deployDialog = {
                     m('.col-sm-12',{onclick: () => ctrl.real_start(!ctrl.real_start())},[
                         ASTERISK, m('i.fa.fa-fw', {
                             class: classNames({'fa-square-o' : !ctrl.real_start(), 'fa-check-square-o' : ctrl.real_start()})
-                        }), 'I used a realstart and lastpage tasks'
+                        }), 'I used a “start” and “complete” tasks'
 
                     ])
                 ]),
