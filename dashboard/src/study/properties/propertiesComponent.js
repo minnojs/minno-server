@@ -195,7 +195,7 @@ let propertiesComponent = {
 
                             m('select.c-select.form-control.space',{onchange: e => update_url(e.target.value)}, [
                                 m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys && ctrl.study.versions[ctrl.study.versions.length-2].deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running' || set.status==='paused').length>0).length>0 ? '' :
+                                ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys && ctrl.study.versions[ctrl.study.versions.length-2].deploys.filter(deploy=>deploy.sets.filter(set=>set.status==='running' || set.status==='paused' || set.status==='auto-paused').length>0).length>0 ? '' :
                                     m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                             ])
                         ])
