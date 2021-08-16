@@ -24161,9 +24161,11 @@
                             m('p', 'After publishing the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL'),
                             m('p', 'To modify the files after publishing, you can create a new version ("Create a new version" button will be added below), modify files and publish the new version to replace this version.'),
                             m('.input-group.space', [
+
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                    ctrl.study.versions.length<2 ? '' : m('option', {value:'keep'}, 'Use the launch URL from the previous version')
+                                    ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys && ctrl.study.versions[ctrl.study.versions.length-2].deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running'; }).length>0; }).length>0 ? '' :
+                                        m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                                 ])
                             ])
                         ]),
