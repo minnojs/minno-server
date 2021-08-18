@@ -24164,7 +24164,7 @@
 
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                    ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys && ctrl.study.versions[ctrl.study.versions.length-2].deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running' || set.status==='paused' || set.status==='auto-paused'; }).length>0; }).length>0 ? '' :
+                                    ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys ? '' :
                                         m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                                 ])
                             ])
@@ -24522,14 +24522,14 @@
                 if (deployer)
                     return JSON.parse(JSON.stringify(autupause_rules));
                 var full_rules = JSON.parse(JSON.stringify(rules));
-                full_rules.push({
-                    name:'Did not Start or Complete Study',
-                    nameXML:"takenStudies",
-                    equal:['Study name'],
-                    equalXML:['!in'],
-                    values:studies.map(function (study){ return study.name; }),
-                    valuesXML:studies.map(function (study){ return study.id; })
-                });
+    			full_rules.push({
+    			                name:'Did not Start or Complete Study',
+    			                nameXML:"previousStudies",
+    			                equal:['Study name'],
+    			                equalXML:['!in'],
+    			                values:studies.map(function (study){ return study.name; }),
+    			                valuesXML:studies.map(function (study){ return study.id; })
+    			            });
                 return full_rules;
             });
     }

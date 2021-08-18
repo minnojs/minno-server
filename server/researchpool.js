@@ -111,15 +111,14 @@ exports.assignStudy = async function(registration_id) {
             message: 'No studies available.'
         });
     }
-
-    let previousStudies = await studyController.getStudyCountByRegistrationId(registration_id);
     let legalStudies = [];
-	user_demographics['takenStudies']=previousStudies;
+	//let previousStudies = await studyController.getStudyCountByRegistrationId(registration_id);
+	//user_demographics['takenStudies']=previousStudies;
     for (const element of arrayOfPoolStudies) {
         if (element.study_status != 'running') {
             continue;
         }
-        if (previousStudies[element.study_id] && !element.multiple_sessions) {
+        if (user_demographics.previousStudies&& user_demographics.previousStudies[element.study_id] && !element.multiple_sessions) {
             continue;
         }
         if (element && element.rules && element.rules.comparator ) {

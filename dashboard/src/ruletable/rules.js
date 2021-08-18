@@ -23,14 +23,14 @@ function get_all_rules(deployer=false)
             if (deployer)
                 return JSON.parse(JSON.stringify(autupause_rules));
             let full_rules = JSON.parse(JSON.stringify(rules));
-            full_rules.push({
-                name:'Did not Start or Complete Study',
-                nameXML:"takenStudies",
-                equal:['Study name'],
-                equalXML:['!in'],
-                values:studies.map(study=>study.name),
-                valuesXML:studies.map(study=>study.id)
-            });
+			full_rules.push({
+			                name:'Did not Start or Complete Study',
+			                nameXML:"previousStudies",
+			                equal:['Study name'],
+			                equalXML:['!in'],
+			                values:studies.map(study=>study.name),
+			                valuesXML:studies.map(study=>study.id)
+			            });
             return full_rules;
         });
 }
