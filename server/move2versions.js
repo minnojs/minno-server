@@ -56,12 +56,12 @@ connection
                         .then(()=>fs.remove(`${config.user_folder}/${study.folder_name}_tmp`))
                         // .then(()=>studies.updateOne({id:study.id}, {$set: {versions}}))
                         ;
-                    })
-
-
-                        //
-
                 })
-            });
+
+
+                //
+
+            })
+    });
 
 return;
