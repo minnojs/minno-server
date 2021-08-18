@@ -83,7 +83,7 @@ let deployDialog = {
         function update_version(version_id){
             ctrl.version_id = version_id;
             ctrl.version = ctrl.study.versions.find(version=>version.hash === version_id);
-            ctrl.exps = ctrl.version.experiments;
+            ctrl.exps = ctrl.version.experiments.filter(exp=>!exp.inactive);
         }
 
         function update_target_number(set_id, target_number){
@@ -112,7 +112,7 @@ let deployDialog = {
                             if(!m.route.param('versionId') || !ctrl.version)
                                 ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];
                             ctrl.version_id = ctrl.version.hash;
-                            ctrl.exps = ctrl.version.experiments;
+                            ctrl.exps = ctrl.version.experiments.filter(exp=>!exp.inactive);
                         })
                         .then(()=>ctrl.loaded(true))
                         .then(m.redraw);

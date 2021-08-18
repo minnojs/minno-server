@@ -193,7 +193,10 @@ let reviewDeployDialog = {
                         m('strong', 'Experiment File:')
                     ]),
                     m('.col-sm-9',
-                        m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${ctrl.deploy2show().experiment_file.id}/${ctrl.deploy2show().version_hash}`}, ctrl.deploy2show().experiment_file.file_id)
+                        [
+                            ctrl.deploy2show().experiment_file.file_id, ' ', 
+                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${ctrl.deploy2show().experiment_file.id}/${ctrl.deploy2show().version_hash}`}, ' (test)')
+                        ]
                     )
                 ]),
                 m('.row.space',[

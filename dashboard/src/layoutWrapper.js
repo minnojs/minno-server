@@ -102,8 +102,8 @@ let layout = route => {
                 // 'data':['downloads', 'downloadsAccess', 'statistics'],
                 // 'pool':[],
                 'tags':[],
-                'pi':['rules', 'pool'],
-                'admin':['deployList', 'registration',/* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                'pi':['pool', 'rules'],
+                'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
             };
 
             const settings_hash = {
@@ -126,7 +126,9 @@ let layout = route => {
                     }},
                 'admin':{text: 'Admin', href:false,
                     su:true,
-                    subs:{'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
+                    subs:{
+                    'auto-pause_rules': {text: m('i.fa.fa-gavel', ' Auto-pause Rules'), href: '/autupauseruletable'},
+                    'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
                         'registration': {text: m('i.fa.fa-sign-in', ' Registration page'), href: '/edit_registration'},
                         'removalList': {text: 'Removal List', href:'/removalList'},
                         'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},

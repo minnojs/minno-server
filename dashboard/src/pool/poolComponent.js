@@ -122,12 +122,27 @@ let poolComponent = {
                             :
                             list.map(study => m('tr', [
                                 // ### ID
-                                m('td',
+                                m('td', [
                                     m('strong', {class:[
                                         study.study_status === 'running' ?  'text-success'
                                             : study.study_status === 'paused' ?  'text-warning':
                                             'text-danger'
-                                        ]}, `${study.study_name} (v${study.version_id})`)
+                                        ]}, `${study.study_name} (v${study.version_id})`),
+                                    ' ',
+                                    m('i.fa.fa-info-circle'),
+                                        m('.info-box', [
+                                            m('.card', [
+                                                m('ul.list-group.list-group-flush',[
+                                                    m('li.list-group-item', [
+                                                        m('strong', 'Priority: '), study.priority
+                                                    ]),
+                                                    m('li.list-group-item', [
+                                                        m('strong', 'User access: '), study.multiple_sessions ? 'unlimited' : 'once'
+                                                    ])
+                                                ])
+                                            ])
+                                        ])
+                                    ]
                                 ),
                                 m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:`${testUrl}/${study.experiment_file.id}/${study.version_hash}`}, study.experiment_file.descriptive_id)),
 

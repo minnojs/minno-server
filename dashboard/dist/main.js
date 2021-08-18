@@ -11192,12 +11192,27 @@
                                 :
                                 list.map(function (study) { return m('tr', [
                                     // ### ID
-                                    m('td',
+                                    m('td', [
                                         m('strong', {class:[
                                             study.study_status === 'running' ?  'text-success'
                                                 : study.study_status === 'paused' ?  'text-warning':
                                                 'text-danger'
-                                            ]}, ((study.study_name) + " (v" + (study.version_id) + ")"))
+                                            ]}, ((study.study_name) + " (v" + (study.version_id) + ")")),
+                                        ' ',
+                                        m('i.fa.fa-info-circle'),
+                                            m('.info-box', [
+                                                m('.card', [
+                                                    m('ul.list-group.list-group-flush',[
+                                                        m('li.list-group-item', [
+                                                            m('strong', 'Priority: '), study.priority
+                                                        ]),
+                                                        m('li.list-group-item', [
+                                                            m('strong', 'User access: '), study.multiple_sessions ? 'unlimited' : 'once'
+                                                        ])
+                                                    ])
+                                                ])
+                                            ])
+                                        ]
                                     ),
                                     m('td', m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (study.experiment_file.id) + "/" + (study.version_hash))}, study.experiment_file.descriptive_id)),
 
@@ -21330,7 +21345,7 @@
             function update_version(version_id){
                 ctrl.version_id = version_id;
                 ctrl.version = ctrl.study.versions.find(function (version){ return version.hash === version_id; });
-                ctrl.exps = ctrl.version.experiments;
+                ctrl.exps = ctrl.version.experiments.filter(function (exp){ return !exp.inactive; });
             }
 
             function update_target_number(set_id, target_number){
@@ -21359,7 +21374,7 @@
                                 if(!m.route.param('versionId') || !ctrl.version)
                                     ctrl.version = ctrl.study.versions[ctrl.study.versions.length - 1];
                                 ctrl.version_id = ctrl.version.hash;
-                                ctrl.exps = ctrl.version.experiments;
+                                ctrl.exps = ctrl.version.experiments.filter(function (exp){ return !exp.inactive; });
                             })
                             .then(function (){ return ctrl.loaded(true); })
                             .then(m.redraw);
@@ -21791,7 +21806,10 @@
                             m('strong', 'Experiment File:')
                         ]),
                         m('.col-sm-9',
-                            m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (ctrl.deploy2show().experiment_file.id) + "/" + (ctrl.deploy2show().version_hash))}, ctrl.deploy2show().experiment_file.file_id)
+                            [
+                                ctrl.deploy2show().experiment_file.file_id, ' ', 
+                                m('a.fab-button', {title:'Test the study', target:'_blank',  href:(testUrl + "/" + (ctrl.deploy2show().experiment_file.id) + "/" + (ctrl.deploy2show().version_hash))}, ' (test)')
+                            ]
                         )
                     ]),
                     m('.row.space',[
@@ -24164,7 +24182,7 @@
 
                                 m('select.c-select.form-control.space',{onchange: function (e) { return update_url(e.target.value); }}, [
                                     m('option', {value:'update', selected:true}, 'Create a new launch URL'),
-                                    ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys && ctrl.study.versions[ctrl.study.versions.length-2].deploys.filter(function (deploy){ return deploy.sets.filter(function (set){ return set.status==='running' || set.status==='paused' || set.status==='auto-paused'; }).length>0; }).length>0 ? '' :
+                                    ctrl.study.versions.length<2 || ctrl.study.versions[ctrl.study.versions.length-2].deploys ? '' :
                                         m('option', {value:'keep'}, 'Use the launch URL from the previous version')
                                 ])
                             ])
@@ -25708,8 +25726,8 @@
                     // 'data':['downloads', 'downloadsAccess', 'statistics'],
                     // 'pool':[],
                     'tags':[],
-                    'pi':['rules', 'pool'],
-                    'admin':['deployList', 'registration',/* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                    'pi':['pool', 'rules'],
+                    'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
                 };
 
                 var settings_hash = {
@@ -25732,7 +25750,9 @@
                         }},
                     'admin':{text: 'Admin', href:false,
                         su:true,
-                        subs:{'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
+                        subs:{
+                        'auto-pause_rules': {text: m('i.fa.fa-gavel', ' Auto-pause Rules'), href: '/autupauseruletable'},
+                        'deployList': {text: m('i.fa.fa-list', ' Review Requests'), href: '/deployList'},
                             'registration': {text: m('i.fa.fa-sign-in', ' Registration page'), href: '/edit_registration'},
                             'removalList': {text: 'Removal List', href:'/removalList'},
                             'changeRequestList': {text:'Change Request List', href: '/changeRequestList'},
