@@ -22,6 +22,31 @@ exports.insertDemographics = async function(req,res) {
         res.status(200).json({result:'success'});
     });
 };
+exports.addStartedSession = async function(registrationId,studyId,studyName) {
+    if (!registrationId || !studyId || !studyName || registrationId < 0) {
+        return null;
+    }
+	let currentDemographics = await exports.getUserDemographics(registrationId);
+	let previousStudies=currentDemographics.previousStudies;
+	if(!previousStudies){
+	previousStudies={};}
+	previousStudies[studyId]=studyName;
+	currentDemographics.previousStudies=previousStudies;
+    let results = await Demographics.findOneAndUpdate({
+        registrationId: registrationId
+    }, {
+        demographics:currentDemographics
+    }, (err, dataRequests) => {
+        if (err) {
+            throw err;
+        } else {
+            return dataRequests;
+        }
+
+
+    });
+    return results;
+};
 
 
 

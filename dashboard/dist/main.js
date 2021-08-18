@@ -24540,14 +24540,14 @@
                 if (deployer)
                     return JSON.parse(JSON.stringify(autupause_rules));
                 var full_rules = JSON.parse(JSON.stringify(rules));
-                full_rules.push({
-                    name:'Did not Start or Complete Study',
-                    nameXML:"takenStudies",
-                    equal:['Study name'],
-                    equalXML:['!in'],
-                    values:studies.map(function (study){ return study.name; }),
-                    valuesXML:studies.map(function (study){ return study.id; })
-                });
+    			full_rules.push({
+    			                name:'Did not Start or Complete Study',
+    			                nameXML:"previousStudies",
+    			                equal:['Study name'],
+    			                equalXML:['!in'],
+    			                values:studies.map(function (study){ return study.name; }),
+    			                valuesXML:studies.map(function (study){ return study.id; })
+    			            });
                 return full_rules;
             });
     }

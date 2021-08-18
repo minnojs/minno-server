@@ -5,6 +5,7 @@ const fs            = require('fs-extra');
 const urljoin       = require('url-join');
 const config_db     = require('../config_db');
 const data_server   = require('../data_server/controllers/controller');
+const demographics  = require('../data_server/controllers/demographicsController');
 const studies       = require('../studies');
 const utils         = require('../utils');
 const PI          = require('../PI');
@@ -149,6 +150,8 @@ function displayExperiment(params, res, fingerprint){
                 if(exp_data.registration_id){
                     postAlways.registrationId = exp_data.registration_id;
                     experimentSessionData.registrationId = exp_data.registration_id;
+					demographics.addStartedSession(exp_data.registration_id,exp_data.study_id,exp_data.descriptive_id);
+					
                 }
                 if(exp_data.pool_id){
                     postAlways.poolId = exp_data.pool_id;
