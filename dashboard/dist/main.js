@@ -19741,7 +19741,7 @@
 
     function load_exps$1(ctrl){
         ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
-        ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
+        ctrl.version_id([ctrl.versions[0].hash]);
         update_exps$1(ctrl);
         m.redraw();
     }
@@ -20038,7 +20038,7 @@
 
     function load_exps(ctrl){
         ctrl.all_versions(ctrl.versions.map(function (version){ return version.hash; }));
-        ctrl.version_id([ctrl.versions.slice(-1)[0].hash]);
+        ctrl.version_id([ctrl.versions[0].hash]);
         update_exps(ctrl);
         m.redraw();
     }
