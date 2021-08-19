@@ -19539,7 +19539,7 @@
             var ctrl = {
                 data_study_id: m.prop(''),
                 exp_id: m.prop(''),
-                study_id:m.prop(study_id),
+                study_id:m.prop(parseInt(study_id)),
                 exps: exps,
                 versions: versions,
                 ask_delete_request: ask_delete_request,
@@ -19563,7 +19563,6 @@
                 }
             };
 
-
             load_studies()
                 .then(function (response) {
                     ctrl.studies(response.studies);
@@ -19579,7 +19578,9 @@
             var close = ref.close;
 
             return m('div', [
+
             m('.card-block', [
+
                 m('.input-group', [m('strong', 'Study name'),
                     m('select.c-select.form-control',{onchange: function (e) { return select_study$1(ctrl, e.target.value); }}, [
                         ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
@@ -19889,7 +19890,7 @@
                 update_experiment: update_experiment,
                 displayHelp: m.prop(false),
                 data_study_id: m.prop(''),
-                study_id:m.prop(study_id),
+                study_id:m.prop(parseInt(study_id)),
                 versions: versions,
                 studies: m.prop([]),
                 exps: m.prop([]),

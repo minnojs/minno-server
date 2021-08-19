@@ -13,7 +13,7 @@ let stat_dialog = {
             update_experiment,
             displayHelp: m.prop(false),
             data_study_id: m.prop(''),
-            study_id:m.prop(study_id),
+            study_id:m.prop(parseInt(study_id)),
             versions,
             studies: m.prop([]),
             exps: m.prop([]),
