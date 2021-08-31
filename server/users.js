@@ -17,7 +17,11 @@ function user_info (user_id) {
 
 function new_msgs (user_id) {
     return user_info(user_id)
-    .then(user_data => !!user_data.pending_studies && user_data.pending_studies.length || !!user_data.updated_requests && user_data.updated_requests.length);
+    .then(user_data => {
+        const pending = !!user_data.pending_studies ? user_data.pending_studies.length : 0;
+        const deploy = !!user_data.updated_requests ? user_data.updated_requests.length : 0;
+        return pending + deploy;
+    });
 }
 
 function user_info_by_name (user_name) {

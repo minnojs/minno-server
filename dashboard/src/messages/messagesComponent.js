@@ -9,6 +9,7 @@ let messagesComponent = {
     controller(){
         const ctrl = {
             has_messages: m.prop(false),
+            has_messages_deploy: m.prop(false),
             updated_requests: m.prop(''),
             pendings: m.prop(''),
             loaded: false,
@@ -29,9 +30,8 @@ let messagesComponent = {
             })
             .then(()=>get_updated_requests())
             .then((response) => {
-
                 ctrl.updated_requests(response.updated_requests);
-                ctrl.has_messages(ctrl.updated_requests() && ctrl.updated_requests().length>0);
+                ctrl.has_messages_deploy((ctrl.updated_requests() && ctrl.updated_requests().length>0));
             })
             .catch(response => {
                 ctrl.error(response.message);
@@ -42,7 +42,7 @@ let messagesComponent = {
             use_code(code)
                 .then(()=>ctrl.pendings(ctrl.pendings().filter(study=>study.accept!==code && study.reject!==code)))
                 .then(()=>ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0))
-                .then(m.redraw);
+        .then(m.redraw);
         }
 
         function do_read(study_id, deploy_id, creation_date){
@@ -50,8 +50,12 @@ let messagesComponent = {
             .then(m.route(`/deploy/${study_id}/${deploy_id}`));
         }
         function do_ignore(study_id, deploy_id, creation_date){
-            read_update(deploy_id, creation_date)
-                .then(()=>ctrl.updated_requests(ctrl.updated_requests().filter(study=>study.deploy_id!==deploy_id)))
+            return read_update(deploy_id, creation_date)
+                .then(()=>
+                {
+                    ctrl.updated_requests(ctrl.updated_requests().filter(study=>console.log(study.deploy_id) && study[0].deploy_id==deploy_id));
+                    ctrl.has_messages_deploy((ctrl.updated_requests() && ctrl.updated_requests().length>0));
+                })
                 .then(m.redraw);
         }
         return ctrl;
@@ -61,7 +65,7 @@ let messagesComponent = {
             ?
             m('.loader')
             :
-            !ctrl.has_messages()
+            !ctrl.has_messages() && !ctrl.has_messages_deploy()
                 ?
                 m('.container',
                     m('.row.p-t-1', [
@@ -72,9 +76,8 @@ let messagesComponent = {
                 )
                 :
                 m('.container', [
-                    !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl}),
-                    m.component(updatedRequestsComponent, {ctrl}),
-
+                    !ctrl.has_messages() ? '' : m.component(sharingRequestComponent, {ctrl}),
+                    !ctrl.has_messages_deploy() ? '' : m.component(updatedRequestsComponent, {ctrl}),
                 ]);
     }
 };

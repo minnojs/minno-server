@@ -23525,6 +23525,7 @@
         controller: function controller(){
             var ctrl = {
                 has_messages: m.prop(false),
+                has_messages_deploy: m.prop(false),
                 updated_requests: m.prop(''),
                 pendings: m.prop(''),
                 loaded: false,
@@ -23545,9 +23546,8 @@
                 })
                 .then(function (){ return get_updated_requests(); })
                 .then(function (response) {
-
                     ctrl.updated_requests(response.updated_requests);
-                    ctrl.has_messages(ctrl.updated_requests() && ctrl.updated_requests().length>0);
+                    ctrl.has_messages_deploy((ctrl.updated_requests() && ctrl.updated_requests().length>0));
                 })
                 .catch(function (response) {
                     ctrl.error(response.message);
@@ -23558,7 +23558,7 @@
                 use_code(code)
                     .then(function (){ return ctrl.pendings(ctrl.pendings().filter(function (study){ return study.accept!==code && study.reject!==code; })); })
                     .then(function (){ return ctrl.has_messages(ctrl.pendings() && ctrl.pendings().length>0); })
-                    .then(m.redraw);
+            .then(m.redraw);
             }
 
             function do_read(study_id, deploy_id, creation_date){
@@ -23566,8 +23566,11 @@
                 .then(m.route(("/deploy/" + study_id + "/" + deploy_id)));
             }
             function do_ignore(study_id, deploy_id, creation_date){
-                read_update(deploy_id, creation_date)
-                    .then(function (){ return ctrl.updated_requests(ctrl.updated_requests().filter(function (study){ return study.deploy_id!==deploy_id; })); })
+                return read_update(deploy_id, creation_date)
+                    .then(function (){
+                        ctrl.updated_requests(ctrl.updated_requests().filter(function (study){ return console.log(study.deploy_id) && study[0].deploy_id==deploy_id; }));
+                        ctrl.has_messages_deploy((ctrl.updated_requests() && ctrl.updated_requests().length>0));
+                    })
                     .then(m.redraw);
             }
             return ctrl;
@@ -23577,7 +23580,7 @@
                 ?
                 m('.loader')
                 :
-                !ctrl.has_messages()
+                !ctrl.has_messages() && !ctrl.has_messages_deploy()
                     ?
                     m('.container',
                         m('.row.p-t-1', [
@@ -23588,9 +23591,8 @@
                     )
                     :
                     m('.container', [
-                        !ctrl.pendings() ? '' : m.component(sharingRequestComponent, {ctrl: ctrl}),
-                        m.component(updatedRequestsComponent, {ctrl: ctrl}),
-
+                        !ctrl.has_messages() ? '' : m.component(sharingRequestComponent, {ctrl: ctrl}),
+                        !ctrl.has_messages_deploy() ? '' : m.component(updatedRequestsComponent, {ctrl: ctrl}),
                     ]);
         }
     };
