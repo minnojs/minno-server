@@ -9115,13 +9115,6 @@
         throw error;
     };
 
-    var checkFullStatus = function (response) {
-        if (response.status >= 200 && response.status < 300) {
-            return response;
-        }
-        throw response;
-    };
-
     var toJSON = function (response) { return response
         .json()
         .catch( ); };
@@ -9147,24 +9140,6 @@
         return fetch(url, opts)
             .then(checkStatus)
             .catch(catchJSON);
-    }
-
-    function fetchFullJson(url, options){
-        if ( options === void 0 ) options = {};
-
-        var opts = Object.assign({
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }, options);
-
-        opts.body = JSON.stringify(options.body);
-        return fetch(url, opts)
-            .then(checkFullStatus)
-            .then(toJSON)
-            .catch();
     }
 
     function fetchJson(url, options){
@@ -19051,7 +19026,7 @@
         get: function get(){
             var this$1$1 = this;
 
-            return fetchFullJson(this.apiURL())
+            return fetchJson(this.apiURL())
                 .then(function (study) {
                     // const files = this.parseFiles(study.files);
                     var files = flattenFiles(study.files)
@@ -19268,6 +19243,8 @@
             var study = ref.study;
 
             return m('.study', {config: fullHeight},  [
+                !study.err ? '' :
+                    m('.alert.alert-danger',  study.err),
                 !study.loaded ? '' : splitPane({
                     leftWidth: leftWidth$1,
                     left: m.component(sidebarComponent, {study: study}),

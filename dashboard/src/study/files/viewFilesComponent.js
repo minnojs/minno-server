@@ -19,7 +19,7 @@ let editorLayoutComponent = {
                 ?
                 study
                     .get()
-                    .catch(err=>study.err = err.message)
+                    .catch(err=> study.err = err.message)
                     .then(m.redraw)
                 :
                 study
@@ -33,6 +33,8 @@ let editorLayoutComponent = {
     },
     view: ({study}) => {
         return m('.study', {config: fullheight},  [
+            !study.err ? '' :
+                m('.alert.alert-danger',  study.err),
             !study.loaded ? '' : splitPane({
                 leftWidth,
                 left: m.component(sidebarComponent, {study}),
