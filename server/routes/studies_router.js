@@ -181,7 +181,8 @@ studiesRouter.route('/:study_id/collaboration')
         function(req, res){
             studies.get_collaborations(req.user_id, parseInt(req.params.study_id))
                 .then(function ({users, study_name, is_public, link}) {
-                    res.json({users, is_public, link, study_name
+                    const link_str = config.server_url+ '/dashboard/?/view/'+ link;
+                    res.json({users, is_public, link:link_str, study_name
                     });
                 })
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));

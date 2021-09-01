@@ -10,8 +10,8 @@ const sidebarButtons = ({study}, notifications) => {
     return m('.sidebar-buttons.btn-toolbar', [
 
 
-        m('.btn-group.btn-group-sm', [
-            m('a.btn.btn-secondary.btn-sm', {onclick: ()=>m.route(`/properties/${study.id}`), title: `Study properties`}, [
+         m('.btn-group.btn-group-sm', [
+            m('a.btn.btn-secondary.btn-sm', {class: study.code ? 'disabled' : '', onclick: ()=>m.route(`/properties/${study.id}`), title: `Study properties`}, [
                 m('i.fa.fa-gear')
             ]),
 

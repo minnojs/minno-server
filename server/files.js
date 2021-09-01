@@ -250,7 +250,6 @@ function download_files(user_id, study_id, version_id, files) {
         .then(function({study_data}){
             if (version_id==='latest')
                 version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
-
             return Promise.all(files.map(function(file) {
                 const path2copy = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file);
                 return fs.copy(path2copy, zip_path + '/' + file);
