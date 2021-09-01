@@ -4,6 +4,7 @@ const studies     = require('../studies');
 const config      = require('../../config');
 const viewRouter  = express.Router();
 const utils       = require('../utils');
+const {messages} = require('node-input-validator');
 
 module.exports = viewRouter;
 
@@ -55,7 +56,7 @@ viewRouter.route('/:link_id')
             return studies.get_id_with_link(link)
                 .then(function(study){
                     if(!study)
-                        return res.status(400).json('Error: code doesn\'t exist');
+                        return res.status(400).json({message: 'Error: code doesn\'t exist'});
                     const owner_id = study.users.filter(user=>user.permission==='owner')[0].user_id;
                     return files.get_study_files(owner_id, parseInt(study._id), config.server_url)
                         .then(function(response){

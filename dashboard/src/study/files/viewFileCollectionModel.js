@@ -69,7 +69,7 @@ let studyPrototype = {
     },
 
     get(){
-        return fetchFullJson(this.apiURL())
+        return fetchJson(this.apiURL())
             .then(study => {
                 // const files = this.parseFiles(study.files);
                 let files = flattenFiles(study.files)
