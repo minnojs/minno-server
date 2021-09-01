@@ -12732,6 +12732,7 @@
 
     var filePrototype = {
         apiUrl: function apiUrl(){
+
             if(this.viewStudy && !this.version_id)
                 return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
             if(this.viewStudy && !!this.version_id)
@@ -13743,6 +13744,7 @@
 
     var downloadChosenFiles = function (study) { return function () {
         var chosenFiles = study.getChosenFiles().map(function (f){ return f.path; });
+
         if (!chosenFiles.length) {
             messages.alert({
                 header:'Download Files',
@@ -19031,8 +19033,8 @@
         return m('.sidebar-buttons.btn-toolbar', [
 
 
-            m('.btn-group.btn-group-sm', [
-                m('a.btn.btn-secondary.btn-sm', {onclick: function (){ return m.route(("/properties/" + (study.id))); }, title: "Study properties"}, [
+             m('.btn-group.btn-group-sm', [
+                m('a.btn.btn-secondary.btn-sm', {class: study.code ? 'disabled' : '', onclick: function (){ return m.route(("/properties/" + (study.id))); }, title: "Study properties"}, [
                     m('i.fa.fa-gear')
                 ]),
 

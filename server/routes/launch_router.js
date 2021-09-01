@@ -36,11 +36,7 @@ router.get('/test/:exp_id/:version_id',function(req, res){
 });
 
 router.get('/view_play/:link_id/:file_id',function(req, res){
-    // todoR: const server_url =  req.protocol + '://' + req.headers.host+config.relative_path;
-
-    const link = utils.clean_url(config.server_url + '/dashboard/?/view/'+req.params.link_id);
-
-    return studies.get_id_with_link(link)
+    return studies.get_id_with_link(req.params.link_id)
         .then(function(study) {
             const owner_id = study.users.filter(user => user.permission === 'owner')[0].user_id;
             return experiments

@@ -5,6 +5,7 @@ export default fileFactory;
 
 const filePrototype = {
     apiUrl(){
+
         if(this.viewStudy && !this.version_id)
             return `${baseUrl}/view_files/${m.route.param('code')}/file/${encodeURIComponent(this.id)}`;
         if(this.viewStudy && !!this.version_id)
