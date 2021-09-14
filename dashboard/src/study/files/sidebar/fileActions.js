@@ -98,21 +98,21 @@ export let renameFile = (file, study, notifications) => () => {
 
 export let update_experiment = (file, study, notifications, update) => () => {
     let descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.name.split('.').slice(0, -1).join('.'));
+
     let error = m.prop('');
 
-    const ask = () => messages.confirm({
-        header:'New Name',
-        content: {
-            view(){
-                return m('div', [
-                    m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
-                    !error() ? '' : m('p.alert.alert-danger', error())
-                ]);
-            }
-        }
-    }).then(response => response && update_exp());
+    const ask = () =>
+        messages.prompt({
+            header: 'New Name',
+            content: m('div',[
+                'Enter Descriptive Id',
+                !error() ? '' : m('p.alert.alert-danger', error())
+                ]),
+                prop: descriptive_id
 
-    let update_exp = () => {
+    }).then(response => response && update_exp(descriptive_id));
+
+    let update_exp = (descriptive_id) => {
         if (!descriptive_id()) {
             error('Error: missing descriptive id');
             return ask();

@@ -219,6 +219,10 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                 const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
                 let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id && exp.descriptive_id === descriptive_id);
+                const exist_exp = version_data.experiments.find(exp=> exp.file_id !== file_id && exp.descriptive_id === descriptive_id && !exp.inactive);
+                if(!!exist_exp)
+                    return Promise.reject({status:400, message: 'Descriptive id is already in used'});
+
                 if(exp_data) {
                     exp_data.inactive = false;
                 }
@@ -268,6 +272,9 @@ function update_descriptive_id(user_id, study_id, file_id, descriptive_id) {
                 const versions = study_data.versions;
                 const version_data = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
                 let exp_data = version_data.experiments.find(exp=> exp.file_id === file_id);
+                const exist_exp = version_data.experiments.find(exp=> exp.file_id !== file_id && exp.descriptive_id === descriptive_id && !exp.inactive);
+                if(!!exist_exp)
+                    return Promise.reject({status:400, message: 'Descriptive id is already in used'});
                 exp_data.descriptive_id = descriptive_id;
 
                 const studies = db.collection('studies');
