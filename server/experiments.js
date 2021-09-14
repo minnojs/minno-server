@@ -223,7 +223,7 @@ function insert_new_experiment(user_id, study_id, file_id, descriptive_id) {
                 if(!!exist_exp)
                     return Promise.reject({status:400, message: 'Descriptive id is already in used'});
 
-                if(exp_data) {
+                if(!!exp_data) {
                     exp_data.inactive = false;
                 }
                 else {
