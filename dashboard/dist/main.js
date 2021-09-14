@@ -19711,6 +19711,7 @@
             var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
             version2show.experiments.map(function (exp){ return experiments2show.push(exp); });
         });
+        experiments2show = experiments2show.filter(function (exp){ return !exp.inactive; });
         ctrl.exps(experiments2show);
         ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
         ctrl.exp_id(ctrl.all_exp_ids());
@@ -20008,6 +20009,7 @@
             var version2show = ctrl.versions.find(function (version){ return version.hash===id; });
             version2show.experiments.map(function (exp){ return experiments2show.push(exp); });
         });
+        experiments2show = experiments2show.filter(function (exp){ return !exp.inactive; });
         ctrl.exps(experiments2show);
         ctrl.all_exp_ids(ctrl.exps().map(function (exp){ return exp.id; }));
         ctrl.exp_id(ctrl.all_exp_ids());

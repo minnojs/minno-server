@@ -207,6 +207,7 @@ function update_exps(ctrl){
         const version2show = ctrl.versions.find(version=>version.hash===id);
         version2show.experiments.map(exp=>experiments2show.push(exp));
     });
+    experiments2show = experiments2show.filter(exp=>!exp.inactive);
     ctrl.exps(experiments2show);
     ctrl.all_exp_ids(ctrl.exps().map(exp=>exp.id));
     ctrl.exp_id(ctrl.all_exp_ids());
