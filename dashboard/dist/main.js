@@ -13482,21 +13482,20 @@
 
     var update_experiment = function (file, study, notifications, update) { return function () {
         var descriptive_id = m.prop(update ? file.exp_data.descriptive_id : file.name.split('.').slice(0, -1).join('.'));
+
         var error = m.prop('');
 
-        var ask = function () { return messages.confirm({
-            header:'New Name',
-            content: {
-                view: function view(){
-                    return m('div', [
-                        m('input.form-control',  {placeholder: 'Enter Descriptive Id', value: descriptive_id(), onchange: m.withAttr('value', descriptive_id)}),
-                        !error() ? '' : m('p.alert.alert-danger', error())
-                    ]);
-                }
-            }
-        }).then(function (response) { return response && update_exp(); }); };
+        var ask = function () { return messages.prompt({
+                header: 'New Name',
+                content: m('div',[
+                    'Enter Descriptive Id',
+                    !error() ? '' : m('p.alert.alert-danger', error())
+                    ]),
+                    prop: descriptive_id
 
-        var update_exp = function () {
+        }).then(function (response) { return response && update_exp(descriptive_id); }); };
+
+        var update_exp = function (descriptive_id) {
             if (!descriptive_id()) {
                 error('Error: missing descriptive id');
                 return ask();
