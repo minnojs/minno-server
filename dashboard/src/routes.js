@@ -25,6 +25,7 @@ import editRegistrationComponent from './admin/edit_registration/editRegistratio
 
 import addUserComponent from './addUser/addUserComponent';
 import usersComponent from './admin/users/usersComponent';
+import participantsComponent from './admin/participants/participantsComponent';
 import configComponent from './admin/config/configComponent';
 import homepageComponent from './admin/homepage/homepageComponent';
 import settingsComponent from './settings/settingsComponent';
@@ -62,6 +63,7 @@ let routes = {
     '/deployList': deployListComponent,
     '/addUser':  addUserComponent,
     '/users':  usersComponent,
+    '/participants':  participantsComponent,
     '/config':  configComponent,
     '/homepage':  homepageComponent,
     '/massMail':  massMailComponent,

@@ -103,7 +103,7 @@ let layout = route => {
                 // 'pool':[],
                 'tags':[],
                 'pi':['pool', 'rules'],
-                'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'participants', 'config', 'homepage'/*, 'massMail'*/]
             };
 
             const settings_hash = {
@@ -136,7 +136,8 @@ let layout = route => {
                         'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
                         'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                         'massMail': {text: 'Send MassMail', href: '/massMail'},
-                        'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
+                        'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
+                        'participants': {text: m('i.fa.fa-laptop', ' Participants'), href: '/participants'}
                     }}
 
             };

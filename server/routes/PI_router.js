@@ -13,6 +13,16 @@ PIRouter
         next();
     });
 
+PIRouter.route('/participants')
+    .post(
+        function(req, res){
+            console.log(req.body)
+                .then(participants=>res.json(participants))
+                .catch(err=>res.status(err.status || 500).json({message:err.message}));
+
+        });
+
+
 PIRouter.route('/research_pool')
     .post(
         function(req, res){

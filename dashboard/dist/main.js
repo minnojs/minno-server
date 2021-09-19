@@ -9172,7 +9172,7 @@
 
 
     // console.log(location.href);
-    var baseUrl            = "" + urlPrefix;
+    var baseUrl$1            = "" + urlPrefix;
     var studyUrl           = urlPrefix + "/studies";
     var PIUrl              = urlPrefix + "/PI";
     var launchUrl          = urlPrefix + "/launch";
@@ -11298,10 +11298,10 @@
                     m('.col-sm-5',[
                         m('label', m.trust('&nbsp')),
                         m('.text-muted.btn-toolbar', [
-                            dayButtonView$3(ctrl, 'Last 7 Days', 7),
-                            dayButtonView$3(ctrl, 'Last 30 Days', 30),
-                            dayButtonView$3(ctrl, 'Last 90 Days', 90),
-                            dayButtonView$3(ctrl, 'All time', 3650)
+                            dayButtonView$4(ctrl, 'Last 7 Days', 7),
+                            dayButtonView$4(ctrl, 'Last 30 Days', 30),
+                            dayButtonView$4(ctrl, 'Last 90 Days', 90),
+                            dayButtonView$4(ctrl, 'All time', 3650)
                         ])
                     ])
                 ]) ,
@@ -11402,7 +11402,7 @@
         }
     }
 
-    var dayButtonView$3 = function (ctrl, name, days) { return m('button.btn.btn-secondary.btn-sm', {onclick: function () {
+    var dayButtonView$4 = function (ctrl, name, days) { return m('button.btn.btn-secondary.btn-sm', {onclick: function () {
         var d = new Date();
         d.setDate(d.getDate() - days);
         ctrl.startDate(d);
@@ -11449,7 +11449,7 @@
             var download ={
                 studyId: m.prop(''),
                 db: m.prop('test'),
-                startDate: m.prop(daysAgo$2(3650)),
+                startDate: m.prop(daysAgo$3(3650)),
                 endDate: m.prop(new Date())
             };
 
@@ -11531,10 +11531,10 @@
                             m('.form-group', [
                                 dateRangePicker(download),
                                 m('p.text-muted.btn-toolbar', [
-                                    dayButtonView$2(download, 'Last 7 Days', 7),
-                                    dayButtonView$2(download, 'Last 30 Days', 30),
-                                    dayButtonView$2(download, 'Last 90 Days', 90),
-                                    dayButtonView$2(download, 'All time', 3650)
+                                    dayButtonView$3(download, 'Last 7 Days', 7),
+                                    dayButtonView$3(download, 'Last 30 Days', 30),
+                                    dayButtonView$3(download, 'Last 90 Days', 90),
+                                    dayButtonView$3(download, 'All time', 3650)
                                 ])
                             ])
                         ])
@@ -11553,23 +11553,23 @@
     };
 
     // helper functions for the day buttons
-    var daysAgo$2 = function (days) {
+    var daysAgo$3 = function (days) {
         var d = new Date();
         d.setDate(d.getDate() - days);
         return d;
     };
-    var equalDates$2 = function (date1, date2) { return date1.getDate() === date2.getDate(); };
-    var activeDate$2 = function (ref, days) {
+    var equalDates$3 = function (date1, date2) { return date1.getDate() === date2.getDate(); };
+    var activeDate$3 = function (ref, days) {
         var startDate = ref.startDate;
         var endDate = ref.endDate;
 
-        return equalDates$2(startDate(), daysAgo$2(days)) && equalDates$2(endDate(), new Date());
+        return equalDates$3(startDate(), daysAgo$3(days)) && equalDates$3(endDate(), new Date());
     };
 
-    var dayButtonView$2 = function (download, name, days) { return m('button.btn.btn-secondary.btn-sm', {
-        class: activeDate$2(download, days)? 'active' : '',
+    var dayButtonView$3 = function (download, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+        class: activeDate$3(download, days)? 'active' : '',
         onclick: function () {
-            download.startDate(daysAgo$2(days));
+            download.startDate(daysAgo$3(days));
             download.endDate(new Date());
         }
     }, name); };
@@ -12253,9 +12253,9 @@
         return result;
     }, {}); };
 
-    var loginUrl = baseUrl + "/connect";
-    var logoutUrl = baseUrl + "/logout";
-    var is_logedinUrl = baseUrl + "/is_loggedin";
+    var loginUrl = baseUrl$1 + "/connect";
+    var logoutUrl = baseUrl$1 + "/logout";
+    var is_logedinUrl = baseUrl$1 + "/is_loggedin";
 
     var login$1 = function (username, password) { return fetchJson(loginUrl, {
         method: 'post',
@@ -12525,7 +12525,7 @@
         };
     }
 
-    var registrationUrl = baseUrl + "/registration";
+    var registrationUrl = baseUrl$1 + "/registration";
 
     var registration = function (email_address) { return fetchText(registrationUrl, {
         method: 'post',
@@ -12599,7 +12599,7 @@
     }
 
     var assignmentUrl = "../assignment";
-    console.log(baseUrl);
+    console.log(baseUrl$1);
     var login = function (email_address) { return fetchText(assignmentUrl, {
         method: 'post',
         body: {email_address: email_address}
@@ -12709,13 +12709,13 @@
         apiUrl: function apiUrl(){
 
             if(this.viewStudy && !this.version_id)
-                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl$1 + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
             if(this.viewStudy && !!this.version_id)
-                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl$1 + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
 
             if (this.version_id)
-                return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
-            return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl$1 + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
         },
 
         get: function get(){
@@ -12876,15 +12876,15 @@
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + path);
+            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + path);
         },
         apiDownloadURL: function apiDownloadURL(version_id){
-            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version_id + "/files");
+            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version_id + "/files");
         },
         apiVersionURL: function apiVersionURL(path, version){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version + "/" + path);
+            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version + "/" + path);
         },
 
         get4version: function get4version(version){
@@ -13137,7 +13137,7 @@
         downloadFiles: function downloadFiles(files, version){
             version = !version ? 'latest' : version.version ;
             return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files: files}})
-                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
+                .then(function (response) { return (baseUrl$1 + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
 
         delFiles: function delFiles(files){
@@ -13564,9 +13564,9 @@
         function openNew(){
             if (playground && !playground.closed) playground.close();
 
-            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
+            var url = !file.viewStudy ? (baseUrl$1 + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl$1 + "/view_play/" + (study.code) + "/" + (file.id));
             if (study.version)
-                url = baseUrl + "/play/" + (study.id) + "/" + (study.version.version) + "/" + (file.id);
+                url = baseUrl$1 + "/play/" + (study.id) + "/" + (study.version.version) + "/" + (file.id);
             playground = window.open(url, 'Playground');
             playground.onload = function(){
                 playground.addEventListener('unload', function() {
@@ -19216,11 +19216,11 @@
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
+            return (baseUrl$1 + "/view_files/" + (encodeURIComponent(this.code)) + path);
         },
 
         apiVersionURL: function apiVersionURL(version){
-            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
+            return (baseUrl$1 + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
         },
 
         get4version: function get4version(version){
@@ -19396,7 +19396,7 @@
          */
         downloadFiles: function downloadFiles(files){
             return fetchJson(this.apiURL(), {method: 'post', body: {files: files}})
-                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
+                .then(function (response) { return (baseUrl$1 + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
 
 
@@ -19771,8 +19771,8 @@
                 link: m.prop(''),
                 error: m.prop(null),
                 dates: {
-                    startDate: m.prop(daysAgo$1(3650)),
-                    endDate: m.prop(daysAgo$1(0))
+                    startDate: m.prop(daysAgo$2(3650)),
+                    endDate: m.prop(daysAgo$2(0))
                 }
             };
 
@@ -19844,10 +19844,10 @@
                         m('.form-group', [
                             dateRangePicker(ctrl.dates),
                             m('p.text-muted.btn-toolbar', [
-                                dayButtonView$1(ctrl.dates, 'Last 7 Days', 7),
-                                dayButtonView$1(ctrl.dates, 'Last 30 Days', 30),
-                                dayButtonView$1(ctrl.dates, 'Last 90 Days', 90),
-                                dayButtonView$1(ctrl.dates, 'All time', 3650)
+                                dayButtonView$2(ctrl.dates, 'Last 7 Days', 7),
+                                dayButtonView$2(ctrl.dates, 'Last 30 Days', 30),
+                                dayButtonView$2(ctrl.dates, 'Last 90 Days', 90),
+                                dayButtonView$2(ctrl.dates, 'All time', 3650)
                             ])
                         ])
                     ])
@@ -19886,7 +19886,7 @@
             .then(function (response) {
                 var file_data = response.data_file;
                 if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
-                ctrl.link((baseUrl + "/download?path=" + file_data), file_data);
+                ctrl.link((baseUrl$1 + "/download?path=" + file_data), file_data);
             })
             .catch(function (err){ return ctrl.error(err.message); })
             .then(function (){ return ctrl.downloaded(true); })
@@ -19903,23 +19903,23 @@
     }
 
     // helper functions for the day buttons
-    var daysAgo$1 = function (days) {
+    var daysAgo$2 = function (days) {
         var d = new Date();
         d.setDate(d.getDate() - days);
         return d;
     };
-    var equalDates$1 = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
-    var activeDate$1 = function (ref, days) {
+    var equalDates$2 = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
+    var activeDate$2 = function (ref, days) {
         var startDate = ref.startDate;
         var endDate = ref.endDate;
 
-        return equalDates$1(startDate(), daysAgo$1(days)) && equalDates$1(endDate(), new Date());
+        return equalDates$2(startDate(), daysAgo$2(days)) && equalDates$2(endDate(), new Date());
     };
-    var dayButtonView$1 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+    var dayButtonView$2 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
 
-        class: activeDate$1(dates, days)? 'active' : '',
+        class: activeDate$2(dates, days)? 'active' : '',
         onclick: function () {
-            dates.startDate(daysAgo$1(days));
+            dates.startDate(daysAgo$2(days));
             dates.endDate(new Date());
         }
     }, name); };
@@ -20057,7 +20057,7 @@
 
                         m('td', size_format(download.size)),
                         m('td', !download.size ? '-' : [
-                            m('a', {href:(baseUrl + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                            m('a', {href:(baseUrl$1 + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
                             m('i', ' | '),
                             m('a', {href:'..', onclick: function() {ask_delete_request(download.study_id, download._id, ctrl); return false;}}, m('i.fa.fa-close'))
                         ]),
@@ -20123,8 +20123,8 @@
                 link: m.prop(''),
                 error: m.prop(null),
                 dates: {
-                    startDate: m.prop(daysAgo(3650)),
-                    endDate: m.prop(daysAgo(0))
+                    startDate: m.prop(daysAgo$1(3650)),
+                    endDate: m.prop(daysAgo$1(0))
                 }
             };
 
@@ -20189,10 +20189,10 @@
                         m('.form-group', [
                             dateRangePicker(ctrl.dates),
                             m('p.text-muted.btn-toolbar', [
-                                dayButtonView(ctrl.dates, 'Last 7 Days', 7),
-                                dayButtonView(ctrl.dates, 'Last 30 Days', 30),
-                                dayButtonView(ctrl.dates, 'Last 90 Days', 90),
-                                dayButtonView(ctrl.dates, 'All time', 3650)
+                                dayButtonView$1(ctrl.dates, 'Last 7 Days', 7),
+                                dayButtonView$1(ctrl.dates, 'Last 30 Days', 30),
+                                dayButtonView$1(ctrl.dates, 'Last 90 Days', 90),
+                                dayButtonView$1(ctrl.dates, 'All time', 3650)
                             ]),
                             m('small.text-muted',  'The data for the study statistics by day is saved in 24 hour increments by date in USA eastern time (EST).')
                         ])
@@ -20297,23 +20297,23 @@
 
 
     // helper functions for the day buttons
-    var daysAgo = function (days) {
+    var daysAgo$1 = function (days) {
         var d = new Date();
         d.setDate(d.getDate() - days);
         return d;
     };
-    var equalDates = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
-    var activeDate = function (ref, days) {
+    var equalDates$1 = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
+    var activeDate$1 = function (ref, days) {
         var startDate = ref.startDate;
         var endDate = ref.endDate;
 
-        return equalDates(startDate(), daysAgo(days)) && equalDates(endDate(), new Date());
+        return equalDates$1(startDate(), daysAgo$1(days)) && equalDates$1(endDate(), new Date());
     };
-    var dayButtonView = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+    var dayButtonView$1 = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
 
-        class: activeDate(dates, days)? 'active' : '',
+        class: activeDate$1(dates, days)? 'active' : '',
         onclick: function () {
-            dates.startDate(daysAgo(days));
+            dates.startDate(daysAgo$1(days));
             dates.endDate(new Date());
         }
     }, name); };
@@ -22114,7 +22114,7 @@
         ctrl.experiment(ctrl.version().experiments.find(function (exp){ return exp.id===experiment_id; }));
     }
 
-    var add_userUrl = baseUrl + "/users/add_user";
+    var add_userUrl = baseUrl$1 + "/users/add_user";
 
     var add = function (username, first_name , last_name, email, iscu) { return fetchJson(add_userUrl, {
         method: 'post',
@@ -22237,22 +22237,22 @@
     var focus_it$2 = function (element, isInitialized) {
         if (!isInitialized) setTimeout(function () { return element.focus(); });};
 
-    function users_url()
+    function users_url$1()
     {
-        return (baseUrl + "/users");
+        return (baseUrl$1 + "/users");
     }
 
 
-    var get_users = function () { return fetchJson(users_url(), {
+    var get_users$1 = function () { return fetchJson(users_url$1(), {
         method: 'get'
     }); };
 
-    var remove_user = function (user_id) { return fetchJson(users_url(), {
+    var remove_user = function (user_id) { return fetchJson(users_url$1(), {
         body: {user_id: user_id},
         method: 'delete'
     }); };
 
-    var update_role = function (user_id, role) { return fetchJson(users_url(), {
+    var update_role = function (user_id, role) { return fetchJson(users_url$1(), {
         body: {user_id: user_id, role: role},
         method: 'put'
     }); };
@@ -22270,7 +22270,7 @@
                 activate_user: activate_user,
                 add_user: add_user};
             function load() {
-                get_users()
+                get_users$1()
                     .then(function (response) { return ctrl.users(response.users); })
                     .then(function (){ return ctrl.loaded = true; })
                     .catch(function (error) {
@@ -22378,14 +22378,213 @@
         }
     };
 
+    function participants_url()
+    {
+        return (baseUrl$1 + "/PI/participants");
+    }
+
+    function users_url()
+    {
+        return (baseUrl$1 + "/users");
+    }
+    /* should be removed */
+    var get_users = function () { return fetchJson(users_url(), {
+        method: 'get'
+    }); };
+    var get_participants = function (file_format, relative_to, start_date, end_date) { return fetchJson(participants_url(), {
+        method: 'post',
+        body: {file_format: file_format, relative_to: relative_to, start_date: start_date, end_date: end_date}
+    }); };
+
+    var participantsComponent = {
+        controller: function controller(){
+            var ctrl = {
+                file_format: m.prop('csv'),
+                dates: {
+                    relative_to: m.prop('registration'),
+                    startDate: m.prop(daysAgo(3650)),
+                    endDate: m.prop(daysAgo(0))
+                },
+                error:m.prop(''),
+                downloaded:m.prop(false),
+                ask_get_participants: ask_get_participants,
+                users:m.prop(),
+                requests:m.prop([]),
+                loaded:m.prop(false),
+                col_error:m.prop(''),
+                password:m.prop('')
+            };
+
+            function load_requests(ctrl){
+                get_requests()
+                    .then(function (response) { return ctrl.requests(response.requests); })
+                    .then(function (){
+                        if (ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length)
+                            setTimeout(function (){ return load_requests(ctrl); }, 5000);
+                    })
+                    .catch(ctrl.error)
+                    .then(ctrl.loaded.bind(null, true))
+                    .then(m.redraw);
+            }
+
+            function ask_get_participants(){
+                ctrl.error('');
+                ctrl.downloaded(false);
+
+                var correct_start_date = new Date(ctrl.dates.startDate());
+                correct_start_date.setHours(0,0,0,0);
+
+                var correct_end_date = new Date(ctrl.dates.endDate());
+                correct_end_date.setHours(23,59,59,999);
+
+                return get_participants(ctrl.file_format(), ctrl.dates.relative_to(), correct_start_date, correct_end_date)
+                    .then(function (response) {
+                        var file_data = response.data_file;
+                        if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
+                        ctrl.link((baseUrl + "/download?path=" + file_data), file_data);
+                    })
+                    .catch(function (err){ return ctrl.error(err.message); })
+                    .then(function (){ return ctrl.downloaded(true); })
+                    .then(function (){ return load_requests(ctrl); })
+                    .then(m.redraw);
+            }
+
+            function load() {
+                get_users()
+                    .then(function (response) { return ctrl.users(response.users); })
+                    .then(function (){ return ctrl.loaded(true); })
+                    .then(function (){ return load_requests(ctrl); })
+
+                    .catch(function (error) {
+                        ctrl.col_error(error.message);
+                    }).then(m.redraw);
+            }
+            load();
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return  !ctrl.loaded()
+                ?
+                m('.loader')
+                :
+                m('.container.participants-page', [
+                    m('.row.double_space',[
+                        m('.col-sm-12', [
+                            m('h3', 'Participants')
+                        ])
+                    ]),
+                    m('.row', [
+
+                        m('.col-sm-3', [
+                            m('.input-group', [m('strong', 'Output type'),
+                                m('select.c-select.form-control',{onchange: function (e) { return ctrl.file_format(e.target.value); }}, [
+                                    m('option', {value:'csv'}, 'csv'),
+                                    m('option', {value:'tsv'}, 'tsv'),
+                                    m('option', {value:'json'}, 'json')
+                                ])
+                            ])
+                        ]),
+                        m('.col-sm-3', [
+                            m('.input-group', [m('strong', 'Time relative to:'),
+                                m('select.c-select.form-control',{onchange: function (e) { return ctrl.dates.relative_to(e.target.value); }}, [
+                                    m('option', {value:'registration'}, 'Registration'),
+                                    m('option', {value:'activity'}, 'Activity')
+                                ])
+                            ])
+                        ])
+                    ]),
+                    m('.row.space', [
+                        m('.col-sm-12', [
+                            m('.form-group', [
+                                dateRangePicker(ctrl.dates),
+                                m('p.text-muted.btn-toolbar', [
+                                    dayButtonView(ctrl.dates, 'Last 7 Days', 7),
+                                    dayButtonView(ctrl.dates, 'Last 30 Days', 30),
+                                    dayButtonView(ctrl.dates, 'Last 90 Days', 90),
+                                    dayButtonView(ctrl.dates, 'All time', 3650)
+                                ])
+                            ])
+                        ])
+                    ]),
+                    m('.row.space',
+                        m('.col-sm-12',
+                            m('.btn-group.btn-group-sm.pull-right',
+                                m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length, onclick:function (){ctrl.ask_get_participants();}}, 'Download')
+                            )
+                        )
+                    )
+                  /*  ,
+
+                    m('table.space', {class:'table table-striped table-hover'}, [
+                        m('thead', [
+                            m('tr', [
+                                m('th', 'User name'),
+                                m('th',  'First name'),
+                                m('th',  'Last name'),
+                                m('th',  'Email'),
+                                m('th',  'Role'),
+                                ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length>0 ? m('th',  'Actions') : '',
+                                m('th',  'Remove')
+                            ])
+                        ]),
+                        m('tbody', [
+                            ctrl.users().map(user => m('tr', [
+                                m('td', user.user_name),
+                                m('td', user.first_name),
+                                m('td', user.last_name),
+                                m('td', user.email),
+                                m('td',
+                                    m('select.form-control', {value:user.role, onchange : function(){ }}, [
+                                        m('option',{value:'u', selected: user.role !== 'su'},  'Simple user'),
+                                        m('option',{value:'du', selected: user.role !== 'du'},  'Deployer'),
+                                        m('option',{value:'su', selected: user.role === 'su'}, 'Super user')
+                                    ])
+                                ),
+
+                                ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length==0 ? '' :
+                                    !user.reset_code && !user.activation_code ?  m('td', '') :
+                                        user.reset_code ? m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Reset password'))
+                                            : m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Activate user')),
+
+                                m('td', m('button.btn.btn-danger', {onclick:()=>{}}, 'Remove'))
+                            ]))
+                        ]),
+                    ])
+                */
+                ]);
+        }
+    };
+
+    var equalDates = function (date1, date2) { return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth(); };
+    var activeDate = function (ref, days) {
+        var startDate = ref.startDate;
+        var endDate = ref.endDate;
+
+        return equalDates(startDate(), daysAgo(days)) && equalDates(endDate(), new Date());
+    };
+    var dayButtonView = function (dates, name, days) { return m('button.btn.btn-secondary.btn-sm', {
+
+        class: activeDate(dates, days)? 'active' : '',
+        onclick: function () {
+            dates.startDate(daysAgo(days));
+            dates.endDate(new Date());
+        }
+    }, name); };
+
+    var daysAgo = function (days) {
+        var d = new Date();
+        d.setDate(d.getDate() - days);
+        return d;
+    };
+
     function config_url()
     {
-        return (baseUrl + "/config");
+        return (baseUrl$1 + "/config");
     }
 
     function params_url()
     {
-        return (baseUrl + "/config/params");
+        return (baseUrl$1 + "/config/params");
     }
 
 
@@ -22881,7 +23080,7 @@
 
     function homepage_url()
     {
-        return (baseUrl + "/config/homepage");
+        return (baseUrl$1 + "/config/homepage");
     }
 
 
@@ -23016,11 +23215,11 @@
         }
     };
 
-    var change_password_url = baseUrl + "/change_password";
-    var change_email_url = baseUrl + "/change_email";
-    var update_details_url = baseUrl + "/settings";
-    var present_templates_url = baseUrl + "/present_templates";
-    var dropbox_url = baseUrl + "/dropbox";
+    var change_password_url = baseUrl$1 + "/change_password";
+    var change_email_url = baseUrl$1 + "/change_email";
+    var update_details_url = baseUrl$1 + "/settings";
+    var present_templates_url = baseUrl$1 + "/present_templates";
+    var dropbox_url = baseUrl$1 + "/dropbox";
 
     function apiURL$3(code)
     {   
@@ -23345,8 +23544,8 @@
         }
     };
 
-    var pending_url = baseUrl + "/pending";
-    var updated_requests_url = baseUrl + "/updates";
+    var pending_url = baseUrl$1 + "/pending";
+    var updated_requests_url = baseUrl$1 + "/updates";
 
     function apiURL$2(code)
     {
@@ -23355,7 +23554,7 @@
 
     function updateApiURL(id)
     {
-        return (baseUrl + "/updates/" + id);
+        return (baseUrl$1 + "/updates/" + id);
     }
 
     var get_pending_studies = function () { return fetchJson(pending_url, {
@@ -23577,7 +23776,7 @@
         }
     };
 
-    var massMailUrl = baseUrl + "/mass_mail";
+    var massMailUrl = baseUrl$1 + "/mass_mail";
 
     var send = function (subject, body , ru, su, cu) { return fetchJson(massMailUrl, {
         method: 'post',
@@ -23837,7 +24036,7 @@
         }
     };
 
-    var recoveryUrl = baseUrl + "/recovery";
+    var recoveryUrl = baseUrl$1 + "/recovery";
 
 
     var recovery = function (username) { return fetchJson(recoveryUrl, {
@@ -25569,6 +25768,7 @@
         '/deployList': deployComponent,
         '/addUser':  addComponent,
         '/users':  usersComponent,
+        '/participants':  participantsComponent,
         '/config':  configComponent,
         '/homepage':  homepageComponent,
         '/massMail':  massMailComponent,
@@ -25710,7 +25910,7 @@
                     // 'pool':[],
                     'tags':[],
                     'pi':['pool', 'rules'],
-                    'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                    'admin':[ 'deployList', 'auto-pause_rules', 'registration', /* 'removalList', 'changeRequestList', 'addUser', */'users', 'participants', 'config', 'homepage'/*, 'massMail'*/]
                 };
 
                 var settings_hash = {
@@ -25743,7 +25943,8 @@
                             'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
                             'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                             'massMail': {text: 'Send MassMail', href: '/massMail'},
-                            'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
+                            'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
+                            'participants': {text: m('i.fa.fa-laptop', ' Participants'), href: '/participants'}
                         }}
 
                 };
