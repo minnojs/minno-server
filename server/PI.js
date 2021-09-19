@@ -572,8 +572,8 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-function get_participants_between_dates(file_format, relative_to, start_date, end_date) {
-    console.log({file_format, relative_to, start_date, end_date});
+function get_participants_between_dates(file_format, pertains_to, start_date, end_date) {
+    console.log({file_format, pertains_to, start_date, end_date});
     return Promise.resolve({});
 }
 

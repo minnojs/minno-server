@@ -22391,9 +22391,9 @@
     var get_users = function () { return fetchJson(users_url(), {
         method: 'get'
     }); };
-    var get_participants = function (file_format, relative_to, start_date, end_date) { return fetchJson(participants_url(), {
+    var get_participants = function (file_format, pertains_to, start_date, end_date) { return fetchJson(participants_url(), {
         method: 'post',
-        body: {file_format: file_format, relative_to: relative_to, start_date: start_date, end_date: end_date}
+        body: {file_format: file_format, pertains_to: pertains_to, start_date: start_date, end_date: end_date}
     }); };
 
     var participantsComponent = {
@@ -22401,7 +22401,7 @@
             var ctrl = {
                 file_format: m.prop('csv'),
                 dates: {
-                    relative_to: m.prop('registration'),
+                    pertains_to: m.prop('registration'),
                     startDate: m.prop(daysAgo(3650)),
                     endDate: m.prop(daysAgo(0))
                 },
@@ -22437,7 +22437,7 @@
                 var correct_end_date = new Date(ctrl.dates.endDate());
                 correct_end_date.setHours(23,59,59,999);
 
-                return get_participants(ctrl.file_format(), ctrl.dates.relative_to(), correct_start_date, correct_end_date)
+                return get_participants(ctrl.file_format(), ctrl.dates.pertains_to(), correct_start_date, correct_end_date)
                     .then(function (response) {
                         var file_data = response.data_file;
                         if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
@@ -22470,7 +22470,7 @@
                 m('.container.participants-page', [
                     m('.row.double_space',[
                         m('.col-sm-12', [
-                            m('h3', 'Participants')
+                            m('h3', 'Participation Data')
                         ])
                     ]),
                     m('.row', [
@@ -22485,8 +22485,8 @@
                             ])
                         ]),
                         m('.col-sm-3', [
-                            m('.input-group', [m('strong', 'Time relative to:'),
-                                m('select.c-select.form-control',{onchange: function (e) { return ctrl.dates.relative_to(e.target.value); }}, [
+                            m('.input-group', [m('strong', 'Date range pertains to:'),
+                                m('select.c-select.form-control',{onchange: function (e) { return ctrl.dates.pertains_to(e.target.value); }}, [
                                     m('option', {value:'registration'}, 'Registration'),
                                     m('option', {value:'activity'}, 'Activity')
                                 ])
@@ -25944,7 +25944,7 @@
                             'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                             'massMail': {text: 'Send MassMail', href: '/massMail'},
                             'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
-                            'participants': {text: m('i.fa.fa-laptop', ' Participants'), href: '/participants'}
+                            'participants': {text: m('i.fa.fa-laptop', ' Participation Data'), href: '/participants'}
                         }}
 
                 };

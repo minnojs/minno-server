@@ -137,7 +137,7 @@ let layout = route => {
                         'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                         'massMail': {text: 'Send MassMail', href: '/massMail'},
                         'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
-                        'participants': {text: m('i.fa.fa-laptop', ' Participants'), href: '/participants'}
+                        'participants': {text: m('i.fa.fa-laptop', ' Participation Data'), href: '/participants'}
                     }}
 
             };

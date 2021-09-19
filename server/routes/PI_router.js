@@ -16,7 +16,7 @@ PIRouter
 PIRouter.route('/participants')
     .post(
         function(req, res){
-            PI.get_participants_between_dates(req.body.file_format, req.body.relative_to, req.body.start_date, req.body.end_date)
+            PI.get_participants_between_dates(req.body.file_format, req.body.pertains_to, req.body.start_date, req.body.end_date)
                 .then(participants=>res.json(participants))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
 

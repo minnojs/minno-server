@@ -30,7 +30,7 @@ export let change_user_password = (user_id, password) => fetchJson(users_url(), 
     body: {user_id, password},
     method: 'put'
 });
-export let get_participants = (file_format, relative_to, start_date, end_date) => fetchJson(participants_url(), {
+export let get_participants = (file_format, pertains_to, start_date, end_date) => fetchJson(participants_url(), {
     method: 'post',
-    body: {file_format, relative_to, start_date, end_date}
+    body: {file_format, pertains_to, start_date, end_date}
 });
