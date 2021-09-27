@@ -12,6 +12,7 @@ let participantsComponent = {
     controller(){
         let ctrl = {
             file_format: m.prop('csv'),
+            demographic: m.prop('without'),
             dates: {
                 pertains_to: m.prop('registration'),
                 startDate: m.prop(daysAgo(3650)),
@@ -49,7 +50,7 @@ let participantsComponent = {
             let correct_end_date = new Date(ctrl.dates.endDate());
             correct_end_date.setHours(23,59,59,999);
 
-            return get_participants(ctrl.file_format(), ctrl.dates.pertains_to(), correct_start_date, correct_end_date)
+            return get_participants(ctrl.file_format(), ctrl.dates.pertains_to(), ctrl.demographic(), correct_start_date, correct_end_date)
                 .then(response => {
                     const file_data = response.data_file;
                     if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
@@ -97,13 +98,22 @@ let participantsComponent = {
                         ])
                     ]),
                     m('.col-sm-3', [
-                        m('.input-group', [m('strong', 'Date range pertains to:'),
+                        m('.input-group', [m('strong', 'Date range pertains to'),
                             m('select.c-select.form-control',{onchange: e => ctrl.dates.pertains_to(e.target.value)}, [
                                 m('option', {value:'registration'}, 'Registration'),
                                 m('option', {value:'activity'}, 'Activity')
                             ])
                         ])
+                    ]),
+                    m('.col-sm-3', [
+                        m('.input-group', [m('strong', 'Demographic data'),
+                            m('select.c-select.form-control',{onchange: e => ctrl.demographic(e.target.value)}, [
+                                m('option', {value:'without'}, 'Exclude demographic data'),
+                                m('option', {value:'with'}, 'Include demographic data')
+                            ])
+                        ])
                     ])
+
                 ]),
                 m('.row.space', [
                     m('.col-sm-12', [

@@ -17227,7 +17227,7 @@
             ]),
 
             m('.btn-group.btn-group-sm.pull-xs-right', [
-                m('a.btn.btn-secondary', {href: "https://minnojs.github.io/minno-quest/0.2/basics/overview.html", target: '_blank', title:'API documentation'},[
+                m('a.btn.btn-secondary', {href: "https://minnojs.github.io/docs/", target: '_blank', title:'API documentation'},[
                     m('strong.fa.fa-book'),
                     m('strong', ' Docs')
                 ]),
@@ -22391,15 +22391,16 @@
     var get_users = function () { return fetchJson(users_url(), {
         method: 'get'
     }); };
-    var get_participants = function (file_format, pertains_to, start_date, end_date) { return fetchJson(participants_url(), {
+    var get_participants = function (file_format, pertains_to, demographic, start_date, end_date) { return fetchJson(participants_url(), {
         method: 'post',
-        body: {file_format: file_format, pertains_to: pertains_to, start_date: start_date, end_date: end_date}
+        body: {file_format: file_format, pertains_to: pertains_to, demographic: demographic, start_date: start_date, end_date: end_date}
     }); };
 
     var participantsComponent = {
         controller: function controller(){
             var ctrl = {
                 file_format: m.prop('csv'),
+                demographic: m.prop('without'),
                 dates: {
                     pertains_to: m.prop('registration'),
                     startDate: m.prop(daysAgo(3650)),
@@ -22437,7 +22438,7 @@
                 var correct_end_date = new Date(ctrl.dates.endDate());
                 correct_end_date.setHours(23,59,59,999);
 
-                return get_participants(ctrl.file_format(), ctrl.dates.pertains_to(), correct_start_date, correct_end_date)
+                return get_participants(ctrl.file_format(), ctrl.dates.pertains_to(), ctrl.demographic(), correct_start_date, correct_end_date)
                     .then(function (response) {
                         var file_data = response.data_file;
                         if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
@@ -22485,13 +22486,22 @@
                             ])
                         ]),
                         m('.col-sm-3', [
-                            m('.input-group', [m('strong', 'Date range pertains to:'),
+                            m('.input-group', [m('strong', 'Date range pertains to'),
                                 m('select.c-select.form-control',{onchange: function (e) { return ctrl.dates.pertains_to(e.target.value); }}, [
                                     m('option', {value:'registration'}, 'Registration'),
                                     m('option', {value:'activity'}, 'Activity')
                                 ])
                             ])
+                        ]),
+                        m('.col-sm-3', [
+                            m('.input-group', [m('strong', 'Demographic data'),
+                                m('select.c-select.form-control',{onchange: function (e) { return ctrl.demographic(e.target.value); }}, [
+                                    m('option', {value:'without'}, 'Exclude demographic data'),
+                                    m('option', {value:'with'}, 'Include demographic data')
+                                ])
+                            ])
                         ])
+
                     ]),
                     m('.row.space', [
                         m('.col-sm-12', [
