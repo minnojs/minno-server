@@ -10,6 +10,7 @@ const config        = require('../config');
 const path          = require('path');
 const urljoin       = require('url-join');
 const join          = require('path').join;
+const data_server   = require('./data_server/controllers/controller');
 
 
 const {has_write_permission} = require('./studies');
@@ -574,7 +575,7 @@ function change_deploy(user_id, study_id, props) {
 
 function get_participants_between_dates(file_format, pertains_to, start_date, end_date) {
     console.log({file_format, pertains_to, start_date, end_date});
-    return Promise.resolve({});
+	return data_server.getData(null, file_format, null, start_date, end_date, null, true);
 }
 
 
