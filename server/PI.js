@@ -307,13 +307,12 @@ function registration(email_address) {
                     {
                         if (data)
                             return Promise.reject({status: 400, message: 'This email is already in used'});
-                        return participants.insertOne({email_address})
+                        return participants.insertOne({email_address, registration_date: Date.now()})
                             .then(function (user_result) {
                                 if (!user_result)
                                     return Promise.reject();
                                 return Promise.resolve(user_result.ops[0]);
                             });
-
                     });
             });
         });
