@@ -34,3 +34,11 @@ export let get_participants = (file_format, pertains_to, demographic, start_date
     method: 'post',
     body: {file_format, pertains_to, demographic, start_date, end_date}
 });
+
+export let get_requests = () => fetchJson(participants_url());
+
+export let delete_request = (request_id) => fetchJson(participants_url(), {
+    method: 'delete',
+    body: {request_id}
+
+});

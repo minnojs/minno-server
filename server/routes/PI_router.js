@@ -1,6 +1,7 @@
 const express       = require('express');
 const PI            = require('../PI');
 const research_pool = require('../researchpool');
+const experiments = require('../experiments');
 const PIRouter = express.Router();
 
 module.exports = PIRouter;
@@ -16,11 +17,32 @@ PIRouter
 PIRouter.route('/participants')
     .post(
         function(req, res){
-            PI.get_participants_between_dates(req.body.file_format, req.body.pertains_to, req.body.demographic, req.body.start_date, req.body.end_date)
+            PI.get_participants_between_dates(req.user_id, req.body.file_format, req.body.pertains_to, req.body.demographic, req.body.start_date, req.body.end_date)
+
                 .then(participants=>res.json(participants))
                 .catch(err=>res.status(err.status || 500).json({message:err.message}));
 
-        });
+        })
+    .get(
+        function(req, res){
+            PI.get_participants_requests(req.user_id)
+                .then(function (requests) {
+                    res.json({requests});
+                })
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
+        })
+    .delete(function(req, res){
+        PI.delete_participants_request(req.user_id, req.body.request_id)
+            .then(function (requests) {
+                res.json({requests});
+            })
+            .catch(err=> {
+                res.status(err.status || 500).json({message: err.message});
+            });
+    })
+;
 
 
 PIRouter.route('/research_pool')

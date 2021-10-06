@@ -10,9 +10,12 @@ const config        = require('../config');
 const path          = require('path');
 const urljoin       = require('url-join');
 const join          = require('path').join;
+const data_server   = require('./data_server/controllers/controller');
 
 
 const {has_write_permission} = require('./studies');
+const {ObjectId} = require('mongodb');
+const fs = require('fs-extra');
 
 function get_rules(user_id, deployer = false, user_role = '') {
     if(deployer && (user_role !== 'du' && user_role !== 'su'))
@@ -572,10 +575,96 @@ function change_deploy(user_id, study_id, props) {
         });
 }
 
-function get_participants_between_dates(file_format, pertains_to, demographic, start_date, end_date) {
-    console.log({file_format, pertains_to, demographic, start_date, end_date});
-    return Promise.resolve({});
+function get_participants_between_dates(user_id, file_format, pertains_to, with_demographic, start_date, end_date) {
+    // console.log({file_format, pertains_to, start_date, end_date});
+    // return delete_participants_request(user_id, '615d6524865e8711f64f5bff');
+    return add_participants_request(user_id, file_format, start_date, end_date, pertains_to, false)
+                .then((record)=>{
+
+                    const request_id=record.ops[0]._id;
+                    data_server.getData(null, file_format, null, start_date, end_date, null, true)
+                        .then(path2file=>update_participants_request(request_id, path2file))
+                        .catch(()=>cancel_participants_request(request_id));
+                    return {request_id};
+                })
+        .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
+}
+
+function get_participants_requests(user_id) {
+    return connection.then(function (db) {
+        const participants_requests = db.collection('participants_requests');
+        return participants_requests.find({user_id})
+            .toArray();
+    });
+}
+
+function delete_participants_request(user_id, request_id) {
+    return connection.then(function (db) {
+        const participants_requests = db.collection('participants_requests');
+        return participants_requests.findOne({_id: ObjectId(request_id)})
+            .then(request => {
+                participants_requests.deleteOne({_id: ObjectId(request_id)});
+                const delPath = path.join(config.base_folder, config.dataFolder,  request.path);
+                fs.remove(delPath);
+            });
+    });
+}
+
+function add_participants_request(user_id, file_format, start_date, end_date, pertains_to, with_demographic) {
+    return connection.then(function (db) {
+
+        const week_ms = 1000*60*60*24*7;
+        const participants_requests = db.collection('participants_requests');
+        return participants_requests.find({creation_date: {$lt: Date.now()-week_ms}})
+            .toArray()
+            .then(requests => { return Promise.all(requests.map(request => {
+                if (!request.path)
+                    return;
+                const delPath = path.join(config.base_folder, config.dataFolder,  request.path);
+                fs.remove(delPath);
+            }));
+            })
+            .then(() => participants_requests.deleteMany({creation_date: {$lt: Date.now()-week_ms}}))
+            .then(() => participants_requests.deleteMany({status:'No data'}))
+            .then(() => participants_requests.insertOne({
+                user_id,
+                file_format,
+                start_date,
+                end_date,
+                with_demographic,
+                pertains_to,
+                status: 'in progress',
+                creation_date: Date.now()
+            }));
+    });
 }
 
 
-module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review, get_participants_between_dates};
+function update_participants_request(request_id, path2file) {
+    return connection.then(function (db) {
+        return fs.stat(path.join(config.base_folder, config.dataFolder, path2file)).then(file_data=>{
+
+            const participants_requests = db.collection('participants_requests');
+            return participants_requests.updateOne({_id: request_id},
+                {$set:{
+                        status: 'Ready',
+                        path: path2file,
+                        size: file_data.size}}
+            );
+        });
+    });
+}
+
+function cancel_participants_request(request_id) {
+    return connection.then(function (db) {
+        const participants_requests = db.collection('participants_requests');
+        return participants_requests.updateOne({_id: request_id},
+            {$set:{
+                    status: 'No data',
+                    path: '',
+                    size: ''}}
+        );
+    });
+}
+
+module.exports = {login_and_assign, add2pool, pause_study, remove_study, edit_registration, registration, get_registration, get_all_participants, assign_study, get_registration_url, get_rules, insert_new_set, delete_set, update_set, request_deploy, change_deploy, get_deploy, get_all_deploys, update_deploy, read_review, get_participants_between_dates, get_participants_requests, delete_participants_request};

@@ -279,10 +279,21 @@ exports.getStatistics = async function(exptId, versionId, startDate, endDate, da
 exports.getData2 = function(req, res) {
     res.send(exports.getData(req.get('exptId')));
 };
-exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, endDate, versionId) {
-    if (typeof exptId == 'undefined' || !exptId)
-        throw new Error('Error: exptId must be specified');
-    let findObject = {};
+exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, endDate, versionId, experimentSessionOnly) {
+	let findObject = {};
+    if (!experimentSessionOnly && (typeof exptId == 'undefined' || !exptId)){
+        throw new Error('Error: exptId must be specified');}
+
+	if (experimentSessionOnly){
+		findObject.registrationId= { $ne: null }  //only return sessions from registered participants
+	}
+	else{
+		findObject.exptId = exptId;
+	    if (Array.isArray(exptId)) {
+	        findObject.exptId = {};
+	        findObject.exptId.$in = exptId;
+	    }
+	}
     let files = {};
     let dataMaps = {};
     let rowSplitString = '\t';
@@ -290,11 +301,7 @@ exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, en
     let fileConfig = {};
     let dataCount = 0;
     let useDataArray = true;
-    findObject.exptId = exptId;
-    if (Array.isArray(exptId)) {
-        findObject.exptId = {};
-        findObject.exptId.$in = exptId;
-    }
+
     if (typeof startDate !== 'undefined' && startDate) {
         findObject.createdDate = {};
         findObject.createdDate.$gt = new Date(startDate);
@@ -324,7 +331,9 @@ exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, en
         rowSplitString = '\t';
     }
     let newMapArray = [maxRowsInMemory];
-    let cursor = Data.find(findObject).lean().cursor({
+	let cursor=null;
+	if(!experimentSessionOnly){
+     cursor = Data.find(findObject).lean().cursor({
         batchSize: 10000
     }); //;
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
@@ -352,11 +361,14 @@ exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, en
         };
 
     }
+}
+// console.log(findObject);
     cursor = experimentSessionSchema.find(findObject).lean().cursor({
         batchSize: 10000
     }); //;
     try {
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+			// console.log(dataEntry);
             let newMaps = getInitialVarMap(dataEntry);
             if (useDataArray) {
                 newMapArray[dataCount] = newMaps;
@@ -396,6 +408,7 @@ exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, en
         }
 
     } else {
+		if(!experimentSessionOnly){
         cursor = cursor = Data.find(findObject).lean().cursor({
             batchSize: 10000
         });
@@ -420,6 +433,7 @@ exports.getData = async function(exptId, fileFormat, fileSplitVar, startDate, en
                 writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
             }
         }
+	}
         cursor = experimentSessionSchema.find(findObject).lean().cursor({
             batchSize: 10000
         });

@@ -9172,7 +9172,7 @@
 
 
     // console.log(location.href);
-    var baseUrl$1            = "" + urlPrefix;
+    var baseUrl            = "" + urlPrefix;
     var studyUrl           = urlPrefix + "/studies";
     var PIUrl              = urlPrefix + "/PI";
     var launchUrl          = urlPrefix + "/launch";
@@ -10991,10 +10991,10 @@
     var create_study = function (body) { return fetchJson(studyUrl, { method: 'post', body: body }); };
 
 
-    var get_requests = function (study_id) { return fetchJson(get_requests_url(study_id)); };
+    var get_requests$1 = function (study_id) { return fetchJson(get_requests_url(study_id)); };
 
 
-    var delete_request = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
+    var delete_request$1 = function (study_id, request_id) { return fetchJson(get_requests_url(study_id), {
         method: 'delete',
         body: {request_id: request_id}
 
@@ -12253,9 +12253,9 @@
         return result;
     }, {}); };
 
-    var loginUrl = baseUrl$1 + "/connect";
-    var logoutUrl = baseUrl$1 + "/logout";
-    var is_logedinUrl = baseUrl$1 + "/is_loggedin";
+    var loginUrl = baseUrl + "/connect";
+    var logoutUrl = baseUrl + "/logout";
+    var is_logedinUrl = baseUrl + "/is_loggedin";
 
     var login$1 = function (username, password) { return fetchJson(loginUrl, {
         method: 'post',
@@ -12525,7 +12525,7 @@
         };
     }
 
-    var registrationUrl = baseUrl$1 + "/registration";
+    var registrationUrl = baseUrl + "/registration";
 
     var registration = function (email_address) { return fetchText(registrationUrl, {
         method: 'post',
@@ -12599,7 +12599,7 @@
     }
 
     var assignmentUrl = "../assignment";
-    console.log(baseUrl$1);
+    console.log(baseUrl);
     var login = function (email_address) { return fetchText(assignmentUrl, {
         method: 'post',
         body: {email_address: email_address}
@@ -12709,13 +12709,13 @@
         apiUrl: function apiUrl(){
 
             if(this.viewStudy && !this.version_id)
-                return (baseUrl$1 + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/file/" + (encodeURIComponent(this.id)));
             if(this.viewStudy && !!this.version_id)
-                return (baseUrl$1 + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl + "/view_files/" + (m.route.param('code')) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
 
             if (this.version_id)
-                return (baseUrl$1 + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
-            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
+                return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/version/" + (this.version_id) + "/file/" + (encodeURIComponent(this.id)));
+            return (baseUrl + "/files/" + (encodeURIComponent(this.studyId)) + "/file/" + (encodeURIComponent(this.id)));
         },
 
         get: function get(){
@@ -12876,15 +12876,15 @@
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + path);
+            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + path);
         },
         apiDownloadURL: function apiDownloadURL(version_id){
-            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version_id + "/files");
+            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version_id + "/files");
         },
         apiVersionURL: function apiVersionURL(path, version){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl$1 + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version + "/" + path);
+            return (baseUrl + "/files/" + (encodeURIComponent(this.id)) + "/version/" + version + "/" + path);
         },
 
         get4version: function get4version(version){
@@ -13137,7 +13137,7 @@
         downloadFiles: function downloadFiles(files, version){
             version = !version ? 'latest' : version.version ;
             return fetchJson(this.apiDownloadURL(version), {method: 'post', body: {files: files}})
-                .then(function (response) { return (baseUrl$1 + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
+                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
 
         delFiles: function delFiles(files){
@@ -13564,9 +13564,9 @@
         function openNew(){
             if (playground && !playground.closed) playground.close();
 
-            var url = !file.viewStudy ? (baseUrl$1 + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl$1 + "/view_play/" + (study.code) + "/" + (file.id));
+            var url = !file.viewStudy ? (baseUrl + "/play/" + (study.id) + "/" + (file.id)) : (baseUrl + "/view_play/" + (study.code) + "/" + (file.id));
             if (study.version)
-                url = baseUrl$1 + "/play/" + (study.id) + "/" + (study.version.version) + "/" + (file.id);
+                url = baseUrl + "/play/" + (study.id) + "/" + (study.version.version) + "/" + (file.id);
             playground = window.open(url, 'Playground');
             playground.onload = function(){
                 playground.addEventListener('unload', function() {
@@ -19216,11 +19216,11 @@
         apiURL: function apiURL(path){
             if ( path === void 0 ) path = '';
 
-            return (baseUrl$1 + "/view_files/" + (encodeURIComponent(this.code)) + path);
+            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + path);
         },
 
         apiVersionURL: function apiVersionURL(version){
-            return (baseUrl$1 + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
+            return (baseUrl + "/view_files/" + (encodeURIComponent(this.code)) + "/version/" + (encodeURIComponent(version)));
         },
 
         get4version: function get4version(version){
@@ -19396,7 +19396,7 @@
          */
         downloadFiles: function downloadFiles(files){
             return fetchJson(this.apiURL(), {method: 'post', body: {files: files}})
-                .then(function (response) { return (baseUrl$1 + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
+                .then(function (response) { return (baseUrl + "/download?path=" + (response.zip_file) + "&study=_PATH"); });
         },
 
 
@@ -19886,7 +19886,7 @@
             .then(function (response) {
                 var file_data = response.data_file;
                 if (file_data == null) return Promise.reject('There was a problem creating your file, please contact your administrator');
-                ctrl.link((baseUrl$1 + "/download?path=" + file_data), file_data);
+                ctrl.link((baseUrl + "/download?path=" + file_data), file_data);
             })
             .catch(function (err){ return ctrl.error(err.message); })
             .then(function (){ return ctrl.downloaded(true); })
@@ -19896,7 +19896,7 @@
     }
 
     function ask_delete_request(study_id, request_id, ctrl){
-        return delete_request(study_id, request_id)
+        return delete_request$1(study_id, request_id)
             .then(function (){ return load_requests(ctrl); })
             .then(m.redraw);
 
@@ -19961,7 +19961,7 @@
     }
 
     function load_requests(ctrl){
-        get_requests(ctrl.study_id())
+        get_requests$1(ctrl.study_id())
             .then(function (response) { return ctrl.requests(response.requests); })
             .then(function (){
                 if (ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length)
@@ -20055,9 +20055,9 @@
                             ])
                         ]),
 
-                        m('td', size_format(download.size)),
+                        m('td', size_format$1(download.size)),
                         m('td', !download.size ? '-' : [
-                            m('a', {href:(baseUrl$1 + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                            m('a', {href:(baseUrl + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
                             m('i', ' | '),
                             m('a', {href:'..', onclick: function() {ask_delete_request(download.study_id, download._id, ctrl); return false;}}, m('i.fa.fa-close'))
                         ]),
@@ -20067,7 +20067,7 @@
             ];
     }
 
-    function size_format(bytes){
+    function size_format$1(bytes){
         if (!bytes)
             return '-';
 
@@ -22114,7 +22114,7 @@
         ctrl.experiment(ctrl.version().experiments.find(function (exp){ return exp.id===experiment_id; }));
     }
 
-    var add_userUrl = baseUrl$1 + "/users/add_user";
+    var add_userUrl = baseUrl + "/users/add_user";
 
     var add = function (username, first_name , last_name, email, iscu) { return fetchJson(add_userUrl, {
         method: 'post',
@@ -22239,7 +22239,7 @@
 
     function users_url$1()
     {
-        return (baseUrl$1 + "/users");
+        return (baseUrl + "/users");
     }
 
 
@@ -22380,12 +22380,12 @@
 
     function participants_url()
     {
-        return (baseUrl$1 + "/PI/participants");
+        return (baseUrl + "/PI/participants");
     }
 
     function users_url()
     {
-        return (baseUrl$1 + "/users");
+        return (baseUrl + "/users");
     }
     /* should be removed */
     var get_users = function () { return fetchJson(users_url(), {
@@ -22394,6 +22394,14 @@
     var get_participants = function (file_format, pertains_to, demographic, start_date, end_date) { return fetchJson(participants_url(), {
         method: 'post',
         body: {file_format: file_format, pertains_to: pertains_to, demographic: demographic, start_date: start_date, end_date: end_date}
+    }); };
+
+    var get_requests = function () { return fetchJson(participants_url()); };
+
+    var delete_request = function (request_id) { return fetchJson(participants_url(), {
+        method: 'delete',
+        body: {request_id: request_id}
+
     }); };
 
     var participantsComponent = {
@@ -22409,6 +22417,7 @@
                 error:m.prop(''),
                 downloaded:m.prop(false),
                 ask_get_participants: ask_get_participants,
+                ask_delete_request: ask_delete_request,
                 users:m.prop(),
                 requests:m.prop([]),
                 loaded:m.prop(false),
@@ -22426,6 +22435,13 @@
                     .catch(ctrl.error)
                     .then(ctrl.loaded.bind(null, true))
                     .then(m.redraw);
+            }
+
+            function ask_delete_request(request_id){
+                return delete_request(request_id)
+                    .then(function (){ return load_requests(ctrl); })
+                    .then(m.redraw);
+
             }
 
             function ask_get_participants(){
@@ -22522,45 +22538,98 @@
                                 m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length, onclick:function (){ctrl.ask_get_participants();}}, 'Download')
                             )
                         )
-                    )
-                  /*  ,
+                    ),
+                    ctrl.requests().length === 0
+                        ?
+                        ''
+                        :[m('table', {class:'table table-striped table-hover'}, [
+                            m('thead', [
+                                m('tr', [
+                                    // m('th', 'ID')
+                                    m('th', 'Date Added'),
+                                    m('th', 'File Size'),
+                                    m('th', 'Actions'),
+                                    m('th','Status'),
+                                ])
+                            ]),
+                            m('tbody',
+                                ctrl.requests().map(function (download) { return m('tr', [
+                                    m('td', [
+                                        formatDate$1(new Date(download.creation_date)),
+                                        '  ',
+                                        m('i.fa.fa-info-circle'),
+                                        m('.info-box.info-box4data',[
+                                            m('.card', [
+                                                m('.row-xs-10.list-group-item2.row-centered', [
+                                                    m('.col-xs-10',[
+                                                        m('strong', 'Request Details')
+                                                    ])
+                                                ]),
 
-                    m('table.space', {class:'table table-striped table-hover'}, [
-                        m('thead', [
-                            m('tr', [
-                                m('th', 'User name'),
-                                m('th',  'First name'),
-                                m('th',  'Last name'),
-                                m('th',  'Email'),
-                                m('th',  'Role'),
-                                ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length>0 ? m('th',  'Actions') : '',
-                                m('th',  'Remove')
-                            ])
-                        ]),
-                        m('tbody', [
-                            ctrl.users().map(user => m('tr', [
-                                m('td', user.user_name),
-                                m('td', user.first_name),
-                                m('td', user.last_name),
-                                m('td', user.email),
-                                m('td',
-                                    m('select.form-control', {value:user.role, onchange : function(){ }}, [
-                                        m('option',{value:'u', selected: user.role !== 'su'},  'Simple user'),
-                                        m('option',{value:'du', selected: user.role !== 'du'},  'Deployer'),
-                                        m('option',{value:'su', selected: user.role === 'su'}, 'Super user')
-                                    ])
-                                ),
+                                                m('.row-xs-12.list-group-item2', [
+                                                    m('.col-xs-3',[
+                                                        m('strong', 'Creation Date: ')
+                                                    ]),
+                                                    m('.col-xs-7',[
+                                                        formatDate$1(new Date(download.creation_date))
+                                                    ])
+                                                ]),
 
-                                ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length==0 ? '' :
-                                    !user.reset_code && !user.activation_code ?  m('td', '') :
-                                        user.reset_code ? m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Reset password'))
-                                            : m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Activate user')),
+                                                m('.row-xs-10.list-group-item2', [
+                                                    m('.col-xs-3',
+                                                        m('strong', 'Start Date: ')
+                                                    ),
+                                                    m('.col-xs-3',
+                                                        formatDate$1(new Date(download.start_date))
+                                                    ),
+                                                    m('.col-xs-3',
+                                                        m('strong', 'End Date: ')
+                                                    ),
+                                                    m('.col-xs-2',
+                                                        formatDate$1(new Date(download.end_date))
+                                                    )
+                                                ]),
+                                                m('.row-xs-10.list-group-item2', [
+                                                    m('.col-xs-3',
+                                                        m('strong', 'File Format: ')
+                                                    ),
+                                                    m('.col-xs-3',
+                                                        download.file_format
+                                                    ),
+                                                    m('.col-xs-3',
+                                                        m('strong', 'File Split: ')
+                                                    ),
+                                                    m('.col-xs-2',
+                                                        download.file_split
+                                                    )
+                                                ]),
+                                                m('.row-xs-10.list-group-item2', [
+                                                    m('.col-xs-3',
+                                                        m('strong', 'Experimant Id: ')
+                                                    ),
+                                                    m('.col-xs-3', ''
+                                                        // download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
+                                                    ),
+                                                    m('.col-xs-3',
+                                                        m('strong', 'Version Id: ')
+                                                    ),
+                                                    m('.col-xs-2', ''
+                                                        // download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version
+                                                    )
+                                                ])
+                                            ])
+                                        ])
+                                    ]),
 
-                                m('td', m('button.btn.btn-danger', {onclick:()=>{}}, 'Remove'))
-                            ]))
-                        ]),
-                    ])
-                */
+                                    m('td', size_format(download.size)),
+                                    m('td', !download.size ? '-' : [
+                                        m('a', {href:(baseUrl + "/download_data?path=" + (download.path)), download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                                        m('i', ' | '),
+                                        m('a', {href:'javascript:void(0);', onclick: function() {ctrl.ask_delete_request(download._id); return false;}}, m('i.fa.fa-close'))
+                                    ]),
+                                    m('td', m('span.label.label-success', download.status)),
+                                ]); })
+                            )])                    ]
                 ]);
         }
     };
@@ -22587,14 +22656,30 @@
         return d;
     };
 
+    function size_format(bytes){
+        if (!bytes)
+            return '-';
+
+        var thresh = 1024;
+
+        var units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
+        var u = 0;
+        while(Math.abs(bytes) >= thresh)
+        {
+            bytes /= thresh;
+            u = u+1;
+        }
+        return bytes.toFixed(1)+' '+units[u];
+    }
+
     function config_url()
     {
-        return (baseUrl$1 + "/config");
+        return (baseUrl + "/config");
     }
 
     function params_url()
     {
-        return (baseUrl$1 + "/config/params");
+        return (baseUrl + "/config/params");
     }
 
 
@@ -23090,7 +23175,7 @@
 
     function homepage_url()
     {
-        return (baseUrl$1 + "/config/homepage");
+        return (baseUrl + "/config/homepage");
     }
 
 
@@ -23225,11 +23310,11 @@
         }
     };
 
-    var change_password_url = baseUrl$1 + "/change_password";
-    var change_email_url = baseUrl$1 + "/change_email";
-    var update_details_url = baseUrl$1 + "/settings";
-    var present_templates_url = baseUrl$1 + "/present_templates";
-    var dropbox_url = baseUrl$1 + "/dropbox";
+    var change_password_url = baseUrl + "/change_password";
+    var change_email_url = baseUrl + "/change_email";
+    var update_details_url = baseUrl + "/settings";
+    var present_templates_url = baseUrl + "/present_templates";
+    var dropbox_url = baseUrl + "/dropbox";
 
     function apiURL$3(code)
     {   
@@ -23554,8 +23639,8 @@
         }
     };
 
-    var pending_url = baseUrl$1 + "/pending";
-    var updated_requests_url = baseUrl$1 + "/updates";
+    var pending_url = baseUrl + "/pending";
+    var updated_requests_url = baseUrl + "/updates";
 
     function apiURL$2(code)
     {
@@ -23564,7 +23649,7 @@
 
     function updateApiURL(id)
     {
-        return (baseUrl$1 + "/updates/" + id);
+        return (baseUrl + "/updates/" + id);
     }
 
     var get_pending_studies = function () { return fetchJson(pending_url, {
@@ -23786,7 +23871,7 @@
         }
     };
 
-    var massMailUrl = baseUrl$1 + "/mass_mail";
+    var massMailUrl = baseUrl + "/mass_mail";
 
     var send = function (subject, body , ru, su, cu) { return fetchJson(massMailUrl, {
         method: 'post',
@@ -24046,7 +24131,7 @@
         }
     };
 
-    var recoveryUrl = baseUrl$1 + "/recovery";
+    var recoveryUrl = baseUrl + "/recovery";
 
 
     var recovery = function (username) { return fetchJson(recoveryUrl, {

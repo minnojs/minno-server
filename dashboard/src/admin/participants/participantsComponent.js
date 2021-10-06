@@ -1,9 +1,10 @@
-import {get_users, get_participants, remove_user, update_role} from './participantsModel';
+import {get_users, get_participants, delete_request, update_role, get_requests} from './participantsModel';
+import {baseUrl} from 'modelUrls';
 
 import messages from 'utils/messagesComponent';
 import {dateRangePicker} from 'utils/dateRange';
+import formatDate from 'utils/formatDate';
 
-import {get_data, get_requests} from "../../study/studyModel";
 
 
 export default participantsComponent;
@@ -21,6 +22,7 @@ let participantsComponent = {
             error:m.prop(''),
             downloaded:m.prop(false),
             ask_get_participants,
+            ask_delete_request,
             users:m.prop(),
             requests:m.prop([]),
             loaded:m.prop(false),
@@ -38,6 +40,13 @@ let participantsComponent = {
                 .catch(ctrl.error)
                 .then(ctrl.loaded.bind(null, true))
                 .then(m.redraw);
+        }
+
+        function ask_delete_request(request_id){
+            return delete_request(request_id)
+                .then(()=>load_requests(ctrl))
+                .then(m.redraw);
+
         }
 
         function ask_get_participants(){
@@ -134,45 +143,98 @@ let participantsComponent = {
                             m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ctrl.ask_get_participants()}}, 'Download')
                         )
                     )
-                )
-              /*  ,
+                ),
+                ctrl.requests().length === 0
+                    ?
+                    ''
+                    :[m('table', {class:'table table-striped table-hover'}, [
+                        m('thead', [
+                            m('tr', [
+                                // m('th', 'ID')
+                                m('th', 'Date Added'),
+                                m('th', 'File Size'),
+                                m('th', 'Actions'),
+                                m('th','Status'),
+                            ])
+                        ]),
+                        m('tbody',
+                            ctrl.requests().map(download => m('tr', [
+                                m('td', [
+                                    formatDate(new Date(download.creation_date)),
+                                    '  ',
+                                    m('i.fa.fa-info-circle'),
+                                    m('.info-box.info-box4data',[
+                                        m('.card', [
+                                            m('.row-xs-10.list-group-item2.row-centered', [
+                                                m('.col-xs-10',[
+                                                    m('strong', 'Request Details')
+                                                ])
+                                            ]),
 
-                m('table.space', {class:'table table-striped table-hover'}, [
-                    m('thead', [
-                        m('tr', [
-                            m('th', 'User name'),
-                            m('th',  'First name'),
-                            m('th',  'Last name'),
-                            m('th',  'Email'),
-                            m('th',  'Role'),
-                            ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length>0 ? m('th',  'Actions') : '',
-                            m('th',  'Remove')
-                        ])
-                    ]),
-                    m('tbody', [
-                        ctrl.users().map(user => m('tr', [
-                            m('td', user.user_name),
-                            m('td', user.first_name),
-                            m('td', user.last_name),
-                            m('td', user.email),
-                            m('td',
-                                m('select.form-control', {value:user.role, onchange : function(){ }}, [
-                                    m('option',{value:'u', selected: user.role !== 'su'},  'Simple user'),
-                                    m('option',{value:'du', selected: user.role !== 'du'},  'Deployer'),
-                                    m('option',{value:'su', selected: user.role === 'su'}, 'Super user')
-                                ])
-                            ),
+                                            m('.row-xs-12.list-group-item2', [
+                                                m('.col-xs-3',[
+                                                    m('strong', 'Creation Date: ')
+                                                ]),
+                                                m('.col-xs-7',[
+                                                    formatDate(new Date(download.creation_date))
+                                                ])
+                                            ]),
 
-                            ctrl.users().filter(user=> !!user.reset_code || !!user.activation_code).length==0 ? '' :
-                                !user.reset_code && !user.activation_code ?  m('td', '') :
-                                    user.reset_code ? m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Reset password'))
-                                        : m('td', m('button.btn.btn-secondery', {onclick:()=>{}}, 'Activate user')),
+                                            m('.row-xs-10.list-group-item2', [
+                                                m('.col-xs-3',
+                                                    m('strong', 'Start Date: ')
+                                                ),
+                                                m('.col-xs-3',
+                                                    formatDate(new Date(download.start_date))
+                                                ),
+                                                m('.col-xs-3',
+                                                    m('strong', 'End Date: ')
+                                                ),
+                                                m('.col-xs-2',
+                                                    formatDate(new Date(download.end_date))
+                                                )
+                                            ]),
+                                            m('.row-xs-10.list-group-item2', [
+                                                m('.col-xs-3',
+                                                    m('strong', 'File Format: ')
+                                                ),
+                                                m('.col-xs-3',
+                                                    download.file_format
+                                                ),
+                                                m('.col-xs-3',
+                                                    m('strong', 'File Split: ')
+                                                ),
+                                                m('.col-xs-2',
+                                                    download.file_split
+                                                )
+                                            ]),
+                                            m('.row-xs-10.list-group-item2', [
+                                                m('.col-xs-3',
+                                                    m('strong', 'Experimant Id: ')
+                                                ),
+                                                m('.col-xs-3', ''
+                                                    // download.exp_id.length>1 ? 'All' : ctrl.exps().filter(exp=> exp.ids==download.exp_id[0])[0].descriptive_id
+                                                ),
+                                                m('.col-xs-3',
+                                                    m('strong', 'Version Id: ')
+                                                ),
+                                                m('.col-xs-2', ''
+                                                    // download.version_id.length>1 ? 'All' : ctrl.versions.filter(version=> version.id==download.version_id[0])[0].version
+                                                )
+                                            ])
+                                        ])
+                                    ])
+                                ]),
 
-                            m('td', m('button.btn.btn-danger', {onclick:()=>{}}, 'Remove'))
-                        ]))
-                    ]),
-                ])
-            */
+                                m('td', size_format(download.size)),
+                                m('td', !download.size ? '-' : [
+                                    m('a', {href:`${baseUrl}/download_data?path=${download.path}`, download:download.path , target: '_blank'}, m('i.fa.fa-download')),
+                                    m('i', ' | '),
+                                    m('a', {href:'javascript:void(0);', onclick: function() {ctrl.ask_delete_request(download._id); return false;}}, m('i.fa.fa-close'))
+                                ]),
+                                m('td', m('span.label.label-success', download.status)),
+                            ]))
+                        )])                    ]
             ]);
     }
 };
@@ -193,3 +255,19 @@ let daysAgo = (days) => {
     d.setDate(d.getDate() - days);
     return d;
 };
+
+function size_format(bytes){
+    if (!bytes)
+        return '-';
+
+    const thresh = 1024;
+
+    const units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
+    let u = 0;
+    while(Math.abs(bytes) >= thresh)
+    {
+        bytes /= thresh;
+        u = u+1;
+    }
+    return bytes.toFixed(1)+' '+units[u];
+}
