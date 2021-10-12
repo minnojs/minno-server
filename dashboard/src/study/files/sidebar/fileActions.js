@@ -143,10 +143,14 @@ export let delete_experiment = (file, study, notifications) => () => {
         content: 'Are you sure you want to remove this experiment? This is a permanent change.'
     })
         .then(response => {
-            if (response) study.delete_experiment(file);})
-        .then(()=>notifications.show_success(`Experiment '${file.exp_data.descriptive_id}' removed successfully`))
-
-        .then(()=>{delete file.exp_data; m.redraw();});
+            if (response)
+                study.delete_experiment(file)
+                    .then(() => notifications.show_success(`Experiment '${file.exp_data.descriptive_id}' removed successfully`))
+                    .then(() => {
+                        delete file.exp_data;
+                        m.redraw();
+                    })
+        });
 
 };
 

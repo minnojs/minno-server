@@ -10,7 +10,7 @@ let copyFileComponent = {
         load_studies()
 
 
-            .then(response => studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())))
+            .then(response => {console.log(response); studies(response.studies.sort(sort_studies_by_name2).filter(template_filter()));})
 
             .catch(error)
             .then(loaded.bind(null, true))

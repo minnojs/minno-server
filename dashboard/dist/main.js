@@ -13106,7 +13106,7 @@
             load_studies()
 
 
-                .then(function (response) { return studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())); })
+                .then(function (response) {console.log(response); studies(response.studies.sort(sort_studies_by_name2).filter(template_filter()));})
 
                 .catch(error)
                 .then(loaded.bind(null, true))
@@ -13291,10 +13291,14 @@
             content: 'Are you sure you want to remove this experiment? This is a permanent change.'
         })
             .then(function (response) {
-                if (response) study.delete_experiment(file);})
-            .then(function (){ return notifications.show_success(("Experiment '" + (file.exp_data.descriptive_id) + "' removed successfully")); })
-
-            .then(function (){delete file.exp_data; m.redraw();});
+                if (response)
+                    study.delete_experiment(file)
+                        .then(function () { return notifications.show_success(("Experiment '" + (file.exp_data.descriptive_id) + "' removed successfully")); })
+                        .then(function () {
+                            delete file.exp_data;
+                            m.redraw();
+                        });
+            });
 
     }; };
 
