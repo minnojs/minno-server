@@ -13106,7 +13106,7 @@
             load_studies()
 
 
-                .then(function (response) {console.log(response); studies(response.studies.sort(sort_studies_by_name2).filter(template_filter()));})
+                .then(function (response) { return studies(response.studies.sort(sort_studies_by_name2).filter(template_filter())); })
 
                 .catch(error)
                 .then(loaded.bind(null, true))
@@ -13218,9 +13218,11 @@
             content: copyFileComponent({new_study_id: new_study_id, new_study_name: new_study_name, study_id: study_id})
         })
             .then(function (response) {
-                if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
-            })
-            .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
+                if (response && study_id() !== new_study_id)
+                    return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id)
+                        .then(function (){ return notifications.show_success(("'" + (file.name) + "' successfully copied to '" + (new_study_name()) + "'")); });
+
+            });
     }; };
 
     var renameFile = function (file, study, notifications) { return function () {

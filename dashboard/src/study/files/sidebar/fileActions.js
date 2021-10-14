@@ -69,9 +69,11 @@ export let copyFile = (file, study, notifications) => () => {
         content: copyFileComponent({new_study_id, new_study_name, study_id})
     })
         .then(response => {
-            if (response && study_id() !== new_study_id) return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id);
+            if (response && study_id() !== new_study_id)
+                return copyAction(filePath() +'/'+ file.name, file, study_id, new_study_id)
+                    .then(()=>notifications.show_success(`'${file.name}' successfully copied to '${new_study_name()}'`));
+
         })
-        .then(()=>notifications.show_success(`'${file.name}' successfully copied to '${new_study_name()}'`));
 };
 
 export let renameFile = (file, study, notifications) => () => {
