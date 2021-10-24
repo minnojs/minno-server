@@ -1,0 +1,21 @@
+{
+  "name": "iat-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard component for creating minnoJS IATs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "rollup -c",
+    "bundle-watch": "rollup -c -w"
+  },
+  "keywords": [
+    "MinnoJS",
+    "IAT"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mithril": "^2.0.4",
+    "rollup": "^2.33.1"
+  }
+}

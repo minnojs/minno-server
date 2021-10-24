@@ -4,6 +4,10 @@ import pdfEditor from './editors/pdfEditor';
 import unknowEditor from './editors/unknownEditor';
 import textEditor from './editors/textEditor';
 import propEditor from './editors/propEditor';
+import iatEditor from './wizards/implicit_measures/IAT/iat.js';
+import biatEditor from './wizards/implicit_measures/BIAT/biat.js';
+import spfEditor from './wizards/implicit_measures/SPF/spf.js';
+import stiatEditor from './wizards/implicit_measures/STIAT/stiat.js';
 
 export default fileEditorComponent;
 
@@ -34,7 +38,12 @@ let editors = {
 
     pdf: pdfEditor,
 
-    prop: propEditor
+    prop: propEditor,
+
+    iat: iatEditor,
+    biat: biatEditor,
+    spf: spfEditor,
+    stiat: stiatEditor
 
 };
 

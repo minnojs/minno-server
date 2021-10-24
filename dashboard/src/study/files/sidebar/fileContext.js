@@ -4,7 +4,7 @@ import {launchUrl} from 'modelUrls';
 
 import {
     createDir, createEmpty, createCognitive, moveFile, duplicateFile, copyFile, renameFile, downloadFile, resetFile,
-    update_experiment, delete_experiment
+    update_experiment, delete_experiment, createIAT, createBIAT, createSPF, createSTIAT
 } from './fileActions';
 
 import {copyUrl} from 'utils/copyUrl';
@@ -28,6 +28,10 @@ const fileContext = (file, study, notifications) => {
             {icon:'fa-magic', text:'Wizard', menu: [
                 {text: 'Rating wizard', action: activateWizard(`rating`)},
                 {icon:'fa-clock-o', text:'Cognitive task', action: createCognitive(study, path)},
+                {text:'IAT task', action: createIAT(study, path)},
+                {text:'Brief-IAT task', action: createBIAT(study, path)},
+                {text:'SPF task', action: createSPF(study, path)},
+                {text:'Single Target-IAT task', action: createSTIAT(study, path)},
             ]}
         ]);
     }
