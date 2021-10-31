@@ -59,7 +59,8 @@ export function updateSettings(settings){
 }
 
 export function toScript(output){
-    return `define(['pipAPI' ,'${'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'}'], function(APIConstructor, spfExtension) {var API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
+    return '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+        `define(['pipAPI' ,'${'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'}'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
 }
 
 export function toString(settings){

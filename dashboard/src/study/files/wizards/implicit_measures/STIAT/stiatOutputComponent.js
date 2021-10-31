@@ -88,7 +88,8 @@ function updateSettings(settings){
 }
 
 function toScript(output){
-    return `define(['pipAPI' ,'${output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/qualtrics/qstiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/stiat6.js'}'], function(APIConstructor, stiatExtension) {var API = new APIConstructor(); return stiatExtension(${JSON.stringify(output,null,4)});});`;
+    return '//Note: This script was created by the STIAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+        `define(['pipAPI' ,'${output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/qualtrics/qstiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/stiat6.js'}'], function(APIConstructor, stiatExtension){\n\tvar API = new APIConstructor(); return stiatExtension(${JSON.stringify(output,null,4)});});`;
 }
 
 export function validityCheck(error_msg, settings, clearBlock){

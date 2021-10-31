@@ -18515,7 +18515,8 @@
     }
 
     function toScript$3(output){
-        return ("define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualtrics/quiat10.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat9.js') + "'], function(APIConstructor, iatExtension) {var API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});");
+        return '//Note: This script was created by the IAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+            "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualtrics/quiat10.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat9.js') + "'], function(APIConstructor, iatExtension){\n\tvar API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});";
     }
 
     function view$j(ctrl,settings){
@@ -20041,7 +20042,8 @@
     }
 
     function toScript$2(output){
-        return ("define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/qualtrics/qbiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/biat6.js') + "'], function(APIConstructor, iatExtension) {var API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});");
+        return '//Note: This script was created by the BIAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+            "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/qualtrics/qbiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/biat6.js') + "'], function(APIConstructor, iatExtension){\n\tvar API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});";
     }
 
     function view$9(ctrl, settings){
@@ -20425,7 +20427,8 @@
     }
 
     function toScript$1(output){
-        return ("define(['pipAPI' ,'" + ('https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js') + "'], function(APIConstructor, spfExtension) {var API = new APIConstructor(); return spfExtension(" + (JSON.stringify(output,null,4)) + ")});");
+        return '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+            "define(['pipAPI' ,'" + ('https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js') + "'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(" + (JSON.stringify(output,null,4)) + ")});";
     }
 
     function toString$1(settings){
@@ -20895,7 +20898,8 @@
     }
 
     function toScript(output){
-        return ("define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/qualtrics/qstiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/stiat6.js') + "'], function(APIConstructor, stiatExtension) {var API = new APIConstructor(); return stiatExtension(" + (JSON.stringify(output,null,4)) + ");});");
+        return '//Note: This script was created by the STIAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n'+
+            "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/qualtrics/qstiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/stiat6.js') + "'], function(APIConstructor, stiatExtension){\n\tvar API = new APIConstructor(); return stiatExtension(" + (JSON.stringify(output,null,4)) + ");});";
     }
 
     function validityCheck(error_msg, settings, clearBlock){
