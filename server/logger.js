@@ -1,3 +1,5 @@
+const config = require.main.require('../config');
+
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf } = format;
 
@@ -14,8 +16,8 @@ const logger = createLogger({
         myFormat
     ),
     transports: [
-        new transports.File({ filename: 'logs/error.log', level: 'Error' }),
-        new transports.File({ filename: 'logs/all.log' }),
+        new transports.File({ filename: config.logs_folder+'/error.log', level: 'Error' }),
+        new transports.File({ filename: config.logs_folder+'/all.log' }),
     ],
 });
 
