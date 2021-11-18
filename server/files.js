@@ -101,10 +101,10 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
                 is_locked: study_data.locked,
                 type: study_data.type,
                 is_public: study_data.is_public,
-                is_readonly: !can_write,
+                is_readonly: !can_write || study_user.deleted,
                 versions: study_data.versions,
                 description: study_data.description,
-                permission: study_user ? study_user.permission :'read only',
+                permission: !study_user ? 'read only' : study_user.deleted ? 'deleted' : study_user.permission,
                 has_data_permission: study_user && (study_user.permission === 'owner' || study_user.data_permission === 'visible'),
                 files: files.files,
                 is_last: version_id === last_version_id,
@@ -113,6 +113,7 @@ function get_study_files(user_id, study_id, server_url, version_id='') {
         });
     });
 }
+
 
 function create_folder(user_id, study_id, folder_id) {
     return has_write_permission(user_id, study_id)

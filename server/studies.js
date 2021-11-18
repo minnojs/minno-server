@@ -338,16 +338,13 @@ function duplicate_experiments(study_data, experiments) {
 
 function delete_study(user_id, study_id) {
     return has_write_permission(user_id, study_id)
-        .then(()=>delete_by_id(user_id, study_id)
-            // .then(function(study_data) {
-            //     const dir = path.join(config.user_folder, study_data.value.folder_name);
-            //     return fs.pathExists(dir)
-            //         .then(existing => !existing
-            //                     ?  Promise.reject({status:500, message: 'ERROR: Study does not exist in FS!'})
-            //                     : fs.remove(dir));
-            // }
-        );
+        .then((data)=>{
+        return Promise.all(data.study_data.users.map(user => 
+                delete_by_id(user.user_id,study_id)));    
+        });
 }
+
+
 
 function has_read_data_permission(user_id, study_id){
     return get_user_study(user_id, study_id)
