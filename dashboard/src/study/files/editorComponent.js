@@ -4,10 +4,11 @@ import pdfEditor from './editors/pdfEditor';
 import unknowEditor from './editors/unknownEditor';
 import textEditor from './editors/textEditor';
 import propEditor from './editors/propEditor';
-import iatEditor from './wizards/implicit_measures/IAT/iat.js';
-import biatEditor from './wizards/implicit_measures/BIAT/biat.js';
-import spfEditor from './wizards/implicit_measures/SPF/spf.js';
-import stiatEditor from './wizards/implicit_measures/STIAT/stiat.js';
+import iatEditor from './wizards/implicitMeasures/IAT/iat.js';
+import biatEditor from './wizards/implicitMeasures/BIAT/biat.js';
+import spfEditor from './wizards/implicitMeasures/SPF/spf.js';
+import stiatEditor from './wizards/implicitMeasures/STIAT/stiat.js';
+import epEditor from './wizards/implicitMeasures/EP/ep.js';
 
 export default fileEditorComponent;
 
@@ -43,7 +44,8 @@ let editors = {
     iat: iatEditor,
     biat: biatEditor,
     spf: spfEditor,
-    stiat: stiatEditor
+    stiat: stiatEditor,
+    ep: epEditor
 
 };
 

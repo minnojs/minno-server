@@ -1,0 +1,34 @@
+<!doctype html>
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript">
+        function getParams() {
+            var idx = document.URL.indexOf('?');
+            var params = [];
+            let type =''
+            if (idx !== -1) {
+                type = document.URL.substring(idx+1, document.URL.length).split('=')[1];
+            }
+            document.title = 'Minno\'s '+type.toUpperCase();
+            return type;
+        }
+        function addScript(){
+            let type = getParams();
+            var s = document.createElement("script");
+            s.type = "text/javascript";
+            s.src = '../jsFiles/'+type+'_index.js';
+            document.getElementsByTagName('head')[0].append(s);
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../../dashboard/dist/style.css">
+</head>
+<body onload="addScript();">
+<div id="dashboard"></div>
+</body>
+<script src='https://cdn.jsdelivr.net/npm/mithril@0.2.8/mithril.js'></script>
+<!--<script src='https://kit.fontawesome.com/8c5b839f7d.js'></script>-->
+
+

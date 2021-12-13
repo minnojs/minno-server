@@ -294,78 +294,23 @@ export let createCognitive = (study, path = '') => () => {
     });
 };
 
-export let createIAT = (study, path = '') => () => {
+export let createImplicitMeasure = (study, path = '', type) => () => {
     let name = pathProp(path);
 
     let content = ()=>'';
 
     messages.prompt({
-        header: 'Create IAT task',
+        header: `Create ${type.toUpperCase()} task`,
         content: 'Please insert task name:',
         prop: name
     }).then(response => {
 
         if (response){
             return createFile(study, m.prop(`${name()}.js`), content)
-                .then(createFile(study, m.prop(`${name()}.iat`), content));
+                .then(createFile(study, m.prop(`${name()}.${type}`), content));
         }
     });
 };
-
-export let createBIAT = (study, path = '') => () => {
-    let name = pathProp(path);
-
-    let content = ()=>'';
-
-    messages.prompt({
-        header: 'Create BIAT task',
-        content: 'Please insert task name:',
-        prop: name
-    }).then(response => {
-
-        if (response){
-            return createFile(study, m.prop(`${name()}.js`), content)
-                .then(createFile(study, m.prop(`${name()}.biat`), content));
-        }
-    });
-};
-
-export let createSPF = (study, path = '') => () => {
-    let name = pathProp(path);
-
-    let content = ()=>'';
-
-    messages.prompt({
-        header: 'Create SPF task',
-        content: 'Please insert task name:',
-        prop: name
-    }).then(response => {
-
-        if (response){
-            return createFile(study, m.prop(`${name()}.js`), content)
-                .then(createFile(study, m.prop(`${name()}.spf`), content));
-        }
-    });
-};
-
-export let createSTIAT = (study, path = '') => () => {
-    let name = pathProp(path);
-
-    let content = ()=>'';
-
-    messages.prompt({
-        header: 'Create STIAT task',
-        content: 'Please insert task name:',
-        prop: name
-    }).then(response => {
-
-        if (response){
-            return createFile(study, m.prop(`${name()}.js`), content)
-                .then(createFile(study, m.prop(`${name()}.stiat`), content));
-        }
-    });
-};
-
 
 export let createEmpty = (study, path = '') => () => {
     let name = pathProp(path);

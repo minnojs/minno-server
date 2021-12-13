@@ -26,10 +26,7 @@ const Fingerprint 			= require('express-fingerprint');
 const configDb = require('./config_db');
 const logger = require('./logger');
 
-const iat_generator_router  = require('./routes/iat_generator_router');
-const biat_generator_router  = require('./routes/biat_generator_router');
-const spf_generator_router  = require('./routes/spf_generator_router');
-const stiat_generator_router  = require('./routes/stiat_generator_router');
+
 
 const mongoose   = require('mongoose');
 const urljoin    = require('url-join');
@@ -136,11 +133,6 @@ basePathRouter.use('/collaboration', collaboration_router);
 basePathRouter.use('/users', users_router);
 basePathRouter.use('/config', config_router);
 basePathRouter.use('/dropbox', dropbox_router);
-
-basePathRouter.use('/studies', iat_generator_router);
-basePathRouter.use('/studies', biat_generator_router);
-basePathRouter.use('/studies', spf_generator_router);
-basePathRouter.use('/studies', stiat_generator_router);
 
 let sess;
 

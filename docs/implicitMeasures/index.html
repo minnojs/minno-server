@@ -1,0 +1,50 @@
+<!doctype html>
+<head>
+    <title>MinnoJS implicit measures wizard</title>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <style>
+        body {
+            background: #d3edf0;
+        }
+        .jumbotron {
+            background: none
+        }
+    </style>
+    <script type="text/javascript">
+        function addButtons(tasksNames){
+            let p = document.getElementsByTagName('p')[2];
+            //p.className = 'lead'
+            tasksNames.forEach(function(task){
+                let btn = document.createElement("a");
+                btn.innerText  = 'Create my '+task.toUpperCase()
+                btn.className = "btn btn-info btn-lg";
+                btn.role = 'button';
+                btn.href = "./view/implicit.html?type="+task;
+                p.appendChild(btn);
+            });
+            document.getElementsByTagName('body')[0].append(p);
+        }
+    </script>
+</head>
+<body>
+<!--<body onload="addButtons(['iat','biat','stiat', 'spf', 'ep']);">-->
+<div class="jumbotron">
+    <h1 class="display-4">Welcome to MinnoJS Implicit Measures Wizard</h1>
+    <p class="lead">This website helps you create scripts for implicit measures implemented in <a href='https://minnojs.github.io/'>MinnoJS.</a> MinnoJS is a JavaScript player for online studies,
+        created by <a href='https://www.projectimplicit.net/'>Project Implicit.</a> We run those scripts in Open Minno Suite,
+        our platform for running web studies. You can <a href='https://minnojs.github.io/docsite/docs/server/installation/'>install that platform</a> on your own server, use a more
+        <a href='https://minnojs.github.io/minnojs-blog/csv-server/'>simple php server</a> for Minno,
+        or run the script directly from <a href='https://www.qualtrics.com/'>Qualtrics.</a>
+        To learn more, you can visit <a href="https://minnojs.github.io/docsite/">our documentation website.</a></p>
+    <hr class="my-4">
+    <p class="lead">Start creating your task!</p>
+    <p class="lead">
+        <a class="btn btn-info btn-lg" href="view/implicit.html?type=iat" role="button">Create my IAT</a>
+        <a class="btn btn-info btn-lg" href="view/implicit.html?type=biat" role="button">Create my BIAT</a>
+        <a class="btn btn-info btn-lg" href="view/implicit.html?type=stiat" role="button">Create my STIAT</a>
+        <a class="btn btn-info btn-lg" href="view/implicit.html?type=spf" role="button">Create my SPF</a>
+        <a class="btn btn-info btn-lg" href="view/implicit.html?type=ep" role="button">Create my EP</a>
+    </p>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/mithril@0.2.8/mithril.js" integrity="sha256-nLlYh6AP9Rvo87dDp7fv/Uw3+qPKb/fpBJt2NxAIxMU=" crossorigin="anonymous"></script>
