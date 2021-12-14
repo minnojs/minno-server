@@ -248,6 +248,18 @@
         return JSON.parse(JSON.stringify(obj));
     }
 
+    function pageHeadLine(task){
+        return m('div',{id:'side_bar', class:'clearfix'},[
+            m('h1.display-4', {style:{float: 'left'}},'Create my '+task+' script'),
+            m('a.btn btn-info btn-lg',{
+                style:{'margin-right': '20px', 'margin-top': '10px', float: 'right'},
+                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
+                    role:'button',
+                    title:'Main Page'}
+                ,m('i.fa.fa-home'))
+        ])
+    }
+
     function checkMissingElementName(element, name_to_display, error_msg){
         let containsImage = false;
         //check for missing titles and names
@@ -1817,7 +1829,7 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', 'Create my SPF script'),
+            pageHeadLine('SPF'),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }

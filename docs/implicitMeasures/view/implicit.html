@@ -10,7 +10,7 @@
             if (idx !== -1) {
                 type = document.URL.substring(idx+1, document.URL.length).split('=')[1];
             }
-            document.title = '!Minno\'s '+type.toUpperCase();
+            document.title = 'Minno\'s '+type.toUpperCase();
             return type;
         }
         function addScript(){
@@ -23,7 +23,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="../../dashboard/dist/style.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body onload="addScript();">
 <div id="dashboard"></div>

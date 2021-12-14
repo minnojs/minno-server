@@ -1,7 +1,7 @@
 import tabsComponent from '../resources/tabsComponent.js';
 import defaultSettings from './stiatDefaultSettings.js';
 import tabs from './stiatTabs.js';
-import {clone} from '../resources/utilities.js';
+import {clone, pageHeadLine} from '../resources/utilities.js';
 import {save, saveToJS} from '../../../../generator/implicitMeasuresGeneratorModel';
 import {createNotifications} from '../../../../../utils/notifyComponent.js';
 import {toString, validityCheck} from './stiatOutputComponent.js';
@@ -118,7 +118,7 @@ function view(ctrl){
     }
     return m('.container',
         m('div', ctrl.notifications.view()),
-        m('h1.display-4', 'Create my STIAT script'),
+        pageHeadLine('STIAT'),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 
