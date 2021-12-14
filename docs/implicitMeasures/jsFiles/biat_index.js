@@ -1579,8 +1579,7 @@
         category:'20.7em',
         practiceCategory:'29.85em',
         single:'7em', //for SPF
-        ep: '29.7em'
-
+        ep: '32.5em'
     };
 
     function controller$3(settings, defaultSettings, clearElement, subTabs, taskType){
