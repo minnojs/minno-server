@@ -15,7 +15,7 @@ let btnWidthTypes = {
     category:'20.7em',
     practiceCategory:'29.85em',
     single:'7em', //for SPF
-    ep: '32.5em'
+    ep: '32.4em'
 };
 
 function controller(settings, defaultSettings, clearElement, subTabs, taskType){
