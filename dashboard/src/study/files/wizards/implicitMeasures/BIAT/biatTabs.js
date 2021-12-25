@@ -56,26 +56,38 @@ let elementClear = [{
     stimulusCss : {color:'#000000','font-size':'1em'} }];
 
 
-let attributesTabs = [
-    {value: 'attribute1', text: 'First Attribute'},
-    {value: 'attribute2', text: 'Second Attribute'},
-]
+let attributesTabs = {
+    'attribute1': {text: 'First Attribute'},
+    'attribute2': {text: 'Second Attribute'}
+}
 
-let practiceTabs = [
-    {value: 'practiceCategory1', text: 'First Practice Category'},
-    {value: 'practiceCategory2', text: 'Second Practice Category'},
-]
+let practiceTabs = {
+    'practiceCategory1':{text: 'First Practice Category'},
+    'practiceCategory2':{text: 'Second Practice Category'}
+}
 
-let tabs = [
-    {value: 'parameters', text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc },
-    {value: 'blocks', text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
-    {value: 'practice', text: 'Practice Block', component: attributesComponent, rowsDesc: elementClear, subTabs:practiceTabs, type: 'BIAT'},
-    {value: 'categories', text: 'Categories', component: categoriesComponent, rowsDesc: elementClear},
-    {value: 'attributes', text: 'Attributes', component: attributesComponent, rowsDesc: elementClear, subTabs:attributesTabs, type: 'BIAT'},
-    {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc},
-    {value: 'output', text: 'Complete', component: outputComponent, rowsDesc: blocksDesc},
-    {value: 'import', text: 'Import', component: importComponent},
-    {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'BIAT'}
-];
+let tabs = {
+    'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},
+    'blocks': {text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
+    'practice': {
+        text: 'Practice Block',
+        component: attributesComponent,
+        rowsDesc: elementClear,
+        subTabs: practiceTabs,
+        type: 'BIAT'
+    },
+    'categories': {text: 'Categories', component: categoriesComponent, rowsDesc: elementClear},
+    'attributes': {
+        text: 'Attributes',
+        component: attributesComponent,
+        rowsDesc: elementClear,
+        subTabs: attributesTabs,
+        type: 'BIAT'
+    },
+    'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
+    'output': {text: 'Complete', component: outputComponent, rowsDesc: blocksDesc},
+    'import': {text: 'Import', component: importComponent},
+    'help': {text: 'Help', component: helpComponent, rowsDesc: 'BIAT'}
+};
 
 export default tabs;

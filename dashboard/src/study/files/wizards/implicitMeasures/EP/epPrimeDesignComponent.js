@@ -16,9 +16,9 @@ function controller(settings){
     }
     function set(parameter){
         return function(value){
-            if (parameter == 'font-size'){
+            if (parameter === 'font-size'){
                 value = Math.abs(value);
-                if (value == 0){
+                if (value === 0){
                     showRestrictions('Font\'s size must be bigger than 0.', 'error')
                     return primeCss[parameter];
                 }
@@ -30,19 +30,18 @@ function controller(settings){
 }
 
 function view(ctrl){
-    return m('.div' , [
-        m('.row.space',[
-            m('.col',{style:{'padding-left':'2rem'}},[
-                m('span', 'Font\'s color: '),
-                m('input[type=color]', {style: {width:'3em', 'border-radius':'3px', 'margin-left':'0.3rem'}, value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
-            ])
-        ]),
-        m('hr'),
-        m('.row',[
-            m('.col',{style:{'padding-left':'2rem'}},[
-                m('span', 'Font\'s size: '),
-                m('input[type=number]', {placeholder:'1', style: {'border-radius':'4px','border':'1px solid #E2E3E2', width:'3em'}, value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
-            ])
+    return m('.row' , [
+        m('.col-sm-12',[
+            m('.row.line',[
+                m('.col-sm-2',[
+                    m('span', 'Font\'s color: '),
+                    m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
+                ]),
+                m('.col-sm-2',[
+                    m('span', 'Font\'s size: '),
+                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
+                ])
+            ]),
         ])
     ])
 }

@@ -8,7 +8,7 @@ let outputComponent = {
 function controller(settings, defaultSettings, clearBlock){
     let error_msg = [];
     error_msg = validityCheck(error_msg, settings, clearBlock)
-    return{error_msg, createFile, printToPage};
+    return{error_msg, createFile};
 
     function createFile(fileType){
         return function(){
@@ -29,15 +29,6 @@ function controller(settings, defaultSettings, clearBlock){
                 document.body.appendChild(downloadLink);
             }
             downloadLink.click();
-        };
-    }
-  
-    function printToPage(){
-        return function() {
-            let para = document.getElementById('textDiv');
-            para.style.visibility = 'visible';
-            let text_area = document.getElementById('textArea');
-            text_area.value = toString(settings);
         };
     }
 }
@@ -124,7 +115,7 @@ export function validityCheck(error_msg, settings, clearBlock){
 }
 
 function view(ctrl, settings){
-    return viewOutput(ctrl, settings)
+    return viewOutput(ctrl, settings, toString)
 }
 
 export default outputComponent;

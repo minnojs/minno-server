@@ -11,11 +11,9 @@ function controller(object, settings, stimuliList){
         newStimulus : m.prop(''),
         elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
         selectedStimuli: m.prop(''),
-        stimuliHidden: m.prop('')
     };
 
-    return {fields, set, get, addStimulus, updateSelectedStimuli, removeChosenStimuli, removeAllStimuli,
-        resetStimuliList};
+    return {fields, set, get, addStimulus, updateSelectedStimuli, removeChosenStimuli, removeAllStimuli, resetStimuliList};
 
     function get(name, media, type){
         if (media != null && type != null){
@@ -74,55 +72,57 @@ function controller(object, settings, stimuliList){
 }
 
 function view(ctrl) {
-    return m('.container', [
-        m('.row.space',[
-            m('.col-sm-4.space',[
-                m('i.fa.fa-info-circle'),
-                m('.card.info-box.card-header', ['Will appear in the data and in the default feedback message.']),
-                m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data: '])
+    return m('.space', [
+        m('.row.line',[
+            m('.col-md-4',[
+                m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data ']),
+                m('i.fa.fa-info-circle.text-muted',{
+                    title:'Will appear in the data and in the default feedback message.'
+                }),
             ]),
-            m('.col-8', [
-                m('input[type=text].form-control',{style: {width: '18rem'}, value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
+            m('.col-md-4', [
+                m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
             ])
         ]),
-        m('hr'),
         m('.row',[
-            m('.col-sm-12',[
-                m('i.fa.fa-info-circle'),
-                m('.card.info-box.card-header', ['Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page']),
-                m('input[type=text].form-control', {style:{width:'15em'},placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons'}},[
-                    m('button[type=button].btn btn-outline-secondary',{disabled:ctrl.fields.newStimulus().length===0, id:'addWord', onclick:ctrl.addStimulus},[
-                        m('i.fa.fa-plus'), 'Add Word'
-                    ]),
-                    m('button[type=button].btn btn-outline-secondary', {disabled:ctrl.fields.newStimulus().length===0, id:'addImage', onclick: ctrl.addStimulus},[
-                        m('i.fa.fa-plus'), 'Add Image'
+            m('.col-md-12',[
+                m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                    title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
+                })),
+                m('.h-25.d-inline-block',[
+                    m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
+                    m('.btn-group btn-group-toggle', [
+                        m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                            m('i.fa.fa-plus'), 'Add Word'
+                        ]),
+                        m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                            m('i.fa.fa-plus'), 'Add Image'
+                        ])
                     ])
-                ])
+                ]),
             ]),
         ]),
         m('.row',[
-            m('.col-sm-12',[
-                m('.form-group',[
-                    m('br'),
-                    m('span',{style:{'font-size': '20px'}},'Stimuli: '),
-                    m('select.form-control', {multiple : 'multiple', size : '8' ,style: {width: '15rem'}, onchange:(e) => ctrl.updateSelectedStimuli(e)},[
-                        ctrl.get('mediaArray').some(object => object.word) ? ctrl.fields.stimuliHidden('visible') : ctrl.fields.stimuliHidden('hidden'),
-                        ctrl.get('mediaArray').map(function(object){
-                            let value = object.word ? object.word : object.image;
-                            let option = value + (object.word ? ' [Word]' : ' [Image]');
-                            return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
-                        })
-                    ]),
-                    m('br'),
-                    m('.btn-group-vertical', {style:{'data-toggle':'buttons'}},[
-                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: ctrl.fields.selectedStimuli().length===0, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+            m('.col-md-6',[
+                m('.row',
+                    m('.col-sm-6',
+                        m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
+                            ctrl.get('mediaArray').map(function(object){
+                                let value = object.word ? object.word : object.image;
+                                let option = value + (object.word ? ' [Word]' : ' [Image]');
+                                return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                            })
+                        ])
+                    )
+                ),
+                m('.row.space',
+                    m('.col-sm-5',
+                        m('.btn-group-vertical',[
+                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
                         m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                        m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List'),
-                    ])
-                ]),
-                m('.row'),
-                m('hr')
+                        m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                    ]))
+                )
             ])
         ])
     ]);

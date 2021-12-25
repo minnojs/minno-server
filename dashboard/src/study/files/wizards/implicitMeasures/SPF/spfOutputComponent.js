@@ -10,7 +10,7 @@ function controller(settings, defaultSettings, blocksObject){
 
     error_msg = validityCheck(error_msg, settings, blocksObject)
 
-    return{printToPage, createFile, error_msg};
+    return{createFile, error_msg};
 
     function createFile(settings, fileType){
         return function(){
@@ -33,16 +33,6 @@ function controller(settings, defaultSettings, blocksObject){
             downloadLink.click();
         };
     }
-
-    function printToPage(settings){
-        return function() {
-            let para = document.getElementById('textDiv');
-            para.style.visibility = 'visible';
-            let text_area = document.getElementById('textArea');
-            text_area.value = toString(settings);
-        };
-    }
-
 }
 
 export function updateSettings(settings){
@@ -96,7 +86,7 @@ export function validityCheck(error_msg, settings, blocksObject){
 }
 
 function view(ctrl, settings){
-    return viewOutput(ctrl, settings)
+    return viewOutput(ctrl, settings, toString)
 }
 
 

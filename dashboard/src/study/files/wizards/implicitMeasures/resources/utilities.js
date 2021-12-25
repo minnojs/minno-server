@@ -4,15 +4,24 @@ export function clone(obj){
     return JSON.parse(JSON.stringify(obj));
 }
 
+export function resetClearButtons(reset, clear, curr_tab = null){
+    return m('.row',[
+        m('.col.pull-xs-right',[
+            m('.btn-group btn-group-toggle',[
+                m('button.btn btn btn-secondary',
+                    {title:'Reset all current fields to default values', onclick: () => reset(curr_tab)},
+                    m('i.fa.fa-undo.fa-sm'), ' Reset'),
+                m('button.btn btn btn-danger',
+                    {title:'Clears all current values',onclick:() => clear(curr_tab)},
+                    m('i.fa.fa-trash.fa-sm'), ' Clear'),
+            ])
+        ])
+    ])
+}
+
 export function pageHeadLine(task){
-    return m('div',{id:'side_bar', class:'clearfix'},[
-        m('h1.display-4', {style:{float: 'left'}},'Create my '+task+' script'),
-        m('a.btn btn-info btn-lg',{
-            style:{'margin-right': '20px', 'margin-top': '10px', float: 'right'},
-                href:'https://minnojs.github.io/minno-server/implicitMeasures/',
-                role:'button',
-                title:'Main Page'}
-            ,m('i.fa.fa-home'))
+    return m('.row',[
+        m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'),)
     ])
 }
 
@@ -67,6 +76,7 @@ export function checkPrime(element, name_to_display, error_msg){
 }
 
 export function showClearOrReset(element, value, action){
+    console.log('here reset')
     let msg_text = {
         'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
         'clear':{text: 'This will delete all current properties.', title: 'Clear?'}
@@ -87,70 +97,74 @@ export function showRestrictions(type, text, title = ''){
     if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)})
 }
 
-export function viewOutput(ctrl, settings){
-    return m('.container',[
-        m('.alert alert-danger', {role:'alert',style: {'margin-top':'20px',visibility: ctrl.error_msg.length === 0 ? 'hidden' : 'visible'}},[
-            m('h6','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
+let printFlag = m.prop(false);
+export function viewOutput(ctrl, settings, toString){
+    return m('.space',[
+        !ctrl.error_msg.length ? '' :
+        m('.alert alert-danger', [
+            m('strong','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
             m('ul',[
                 ctrl.error_msg.map(function(err){
                     return m('li',err);
                 })
             ])
         ]),
-        m('.row.space',[
-            m('.col-md-6.offset-sm-4',[
-                m('i.fa.fa-info-circle'),
-                m('.card.info-box.card-header', ['Download the JavaScript file. For more details how to use it, see the “Help” page.']),
-                m('button.btn btn btn-primary', {style:{'margin-left':'6px','background-color': 'rgb(40, 28, 128)', 'font-size': '16px'},onclick: ctrl.createFile(settings,'JS')},[
-                    m('i.fa.fa-download'), ' Download Script']),
-            ])
-        ]),
-        m('.row.space',[
-            m('.col-md-6.offset-sm-4',[
-                m('i.fa.fa-info-circle'),
-                m('.card.info-box.card-header', ['Importing this file to this tool, will load all your parameters to this tool.']),
-                m('button.btn btn btn-primary', {style:{'margin-left':'6px'}, onclick: ctrl.createFile(settings,'JSON')},[
-                    m('i.fa.fa-download'), ' Download JSON']),
-            ])
-        ]),
-        m('.row.space',[
-            m('.col-md-6.offset-sm-4',
-                m('button.btn btn btn-primary', {style:{'margin-left': '30px'} ,onclick: ctrl.printToPage(settings)},
-                    'Print to Browser'))
-        ]),
-        m('div.space',{id: 'textDiv', style: {visibility: 'hidden', 'padding' :'1em 0 0 3.5em'}},
-            m('textarea.form-control', {id:'textArea', value:'', style: {width : '57rem', height: '25rem'}}))
+        m('.row.space',
+                m('.col-md-8.offset-sm-3',
+                    m('.btn-group', [
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JS'),
+                            title:'Download the JavaScript file. For more details how to use it, see the “Help” page.'},
+                            [m('i.fa.fa-download'), ' Download Script']),
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JSON'),
+                            title:'Importing this file to this tool, will load all your parameters to this tool.'},
+                            [m('i.fa.fa-download'), ' Download JSON']),
+                        m('button.btn btn btn-light', {
+                            onclick: () => printFlag(true)},
+                            [m('i.fa.fa-file'), ' Print to Browser'])
+        ]))),
+        !printFlag() ? '' :
+            m('.row.space',
+                m('.col-md-10.offset-sm-1',
+                    m('textarea.form-control', {value: toString(settings), rows:20})
+            ))
     ]);
 }
 
 export function viewImport(ctrl){
-    return m('.activation.centrify',[
-        m('.card-block',[
-            m('.card.border-info.mb-3',{style:{'max-width': '25rem'}}, [
+    return m('.row.centrify.space',[
+        m('.col-sm-5',
+            m('.card.border-info.mb-3', [
                 m('.card-header','Upload a JSON file: ' ),
-                m('.card-body.text-info',[
-                    m('p',{style:{margin:'0.5em 1em 0.5em 1em'}},'If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
-                    m('input[type=file].form-control',{id:'uploadFile', style: {'text-align': 'center'}, onchange: ctrl.handleFile})
-                ])
+                    m('card-body.text-info',[
+                        m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
+                    ])
             ])
-        ])
-    ]);
+        )]
+    );
 }
 
 export function editStimulusObject(fieldName, get, set){ //used in parameters component
-    return m('.col-8',[
-        m('.col',[
-            m('span' ,'Font\'s color: '),
-            m('input[type=color]', {style: {width:'3em', 'border-radius':'3px', 'margin-left':'0.3rem'}, value: get(fieldName,'css','color'), onchange:m.withAttr('value', set(fieldName,'css','color'))})
+    return m('.col-sm-4.col-lg-4',[
+        m('.row',[
+            m('.col-sm-4', m('span' ,'Font\'s color: ')),
+            m('.col-sm-4', m('input[type=color].form-control', {value: get(fieldName,'css','color'), onchange:m.withAttr('value', set(fieldName,'css','color'))}))
         ]),
-        m('.col.space',{style:{'padding-left':'22.5rem'}},[
-            m('label', 'Font\'s size:'),
-            m('input[type=number]', {placeholder:'0', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2', 'margin-left':'0.3rem'}, value:get(fieldName,'css','font-size') ,min: '0' ,onchange:m.withAttr('value', set(fieldName,'css','font-size'))})
+        m('.row.space',[
+            m('.col-sm-4', m('span', 'Font\'s size:')),
+            m('.col-sm-4', m('input[type=number].form-control', {placeholder:'0', value:get(fieldName,'css','font-size') ,min: '0' ,onchange:m.withAttr('value', set(fieldName,'css','font-size'))}))
         ]),
-        m('.col.space',{style:{'padding-left':'22.5rem'}},[
-            !fieldName.toLowerCase().includes('maskstimulus') ? m('span', 'Text: ') :  m('span', 'Image: '),
-            !fieldName.toLowerCase().includes('maskstimulus') ? m('input[type=text]', {style: {'border-radius':'3px','border':'1px solid #E2E3E2',height:'2.5rem',width:'13rem'}, value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
-                : m('input[type=text]', {style: {'border-radius':'3px','border':'1px solid #E2E3E2'}, value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+        m('.row.space',[
+            m('.col-sm-4',
+                !fieldName.toLowerCase().includes('maskstimulus')
+                    ? m('span', 'Text: ') :  m('span', 'Image: ')),
+            m('.col-sm-8',
+                !fieldName.toLowerCase().includes('maskstimulus')
+                    ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
+                    : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+            )
         ])
     ])
 }

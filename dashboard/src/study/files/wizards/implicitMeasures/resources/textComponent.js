@@ -1,4 +1,4 @@
-import {showClearOrReset} from './utilities.js';
+import {resetClearButtons, showClearOrReset} from './utilities.js';
 
 let textComponent = {
     controller:controller,
@@ -25,42 +25,27 @@ function controller(settings, defaultSettings, rows){
 }
 
 function view(ctrl){
-    return m('.container' ,[
+    return m('.space' ,[
         ctrl.rows.map(function(row){
             //if touch parameter is chosen, don't show the irrelevant text parameters
             if (ctrl.isTouch === true && row.nameTouch === undefined)
                 return;
             if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                 return;
-            return m('.div',[
-                m('.row.space',[
+            return m('.row.line',[
                     row.desc ?
                         m('.col-md-4.space',[
-                            m('i.fa.fa-info-circle'),
-                            m('.card.info-box.card-header', [row.desc]),
-                            m('span', [' ', row.label])
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            })
                         ])
-                        :
-                        m('.col-md-4.space', {style:{'padding-left':'2rem'}}, m('span', [' ', row.label])),
-                    m('.col-sm-8', [
-                        m('textarea.form-control',{style: {width: '30rem' ,height: '5.5rem'}, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                        : m('.col-md-4.space', m('span', [' ', row.label])),
+                        m('.col-sm-7', [
+                            m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
-                ]),
-                m('hr')
             ]);
-        }),
-        m('.row.space',[
-            m('.col.space',{style:{'margin-bottom':'7px'}},[
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                    m('button.btn btn btn-secondary',
-                        {title:'Reset all current fields to default values', onclick: () => ctrl.reset()},
-                        m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                    m('button.btn btn btn-danger',
-                        {title:'Clears all current values',onclick:() => ctrl.clear()},
-                        m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                ])
-            ])
-        ])
+        }), resetClearButtons(ctrl.reset, ctrl.clear)
     ]);
 }
 

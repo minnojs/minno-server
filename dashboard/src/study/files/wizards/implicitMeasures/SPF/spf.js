@@ -48,7 +48,7 @@ function controller({file, study}, external = false){
 
     function show_do_save(){
         let error_msg = []
-        let blocksObject = tabs[5].rowsDesc //blockDesc inside output attribute
+        let blocksObject = tabs.blocks.rowsDesc //blockDesc inside output attribute
         error_msg = validityCheck(error_msg, ctrl.settings, blocksObject)
         if(error_msg.length !== 0) {
             return messages.confirm({
@@ -100,25 +100,12 @@ function controller({file, study}, external = false){
 function view(ctrl){
     if(!ctrl.external) {
         return !ctrl.loaded()
-            ?
-            m('.loader')
-            :
-            m('.container.space',[
-                m('div', ctrl.notifications.view()),
-                m('div.space',[
-                    ctrl.is_locked() ? '' :
-                        m('button.btn btn btn-primary', {
-                            title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                            onclick: () => ctrl.show_do_save(),
-                            disabled: !ctrl.is_settings_changed(),
-                            style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                        }, 'Save'),
-                ]),
-                m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-            ])
+            ? m('.loader')
+            : m('.container.space',
+                m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                    ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
     }
     return m('.container',
-        m('div', ctrl.notifications.view()),
         pageHeadLine('SPF'),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );

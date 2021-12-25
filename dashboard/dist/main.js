@@ -18176,6 +18176,18 @@
         return JSON.parse(JSON.stringify(obj));
     }
 
+    function pageHeadLine(task){
+        return m('div',{id:'side_bar', class:'clearfix'},[
+            m('h1.display-4', {style:{float: 'left'}},'Create my '+task+' script'),
+            m('a.btn btn-info btn-lg',{
+                style:{'margin-right': '20px', 'margin-top': '10px', float: 'right'},
+                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
+                    role:'button',
+                    title:'Main Page'}
+                ,m('i.fa.fa-home'))
+        ])
+    }
+
     function checkMissingElementName(element, name_to_display, error_msg){
         var containsImage = false;
         //check for missing titles and names
@@ -19400,8 +19412,7 @@
         category:'20.7em',
         practiceCategory:'29.85em',
         single:'7em', //for SPF
-        ep: '29.7em'
-
+        ep: '32.4em'
     };
 
     function controller$h(settings, defaultSettings, clearElement, subTabs, taskType){
@@ -19772,8 +19783,8 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', 'Create my IAT script'),
-            m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            pageHeadLine('IAT'),
+        m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
 
@@ -20031,7 +20042,7 @@
         var headlines = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth'];
         var addFlag =  m.prop('visible');
         var removeFlag = m.prop('hidden');
-        var chooseFlag = m.prop('hidden');
+        var chooseFlag = m.prop(false);
         var choosenCategoriesList = m.prop([]);
         var chooseClicked = m.prop(false);
         var curr_tab = m.prop(0);
@@ -20058,7 +20069,7 @@
             if (e.target.checked) choosenCategoriesList().push(index);
         }
         function unChooseCategories(){
-            chooseFlag('hidden');
+            chooseFlag(false);
             choosenCategoriesList().length = 0;
         }
         function chooseCategories(){
@@ -20066,7 +20077,7 @@
                 showRestrictions('error','It\'s not possible to remove categories because there must be at least 2 categories.','Error');
                 return;
             }
-            chooseFlag('visible');
+            chooseFlag(true);
             if (!chooseClicked()) { //show the info msg only for the first time the choose button has been clicked
                 showRestrictions('info','To choose categories to remove, please tik the checkbox near the wanted category, and to remove them click the \'Remove Choosen Categories\' button.', 'Choose categories to remove');
                 chooseClicked(true);
@@ -20086,7 +20097,7 @@
                     }
                     else {
                         choosenCategoriesList().length = 0;
-                        chooseFlag('hidden');
+                        chooseFlag(false);
                         m.redraw();
                     }
                 }).catch(function (error) { return messages.alert({header: 'Error in removing categories' , content: m('p.alert.alert-danger', error.message)}); })
@@ -20098,7 +20109,7 @@
                     categories.splice(choosenCategoriesList()[i],1);
 
                 choosenCategoriesList().length = 0;
-                chooseFlag('hidden');
+                chooseFlag(false);
                 addFlag(categories.length < 8 ? 'visible' : 'hidden');
                 curr_tab(categories.length - 1);
             }
@@ -20116,19 +20127,21 @@
     }
 
     function view$d(ctrl,settings) {
-        return m('.container.space',[
+        return m('.space',[
             m('.subtab', ctrl.categories.map(function(tab, index){
                 return m('button',{
                         class: ctrl.curr_tab() === index ? 'active' : '',
                         onclick:function(){
                             ctrl.curr_tab(index);
-                        }}, ctrl.headlines[index] + ' Category',
-                    m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), style:{'margin-left':'1em',visibility: ctrl.chooseFlag()}, onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}));
+                        }}, ctrl.headlines[index] + ' Category ',
+                    !ctrl.chooseFlag() ? '' :
+                        m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}));
             })),
             m('.row.space',[
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons',display: 'flex','justify-content': 'center'}},[
+                m('.col-sm-5.offset-sm-3',
+                m('.btn-group btn-group-toggle', [
                     m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory, style:{'padding-right':'60px','padding-left':'60px' ,visibility: ctrl.addFlag()}}, [m('i.fa.fa-plus')],' Add Category'),
-                    ctrl.chooseFlag() === 'hidden' ?
+                    !ctrl.chooseFlag() ?
                         m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
                             m('i.fa.fa-check'), ' Choose Categories to Remove'])
                         :
@@ -20139,6 +20152,7 @@
                             m('i.fa.fa-eraser'), ' Remove Choosen Categories']) : ''
 
                 ])
+                )
             ]),
             m('.div.space',{key:ctrl.categories[ctrl.curr_tab()].key},
                 m.component(elementComponent$1, {key:'categories'}, settings, ctrl.getDefaultValues()[0], ctrl.getDefaultValues()[1], ctrl.curr_tab())),
@@ -20536,7 +20550,7 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', 'Create my BIAT script'),
+            pageHeadLine('BIAT'),
             m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
@@ -20925,7 +20939,7 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', 'Create my SPF script'),
+            pageHeadLine('SPF'),
             m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
@@ -21628,7 +21642,7 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', 'Create my STIAT script'),
+            pageHeadLine('STIAT'),
             m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
 
@@ -22121,7 +22135,7 @@
         }
         return m('.container',
             m('div', ctrl.notifications.view()),
-            m('h1.display-4', ' Create my Evaluative Priming script'),
+            pageHeadLine('Evaluative Priming'),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }

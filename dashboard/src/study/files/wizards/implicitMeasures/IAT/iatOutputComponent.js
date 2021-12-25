@@ -9,7 +9,7 @@ function controller(settings, defaultSettings, blocksObject){
     let error_msg = [];
     error_msg = validityCheck(error_msg, settings, blocksObject)
 
-    return {error_msg, createFile, printToPage, settings};
+    return {error_msg, createFile, settings};
 
     function createFile(settings, fileType){
         return function(){
@@ -30,15 +30,6 @@ function controller(settings, defaultSettings, blocksObject){
                 document.body.appendChild(downloadLink);
             }
             downloadLink.click();
-        };
-    }
-
-    function printToPage(settings){
-        return function(){
-            let para = document.getElementById('textDiv');
-            para.style.visibility = 'visible';
-            let text_area = document.getElementById('textArea');
-            text_area.value = toString(settings);
         };
     }
 }
@@ -111,7 +102,7 @@ export function toScript(output, external){
 }
 
 function view(ctrl,settings){
-    return viewOutput(ctrl, settings);
+    return viewOutput(ctrl, settings, toString);
 }
 
 export default iatOutputComponent;

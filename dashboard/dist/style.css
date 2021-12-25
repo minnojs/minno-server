@@ -152,6 +152,14 @@ a.no-decoration {
   padding-top: 10px;
 }
 
+.line {
+  margin-bottom: 20px;
+  width: 100%;
+  border-bottom: 1px solid #e3e1e1;
+  padding-top: 5px;
+  padding-bottom: 25px;
+}
+
 .disable_properties {
   pointer-events: none;
   opacity: 0.4;

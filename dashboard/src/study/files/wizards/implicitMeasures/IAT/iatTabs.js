@@ -57,25 +57,35 @@ let categoryClear = [{
     stimulusCss : {color:'#000000', 'font-size':'1em'}
 }];
 
-let categoriesTabs = [
-    {value: 'category1', text: 'First Category'},
-    {value: 'category2', text: 'Second Category'},
-]
+let categoriesTabs = {
+    'category1': {text: 'First Category'},
+    'category2': {text: 'Second Category'}
+}
 
-let attributesTabs = [
-    {value: 'attribute1', text: 'First Attribute'},
-    {value: 'attribute2', text: 'Second Attribute'},
-]
+let attributesTabs = {
+    'attribute1':{text: 'First Attribute'},
+    'attribute2':{text: 'Second Attribute'}
+}
 
-let tabs = [
-    {value: 'parameters', text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},
-    {value: 'blocks', text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc},
-    {value: 'categories', text: 'Categories', component: categoriesComponent, rowsDesc: categoryClear, subTabs:categoriesTabs},
-    {value: 'attributes', text: 'Attributes', component: categoriesComponent, rowsDesc: categoryClear, subTabs:attributesTabs},
-    {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc},
-    {value: 'output', text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc},
-    {value: 'import', text: 'Import', component: importComponent},
-    {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'IAT'}
-];
+let tabs = {
+    'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},
+    'blocks': {text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc},
+    'categories': {
+        text: 'Categories',
+        component: categoriesComponent,
+        rowsDesc: categoryClear,
+        subTabs: categoriesTabs
+    },
+    'attributes': {
+        text: 'Attributes',
+        component: categoriesComponent,
+        rowsDesc: categoryClear,
+        subTabs: attributesTabs
+    },
+    'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
+    'output': {text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc},
+    'import': {text: 'Import', component: importComponent},
+    'help': {text: 'Help', component: helpComponent, rowsDesc: 'IAT'}
+};
 
 export default tabs;

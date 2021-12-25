@@ -1,4 +1,4 @@
-import {showClearOrReset} from '../resources/utilities.js';
+import {resetClearButtons, showClearOrReset} from './utilities.js';
 
 let blocksComponent = {
     controller:controller,
@@ -18,7 +18,7 @@ function controller(settings, defaultSettings, rows){
     }
 }
 function view(ctrl, settings){
-    return m('.container' , [
+    return m('.space' , [
         //create numbers inputs
         ctrl.rows.map(function(row){
             //if user chooses not to have a prcatice block set it's parameter to 0
@@ -26,40 +26,25 @@ function view(ctrl, settings){
                 settings.blocks.nPracticeBlockTrials = 0;
                 return;
             }
-            return m('.row.space', [
+            return m('.row.line', [
                 row.desc ?
                     m('.col-md-4.space',[
-                        m('i.fa.fa-info-circle'),
-                        m('.card.info-box.card-header', [row.desc]),
-                        m('span', [' ', row.label])
-                    ])
-                    :
-                    m('.col-md-4.space', {style:{'padding-left':'2rem'}}, m('span', [' ', row.label])),
-                m('.col-8.space',
+                        m('span', [' ', row.label, ' ']),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:row.desc
+                        })
+                    ]) : m('.col-md-4.space', m('span', [' ', row.label])),
+                    m('.col-sm-4.col-lg-2',
                     row.options ?
-                        m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem'}},[
+                        m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
                         row.options.map(function(option){return m('option', option);})
                         ])
                     : row.name.includes('random') ?
                         m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
-                    :
-                        m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'},onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
+                    : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
                 ),
-                m('hr')
             ])
-        }),
-        m('.row.space',[
-            m('.col.space',{style:{'margin-bottom':'7px'}},[
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                    m('button.btn btn btn-secondary',
-                        {title:'Reset all current fields to default values', onclick: () => ctrl.reset()},
-                        m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                    m('button.btn btn btn-danger',
-                        {title:'Clears all current values',onclick:() => ctrl.clear()},
-                        m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                ])
-            ])
-        ])
+        }), resetClearButtons(ctrl.reset, ctrl.clear)
     ])
 }
 

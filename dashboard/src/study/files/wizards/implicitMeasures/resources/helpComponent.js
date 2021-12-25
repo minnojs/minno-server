@@ -9,9 +9,8 @@ let links = {IAT: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/',
 let helpComponent = {
 	view: function(ctrl, settings, defaultSettings, type){
 		let extension = '.'+type.toLowerCase();
-		return m('.activation.centrify', [
-			m('.alert.alert-info',{role:'alert'},
-				m('p',{style:{margin:'0.5em 1em 0.5em 1em'}},
+		return m('.alert.alert-info',
+				m('p',
 					!settings.external ? //only show this text if we are in the dashboard
 					['This will create a script for our '+type+' extension.' +
 					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
@@ -29,10 +28,9 @@ let helpComponent = {
 					'You can install that platform on your own server, use a more simple ',
 					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
 						'this script directly from Qualtrics.')
-						]
+					]
 				)
-			)]
-		);
+			);
 	}
 };
 

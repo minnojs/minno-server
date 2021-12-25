@@ -53,26 +53,37 @@ let primeClear = [{
 
 }]
 
-let categoriesTabs = [
-    {value: 'rightAttTargets', text: 'First Category'},
-    {value: 'leftAttTargets', text: 'Second Category'},
-]
+let categoriesTabs = {
+    'rightAttTargets':{text: 'First Category'},
+    'leftAttTargets':{text: 'Second Category'},
+    }
 
-let primesTabs = [
-    {value: 'prime1', text: 'First Category'},
-    {value: 'prime2', text: 'Second Category'},
-    {value:'primeStimulusCSS', text:'Prime Appearance'}
-]
+let primesTabs = {
+    'prime1':{text: 'First Category'},
+    'prime2':{text: 'Second Category'},
+    'primeStimulusCSS':{text:'Prime Appearance'}
+}
 
-let tabs = [
-    {value: 'parameters', text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc },
-    {value: 'blocks', text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
-    {value: 'prime', text: 'Prime Categories', component: categoriesComponent, rowsDesc: primeClear, subTabs:primesTabs, type: 'EP'},
-    {value: 'categories', text: 'Target Categories', component: categoriesComponent, rowsDesc: categoryClear, subTabs:categoriesTabs},
-    {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc},
-    {value: 'output', text: 'Complete', component: outputComponent},
-    {value: 'import', text: 'Import', component: importComponent},
-    {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'EP'}
-];
+let tabs = {
+    'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},
+    'blocks': {text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
+    'prime': {
+        text: 'Prime Categories',
+        component: categoriesComponent,
+        rowsDesc: primeClear,
+        subTabs: primesTabs,
+        type: 'EP'
+    },
+    'categories': {
+        text: 'Target Categories',
+        component: categoriesComponent,
+        rowsDesc: categoryClear,
+        subTabs: categoriesTabs
+    },
+    'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
+    'output': {text: 'Complete', component: outputComponent},
+    'import': {text: 'Import', component: importComponent},
+    'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
+};
 
 export default tabs;

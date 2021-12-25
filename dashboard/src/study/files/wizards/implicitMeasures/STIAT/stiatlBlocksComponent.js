@@ -1,5 +1,5 @@
-import {clone, showRestrictions } from "../resources/utilities";
-import messages from "../../../../../utils/messagesComponent";
+import {clone, resetClearButtons, showRestrictions} from "../resources/utilities";
+import messages from '../../../../../utils/messagesComponent';
 
 let blocksComponent = {
     controller:controller,
@@ -8,14 +8,12 @@ let blocksComponent = {
 
 function controller(settings, defaultSettings, rows){
     var blocks = settings.trialsByBlock;
-    let addFlag =  m.prop(blocks.length < 30 ? 'visible' : 'hidden');
-    let removeFlag = m.prop('hidden');
-    let chooseFlag = m.prop('hidden');
-    let choosenBlocksList = [];
+    let chooseFlag = m.prop(false);
+    let choosenBlocksList = m.prop([]);
     let chooseClicked = m.prop(false);
     let clearBlock = rows.slice(-1)[0];
     
-    return {showReset, showClear, set, get, blocks, getParameters, setParameters, addFlag, removeFlag,
+    return {showReset, showClear, set, get, blocks, getParameters, setParameters, unChooseCategories,
         chooseFlag, addBlock, showRemoveBlocks, choosenBlocksList, updateChoosenBlocks, chooseBlocks, rows};
 
     function beforeClearReset(action, func){
@@ -43,8 +41,7 @@ function controller(settings, defaultSettings, rows){
             }
             settings.switchSideBlock = defaultSettings.switchSideBlock;
             settings.blockOrder = defaultSettings.blockOrder;
-            choosenBlocksList.length = 0;
-            addFlag('visible')
+            choosenBlocksList().length = 0;
         }
     }
     function showClear(){
@@ -72,22 +69,26 @@ function controller(settings, defaultSettings, rows){
         if (type === 'select') return function(value){return settings[name] = value; };
         return function(value){return settings[name] = Math.abs(Math.round(value));};
     }
+    function unChooseCategories(){
+        chooseFlag(false);
+        choosenBlocksList().length = 0;
+    }
     function updateChoosenBlocks(e, index){
-        if (choosenBlocksList.includes(index) && !e.target.checked){
-            var i = choosenBlocksList.indexOf(index);
+        if (choosenBlocksList().includes(index) && !e.target.checked){
+            var i = choosenBlocksList().indexOf(index);
             if (i !== -1) {
-            choosenBlocksList.splice(i, 1);
+            choosenBlocksList().splice(i, 1);
             }
             return;
         } 
-        if (e.target.checked) choosenBlocksList.push(index);
+        if (e.target.checked) choosenBlocksList().push(index);
     }
     function chooseBlocks(){
         if (blocks.length < 4) {
             showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Choosen Blocks');
             return;
         }
-        chooseFlag('visible');
+        chooseFlag(true);
         if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
             showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.', 'Choose Blocks to Remove');
             chooseClicked(true);
@@ -96,10 +97,9 @@ function controller(settings, defaultSettings, rows){
     function addBlock(){
         blocks.push(clone(clearBlock));
         blocks.slice(-1)[0]['block'] = blocks.length;
-        if (blocks.length === 30) addFlag('hidden') //limit blocks to 30
     }
     function showRemoveBlocks(){
-        if ((blocks.length - choosenBlocksList.length) < 3){
+        if ((blocks.length - choosenBlocksList().length) < 3){
             showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Choosen Blocks');
             return;
         }
@@ -111,104 +111,96 @@ function controller(settings, defaultSettings, rows){
                     m.redraw();
                 }
                 else {
-                    choosenBlocksList.length = 0;
-                    chooseFlag('hidden');
+                    choosenBlocksList().length = 0;
+                    chooseFlag(false);
                     m.redraw();
                 }
             }).catch((error) => {showRestrictions("error", "Something went wrong on the page!\n"+error, "Oops!");})
             .then(m.redraw());
-
         function removeBlocks(){
-            choosenBlocksList.sort();
-            for (let i = choosenBlocksList.length - 1; i >=0; i--)
-                blocks.splice(choosenBlocksList[i],1)
+            choosenBlocksList().sort();
+            for (let i = choosenBlocksList().length - 1; i >=0; i--)
+                blocks.splice(choosenBlocksList()[i],1)
             
             for (let i = 0; i < blocks.length; i++) 
                 blocks[i]['block'] = i+1
             
-            choosenBlocksList.length = 0;
-            chooseFlag('hidden');
+            choosenBlocksList().length = 0;
+            chooseFlag(true);
         }
     }
 }
 
 function view(ctrl){
-    return m('.container.space' , [
+    return m('.space' , [
         ctrl.rows.slice(0,2).map(function(row) {
-            return m('.div',[
-                    m('.row.space', [
-                    m('.col-sm-3.space',[
-                        m('i.fa.fa-info-circle'),
-                        m('.card.info-box.card-header', [row.desc]),
-                        m('span', [' ', row.label])
+            return m('.row.line', [
+                    m('.col-md-3',[
+                        m('span', [' ', row.label, ' ']),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:row.desc
+                        })
                     ]),
-                    m('.col-md-9',
+                    m('.col-md-2',
                         row.options ?
-                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select')), style: {width: '8.3rem'}},[
-                                row.options.map(function(option){return m('option', option);})
-                            ])
-                            : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), style: {width: '4em'}, min:0})
-                    ),
-                ]),
-                m('hr')
-            ])
+                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                row.options.map(function(option){return m('option', option);})])
+                            : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                    )
+            ]);
         }),
         ctrl.blocks.map(function(block) {
             let index = ctrl.blocks.indexOf(block);
-            return m('div',[
-                m('.row', [
+            return m('.row.line', [
                     m('.col-md-3',[
-                        m('input[type=checkbox]', {checked : ctrl.choosenBlocksList.includes(index), style:{visibility: ctrl.chooseFlag(), 'margin-right':'0.5rem'}, onclick: (e) => ctrl.updateChoosenBlocks(e, index)}),
-                        index === 0 ?
-                            [
-                                m('i.fa.fa-info-circle'),
-                                m('.card.info-box.card-header', ['By default, this is the practice block that shows only the attributes and not the category. ' +
-                                                                'Because of that, the number of category trials is 0. ' +
-                                                                'You can change that if you want.'])
-                            ] : '',
-                        m('span', [' ','Block '+parseInt(index+1)])
+                        !ctrl.chooseFlag() ? ' ' :
+                        m('input[type=checkbox]', {checked : ctrl.choosenBlocksList().includes(index), onclick: (e) => ctrl.updateChoosenBlocks(e, index)}),
+                        m('span', [' ','Block '+parseInt(index+1), ' ']),
+                        index !== 0 ? ' ' :
+                            m('i.fa.fa-info-circle.text-muted', {
+                                title:'By default, this is the practice block that shows only the attributes and not the category. ' +
+                                'Because of that, the number of category trials is 0. ' +
+                                'You can change that if you want.'
+                            }),
                     ]),
                     m('.col-md-9',[
                         ctrl.rows.slice(2,-1).map(function(row) {
                             return m('.row.space', [
                                 m('.col-sm-4.space',[
-                                    m('i.fa.fa-info-circle'),
-                                    m('.card.info-box.card-header', [row.desc]),
-                                    m('span', [' ', row.label])
+                                    m('span', [' ', row.label, ' ']),
+                                    m('i.fa.fa-info-circle.text-muted',{
+                                        title:row.desc
+                                    }),
                                 ]),
-                                m('.col-sm-8', [
-                                    row.name === 'instHTML' ?  m('textarea.form-control',{style: {width: '15rem' ,height: '4rem'},oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
-                                    : m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'}, onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
-                                ]) 
+                                row.name === 'instHTML' ?
+                                m('.col-md-4', [
+                                    m('textarea.form-control',{rows:4, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
+                                ]) :
+                                    m('.col-md-2',
+                                        m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
+                                    )
                             ])
                         })
                     ])
-                ]),
-                m('hr')
             ]);
         }),
-        m('.row.space',[
-            m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons',display: 'flex','justify-content': 'center'}},[
-                m('button.btn btn btn-info',{onclick: ctrl.addBlock, style:{'padding-right':'60px','padding-left':'60px' ,visibility: ctrl.addFlag()}},
-                    m('i.fa.fa-plus'),' Add Block'),
-                m('button.btn btn btn-warning',{onclick: ctrl.chooseBlocks},
-                    m('i.fa.fa-check'), ' Choose Blocks to Remove'),
-                m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList.length},
-                    m('i.fa.fa-minus-square'), ' Remove Choosen Blocks'),
-            ])
-        ]),
-        m('.row',[
-            m('.col',{style:{'margin-bottom':'7px'}},[
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                    m('button.btn btn-secondary', 
-                        {title:'Reset all current fields to default values', onclick: () => ctrl.showReset()},
-                        m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                    m('button.btn btn-danger',
-                        {title:'Clears all current values',onclick:() => ctrl.showClear()},
-                        m('i.fa.fa-trash-alt.fa-sm'), ' Clear')
+        m('.row.space.centrify',
+            m('.col-sm-8',
+                m('.btn-group btn-group-toggle', [
+                    ctrl.blocks.length > 29 ? '' : //limit number of blocks to 30
+                    m('button.btn btn btn-info',{onclick: ctrl.addBlock},
+                        m('i.fa.fa-plus'),' Add Block'),
+                    !ctrl.chooseFlag() ?
+                        m('button.btn btn btn-warning',{onclick: ctrl.chooseBlocks},
+                            m('i.fa.fa-check'), ' Choose Blocks to Remove')
+                        : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                            m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
+                    !ctrl.choosenBlocksList().length ? '' :
+                    m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList().length},
+                        m('i.fa.fa-minus-square'), ' Remove Chosen Blocks')
                 ])
-            ])
-        ])
+            )
+        ), resetClearButtons(ctrl.showReset, ctrl.showClear)
     ]);
 }
 
