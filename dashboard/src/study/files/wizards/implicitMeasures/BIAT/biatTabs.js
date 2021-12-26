@@ -64,7 +64,7 @@ let attributesTabs = {
 let practiceTabs = {
     'practiceCategory1':{text: 'First Practice Category'},
     'practiceCategory2':{text: 'Second Practice Category'}
-}
+};
 
 let tabs = {
     'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},

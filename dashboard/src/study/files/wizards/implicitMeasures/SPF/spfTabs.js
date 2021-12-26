@@ -16,9 +16,9 @@ let parametersDesc = [
 ];
 
 let textDesc=[
-    {name: 'firstBlock', label:'First Block\'\s Instructions'},
-    {name: 'middleBlock', label:'Middle Block\'\s Instructions'},
-    {name: 'lastBlock', label:'Last Block\'\s Instructions'},
+    {name: 'firstBlock', label:'First Block\'s Instructions'},
+    {name: 'middleBlock', label:'Middle Block\'s Instructions'},
+    {name: 'lastBlock', label:'Last Block\'s Instructions'},
     {firstBlock: '', middleBlock:'', lastBlock:''},
     {} //an empty element
 
@@ -34,8 +34,7 @@ let blocksDesc = [
 
 let categoryClear = [{
     name: '', 
-    title: {media: {word: ''}, 
-    css: {color: '#000000', 'font-size': '1em'}, height: 4},
+    title: {media: {word: ''}, css: {color: '#000000', 'font-size': '1em'}, height: 4},
     stimulusMedia: [],
     stimulusCss : {color:'#000000', 'font-size':'1em'}
 }];
@@ -43,12 +42,12 @@ let categoryClear = [{
 let categoriesTabs = {
     'objectCat1': {text: 'First Category'},
     'objectCat2': {text: 'Second Category'}
-}
+};
 
 let attributesTabs = {
     'attribute1': {text: 'First Attribute'},
     'attribute2': {text: 'Second Attribute'}
-}
+};
 
 let tabs = {
     'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},

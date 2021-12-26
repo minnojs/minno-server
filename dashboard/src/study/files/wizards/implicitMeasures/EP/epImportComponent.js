@@ -6,7 +6,7 @@ let importComponent = {
 };
 
 function view(ctrl){
-    return viewImport(ctrl)
+    return viewImport(ctrl);
 }
 
 function controller(settings) {
@@ -25,22 +25,22 @@ function controller(settings) {
 }
 export function updateMediaSettings(settings, input){
     //update attributes to be compatible to IAT so that elementComponent can be used.
-    settings.rightAttTargets = input.targetCats.rightAttTargets
-    settings.rightAttTargets.stimulusMedia = input.targetCats.rightAttTargets.mediaArray
-    delete settings.targetCats.rightAttTargets.mediaArray
+    settings.rightAttTargets = input.targetCats.rightAttTargets;
+    settings.rightAttTargets.stimulusMedia = input.targetCats.rightAttTargets.mediaArray;
+    delete settings.targetCats.rightAttTargets.mediaArray;
 
-    settings.leftAttTargets = input.targetCats.leftAttTargets
-    settings.leftAttTargets.stimulusMedia = input.targetCats.leftAttTargets.mediaArray
-    delete settings.targetCats.leftAttTargets.mediaArray
+    settings.leftAttTargets = input.targetCats.leftAttTargets;
+    settings.leftAttTargets.stimulusMedia = input.targetCats.leftAttTargets.mediaArray;
+    delete settings.targetCats.leftAttTargets.mediaArray;
 
-    settings.rightAttTargets.stimulusCss = input.targetCats.rightAttTargets.stimulusCSS
-    settings.leftAttTargets.stimulusCss = input.targetCats.leftAttTargets.stimulusCSS
-    delete settings.rightAttTargets.stimulusCSS
-    delete settings.leftAttTargets.stimulusCSS
-    delete settings.targetCats.rightAttTargets
-    delete settings.targetCats.leftAttTargets
-    delete settings.targetCats
-    return settings
+    settings.rightAttTargets.stimulusCss = input.targetCats.rightAttTargets.stimulusCSS;
+    settings.leftAttTargets.stimulusCss = input.targetCats.leftAttTargets.stimulusCSS;
+    delete settings.rightAttTargets.stimulusCSS;
+    delete settings.leftAttTargets.stimulusCSS;
+    delete settings.targetCats.rightAttTargets;
+    delete settings.targetCats.leftAttTargets;
+    delete settings.targetCats;
+    return settings;
 }
 export function updateSettings(settings, input) {
     settings.primeStimulusCSS = input.primeStimulusCSS;
@@ -63,7 +63,7 @@ export function updateSettings(settings, input) {
     settings.text.middleBlock = input.middleBlock;
     settings.text.lastBlock = input.lastBlock;
 
-    settings.blocks.nTrialsPerPrimeTargetPair = input.nTrialsPerPrimeTargetPair
+    settings.blocks.nTrialsPerPrimeTargetPair = input.nTrialsPerPrimeTargetPair;
     settings.blocks.nBlocks = input.nBlocks;
 
     settings = updateMediaSettings(settings, input);

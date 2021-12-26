@@ -8,9 +8,9 @@ let tabsComponent = {
 
     },
     view:
-        function(ctrl, tabs, settings, defaultSettings, external = false, notifications = null,
-                is_locked = null, is_settings_changed = null, show_do_save = null){
-            return m('.container',[
+        function(ctrl, tabs, settings, defaultSettings, external = false, notifications,
+            is_locked, is_settings_changed, show_do_save){
+            return m('.container-fluid',[
                 m('.row',[
                     m('.col-md-11',
                         m('.tab',
@@ -20,27 +20,27 @@ let tabsComponent = {
                                 if (tab === 'practice' && settings.parameters.practiceBlock === false)
                                     return;
                                 return m('button.tablinks', {
-                                        class: ctrl.tab === tab ? 'active' : '',
-                                        onclick:function(){
-                                            ctrl.tab = tab;
-                                            !tabs[tab].subTabs ? ''
-                                                : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0]
-                                        }}, tabs[tab].text);})),
-                        ),
-                    m('.col-sm-1.text-center',
+                                    class: ctrl.tab === tab ? 'active' : '',
+                                    onclick:function(){
+                                        ctrl.tab = tab;
+                                        !tabs[tab].subTabs ? ''
+                                            : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
+                                    }}, tabs[tab].text);}))
+                    ),
+                    m('.col-sm-1-text-center',
                         !external ?
                             is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                id:'save_button',
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                disabled: !is_settings_changed(),
-                                onclick: () => show_do_save(),
-                            }, 'Save')
+                                m('button.btn btn btn-primary', {
+                                    id:'save_button',
+                                    title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                    disabled: !is_settings_changed(),
+                                    onclick: () => show_do_save(),
+                                }, 'Save')
                             : m('a.btn btn-info btn-lg',{
-                                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
-                                    role:'button',
-                                    title:'Main Page'}
-                                ,m('i.fa.fa-home'))
+                                href:'https://minnojs.github.io/minno-server/implicitMeasures/',
+                                role:'button',
+                                title:'Main Page'}
+                            ,m('i.fa.fa-home'))
                     )
                 ]),
                 !tabs[ctrl.tab].subTabs ? '' :
@@ -51,18 +51,17 @@ let tabsComponent = {
                                     return m('button',{
                                         class: ctrl.currSubTab === subTab ? 'active' : '',
                                         onclick:function(){
-                                        ctrl.currSubTab = subTab;
-                                    }} ,tabs[ctrl.tab].subTabs[subTab].text);
-                            }))
+                                            ctrl.currSubTab = subTab;
+                                        }} ,tabs[ctrl.tab].subTabs[subTab].text);
+                                }))
                         ])
                     ]),
                 m('.row',[
                     external ? '' : m('div', notifications.view()),
-                    m('.col-sm-12',{key:tabs[ctrl.tab]},
+                    m('.col-sm-11',{key:tabs[ctrl.tab]},
                         m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
                 ])
-            ]);
-    }
+            ]);}
 };
 
 export default tabsComponent;

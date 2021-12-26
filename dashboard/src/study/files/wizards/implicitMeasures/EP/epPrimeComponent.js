@@ -18,7 +18,7 @@ function controller(object, settings, stimuliList){
     function get(name, media, type){
         if (media != null && type != null){
             if (type === 'font-size'){
-                return parseFloat((element[name][media][type].replace("em","")));
+                return parseFloat((element[name][media][type].replace('em','')));
             }
             return element[name][media][type];
         }
@@ -32,10 +32,10 @@ function controller(object, settings, stimuliList){
                 if (type === 'font-size'){
                     value = Math.abs(value);
                     if (value === 0){
-                        showRestrictions('Font\'s size must be bigger than 0.', 'error')
+                        showRestrictions('Font\'s size must be bigger than 0.', 'error');
                         return element[name][media][type];
                     }
-                    return element[name][media][type] = value + "em";
+                    return element[name][media][type] = value + 'em';
                 }
                 return element[name][media][type] = value;
             }
@@ -43,13 +43,13 @@ function controller(object, settings, stimuliList){
             else if (media === 'font-size'){
                 value = Math.abs(value);
                 if (value === 0){
-                    showRestrictions('Font\'s size must be bigger than 0.', 'error')
+                    showRestrictions('Font\'s size must be bigger than 0.', 'error');
                     return element[name][media];
                 }
-                return element[name][media] = value + "em";
+                return element[name][media] = value + 'em';
             }
             return element[name] = value;
-        }
+        };
     }
     function addStimulus(event){
         let new_stimuli = fields.newStimulus();
@@ -75,7 +75,7 @@ function view(ctrl) {
     return m('.space', [
         m('.row.line',[
             m('.col-md-4',[
-                m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data ']),
+                m('span', ctrl.fields.elementType()+' name logged in the data file '),
                 m('i.fa.fa-info-circle.text-muted',{
                     title:'Will appear in the data and in the default feedback message.'
                 }),
@@ -99,8 +99,8 @@ function view(ctrl) {
                             m('i.fa.fa-plus'), 'Add Image'
                         ])
                     ])
-                ]),
-            ]),
+                ])
+            ])
         ]),
         m('.row',[
             m('.col-md-6',[
@@ -118,10 +118,10 @@ function view(ctrl) {
                 m('.row.space',
                     m('.col-sm-5',
                         m('.btn-group-vertical',[
-                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
-                        m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                        m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
-                    ]))
+                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                            m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                        ]))
                 )
             ])
         ])

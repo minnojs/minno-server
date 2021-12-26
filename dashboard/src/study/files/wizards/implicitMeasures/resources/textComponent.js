@@ -14,11 +14,11 @@ function controller(settings, defaultSettings, rows){
 
     function reset(){
         let valueToSet = isTouch ? defaultSettings.touch_text : defaultSettings.text;
-        showClearOrReset(textparameters, valueToSet, 'reset')
+        showClearOrReset(textparameters, valueToSet, 'reset');
     }
     function clear(){
         let valueToSet = isTouch ? rows.slice(-1)[0] :  rows.slice(-2)[0];
-        showClearOrReset(textparameters, valueToSet, 'clear')
+        showClearOrReset(textparameters, valueToSet, 'clear');
     }
     function get(name){return textparameters[name];}
     function set(name){return function(value){return textparameters[name] = value;};}
@@ -33,17 +33,17 @@ function view(ctrl){
             if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                 return;
             return m('.row.line',[
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ])
-                        : m('.col-md-4.space', m('span', [' ', row.label])),
-                        m('.col-sm-7', [
-                            m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                row.desc ?
+                    m('.col-md-4.space',[
+                        m('span', [' ', row.label, ' ']),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:row.desc
+                        })
                     ])
+                    : m('.col-md-4.space', m('span', [' ', row.label])),
+                m('.col-sm-8', [
+                    m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                ])
             ]);
         }), resetClearButtons(ctrl.reset, ctrl.clear)
     ]);

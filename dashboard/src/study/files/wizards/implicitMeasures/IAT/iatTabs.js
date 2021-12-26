@@ -60,12 +60,12 @@ let categoryClear = [{
 let categoriesTabs = {
     'category1': {text: 'First Category'},
     'category2': {text: 'Second Category'}
-}
+};
 
 let attributesTabs = {
     'attribute1':{text: 'First Attribute'},
     'attribute2':{text: 'Second Attribute'}
-}
+};
 
 let tabs = {
     'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},

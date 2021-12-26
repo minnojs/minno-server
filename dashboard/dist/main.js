@@ -18071,34 +18071,70 @@
     };
 
     var tabsComponent = {
-        controller: function(tabs, settings, defaultSettings, external){
-
-            var tab = tabs[0].value;
-            var index = setIndex(tab);
-
-            return {tab: tab, index: index, setIndex:setIndex};
-            function setIndex(tab){return tabs.findIndex(function (element) { return (element.value === tab); });}
+        controller: function(tabs){
+            var tab = Object.keys(tabs)[0];
+            var subTabs = null;
+            var currSubTab = null;
+            return {tab: tab, subTabs: subTabs, currSubTab: currSubTab};
 
         },
         view:
-            function(ctrl, tabs, settings, defaultSettings, external){
+            function(ctrl, tabs, settings, defaultSettings, external, notifications,
+                is_locked, is_settings_changed, show_do_save){
                 if ( external === void 0 ) external = false;
 
-                return m('.container',{id:'tabs'},[
-                    m('.tab',
-                    tabs.map(function(tab){
-                        if (!external && (tab.value === 'output' || tab.value === 'import'))
-                            return;
-                        if (tab.value === 'practice' && settings.parameters.practiceBlock === false)
-                            return;
-                        return m('button.tablinks', {
-                            class: ctrl.tab === tab.value ? 'active' : '', onclick:function(){
-                                ctrl.tab = tab.value;ctrl.index = ctrl.setIndex(tab.value);}},
-                            tab.text);})),
-                    m('.div',{key:tabs[ctrl.index].value},
-                        m.component(tabs[ctrl.index].component, settings, defaultSettings, tabs[ctrl.index].rowsDesc, tabs[ctrl.index].subTabs, tabs[ctrl.index].type))
-                ]);
-        }
+                return m('.container-fluid',[
+                    m('.row',[
+                        m('.col-md-11',
+                            m('.tab',
+                                Object.keys(tabs).map(function(tab){
+                                    if (!external && (tab === 'output' || tab === 'import'))
+                                        return;
+                                    if (tab === 'practice' && settings.parameters.practiceBlock === false)
+                                        return;
+                                    return m('button.tablinks', {
+                                        class: ctrl.tab === tab ? 'active' : '',
+                                        onclick:function(){
+                                            ctrl.tab = tab;
+                                            !tabs[tab].subTabs ? ''
+                                                : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
+                                        }}, tabs[tab].text);}))
+                        ),
+                        m('.col-sm-1-text-center',
+                            !external ?
+                                is_locked() ? '' :
+                                    m('button.btn btn btn-primary', {
+                                        id:'save_button',
+                                        title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                        disabled: !is_settings_changed(),
+                                        onclick: function () { return show_do_save(); },
+                                    }, 'Save')
+                                : m('a.btn btn-info btn-lg',{
+                                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
+                                    role:'button',
+                                    title:'Main Page'}
+                                ,m('i.fa.fa-home'))
+                        )
+                    ]),
+                    !tabs[ctrl.tab].subTabs ? '' :
+                        m('.row.space',[
+                            m('.col-md-11',[
+                                m('.subtab',
+                                    Object.keys(tabs[ctrl.tab].subTabs).map(function(subTab){
+                                        return m('button',{
+                                            class: ctrl.currSubTab === subTab ? 'active' : '',
+                                            onclick:function(){
+                                                ctrl.currSubTab = subTab;
+                                            }} ,tabs[ctrl.tab].subTabs[subTab].text);
+                                    }))
+                            ])
+                        ]),
+                    m('.row',[
+                        external ? '' : m('div', notifications.view()),
+                        m('.col-sm-11',{key:tabs[ctrl.tab]},
+                            m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
+                    ])
+                ]);}
     };
 
     function defaultSettings$4(external) {
@@ -18176,32 +18212,45 @@
         return JSON.parse(JSON.stringify(obj));
     }
 
+    function resetClearButtons(reset, clear, curr_tab, isBiat){
+        if ( curr_tab === void 0 ) curr_tab = null;
+        if ( isBiat === void 0 ) isBiat = false;
+
+        var showReset = !(isBiat && curr_tab > 1); //if the condition holds, don't show the reset button
+        return m('.pull-xs-right',[
+            m('.btn-group btn-group-toggle',[
+                !showReset ? '' :
+                    m('button.btn btn btn-secondary',
+                        {title:'Reset all current fields to default values',
+                            onclick: function () { return reset(curr_tab); }},
+                        m('i.fa.fa-undo.fa-sm'), ' Reset'),
+                m('button.btn btn btn-danger',
+                    {title:'Clears all current values',onclick:function () { return clear(curr_tab); }},
+                    m('i.fa.fa-trash.fa-sm'), ' Clear'),
+            ])
+        ]);
+    }
+
     function pageHeadLine(task){
-        return m('div',{id:'side_bar', class:'clearfix'},[
-            m('h1.display-4', {style:{float: 'left'}},'Create my '+task+' script'),
-            m('a.btn btn-info btn-lg',{
-                style:{'margin-right': '20px', 'margin-top': '10px', float: 'right'},
-                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
-                    role:'button',
-                    title:'Main Page'}
-                ,m('i.fa.fa-home'))
-        ])
+        return m('.row',[
+            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
+        ]);
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
         var containsImage = false;
         //check for missing titles and names
         if(element.name.length === 0)
-            error_msg.push(name_to_display+'\'s\ name is missing');
+            error_msg.push(name_to_display+'\'s name is missing');
 
         if(element.title.media.image !== undefined){
             containsImage = true;
             if(element.title.media.image.length === 0)
-                error_msg.push(name_to_display+'\'s\ title is missing');
+                error_msg.push(name_to_display+'\'s title is missing');
         }
         else {
             if(element.title.media.word.length === 0)
-                error_msg.push(name_to_display+'\'s\ title is missing');
+                error_msg.push(name_to_display+'\'s title is missing');
         }
         var stimulusMedia = element.stimulusMedia;
 
@@ -18216,14 +18265,14 @@
         if(element.title.startStimulus) //for biat only, checking if startStimulus contains image
             element.title.startStimulus.media.image ? containsImage = true : '';
 
-        return containsImage
+        return containsImage;
     }
 
     function checkPrime(element, name_to_display, error_msg){
         var containsImage = false;
         //check for missing titles and names
         if(element.name.length === 0)
-            error_msg.push(name_to_display+'\'s\ name is missing');
+            error_msg.push(name_to_display+'\'s name is missing');
 
         var mediaArray = element.mediaArray;
 
@@ -18235,7 +18284,7 @@
         for(var i = 0; i < mediaArray.length ;i++)
             if(mediaArray[i].image) containsImage = true;
 
-        return containsImage
+        return containsImage;
     }
 
     function showClearOrReset(element, value, action){
@@ -18261,72 +18310,74 @@
         if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)});
     }
 
-    function viewOutput(ctrl, settings){
-        return m('.container',[
-            m('.alert alert-danger', {role:'alert',style: {'margin-top':'20px',visibility: ctrl.error_msg.length === 0 ? 'hidden' : 'visible'}},[
-                m('h6','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
-                m('ul',[
-                    ctrl.error_msg.map(function(err){
-                        return m('li',err);
-                    })
-                ])
-            ]),
-            m('.row.space',[
-                m('.col-md-6.offset-sm-4',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Download the JavaScript file. For more details how to use it, see the “Help” page.']),
-                    m('button.btn btn btn-primary', {style:{'margin-left':'6px','background-color': 'rgb(40, 28, 128)', 'font-size': '16px'},onclick: ctrl.createFile(settings,'JS')},[
-                        m('i.fa.fa-download'), ' Download Script']),
-                ])
-            ]),
-            m('.row.space',[
-                m('.col-md-6.offset-sm-4',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Importing this file to this tool, will load all your parameters to this tool.']),
-                    m('button.btn btn btn-primary', {style:{'margin-left':'6px'}, onclick: ctrl.createFile(settings,'JSON')},[
-                        m('i.fa.fa-download'), ' Download JSON']),
-                ])
-            ]),
-            m('.row.space',[
-                m('.col-md-6.offset-sm-4',
-                    m('button.btn btn btn-primary', {style:{'margin-left': '30px'} ,onclick: ctrl.printToPage(settings)},
-                        'Print to Browser'))
-            ]),
-            m('div.space',{id: 'textDiv', style: {visibility: 'hidden', 'padding' :'1em 0 0 3.5em'}},
-                m('textarea.form-control', {id:'textArea', value:'', style: {width : '57rem', height: '25rem'}}))
+    var printFlag = m.prop(false);
+    function viewOutput(ctrl, settings, toString){
+        return m('.space',[
+            !ctrl.error_msg.length ? '' :
+                m('.alert alert-danger', [
+                    m('strong','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
+                    m('ul',[
+                        ctrl.error_msg.map(function(err){
+                            return m('li',err);
+                        })
+                    ])
+                ]),
+            m('.row',
+                m('.col-md-8.offset-sm-3',
+                    m('.btn-group', [
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JS'),
+                            title:'Download the JavaScript file. For more details how to use it, see the “Help” page.'}, [m('i.fa.fa-download'), ' Download Script']),
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JSON'),
+                            title:'Importing this file to this tool, will load all your parameters to this tool.'}, [m('i.fa.fa-download'), ' Download JSON']),
+                        m('button.btn btn btn-light', {
+                            onclick: function () { return printFlag(true); }}, [m('i.fa.fa-file'), ' Print to Browser'])
+                    ])
+                )),
+            !printFlag() ? '' :
+                m('.row.space',
+                    m('.col-md-10.offset-sm-1',
+                        m('textarea.form-control', {value: toString(settings), rows:20})
+                    ))
         ]);
     }
 
     function viewImport(ctrl){
-        return m('.activation.centrify',[
-            m('.card-block',[
-                m('.card.border-info.mb-3',{style:{'max-width': '25rem'}}, [
+        return m('.row.centrify.space',[
+            m('.col-sm-5',
+                m('.card.border-info.mb-3', [
                     m('.card-header','Upload a JSON file: ' ),
-                    m('.card-body.text-info',[
-                        m('p',{style:{margin:'0.5em 1em 0.5em 1em'}},'If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
-                        m('input[type=file].form-control',{id:'uploadFile', style: {'text-align': 'center'}, onchange: ctrl.handleFile})
+                    m('card-body.text-info',[
+                        m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
                     ])
                 ])
-            ])
-        ]);
+            )]
+        );
     }
 
     function editStimulusObject(fieldName, get, set){ //used in parameters component
-        return m('.col-8',[
-            m('.col',[
-                m('span' ,'Font\'s color: '),
-                m('input[type=color]', {style: {width:'3em', 'border-radius':'3px', 'margin-left':'0.3rem'}, value: get(fieldName,'css','color'), onchange:m.withAttr('value', set(fieldName,'css','color'))})
+        return m('.col-sm-4.col-lg-4',[
+            m('.row',[
+                m('.col-sm-4', m('span' ,'Font\'s color: ')),
+                m('.col-sm-4', m('input[type=color].form-control', {value: get(fieldName,'css','color'), onchange:m.withAttr('value', set(fieldName,'css','color'))}))
             ]),
-            m('.col.space',{style:{'padding-left':'22.5rem'}},[
-                m('label', 'Font\'s size:'),
-                m('input[type=number]', {placeholder:'0', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2', 'margin-left':'0.3rem'}, value:get(fieldName,'css','font-size') ,min: '0' ,onchange:m.withAttr('value', set(fieldName,'css','font-size'))})
+            m('.row.space',[
+                m('.col-sm-4', m('span', 'Font\'s size:')),
+                m('.col-sm-4', m('input[type=number].form-control', {placeholder:'0', value:get(fieldName,'css','font-size') ,min: '0' ,onchange:m.withAttr('value', set(fieldName,'css','font-size'))}))
             ]),
-            m('.col.space',{style:{'padding-left':'22.5rem'}},[
-                !fieldName.toLowerCase().includes('maskstimulus') ? m('span', 'Text: ') :  m('span', 'Image: '),
-                !fieldName.toLowerCase().includes('maskstimulus') ? m('input[type=text]', {style: {'border-radius':'3px','border':'1px solid #E2E3E2',height:'2.5rem',width:'13rem'}, value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
-                    : m('input[type=text]', {style: {'border-radius':'3px','border':'1px solid #E2E3E2'}, value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+            m('.row.space',[
+                m('.col-sm-4',
+                    !fieldName.toLowerCase().includes('maskstimulus')
+                        ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                m('.col-sm-8',
+                    !fieldName.toLowerCase().includes('maskstimulus')
+                        ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
+                        : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+                )
             ])
-        ])
+        ]);
     }
 
     var parametersComponent$1 = {
@@ -18340,28 +18391,24 @@
         var qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
         return {reset: reset, clear: clear, set: set, get: get, rows: rows, qualtricsParameters: qualtricsParameters, external: external};
 
-        function reset() {
-            showClearOrReset(parameters, defaultSettings.parameters, 'reset');
-        }
+        function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
 
-        function clear() {
-            showClearOrReset(parameters, rows.slice(-1)[0], 'clear');
-        }
+        function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
 
         function get(name, object, parameter) {
             if (name === 'base_url')
-                return parameters[name][object]
+                return parameters[name][object];
             if (name === 'isTouch')
-                if (parameters[name] === true) return 'Touch'
+                if (parameters[name] === true) return 'Touch';
                 else return 'Keyboard';
             if (name === 'isQualtrics')
                 if (parameters[name] === true) {
-                    return 'Qualtrics'
+                    return 'Qualtrics';
                 } else return 'Regular';
             if (object && parameter) {
                 if (parameter === 'font-size')
-                    return parseFloat((parameters[name][object][parameter].replace("em", "")));
-                return parameters[name][object][parameter]
+                    return parseFloat((parameters[name][object][parameter].replace('em', '')));
+                return parameters[name][object][parameter];
             }
             return parameters[name];
         }
@@ -18369,14 +18416,14 @@
         function set(name, object, parameter) {
             return function (value) {
                 if (name === 'base_url')
-                    return parameters[name][object] = value
+                    return parameters[name][object] = value;
                 if (name === 'isTouch')
                     if (value === 'Keyboard') return parameters[name] = false;
                     else return parameters[name] = true;
                 if (name === 'isQualtrics')
                     if (value === 'Regular') return parameters[name] = false;
                     else return parameters[name] = true;
-                if (name.includes('Duration')) return parameters[name] = Math.abs(value)
+                if (name.includes('Duration')) return parameters[name] = Math.abs(value);
                 if (object && parameter) {
                     if (parameter === 'font-size') {
                         value = Math.abs(value);
@@ -18384,71 +18431,52 @@
                             showRestrictions('error', 'Font\'s size must be bigger than 0.', 'Error');
                             return parameters[name][object][parameter];
                         }
-                        return parameters[name][object][parameter] = value + "em";
+                        return parameters[name][object][parameter] = value + 'em';
                     }
-                    return parameters[name][object][parameter] = value
+                    return parameters[name][object][parameter] = value;
                 }
                 return parameters[name] = value;
-            }
+            };
         }
 
     }
 
     function view$p(ctrl, settings){
-        return m('.container' ,[
+        return m('.space' ,[
             ctrl.rows.slice(0,-1).map(function (row) {
                 if(!ctrl.external && row.name === 'isQualtrics') return;
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
-
-                return m('div',[
-                        m('.row.space', [
-                            row.desc ?
-                            m('.col-sm-4', [
-                                m('i.fa.fa-info-circle'),
-                                m('.card.info-box.card-header', [row.desc]),
-                                m('span', [' ', row.label])
-                            ])
-                            :
-                            m('.col-sm-4',{style:{'padding-left':'2rem'}}, m('span', [' ', row.label])),
-                            row.name === ('base_url') ?
-                                m('.col-8',
-                                    m('input[type=text].form-control',{style: {width: '30rem'}, value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
-                            : row.name.toLowerCase().includes('key') ? //case of keys parameters
-                            m('.col-8',
-                                m('input[type=text].form-control',{style: {width:'3rem'}, value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
-                            : row.options ? //case of isTouch and isQualtrics
-                            m('.col-8',
-                                m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
-                                    row.options.map(function(option){return m('option', option);})
-                                ]))
-                            : row.name.includes('Duration') ? //case of duration parameter
-                                m('.col-8',
-                                    m('input[type=number].form-control',{placeholder:'0', min:0, style: {width:'5rem'}, value:ctrl.get(row.name), onchange:m.withAttr('value', ctrl.set(row.name))}))
-                                : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
-                                    editStimulusObject(row.name, ctrl.get, ctrl.set)
-                                    : (row.name === 'sortingLabel1' || row.name === 'sortingLabel2' || row.name === 'targetCat') ?
-                                        m('.col-8',
-                                            m('input[type=text]', {style: {'border-radius':'3px','border':'1px solid #E2E3E2',height:'2.5rem',width:'15rem'}, value:ctrl.get(row.name) ,oninput:m.withAttr('value', ctrl.set(row.name))}))
-                                        : m('.col-8',
-                                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name)), checked: ctrl.get(row.name)}))
-                    ]),
-                    m('hr')
-                ])
-            }),
-            m('.row.space',[
-                m('.col.space',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                    ]),
-                ]),
-            ])
-        ])
+                return m('.row.line', [
+                    row.desc ?
+                        m('.col-sm-4', [
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            }),
+                        ]) :
+                        m('.col-sm-4',m('span', [' ', row.label])),
+                    row.name === ('base_url') ?
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
+                        : row.name.toLowerCase().includes('key') ? //case of keys parameters
+                            m('.col-md-2.col-lg-1',
+                                m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
+                            : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
+                                editStimulusObject(row.name, ctrl.get, ctrl.set)
+                                : m('.col-sm-4.col-lg-2',
+                                    row.options ? //case of isTouch and isQualtrics
+                                        m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
+                                            row.options.map(function(option){return m('option', option);})])
+                                        : row.name.includes('Duration') ? //case of duration parameter
+                                            m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(row.name), onchange:m.withAttr('value', ctrl.set(row.name))})
+                                            : (row.name === 'sortingLabel1' || row.name === 'sortingLabel2' || row.name === 'targetCat') ?
+                                                m('input[type=text].form-control', {value:ctrl.get(row.name) ,oninput:m.withAttr('value', ctrl.set(row.name))})
+                                                : m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name)), checked: ctrl.get(row.name)})
+                                )
+                ]);
+            }), resetClearButtons(ctrl.reset, ctrl.clear)
+        ]);
     }
 
     var iatOutputComponent = {
@@ -18460,7 +18488,7 @@
         var error_msg = [];
         error_msg = validityCheck$4(error_msg, settings, blocksObject);
 
-        return {error_msg: error_msg, createFile: createFile, printToPage: printToPage, settings: settings};
+        return {error_msg: error_msg, createFile: createFile, settings: settings};
 
         function createFile(settings, fileType){
             return function(){
@@ -18483,15 +18511,6 @@
                 downloadLink.click();
             };
         }
-
-        function printToPage(settings){
-            return function(){
-                var para = document.getElementById('textDiv');
-                para.style.visibility = 'visible';
-                var text_area = document.getElementById('textArea');
-                text_area.value = toString$4(settings);
-            };
-        }
     }
 
     function validityCheck$4(error_msg, settings, blocksObject){
@@ -18504,7 +18523,7 @@
         temp1 || temp2 || temp3 || temp4 ? containsImage = true : containsImage = false;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         var currBlocks = clone(settings.blocks);
@@ -18562,7 +18581,7 @@
     }
 
     function view$o(ctrl,settings){
-        return viewOutput(ctrl, settings);
+        return viewOutput(ctrl, settings, toString$4);
     }
 
     var textComponent = {
@@ -18590,42 +18609,27 @@
     }
 
     function view$n(ctrl){
-        return m('.container' ,[
+        return m('.space' ,[
             ctrl.rows.map(function(row){
                 //if touch parameter is chosen, don't show the irrelevant text parameters
                 if (ctrl.isTouch === true && row.nameTouch === undefined)
                     return;
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
-                return m('.div',[
-                    m('.row.space',[
-                        row.desc ?
-                            m('.col-md-4.space',[
-                                m('i.fa.fa-info-circle'),
-                                m('.card.info-box.card-header', [row.desc]),
-                                m('span', [' ', row.label])
-                            ])
-                            :
-                            m('.col-md-4.space', {style:{'padding-left':'2rem'}}, m('span', [' ', row.label])),
-                        m('.col-sm-8', [
-                            m('textarea.form-control',{style: {width: '30rem' ,height: '5.5rem'}, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                return m('.row.line',[
+                    row.desc ?
+                        m('.col-md-4.space',[
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            })
                         ])
-                    ]),
-                    m('hr')
-                ]);
-            }),
-            m('.row.space',[
-                m('.col.space',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
+                        : m('.col-md-4.space', m('span', [' ', row.label])),
+                    m('.col-sm-8', [
+                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
-                ])
-            ])
+                ]);
+            }), resetClearButtons(ctrl.reset, ctrl.clear)
         ]);
     }
 
@@ -18649,59 +18653,51 @@
     }
 
     function view$m(ctrl){
-        return m('.container.space' ,[
-            ctrl.rows.slice(0,-1).map(function(row) {
-                return m('div',[
-                    m('.row', [
-                        m('.col-md-3.space',[
-                            m('i.fa.fa-info-circle'),
-                            m('.card.info-box.card-header', [row.desc]),
-                            m('span', [' ', row.label])
-                        ]),
-                        row.name ?  //case of randomBlockOrder & randomAttSide
-                        m('.col-md-9',
-                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)}))
-                        :
-                        m('.col-md-9',[
-                            m('.row', [
-                                m('.col-sm-3', 'Number of trials: '),
-                                m('.col-sm-9', [
-                                    m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'},onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
-                                ])
+        return m('.col-sm-12.space',[
+            m('.row',[
+                m('.col-md-8',
+                    ctrl.rows.slice(0,-1).map(function(row) {
+                        return m('.row.line', [
+                            m('.col-md-5.space',[
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{
+                                    title:row.desc
+                                }),
                             ]),
-                            m('.row.space',[
-                                m('.col-sm-3', 'Number of mini-blocks: '),
-                                m('.col-sm-9', [
-                                    m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'},onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
+                            row.name ?  //case of randomBlockOrder & randomAttSide
+                                m('.col-md-7',
+                                    m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)}))
+                                : m('.col-md-7',[
+                                    m('.row', [
+                                        m('.col-sm-6', 'Number of trials: '),
+                                        m('.col-sm-4', [
+                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
+                                        ])
+                                    ]),
+                                    m('.row.space',[
+                                        m('.col-sm-6', 'Number of mini-blocks: '),
+                                        m('.col-sm-4', [
+                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
+                                        ])
+                                    ])
                                 ])
-                            ])
-                        ])
-                    ]),
-                    m('hr')
-                ]);
-            }),
-            m('.row.space',[
-                m('.col.space',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
+                        ]);
+                    })
+                ),
+                m('.col-md-4.double_space',
+                    m('.alert.alert-info',[
+                        m('h4','More information:'),
+                        m('p','By default, we separate each block into mini-blocks of four trials. In Blocks 3, 4, 6, and 7, '+
+                                        'exactly one item from each of the four groups (attributes and categories) appears in each mini-block. In Blocks 1, 2, and 5, '+
+                                        'two trials of each group (category or attribute) will appear in each mini-block. Tony Greenwald recommended using that feature, '+
+                                        'to avoid same-key runs, based on internal testing in his lab. In Project Implicit, our tests so far found no effect of this feature on the validity of any IAT.'+
+                                        ' To cancel this feature, set Number of mini-blocks to 1, in each block.'),
+                        m('hr'),
+                        m('p','To cancel a block, set the number of trials to 0 (useful for 5-blocks IATs).')
                     ])
-                ])
+                )
             ]),
-            m('.alert.alert-info', {role:'alert', style: {position: 'relative', width: '25rem', left: '62%',top: '-750px',  'margin-bottom': '-450px', border: '2px solid #bcdae2'}},[
-                m('h4','More information:'),
-                m('p','By default, we separate each block into mini-blocks of four trials. In Blocks 3, 4, 6, and 7, '+
-                                    'exactly one item from each of the four groups (attributes and categories) appears in each mini-block. In Blocks 1, 2, and 5, '+
-                                    'two trials of each group (category or attribute) will appear in each mini-block. Tony Greenwald recommended using that feature, '+
-                                    'to avoid same-key runs, based on internal testing in his lab. In Project Implicit, our tests so far found no effect of this feature on the validity of any IAT.'+
-                                    ' To cancel this feature, set Number of mini-blocks to 1, in each block.'),
-                m('hr'),
-                m('p','To cancel a block, set the number of trials to 0 (useful for 5-blocks IATs).')
-            ])
+            m('.row',resetClearButtons(ctrl.reset, ctrl.clear))
         ]);
     }
 
@@ -18716,9 +18712,9 @@
             newStimulus : m.prop(''),
             elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
             titleType: m.prop(element.title.media.word === undefined ? 'image' : 'word'),
-            titleHidden: m.prop(''), //weather the category design flags will be visible
+            titleHidden: m.prop(this.titleType === 'word'), //weather the category design flag will be visible
             selectedStimuli: m.prop(''),
-            stimuliHidden: m.prop('')
+            stimuliHidden: m.prop(true),
         }; 
         return {fields: fields, set: set, get: get, addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli,removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli,
             updateTitleType: updateTitleType, resetStimuliList: resetStimuliList};
@@ -18801,96 +18797,100 @@
     }
 
     function view$l(ctrl) {
-        return m('.container', [
-            m('.row', [
-                m('.col-sm-4.space',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Will appear in the data and in the default feedback message.']),
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data: '])
-                ]),
-                m('.col-sm-8', [
-                    m('input[type=text].form-control',{style: {width: '18rem'}, value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})
-                ]),
-            ]),
-            m('hr'),
-            m('.row', [
+        return m('.space', [
+            m('.row.line', [
                 m('.col-md-4',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Name of the ' +ctrl.fields.elementType()+' presented in the task']),
-                    m('span', [' ',ctrl.fields.elementType()+' title as will appear to the user:'])
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                    m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
+                ]),
+                m('.col-md-4', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
+            ]),
+            m('.row.line', [
+                m('.col-md-4',[
+                    m('span', ctrl.fields.elementType()+' name presented in the task '),
+                    m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
                 ]),
                 m('.col-md-4', [
-                    m('input[type=text].form-control',{style: {width: '18rem'}, value: ctrl.get('title'), oninput: m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))})
+                    m('input[type=text].form-control',{value: ctrl.get('title'), oninput: m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
+                    m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
+                        ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
+                        ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
+                        m('option', 'word'),
+                        m('option', 'image')
+                    ])
                 ]),
-                m('.col-sm-2', ctrl.fields.elementType()+'\'s type:',
-                    [
-                        m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
-                            ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
-                            ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word' ? 'visible' : 'hidden'),
-                            m('option', 'word'),
-                            m('option', 'image')
+                !ctrl.fields.titleHidden() ? '' :
+                    m('.col-md-4',[
+                        m('.row',[
+                            m('.col-sm-4',[
+                                m('span','Font\'s color: '),
+                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange: m.withAttr('value', ctrl.set('title','css','color'))})
+                            ]),
+                            m('.col-sm-4',[
+                                m('span', 'Font\'s size: '),
+                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('title','css','font-size'))})
+                            ])
                         ])
-                    ]),
-                m('.col-md-2',[
+                    ])
+            ]),
+            m('.row',[
+                m('.col-md-6',[
+                    m('.row',
+                        m('.col-md-6',
+                            m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                            ))
+                    ),
+                    m('.row',
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}
+                            ))
+                    ),
+                    m('.row',
+                        m('.col-md-7',
+                            m('.btn-group btn-group-toggle', [
+                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: function (e) { return ctrl.addStimulus(e); }},[
+                                    m('i.fa.fa-plus'), 'Add Word'
+                                ]),
+                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: function (e) { return ctrl.addStimulus(e); }},[
+                                    m('i.fa.fa-plus'), 'Add Image'
+                                ])
+                            ])
+                        )
+                    ),
                     m('.row',[
-                        m('.col',[
-                            m('span', {style: {visibility:ctrl.fields.titleHidden()}}, 'Font\'s color: '),
-                            m('input[type=color]',{style: {width:'3em', 'border-radius':'3px',visibility:ctrl.fields.titleHidden()}, value: ctrl.get('title','css','color'), onchange: m.withAttr('value', ctrl.set('title','css','color'))})
-                        ])
-                    ]),m('br'),
-                    m('.row',[
-                        m('.col',[
-                            m('span', {style: {visibility:ctrl.fields.titleHidden()}}, 'Font\'s size: '),
-                            m('input[type=number]', {placeholder:'1', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2',visibility:ctrl.fields.titleHidden()}, value:ctrl.get('title','css','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('title','css','font-size'))})
-                        ])
+                        m('.col-md-6',
+                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:function (e) { return ctrl.updateSelectedStimuli(e); }},[
+                                ctrl.get('stimulusMedia').some(function (object) { return object.word; }) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
+                                ctrl.get('stimulusMedia').map(function(object){
+                                    var value = object.word ? object.word : object.image;
+                                    var option = value + (object.word ? ' [Word]' : ' [Image]');
+                                    return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                                })
+                            ])
+                        ),
+                        m('.col-md-6',
+                            !ctrl.fields.stimuliHidden() ? '' :
+                                m('.col-md-7',[
+                                    m('u','Stimuli font\'s design:'),m('br'),
+                                    m('label','Font\'s color: '),m('br'),
+                                    m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
+                                    m('br'), m('label', 'Font\'s size:'), m('br'),
+                                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
+                                ])
+                        )
                     ])
                 ])
             ]),
-            m('hr'),
-            m('.row',[
-                m('.col-md-12',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page']),
-                    m('input[type=text].form-control', {style:{width:'15em'},placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons'}},[
-                        m('button[type=button].btn btn-outline-secondary',{disabled:ctrl.fields.newStimulus().length===0, id:'addWord', onclick: function (e) { return ctrl.addStimulus(e); }},[
-                            m('i.fa.fa-plus'), 'Add Word'
-                        ]),
-                        m('button[type=button].btn btn-outline-secondary', {disabled:ctrl.fields.newStimulus().length===0, id:'addImage', onclick: function (e) { return ctrl.addStimulus(e); }},[
-                            m('i.fa.fa-plus'), 'Add Image'
-                        ])
+            m('.row',
+                m('.col.space',
+                    m('.btn-group-vertical',[
+                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: function () { return ctrl.removeChosenStimuli(); }},'Remove Chosen Stimuli'),
+                        m('button.btn btn btn-warning', {onclick: function () { return ctrl.removeAllStimuli(); }},'Remove All Stimuli'),
+                        m('button.btn btn btn-warning', {onclick: function () { return ctrl.resetStimuliList(); }},'Reset Stimuli List'),
                     ])
-                ]),
-            ]),
-            m('.row',[
-                m('.col-md-12',[
-                    m('br'),
-                    m('.form-group',[
-                        m('span',{style:{'font-size': '20px'}},'Stimuli: '),
-                        m('select.form-control', {multiple : 'multiple', size : '8' ,style: {width: '15rem'}, onchange:function (e) { return ctrl.updateSelectedStimuli(e); }},[
-                            ctrl.get('stimulusMedia').some(function (object) { return object.word; }) ? ctrl.fields.stimuliHidden('visible') : ctrl.fields.stimuliHidden('hidden'),
-                            ctrl.get('stimulusMedia').map(function(object){
-                                var value = object.word ? object.word : object.image;
-                                var option = value + (object.word ? ' [Word]' : ' [Image]');
-                                return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
-                            })
-                        ]),
-                        m('.div',{style: {visibility:ctrl.fields.stimuliHidden(), position: 'relative', top: '-170px', left: '255px', marginBottom: '-150px'}},[
-                            m('span', {style:{'text-decoration': 'underline'}} ,'Stimuli font\'s design:'),m('br'),
-                            m('label','Font\'s color: '),m('br'),
-                            m('input[type=color]', {style:{width:'3em', 'border-radius':'3px'},value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
-                            m('br'), m('label', 'Font\'s size:'), m('br'),
-                            m('input[type=number]', {placeholder:'1', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2'},value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
-                        ]),
-                        m('br'),
-                        m('.btn-group-vertical', {style:{'data-toggle':'buttons'}},[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: ctrl.fields.selectedStimuli().length === 0, onclick: function () { return ctrl.removeChosenStimuli(); }},'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick: function () { return ctrl.removeAllStimuli(); }},'Remove All Stimuli'),
-                            m('button.btn btn btn-warning', {onclick: function () { return ctrl.resetStimuliList(); }},'Reset Stimuli List'),
-                        ])
-                    ]),
-                ])
-            ])
+                )
+            )
         ]);
     }
 
@@ -18906,10 +18906,10 @@
             newStimulus : m.prop(''),
             elementType: m.prop(object.key.toLowerCase().includes('categor') ? 'Category' : 'Attribute'),
             titleType: m.prop(element.title.media.word === undefined ? 'image' : 'word'),
-            titleHidden: m.prop(this.titleType === 'word'? 'hidden': 'visible'), //weather the category design flags will be visible
+            titleHidden: m.prop(this.titleType === 'word'), //weather the category design flag will be visible
             selectedStimuli: m.prop(''),
-            stimuliHidden: m.prop('visible'),
-            startStimulus: m.prop(settings.parameters.showStimuliWithInst === false ? 'hidden' : 'visible'),
+            stimuliHidden: m.prop(true),
+            startStimulus: m.prop(settings.parameters.showStimuliWithInst),
             newStartStimulus: m.prop(''), //startStimulus
             startStimuliHidden: m.prop(this.startStimulus),
             selectedStartStimuli: m.prop(''),
@@ -19091,140 +19091,163 @@
     }
 
     function view$k(ctrl) {
-        return m('.container', [
-            m('.row.space', [
-                m('.col-sm-4.space',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Will appear in the data and in the default feedback message.']),
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data: '])
-                ]),
-                m('.col-sm-8', [
-                    m('input[type=text].form-control',{style: {width: '16rem', height:'2.5rem'}, value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
-                ]),
-            ]),
-            m('hr'),
-            m('.row', [
+        return m('.space', [
+            m('.row.line', [
                 m('.col-md-4',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Name of the ' +ctrl.fields.elementType()+' presented in the task: ']),
-                    m('span', [' ',ctrl.fields.elementType()+' title as will appear to the user: '])
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                    m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
                 ]),
                 m('.col-md-4', [
-                    m('input[type=text].form-control',{style: {width: '16rem', height:'2.5rem'}, value: ctrl.get('title'), oninput:m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))})
-                ]),
-                m('.col-sm-2', ctrl.fields.elementType()+'\'s type:',
-                    [
-                        m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
-                            ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
-                            ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word' ? 'visible' : 'hidden'),
-                            m('option', 'word'),
-                            m('option', 'image')
-                        ])
-                    ]),
-                m('.col-md-2',[
-                    m('.row',[
-                        m('.col',[
-                            m('span', {style: {visibility:ctrl.fields.titleHidden()}}, 'Font\'s color: '),
-                            m('input[type=color]',{style: {width:'3em', 'border-radius':'3px',visibility:ctrl.fields.titleHidden()}, value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
-                        ])
-                    ]),m('br'),
-                    m('.row',[
-                        m('.col',[
-                            m('span', {style: {visibility:ctrl.fields.titleHidden()}}, 'Font\'s size: '),
-                            m('input[type=number]', {placeholder:'1', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2',visibility:ctrl.fields.titleHidden()}, value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
-                        ])
-                    ])
+                    m('input[type=text].form-control',{value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
                 ])
             ]),
-            m('hr'),
-            m('.row',[
-                m('.col-sm-6',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page']),
-                    m('input[type=text].form-control', {style:{width:'15em'},placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons'}},[
-                        m('button[type=button].btn btn-outline-secondary',{disabled:ctrl.fields.newStimulus().length===0, id:'addWord', onclick: ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Word'
-                        ]),
-                        m('button[type=button].btn btn-outline-secondary', {disabled:ctrl.fields.newStimulus().length===0, id:'addImage', onclick: ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Image'
-                        ])
+            m('.row.line', [
+                m('.col-md-4',[
+                    m('span', ctrl.fields.elementType()+' name presented in the task '),
+                    m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
+                ]),
+                m('.col-md-4', [
+                    m('input[type=text].form-control',{value: ctrl.get('title'), oninput:m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
+                    m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
+                        ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
+                        ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
+                        m('option', 'word'),
+                        m('option', 'image')
                     ])
                 ]),
-                ///startStimulus
-                m('.col-sm-6',{style: {visibility:ctrl.fields.startStimulus()}}, [
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Here You can enter only one type of stimuli (image or words), if you enter an image you can only enter one and with its file extension.']),
-                    m('input[type=text].form-control', {style:{width:'15em'},placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStartStimulus(), oninput: m.withAttr('value', ctrl.fields.newStartStimulus)}),
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons'}},[
-                        m('button[type=button].btn btn-outline-secondary',{disabled:ctrl.fields.newStartStimulus().length === 0, id:'addWord', onclick: function (e) { return ctrl.addStimulus(e,true); }},[
-                            m('i.fa.fa-plus'), 'Add Word'
-                        ]),
-                        m('button[type=button].btn btn-outline-secondary', {disabled:ctrl.fields.newStartStimulus().length === 0, id:'addImage', onclick: function (e) { return ctrl.addStimulus(e,true); }},[
-                            m('i.fa.fa-plus'), 'Add Image'
+                !ctrl.fields.titleHidden() ? '' :
+                    m('.col-md-4',[
+                        m('.row',[
+                            m('.col-sm-4',[
+                                m('span', 'Font\'s color: '),
+                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                            ]),
+                            m('.col-sm-4',[
+                                m('span', 'Font\'s size: '),
+                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
+                            ])
                         ])
                     ])
-                ]),
             ]),
             m('.row',[
-                m('.col-sm-6',[
-                    m('.form-group',[
-                        m('br'),
-                        m('span',{style:{'font-size': '20px'}},'Stimuli: '),
-                        m('select.form-control', {multiple : 'multiple', size : '8' ,style: {width: '15rem'}, onchange: function (e) { return ctrl.updateSelectedStimuli(e); }},[
-                            ctrl.get('stimulusMedia').some(function (object) { return object.word; }) ? ctrl.fields.stimuliHidden('visible') : ctrl.fields.stimuliHidden('hidden'),
-                            ctrl.get('stimulusMedia').map(function(object){
-                                var value = object.word ? object.word : object.image;
-                                var option = value + (object.word ? ' [Word]' : ' [Image]');
-                                return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
-                            })
-                        ]),
-                        m('div',{style: {visibility:ctrl.fields.stimuliHidden(), position: 'relative', top: '-170px', left: '255px', marginBottom: '-150px'}},[
-                            m('span',{style:{'text-decoration': 'underline'}}, 'Stimuli font\'s design:'),m('br'),
-                            m('label','Font\'s color: '),m('br'),
-                            m('input[type=color]', {style:{width:'3em', 'border-radius':'3px'},value: ctrl.get('stimulusCss','color'), onchange:m.withAttr('value', ctrl.set('stimulusCss','color'))}),
-                            m('br'), m('label', 'Font\'s size:'), m('br'),
-                            m('input[type=number]', {placeholder:'1', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2'},value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
-                        ]),
-                        m('br'),
-                        m('.btn-group-vertical', {style:{'data-toggle':'buttons'}},[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: ctrl.fields.selectedStimuli().length===0, onclick:ctrl.removeChosenStimuli}, 'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                            ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:function (e) { return ctrl.resetStimuliList(e); }}, 'Reset Stimuli List'),
+                m('.col-md-6',[
+                    m('.row',
+                        m('.col-md-6',
+                            m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
+                            }))
+                        )
+                    ),
+                    m('.row',
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)})
+                        )
+                    ),
+                    m('.row',
+                        m('.col-md-7',[
+                            m('.btn-group btn-group-toggle', [
+                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                                    m('i.fa.fa-plus'), 'Add Word'
+                                ]),
+                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                                    m('i.fa.fa-plus'), 'Add Image'
+                                ])
+                            ])
                         ])
-                    ]),
+                    ),
+                    m('.row',[
+                        m('.col-md-6',
+                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: function (e) { return ctrl.updateSelectedStimuli(e); }},[
+                                ctrl.get('stimulusMedia').some(function (object) { return object.word; }) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
+                                ctrl.get('stimulusMedia').map(function(object){
+                                    var value = object.word ? object.word : object.image;
+                                    var option = value + (object.word ? ' [Word]' : ' [Image]');
+                                    return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                                })
+                            ])
+                        ),
+                        m('.col-md-6',
+                            !ctrl.fields.stimuliHidden() ? '' :
+                                m('.col-md-7',[
+                                    m('u','Stimuli font\'s design:'),m('br'),
+                                    m('label','Font\'s color: '),m('br'),
+                                    m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange:m.withAttr('value', ctrl.set('stimulusCss','color'))}),
+                                    m('br'), m('label', 'Font\'s size:'), m('br'),
+                                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
+                                ])
+                        )
+                    ])
                 ]),
                 ///startStimulus
-                m('.col-sm-5',{style: {visibility:ctrl.fields.startStimulus()}},[
-                    m('.form-group',[   
-                        m('br'), 
-                        m('span',{style:{'font-size': '20px'}},'Stimuli Presented with Instructions: '),
-                        m('select.form-control', {multiple : 'multiple', size : '8' ,style: {width: '15rem'}, onchange: function (e) { return ctrl.updateSelectedStimuli(e, true); }},[
-                            ctrl.fields.startStimulus() === 'hidden' ||
-                            ctrl.get('title','startStimulus','media').some(function (object) { return object.includes('.'); }) || 
-                            ctrl.get('title','startStimulus','media').length === 0 ? ctrl.fields.startStimuliHidden('hidden') : ctrl.fields.startStimuliHidden('visible'),
-                            ctrl.get('title','startStimulus','media').map(function(object){
-                                var type = object.includes('.') ? ' [Image]' : ' [Word]';
-                                var option = object + type;
-                                return m('option', {value:object, selected : ctrl.fields.selectedStartStimuli().includes(object)} ,option);
-                            })
-                        ]),
-                        m('div',{style: {visibility:ctrl.fields.startStimuliHidden(), position: 'relative', top: '-170px', left: '255px', marginBottom: '-150px'}},[
-                            m('span',{style:{'text-decoration': 'underline'}},'Stimuli font\'s design:'),m('br'),
-                            m('label','Font\'s color: '),m('br'),
-                            m('input[type=color]', {style:{width:'3em', 'border-radius':'3px'},value: ctrl.get('title','startStimulus','css','color'), onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','color'))}),
-                            m('br'), m('label', 'Font\'s size:'), m('br'),
-                            m('input[type=number]', {placeholder:'1', style: {width:'3em','border-radius':'4px','border':'1px solid #E2E3E2'}, value:ctrl.get('title','startStimulus','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','font-size'))})
-                        ]),
-                        m('br'),
-                        m('.btn-group-vertical', {style:{'data-toggle':'buttons'}},[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: ctrl.fields.selectedStartStimuli().length === 0, onclick: function (e) { return ctrl.removeChosenStartStimuli(e); }}, 'Remove Chosen Stimuli'),
+                !ctrl.fields.startStimulus() ? '' :
+                    m('.col-md-6', [
+                        m('.row',
+                            m('.col-md-12',
+                                m('p.h4','Stimuli Presented with Instructions: ', m('i.fa.fa-info-circle.text-muted',{
+                                    title:'Here You can enter only one type of stimuli (image or words), if you enter an image you can only enter one and with its file extension.'
+                                }))
+                            )
+                        ),
+                        m('.row',
+                            m('.col-md-6',
+                                m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStartStimulus(), oninput: m.withAttr('value', ctrl.fields.newStartStimulus)})
+                            )
+                        ),
+                        m('.row',
+                            m('.col-md-7',
+                                m('.btn-group btn-group-toggle', [
+                                    m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStartStimulus().length, id:'addWord', onclick: function (e) { return ctrl.addStimulus(e,true); }},[
+                                        m('i.fa.fa-plus'), 'Add Word'
+                                    ]),
+                                    m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStartStimulus().length, id:'addImage', onclick: function (e) { return ctrl.addStimulus(e,true); }},[
+                                        m('i.fa.fa-plus'), 'Add Image'
+                                    ])
+                                ])
+                            )
+                        ),
+                        m('.row',[
+                            m('.col-md-6',
+                                m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: function (e) { return ctrl.updateSelectedStimuli(e, true); }},[
+                                    !ctrl.fields.startStimulus()  ||
+                                    ctrl.get('title','startStimulus','media').some(function (object) { return object.includes('.'); }) ||
+                                    !ctrl.get('title','startStimulus','media').length ? ctrl.fields.startStimuliHidden(false) : ctrl.fields.startStimuliHidden(true),
+                                    ctrl.get('title','startStimulus','media').map(function(object){
+                                        var type = object.includes('.') ? ' [Image]' : ' [Word]';
+                                        var option = object + type;
+                                        return m('option', {value:object, selected : ctrl.fields.selectedStartStimuli().includes(object)} ,option);
+                                    })
+                                ])
+                            ),
+                            m('.col-md-6',
+                                !ctrl.fields.startStimuliHidden() ? '' :
+                                    m('.col-md-7',[
+                                        m('u','Stimuli font\'s design:'),m('br'),
+                                        m('label','Font\'s color: '),m('br'),
+                                        m('input[type=color].form-control', {value: ctrl.get('title','startStimulus','css','color'), onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','color'))}),
+                                        m('br'), m('label', 'Font\'s size:'), m('br'),
+                                        m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','startStimulus','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','font-size'))})
+                                    ])
+                            )
+                        ])
+                    ])
+            ]),
+            m('.row',[
+                m('.col-md-6.space',
+                    m('.btn-group-vertical', [
+                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli}, 'Remove Chosen Stimuli'),
+                        m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                        ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:function (e) { return ctrl.resetStimuliList(e); }}, 'Reset Stimuli List'),
+                    ])),
+                ///startStimulus
+                !ctrl.fields.startStimulus() ? '' :
+                    m('.col-md-6.space',[
+                        m('.btn-group-vertical', [
+                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStartStimuli().length, onclick: function (e) { return ctrl.removeChosenStartStimuli(e); }}, 'Remove Chosen Stimuli'),
                             m('button.btn btn btn-warning', {onclick: function (e) { return ctrl.removeAllStimuli(e,true); }}, 'Remove All Stimuli'),
                             ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:function (e) { return ctrl.resetStimuliList(e,true); }}, 'Reset Stimuli List'),
                         ])
                     ])
-                ])
-            ])
+            ]),
         ]);
     }
 
@@ -19239,16 +19262,14 @@
             newStimulus : m.prop(''),
             elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
             selectedStimuli: m.prop(''),
-            stimuliHidden: m.prop('')
         };
 
-        return {fields: fields, set: set, get: get, addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli, removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli,
-            resetStimuliList: resetStimuliList};
+        return {fields: fields, set: set, get: get, addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli, removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli, resetStimuliList: resetStimuliList};
 
         function get(name, media, type){
             if (media != null && type != null){
                 if (type === 'font-size'){
-                    return parseFloat((element[name][media][type].replace("em","")));
+                    return parseFloat((element[name][media][type].replace('em','')));
                 }
                 return element[name][media][type];
             }
@@ -19265,7 +19286,7 @@
                             showRestrictions('Font\'s size must be bigger than 0.', 'error');
                             return element[name][media][type];
                         }
-                        return element[name][media][type] = value + "em";
+                        return element[name][media][type] = value + 'em';
                     }
                     return element[name][media][type] = value;
                 }
@@ -19276,10 +19297,10 @@
                         showRestrictions('Font\'s size must be bigger than 0.', 'error');
                         return element[name][media];
                     }
-                    return element[name][media] = value + "em";
+                    return element[name][media] = value + 'em';
                 }
                 return element[name] = value;
-            }
+            };
         }
         function addStimulus(event){
             var new_stimuli = fields.newStimulus();
@@ -19302,55 +19323,57 @@
     }
 
     function view$j(ctrl) {
-        return m('.container', [
-            m('.row.space',[
-                m('.col-sm-4.space',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Will appear in the data and in the default feedback message.']),
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data: '])
+        return m('.space', [
+            m('.row.line',[
+                m('.col-md-4',[
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                    m('i.fa.fa-info-circle.text-muted',{
+                        title:'Will appear in the data and in the default feedback message.'
+                    }),
                 ]),
-                m('.col-8', [
-                    m('input[type=text].form-control',{style: {width: '18rem'}, value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
+                m('.col-md-4', [
+                    m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
                 ])
             ]),
-            m('hr'),
             m('.row',[
-                m('.col-sm-12',[
-                    m('i.fa.fa-info-circle'),
-                    m('.card.info-box.card-header', ['Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page']),
-                    m('input[type=text].form-control', {style:{width:'15em'},placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons'}},[
-                        m('button[type=button].btn btn-outline-secondary',{disabled:ctrl.fields.newStimulus().length===0, id:'addWord', onclick:ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Word'
-                        ]),
-                        m('button[type=button].btn btn-outline-secondary', {disabled:ctrl.fields.newStimulus().length===0, id:'addImage', onclick: ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Image'
+                m('.col-md-12',[
+                    m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                        title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
+                    })),
+                    m('.h-25.d-inline-block',[
+                        m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
+                        m('.btn-group btn-group-toggle', [
+                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                                m('i.fa.fa-plus'), 'Add Word'
+                            ]),
+                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                                m('i.fa.fa-plus'), 'Add Image'
+                            ])
                         ])
                     ])
-                ]),
+                ])
             ]),
             m('.row',[
-                m('.col-sm-12',[
-                    m('.form-group',[
-                        m('br'),
-                        m('span',{style:{'font-size': '20px'}},'Stimuli: '),
-                        m('select.form-control', {multiple : 'multiple', size : '8' ,style: {width: '15rem'}, onchange:function (e) { return ctrl.updateSelectedStimuli(e); }},[
-                            ctrl.get('mediaArray').some(function (object) { return object.word; }) ? ctrl.fields.stimuliHidden('visible') : ctrl.fields.stimuliHidden('hidden'),
-                            ctrl.get('mediaArray').map(function(object){
-                                var value = object.word ? object.word : object.image;
-                                var option = value + (object.word ? ' [Word]' : ' [Image]');
-                                return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
-                            })
-                        ]),
-                        m('br'),
-                        m('.btn-group-vertical', {style:{'data-toggle':'buttons'}},[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: ctrl.fields.selectedStimuli().length===0, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                            m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List'),
-                        ])
-                    ]),
-                    m('.row'),
-                    m('hr')
+                m('.col-md-6',[
+                    m('.row',
+                        m('.col-sm-6',
+                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:function (e) { return ctrl.updateSelectedStimuli(e); }},[
+                                ctrl.get('mediaArray').map(function(object){
+                                    var value = object.word ? object.word : object.image;
+                                    var option = value + (object.word ? ' [Word]' : ' [Image]');
+                                    return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                                })
+                            ])
+                        )
+                    ),
+                    m('.row.space',
+                        m('.col-sm-5',
+                            m('.btn-group-vertical',[
+                                m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+                                m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                                m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                            ]))
+                    )
                 ])
             ])
         ]);
@@ -19367,39 +19390,38 @@
 
         function get(parameter){
             if (parameter === 'font-size') return parseFloat((primeCss[parameter]).substring(0,3));
-            return primeCss[parameter]
+            return primeCss[parameter];
         }
         function set(parameter){
             return function(value){
-                if (parameter == 'font-size'){
+                if (parameter === 'font-size'){
                     value = Math.abs(value);
-                    if (value == 0){
+                    if (value === 0){
                         showRestrictions('Font\'s size must be bigger than 0.', 'error');
                         return primeCss[parameter];
                     }
-                    return primeCss[parameter] = value + "em";
+                    return primeCss[parameter] = value + 'em';
                 }
                 return primeCss[parameter] = value;
-            }
+            };
         }
     }
 
     function view$i(ctrl){
-        return m('.div' , [
-            m('.row.space',[
-                m('.col',{style:{'padding-left':'2rem'}},[
-                    m('span', 'Font\'s color: '),
-                    m('input[type=color]', {style: {width:'3em', 'border-radius':'3px', 'margin-left':'0.3rem'}, value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
-                ])
-            ]),
-            m('hr'),
-            m('.row',[
-                m('.col',{style:{'padding-left':'2rem'}},[
-                    m('span', 'Font\'s size: '),
-                    m('input[type=number]', {placeholder:'1', style: {'border-radius':'4px','border':'1px solid #E2E3E2', width:'3em'}, value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
+        return m('.row' , [
+            m('.col-sm-12',[
+                m('.row.line',[
+                    m('.col-sm-2',[
+                        m('span', 'Font\'s color: '),
+                        m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
+                    ]),
+                    m('.col-sm-2',[
+                        m('span', 'Font\'s size: '),
+                        m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
+                    ])
                 ])
             ])
-        ])
+        ]);
     }
 
     var categoriesComponent$1 = {
@@ -19407,63 +19429,31 @@
         view:view$h
     };
 
-    var btnWidthTypes = {
-        attribute: '20.3em',
-        category:'20.7em',
-        practiceCategory:'29.85em',
-        single:'7em', //for SPF
-        ep: '32.4em'
-    };
+    function controller$h(settings, defaultSettings, clearElement){
 
-    function controller$h(settings, defaultSettings, clearElement, subTabs, taskType){
+        return {reset: reset, clear: clear};
 
-        var curr_tab = subTabs[0].value; // set default tab
-        var buttonWidth = curr_tab.toLowerCase().includes('attribute') ? btnWidthTypes.attribute:
-            curr_tab.toLowerCase().includes('practice') ? btnWidthTypes.practiceCategory : btnWidthTypes.category;
-        subTabs.length === 1 ? buttonWidth = btnWidthTypes.single : ''; //for SPF which have one category
-        taskType === 'EP' ? buttonWidth = btnWidthTypes.ep : ''; //for EP which have addtional subtab (primeDesignCss)
-
-        return {reset: reset, clear: clear, subTabs: subTabs, curr_tab: curr_tab, buttonWidth: buttonWidth};
-
-        function reset(){showClearOrReset(settings[this.curr_tab], defaultSettings[this.curr_tab],'reset');}
-        function clear(){
-            this.curr_tab === 'primeStimulusCSS' ? showClearOrReset(settings[this.curr_tab], {color:'#000000','font-size':'0em'}, 'clear')
-                : showClearOrReset(settings[this.curr_tab], clearElement[0], 'clear');
+        function reset(curr_tab){showClearOrReset(settings[curr_tab], defaultSettings[curr_tab],'reset');}
+        function clear(curr_tab){
+            curr_tab === 'primeStimulusCSS' ? showClearOrReset(settings[curr_tab], {color:'#000000','font-size':'0em'}, 'clear')
+                : showClearOrReset(settings[curr_tab], clearElement[0], 'clear');
         }
     }
 
-    function view$h(ctrl, settings, defaultSettings, clearElement, subTabs, taskType) {
-        return m('.container.space', [
-            m('.subtab',{style:{width: ctrl.buttonWidth}}, ctrl.subTabs.map(function(tab){
-                return m('button',{
-                    class: ctrl.curr_tab === tab.value ? 'active' : '',
-                    onclick:function(){
-                        ctrl.curr_tab = tab.value;
-                    }},tab.text);
-            })),
-            m('.div',
+    function view$h(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
+        return m('.space', [
+            m('.space',
                 taskType === 'BIAT' ?
-                    m.component(elementComponent$1,{key:ctrl.curr_tab}, settings,
-                        defaultSettings[ctrl.curr_tab].stimulusMedia, defaultSettings[ctrl.curr_tab].title.startStimulus)
-                    : ctrl.curr_tab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
+                    m.component(elementComponent$1,{key:currTab}, settings,
+                        defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
+                    : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
                         m.component(parametersComponent, settings)
-                    : taskType === 'EP' ?
-                        m.component(elementComponent, {key:ctrl.curr_tab}, settings, defaultSettings[ctrl.curr_tab].mediaArray)
-                        :
-                        m.component(elementComponent$2, {key:ctrl.curr_tab}, settings, defaultSettings[ctrl.curr_tab].stimulusMedia)
+                        : taskType === 'EP' ?
+                            m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                            : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
             ),
-            m('.row.space',[
-                m('.col.space',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                    ]),
-                ]),
-            ])
+            m('hr')
+            ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
         ]);
     }
 
@@ -19556,9 +19546,8 @@
     var helpComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		var extension = '.'+type.toLowerCase();
-    		return m('.activation.centrify', [
-    			m('.alert.alert-info',{role:'alert'},
-    				m('p',{style:{margin:'0.5em 1em 0.5em 1em'}},
+    		return m('.space',
+    				m('.alert.alert-info',
     					!settings.external ? //only show this text if we are in the dashboard
     					['This will create a script for our '+type+' extension.' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
@@ -19576,10 +19565,8 @@
     					'You can install that platform on your own server, use a more simple ',
     					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
     						'this script directly from Qualtrics.')
-    						]
-    				)
-    			)]
-    		);
+    					]
+    			));
     	}
     };
 
@@ -19634,26 +19621,36 @@
         stimulusCss : {color:'#000000', 'font-size':'1em'}
     }];
 
-    var categoriesTabs$2 = [
-        {value: 'category1', text: 'First Category'},
-        {value: 'category2', text: 'Second Category'},
-    ];
+    var categoriesTabs$2 = {
+        'category1': {text: 'First Category'},
+        'category2': {text: 'Second Category'}
+    };
 
-    var attributesTabs$3 = [
-        {value: 'attribute1', text: 'First Attribute'},
-        {value: 'attribute2', text: 'Second Attribute'},
-    ];
+    var attributesTabs$3 = {
+        'attribute1':{text: 'First Attribute'},
+        'attribute2':{text: 'Second Attribute'}
+    };
 
-    var tabs$4 = [
-        {value: 'parameters', text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$4},
-        {value: 'blocks', text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc$4},
-        {value: 'categories', text: 'Categories', component: categoriesComponent$1, rowsDesc: categoryClear$3, subTabs:categoriesTabs$2},
-        {value: 'attributes', text: 'Attributes', component: categoriesComponent$1, rowsDesc: categoryClear$3, subTabs:attributesTabs$3},
-        {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc$4},
-        {value: 'output', text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc$4},
-        {value: 'import', text: 'Import', component: iatImportComponent},
-        {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'IAT'}
-    ];
+    var tabs$4 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$4},
+        'blocks': {text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc$4},
+        'categories': {
+            text: 'Categories',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear$3,
+            subTabs: categoriesTabs$2
+        },
+        'attributes': {
+            text: 'Attributes',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear$3,
+            subTabs: attributesTabs$3
+        },
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$4},
+        'output': {text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc$4},
+        'import': {text: 'Import', component: iatImportComponent},
+        'help': {text: 'Help', component: helpComponent, rowsDesc: 'IAT'}
+    };
 
     function url(study_type, study_id, file_id) {
         return (baseUrl + "/files/" + (encodeURIComponent(study_id)) + "/file/" + (encodeURIComponent(file_id)));
@@ -19712,7 +19709,7 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$4[5].rowsDesc; //blockDesc inside output attribute
+            var blocksObject = tabs$4.blocks.rowsDesc; //blockDesc inside output attribute
             error_msg = validityCheck$4(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
@@ -19727,8 +19724,7 @@
                                 ])
                             ]),
                             m('strong','Do you want to save anyway?')
-                        ])
-                    })
+                        ])})
                     .then(function (response) {
                         if (response) do_save();
                     }).catch(function (error) { return messages.alert({
@@ -19764,27 +19760,14 @@
     function view$f(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
-                ?
-                m('.loader')
-                :
-                m('.container.space',[
-                    m('div', ctrl.notifications.view()),
-                        m('div.space',[
-                            ctrl.is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                onclick: function () { return ctrl.show_do_save(); },
-                                disabled: !ctrl.is_settings_changed(),
-                                style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                            }, 'Save'),
-                    ]),
-                    m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-        ])
+                ? m('.loader')
+                : m('.container.space',
+                    m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container',
-            m('div', ctrl.notifications.view()),
             pageHeadLine('IAT'),
-        m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
 
@@ -19984,7 +19967,7 @@
         }
     }
     function view$e(ctrl, settings){
-        return m('.container' , [
+        return m('.space' , [
             //create numbers inputs
             ctrl.rows.map(function(row){
                 //if user chooses not to have a prcatice block set it's parameter to 0
@@ -19992,41 +19975,26 @@
                     settings.blocks.nPracticeBlockTrials = 0;
                     return;
                 }
-                return m('.row.space', [
+                return m('.row.line', [
                     row.desc ?
                         m('.col-md-4.space',[
-                            m('i.fa.fa-info-circle'),
-                            m('.card.info-box.card-header', [row.desc]),
-                            m('span', [' ', row.label])
-                        ])
-                        :
-                        m('.col-md-4.space', {style:{'padding-left':'2rem'}}, m('span', [' ', row.label])),
-                    m('.col-8.space',
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            })
+                        ]) : m('.col-md-4.space', m('span', [' ', row.label])),
+                    m('.col-sm-4.col-lg-2',
                         row.options ?
-                            m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem'}},[
-                            row.options.map(function(option){return m('option', option);})
+                            m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
+                                row.options.map(function(option){return m('option', option);})
                             ])
-                        : row.name.includes('random') ?
-                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
-                        :
-                            m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'},onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
-                    ),
-                    m('hr')
-                ])
-            }),
-            m('.row.space',[
-                m('.col.space',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                    ])
-                ])
-            ])
-        ])
+                            : row.name.includes('random') ?
+                                m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                                : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
+                    )
+                ]);
+            }), resetClearButtons(ctrl.reset, ctrl.clear)
+        ]);
     }
 
     var categoriesComponent = {
@@ -20040,24 +20008,21 @@
             element.key = Math.random();
         });
         var headlines = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth'];
-        var addFlag =  m.prop('visible');
-        var removeFlag = m.prop('hidden');
         var chooseFlag = m.prop(false);
         var choosenCategoriesList = m.prop([]);
         var chooseClicked = m.prop(false);
         var curr_tab = m.prop(0);
 
-        return {reset: reset, clear: clear, addFlag: addFlag, removeFlag: removeFlag, chooseFlag: chooseFlag, unChooseCategories: unChooseCategories,categories: categories, headlines: headlines, addCategory: addCategory, choosenCategoriesList: choosenCategoriesList,
+        return {reset: reset, clear: clear, chooseFlag: chooseFlag, unChooseCategories: unChooseCategories,categories: categories, headlines: headlines, addCategory: addCategory, choosenCategoriesList: choosenCategoriesList,
             updateChoosenBlocks: updateChoosenBlocks, showRemoveCategories: showRemoveCategories, chooseCategories: chooseCategories, curr_tab: curr_tab, getDefaultValues: getDefaultValues};
 
-        function clear(){showClearOrReset(categories[curr_tab()], clearElement[0], 'clear');}
-        function reset(){showClearOrReset(categories[curr_tab()], defaultSettings.categories[curr_tab()], 'reset');
+        function clear(curr_tab){showClearOrReset(categories[curr_tab], clearElement[0], 'clear');}
+        function reset(curr_tab){showClearOrReset(categories[curr_tab], defaultSettings.categories[curr_tab], 'reset');
         }
         function addCategory() {
             categories.push(clone(clearElement[0]));
             var last = categories.length - 1;
             categories[last].key = Math.random();
-            if (categories.length === 8) addFlag('hidden');
         }
         function updateChoosenBlocks(e, index){
             //if clicked the checkbox to uncheck the item
@@ -20110,7 +20075,6 @@
 
                 choosenCategoriesList().length = 0;
                 chooseFlag(false);
-                addFlag(categories.length < 8 ? 'visible' : 'hidden');
                 curr_tab(categories.length - 1);
             }
         }
@@ -20122,53 +20086,46 @@
                 stimulusMedia = defaultSettings.categories[curr_tab()].stimulusMedia;
                 startStimulus = defaultSettings.categories[curr_tab()].title.startStimulus;
             }
-            return [stimulusMedia, startStimulus]
+            return [stimulusMedia, startStimulus];
         }
     }
 
     function view$d(ctrl,settings) {
         return m('.space',[
-            m('.subtab', ctrl.categories.map(function(tab, index){
-                return m('button',{
-                        class: ctrl.curr_tab() === index ? 'active' : '',
-                        onclick:function(){
-                            ctrl.curr_tab(index);
-                        }}, ctrl.headlines[index] + ' Category ',
-                    !ctrl.chooseFlag() ? '' :
-                        m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}));
-            })),
-            m('.row.space',[
-                m('.col-sm-5.offset-sm-3',
-                m('.btn-group btn-group-toggle', [
-                    m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory, style:{'padding-right':'60px','padding-left':'60px' ,visibility: ctrl.addFlag()}}, [m('i.fa.fa-plus')],' Add Category'),
-                    !ctrl.chooseFlag() ?
-                        m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
-                            m('i.fa.fa-check'), ' Choose Categories to Remove'])
-                        :
-                        m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
-                            m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                    ctrl.choosenCategoriesList().length !== 0 ?
-                        m('button.btn btn btn-danger',{onclick: ctrl.showRemoveCategories},[
-                            m('i.fa.fa-eraser'), ' Remove Choosen Categories']) : ''
-
-                ])
+            m('.row',[
+                m('.col-md-12',
+                    m('.subtab', ctrl.categories.map(function(tab, index){
+                        return m('button',{
+                            class: ctrl.curr_tab() === index ? 'active' : '',
+                            onclick:function(){
+                                ctrl.curr_tab(index);
+                            }}, ctrl.headlines[index] + ' Category ',
+                        !ctrl.chooseFlag() ? '' :
+                            m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}));
+                    }))
                 )
             ]),
-            m('.div.space',{key:ctrl.categories[ctrl.curr_tab()].key},
+            m('.row.space.centrify',[
+                m('.col-sm-9',
+                    m('.btn-group btn-group-toggle', [
+                        ctrl.categories.length > 7 ? '' :
+                            m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory}, [m('i.fa.fa-plus')],' Add Category'),
+                        !ctrl.chooseFlag() ?
+                            m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
+                                m('i.fa.fa-check'), ' Choose Categories to Remove'])
+                            :
+                            m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                                m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
+                        !ctrl.choosenCategoriesList().length ? '' :
+                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveCategories},[
+                                m('i.fa.fa-eraser'), ' Remove Chosen Categories'])
+
+                    ]))
+            ]),
+            m('.space',{key:ctrl.categories[ctrl.curr_tab()].key},
                 m.component(elementComponent$1, {key:'categories'}, settings, ctrl.getDefaultValues()[0], ctrl.getDefaultValues()[1], ctrl.curr_tab())),
-            m('.row.space',[
-                m('.col',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        ctrl.curr_tab() < 2?
-                            m('button.btn btn-secondary',
-                                {title:'Reset all current fields to default values', onclick: function () { return ctrl.reset(); }},
-                                m('i.fa.fa-undo.fa-sm'), ' Reset') : null,
-                        m('button.btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.clear(); }},
-                            m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                    ])
-                ])
-            ])
+            m('hr'),
+            resetClearButtons(ctrl.reset, ctrl.clear, ctrl.curr_tab(), true)
         ]);
     }
 
@@ -20181,7 +20138,7 @@
         var error_msg = [];
         error_msg = validityCheck$3(error_msg, settings, blocksObject);
 
-        return {printToPage: printToPage, createFile: createFile, error_msg: error_msg}
+        return {createFile: createFile, error_msg: error_msg};
 
         function createFile(settings, type){
             return function(){
@@ -20207,15 +20164,6 @@
             };
         }
 
-        function printToPage(settings){
-            return function(){
-                var para = document.getElementById('textDiv');
-                para.style.visibility = 'visible';
-                var text_area = document.getElementById('textArea');
-                text_area.value = toString$3(settings);
-            };
-        }
-
     }
     function validityCheck$3(error_msg, settings, blocksObject){
         var category_headlines = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth'];
@@ -20236,7 +20184,7 @@
         var containsImage = temp1 || temp2 || temp3 || temp4 || temp5;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         var currBlocks = clone(settings.blocks);
@@ -20294,7 +20242,7 @@
     }
 
     function view$c(ctrl, settings){
-        return viewOutput(ctrl, settings)
+        return viewOutput(ctrl, settings, toString$3);
     }
 
     var importComponent$3 = {
@@ -20320,42 +20268,42 @@
         }
     }
     function updateSettings$6(settings, input) {
-            if(input.practiceBlock) {
-                settings.practiceCategory1 = input.practiceCategory1;
-                settings.practiceCategory2 = input.practiceCategory2;
-            }
-            settings.categories = input.categories;
-            settings.attribute1 = input.attribute1;
-            settings.attribute2 = input.attribute2;
-            settings.parameters.base_url = input.base_url;
-            settings.parameters.remindError = input.remindError;
-            settings.parameters.showStimuliWithInst = input.showStimuliWithInst;
-            settings.parameters.isTouch = input.isTouch;
-            settings.parameters.practiceBlock = input.practiceBlock;
-            settings.blocks.nMiniBlocks = input.nMiniBlocks;
-            settings.blocks.nTrialsPerMiniBlock = input.nTrialsPerMiniBlock;
-            settings.blocks.nPracticeBlockTrials = input.nPracticeBlockTrials;
-            settings.blocks.nCategoryAttributeBlocks = input.nCategoryAttributeBlocks;
-            settings.blocks.focalAttribute = input.focalAttribute;
-            settings.blocks.firstFocalAttribute = input.firstFocalAttribute;
-            settings.blocks.focalCategoryOrder = input.focalCategoryOrder;
-            if(input.isQualtrics) settings.parameters.isQualtrics = input.isQualtrics;
-            if (input.isTouch){
-                settings.touch_text.remindErrorTextTouch = input.remindErrorTextTouch;
-                settings.touch_text.leftKeyTextTouch = input.leftKeyTextTouch;
-                settings.touch_text.rightKeyTextTouch = input.rightKeyTextTouch;
-                settings.touch_text.orKeyText = input.orKeyText;
-                settings.touch_text.finalTouchText = input.finalTouchText;
-                settings.touch_text.instTemplateTouch = input.instTemplateTouch;
-            }
-            else {
-                settings.text.remindErrorText = input.remindErrorText;
-                settings.text.leftKeyText = input.leftKeyText;
-                settings.text.rightKeyText = input.rightKeyText;
-                settings.text.orKeyText = input.orKeyText;
-                settings.text.finalText = input.finalText;
-                settings.text.instTemplate = input.instTemplate;
-            }
+        if(input.practiceBlock) {
+            settings.practiceCategory1 = input.practiceCategory1;
+            settings.practiceCategory2 = input.practiceCategory2;
+        }
+        settings.categories = input.categories;
+        settings.attribute1 = input.attribute1;
+        settings.attribute2 = input.attribute2;
+        settings.parameters.base_url = input.base_url;
+        settings.parameters.remindError = input.remindError;
+        settings.parameters.showStimuliWithInst = input.showStimuliWithInst;
+        settings.parameters.isTouch = input.isTouch;
+        settings.parameters.practiceBlock = input.practiceBlock;
+        settings.blocks.nMiniBlocks = input.nMiniBlocks;
+        settings.blocks.nTrialsPerMiniBlock = input.nTrialsPerMiniBlock;
+        settings.blocks.nPracticeBlockTrials = input.nPracticeBlockTrials;
+        settings.blocks.nCategoryAttributeBlocks = input.nCategoryAttributeBlocks;
+        settings.blocks.focalAttribute = input.focalAttribute;
+        settings.blocks.firstFocalAttribute = input.firstFocalAttribute;
+        settings.blocks.focalCategoryOrder = input.focalCategoryOrder;
+        if(input.isQualtrics) settings.parameters.isQualtrics = input.isQualtrics;
+        if (input.isTouch){
+            settings.touch_text.remindErrorTextTouch = input.remindErrorTextTouch;
+            settings.touch_text.leftKeyTextTouch = input.leftKeyTextTouch;
+            settings.touch_text.rightKeyTextTouch = input.rightKeyTextTouch;
+            settings.touch_text.orKeyText = input.orKeyText;
+            settings.touch_text.finalTouchText = input.finalTouchText;
+            settings.touch_text.instTemplateTouch = input.instTemplateTouch;
+        }
+        else {
+            settings.text.remindErrorText = input.remindErrorText;
+            settings.text.leftKeyText = input.leftKeyText;
+            settings.text.rightKeyText = input.rightKeyText;
+            settings.text.orKeyText = input.orKeyText;
+            settings.text.finalText = input.finalText;
+            settings.text.instTemplate = input.instTemplate;
+        }
 
         return settings;
     }
@@ -20409,27 +20357,39 @@
         stimulusCss : {color:'#000000','font-size':'1em'} }];
 
 
-    var attributesTabs$2 = [
-        {value: 'attribute1', text: 'First Attribute'},
-        {value: 'attribute2', text: 'Second Attribute'},
-    ];
+    var attributesTabs$2 = {
+        'attribute1': {text: 'First Attribute'},
+        'attribute2': {text: 'Second Attribute'}
+    };
 
-    var practiceTabs = [
-        {value: 'practiceCategory1', text: 'First Practice Category'},
-        {value: 'practiceCategory2', text: 'Second Practice Category'},
-    ];
+    var practiceTabs = {
+        'practiceCategory1':{text: 'First Practice Category'},
+        'practiceCategory2':{text: 'Second Practice Category'}
+    };
 
-    var tabs$3 = [
-        {value: 'parameters', text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$3 },
-        {value: 'blocks', text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$3},
-        {value: 'practice', text: 'Practice Block', component: categoriesComponent$1, rowsDesc: elementClear, subTabs:practiceTabs, type: 'BIAT'},
-        {value: 'categories', text: 'Categories', component: categoriesComponent, rowsDesc: elementClear},
-        {value: 'attributes', text: 'Attributes', component: categoriesComponent$1, rowsDesc: elementClear, subTabs:attributesTabs$2, type: 'BIAT'},
-        {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc$3},
-        {value: 'output', text: 'Complete', component: outputComponent$3, rowsDesc: blocksDesc$3},
-        {value: 'import', text: 'Import', component: importComponent$3},
-        {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'BIAT'}
-    ];
+    var tabs$3 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$3},
+        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$3},
+        'practice': {
+            text: 'Practice Block',
+            component: categoriesComponent$1,
+            rowsDesc: elementClear,
+            subTabs: practiceTabs,
+            type: 'BIAT'
+        },
+        'categories': {text: 'Categories', component: categoriesComponent, rowsDesc: elementClear},
+        'attributes': {
+            text: 'Attributes',
+            component: categoriesComponent$1,
+            rowsDesc: elementClear,
+            subTabs: attributesTabs$2,
+            type: 'BIAT'
+        },
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$3},
+        'output': {text: 'Complete', component: outputComponent$3, rowsDesc: blocksDesc$3},
+        'import': {text: 'Import', component: importComponent$3},
+        'help': {text: 'Help', component: helpComponent, rowsDesc: 'BIAT'}
+    };
 
     var biat = function (args, external) { return m.component(biatComponent$1, args, external); };
 
@@ -20474,7 +20434,7 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$3[6].rowsDesc; //blockDesc inside output attribute
+            var blocksObject = tabs$3.blocks.rowsDesc; //blockDesc inside output attribute
             error_msg = validityCheck$3(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
@@ -20490,7 +20450,7 @@
                             ]),
                             m('strong','Do you want to save anyway?')
                         ])
-                    })
+                })
                     .then(function (response) {
                         if (response) do_save();
                     }).catch(function (error) { return messages.alert({
@@ -20530,29 +20490,15 @@
     function view$a(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
-                ?
-                m('.loader')
-                :
-                m('.container.space',[
-                    m('div', ctrl.notifications.view()),
-                    m('div.space',[
-                        ctrl.is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                id:'save_button',
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                disabled: !ctrl.is_settings_changed(),
-                                onclick: function () { return ctrl.show_do_save(); },
-                                style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                            }, 'Save'),
-                    ]),
-                    m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-                ])
+                ? m('.loader')
+                : m('.container-fluid.space',
+                    m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
         }
-        return m('.container',
-            m('div', ctrl.notifications.view()),
+        return m('.container-fluid',[
             pageHeadLine('BIAT'),
             m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-        );
+        ]);
     }
 
     function defaultSettings$2(external) {
@@ -20632,7 +20578,7 @@
 
         error_msg = validityCheck$2(error_msg, settings, blocksObject);
 
-        return {printToPage: printToPage, createFile: createFile, error_msg: error_msg};
+        return {createFile: createFile, error_msg: error_msg};
 
         function createFile(settings, fileType){
             return function(){
@@ -20655,16 +20601,6 @@
                 downloadLink.click();
             };
         }
-
-        function printToPage(settings){
-            return function() {
-                var para = document.getElementById('textDiv');
-                para.style.visibility = 'visible';
-                var text_area = document.getElementById('textArea');
-                text_area.value = toString$2(settings);
-            };
-        }
-
     }
 
     function updateSettings$5(settings){
@@ -20700,7 +20636,7 @@
         var containsImage = temp1 || temp2 || temp3 || temp4;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         var currBlocks = clone(settings.blocks);
@@ -20718,7 +20654,7 @@
     }
 
     function view$9(ctrl, settings){
-        return viewOutput(ctrl, settings)
+        return viewOutput(ctrl, settings, toString$2);
     }
 
     var importComponent$2 = {
@@ -20780,9 +20716,9 @@
     ];
 
     var textDesc$2=[
-        {name: 'firstBlock', label:'First Block\'\s Instructions'},
-        {name: 'middleBlock', label:'Middle Block\'\s Instructions'},
-        {name: 'lastBlock', label:'Last Block\'\s Instructions'},
+        {name: 'firstBlock', label:'First Block\'s Instructions'},
+        {name: 'middleBlock', label:'Middle Block\'s Instructions'},
+        {name: 'lastBlock', label:'Last Block\'s Instructions'},
         {firstBlock: '', middleBlock:'', lastBlock:''},
         {} //an empty element
 
@@ -20798,32 +20734,41 @@
 
     var categoryClear$2 = [{
         name: '', 
-        title: {media: {word: ''}, 
-        css: {color: '#000000', 'font-size': '1em'}, height: 4},
+        title: {media: {word: ''}, css: {color: '#000000', 'font-size': '1em'}, height: 4},
         stimulusMedia: [],
         stimulusCss : {color:'#000000', 'font-size':'1em'}
     }];
 
-    var categoriesTabs$1 = [
-        {value: 'objectCat1', text: 'First Category'},
-        {value: 'objectCat2', text: 'Second Category'},
-    ];
+    var categoriesTabs$1 = {
+        'objectCat1': {text: 'First Category'},
+        'objectCat2': {text: 'Second Category'}
+    };
 
-    var attributesTabs$1 = [
-        {value: 'attribute1', text: 'First Attribute'},
-        {value: 'attribute2', text: 'Second Attribute'},
-    ];
+    var attributesTabs$1 = {
+        'attribute1': {text: 'First Attribute'},
+        'attribute2': {text: 'Second Attribute'}
+    };
 
-    var tabs$2 = [
-        {value: 'parameters', text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$2 },
-        {value: 'blocks', text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$2},
-        {value: 'categories', text: 'Categories', component: categoriesComponent$1, rowsDesc: categoryClear$2, subTabs:categoriesTabs$1},
-        {value: 'attributes', text: 'Attributes', component: categoriesComponent$1, rowsDesc: categoryClear$2, subTabs:attributesTabs$1},
-        {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc$2},
-        {value: 'output', text: 'Complete', component: outputComponent$2, rowsDesc: blocksDesc$2},
-        {value: 'import', text: 'Import', component: importComponent$2},
-        {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'SPF'}
-    ];
+    var tabs$2 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$2},
+        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$2},
+        'categories': {
+            text: 'Categories',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear$2,
+            subTabs: categoriesTabs$1
+        },
+        'attributes': {
+            text: 'Attributes',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear$2,
+            subTabs: attributesTabs$1
+        },
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$2},
+        'output': {text: 'Complete', component: outputComponent$2, rowsDesc: blocksDesc$2},
+        'import': {text: 'Import', component: importComponent$2},
+        'help': {text: 'Help', component: helpComponent, rowsDesc: 'SPF'}
+    };
 
     var spf = function (args, external) { return m.component(spfComponent, args, external); };
 
@@ -20868,7 +20813,7 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$2[5].rowsDesc; //blockDesc inside output attribute
+            var blocksObject = tabs$2.blocks.rowsDesc; //blockDesc inside output attribute
             error_msg = validityCheck$2(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
@@ -20920,25 +20865,12 @@
     function view$7(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
-                ?
-                m('.loader')
-                :
-                m('.container.space',[
-                    m('div', ctrl.notifications.view()),
-                    m('div.space',[
-                        ctrl.is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                onclick: function () { return ctrl.show_do_save(); },
-                                disabled: !ctrl.is_settings_changed(),
-                                style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                            }, 'Save'),
-                    ]),
-                    m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-                ])
+                ? m('.loader')
+                : m('.container.space',
+                    m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container',
-            m('div', ctrl.notifications.view()),
             pageHeadLine('SPF'),
             m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
@@ -21069,7 +21001,7 @@
     function controller$6(settings, defaultSettings, clearBlock){
         var error_msg = [];
         error_msg = validityCheck$1(error_msg, settings, clearBlock);
-        return {error_msg: error_msg, createFile: createFile, printToPage: printToPage};
+        return {error_msg: error_msg, createFile: createFile};
 
         function createFile(fileType){
             return function(){
@@ -21090,15 +21022,6 @@
                     document.body.appendChild(downloadLink);
                 }
                 downloadLink.click();
-            };
-        }
-      
-        function printToPage(){
-            return function() {
-                var para = document.getElementById('textDiv');
-                para.style.visibility = 'visible';
-                var text_area = document.getElementById('textArea');
-                text_area.value = toString$1(settings);
             };
         }
     }
@@ -21123,7 +21046,7 @@
         delete settings_output.attribute1.stimulusCss;
         settings_output.attribute2.css = settings_output.attribute2.stimulusCss;
         delete settings_output.attribute2.stimulusCss;
-        return settings_output
+        return settings_output;
     }
 
     function updateSettings$3(settings){
@@ -21159,7 +21082,7 @@
         var containsImage = temp1 || temp2 || temp3;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         var currBlocks = clone(settings.trialsByBlock);
@@ -21185,7 +21108,7 @@
     }
 
     function view$6(ctrl, settings){
-        return viewOutput(ctrl, settings)
+        return viewOutput(ctrl, settings, toString$1);
     }
 
     var blocksComponent = {
@@ -21195,14 +21118,12 @@
 
     function controller$5(settings, defaultSettings, rows){
         var blocks = settings.trialsByBlock;
-        var addFlag =  m.prop(blocks.length < 30 ? 'visible' : 'hidden');
-        var removeFlag = m.prop('hidden');
-        var chooseFlag = m.prop('hidden');
-        var choosenBlocksList = [];
+        var chooseFlag = m.prop(false);
+        var choosenBlocksList = m.prop([]);
         var chooseClicked = m.prop(false);
         var clearBlock = rows.slice(-1)[0];
         
-        return {showReset: showReset, showClear: showClear, set: set, get: get, blocks: blocks, getParameters: getParameters, setParameters: setParameters, addFlag: addFlag, removeFlag: removeFlag,
+        return {showReset: showReset, showClear: showClear, set: set, get: get, blocks: blocks, getParameters: getParameters, setParameters: setParameters, unChooseCategories: unChooseCategories,
             chooseFlag: chooseFlag, addBlock: addBlock, showRemoveBlocks: showRemoveBlocks, choosenBlocksList: choosenBlocksList, updateChoosenBlocks: updateChoosenBlocks, chooseBlocks: chooseBlocks, rows: rows};
 
         function beforeClearReset(action, func){
@@ -21230,8 +21151,7 @@
                 }
                 settings.switchSideBlock = defaultSettings.switchSideBlock;
                 settings.blockOrder = defaultSettings.blockOrder;
-                choosenBlocksList.length = 0;
-                addFlag('visible');
+                choosenBlocksList().length = 0;
             }
         }
         function showClear(){
@@ -21259,22 +21179,26 @@
             if (type === 'select') return function(value){return settings[name] = value; };
             return function(value){return settings[name] = Math.abs(Math.round(value));};
         }
+        function unChooseCategories(){
+            chooseFlag(false);
+            choosenBlocksList().length = 0;
+        }
         function updateChoosenBlocks(e, index){
-            if (choosenBlocksList.includes(index) && !e.target.checked){
-                var i = choosenBlocksList.indexOf(index);
+            if (choosenBlocksList().includes(index) && !e.target.checked){
+                var i = choosenBlocksList().indexOf(index);
                 if (i !== -1) {
-                choosenBlocksList.splice(i, 1);
+                    choosenBlocksList().splice(i, 1);
                 }
                 return;
             } 
-            if (e.target.checked) choosenBlocksList.push(index);
+            if (e.target.checked) choosenBlocksList().push(index);
         }
         function chooseBlocks(){
             if (blocks.length < 4) {
                 showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Choosen Blocks');
                 return;
             }
-            chooseFlag('visible');
+            chooseFlag(true);
             if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
                 showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.', 'Choose Blocks to Remove');
                 chooseClicked(true);
@@ -21283,10 +21207,9 @@
         function addBlock(){
             blocks.push(clone(clearBlock));
             blocks.slice(-1)[0]['block'] = blocks.length;
-            if (blocks.length === 30) addFlag('hidden'); //limit blocks to 30
         }
         function showRemoveBlocks(){
-            if ((blocks.length - choosenBlocksList.length) < 3){
+            if ((blocks.length - choosenBlocksList().length) < 3){
                 showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Choosen Blocks');
                 return;
             }
@@ -21298,104 +21221,96 @@
                         m.redraw();
                     }
                     else {
-                        choosenBlocksList.length = 0;
-                        chooseFlag('hidden');
+                        choosenBlocksList().length = 0;
+                        chooseFlag(false);
                         m.redraw();
                     }
-                }).catch(function (error) {showRestrictions("error", "Something went wrong on the page!\n"+error, "Oops!");})
+                }).catch(function (error) {showRestrictions('error', 'Something went wrong on the page!\n'+error, 'Oops!');})
                 .then(m.redraw());
-
             function removeBlocks(){
-                choosenBlocksList.sort();
-                for (var i = choosenBlocksList.length - 1; i >=0; i--)
-                    blocks.splice(choosenBlocksList[i],1);
+                choosenBlocksList().sort();
+                for (var i = choosenBlocksList().length - 1; i >=0; i--)
+                    blocks.splice(choosenBlocksList()[i],1);
                 
                 for (var i$1 = 0; i$1 < blocks.length; i$1++) 
                     blocks[i$1]['block'] = i$1+1;
                 
-                choosenBlocksList.length = 0;
-                chooseFlag('hidden');
+                choosenBlocksList().length = 0;
+                chooseFlag(true);
             }
         }
     }
 
     function view$5(ctrl){
-        return m('.container.space' , [
+        return m('.space' , [
             ctrl.rows.slice(0,2).map(function(row) {
-                return m('.div',[
-                        m('.row.space', [
-                        m('.col-sm-3.space',[
-                            m('i.fa.fa-info-circle'),
-                            m('.card.info-box.card-header', [row.desc]),
-                            m('span', [' ', row.label])
-                        ]),
-                        m('.col-md-9',
-                            row.options ?
-                                m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select')), style: {width: '8.3rem'}},[
-                                    row.options.map(function(option){return m('option', option);})
-                                ])
-                                : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), style: {width: '4em'}, min:0})
-                        ),
+                return m('.row.line', [
+                    m('.col-md-3',[
+                        m('span', [' ', row.label, ' ']),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:row.desc
+                        })
                     ]),
-                    m('hr')
-                ])
+                    m('.col-md-2',
+                        row.options ?
+                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                row.options.map(function(option){return m('option', option);})])
+                            : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                    )
+                ]);
             }),
             ctrl.blocks.map(function(block) {
                 var index = ctrl.blocks.indexOf(block);
-                return m('div',[
-                    m('.row', [
-                        m('.col-md-3',[
-                            m('input[type=checkbox]', {checked : ctrl.choosenBlocksList.includes(index), style:{visibility: ctrl.chooseFlag(), 'margin-right':'0.5rem'}, onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}),
-                            index === 0 ?
-                                [
-                                    m('i.fa.fa-info-circle'),
-                                    m('.card.info-box.card-header', ['By default, this is the practice block that shows only the attributes and not the category. ' +
-                                                                    'Because of that, the number of category trials is 0. ' +
-                                                                    'You can change that if you want.'])
-                                ] : '',
-                            m('span', [' ','Block '+parseInt(index+1)])
-                        ]),
-                        m('.col-md-9',[
-                            ctrl.rows.slice(2,-1).map(function(row) {
-                                return m('.row.space', [
-                                    m('.col-sm-4.space',[
-                                        m('i.fa.fa-info-circle'),
-                                        m('.card.info-box.card-header', [row.desc]),
-                                        m('span', [' ', row.label])
-                                    ]),
-                                    m('.col-sm-8', [
-                                        row.name === 'instHTML' ?  m('textarea.form-control',{style: {width: '15rem' ,height: '4rem'},oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
-                                        : m('input[type=number].form-control',{placeholder:'0', style:{width:'4em'}, onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
-                                    ]) 
-                                ])
-                            })
-                        ])
+                return m('.row.line', [
+                    m('.col-md-3',[
+                        !ctrl.chooseFlag() ? ' ' :
+                            m('input[type=checkbox]', {checked : ctrl.choosenBlocksList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}),
+                        m('span', [' ','Block '+parseInt(index+1), ' ']),
+                        index !== 0 ? ' ' :
+                            m('i.fa.fa-info-circle.text-muted', {
+                                title:'By default, this is the practice block that shows only the attributes and not the category. ' +
+                                'Because of that, the number of category trials is 0. ' +
+                                'You can change that if you want.'
+                            }),
                     ]),
-                    m('hr')
+                    m('.col-md-9',[
+                        ctrl.rows.slice(2,-1).map(function(row) {
+                            return m('.row.space', [
+                                m('.col-sm-4.space',[
+                                    m('span', [' ', row.label, ' ']),
+                                    m('i.fa.fa-info-circle.text-muted',{
+                                        title:row.desc
+                                    }),
+                                ]),
+                                row.name === 'instHTML' ?
+                                    m('.col-md-4', [
+                                        m('textarea.form-control',{rows:4, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
+                                    ]) :
+                                    m('.col-md-2',
+                                        m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
+                                    )
+                            ]);
+                        })
+                    ])
                 ]);
             }),
-            m('.row.space',[
-                m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons',display: 'flex','justify-content': 'center'}},[
-                    m('button.btn btn btn-info',{onclick: ctrl.addBlock, style:{'padding-right':'60px','padding-left':'60px' ,visibility: ctrl.addFlag()}},
-                        m('i.fa.fa-plus'),' Add Block'),
-                    m('button.btn btn btn-warning',{onclick: ctrl.chooseBlocks},
-                        m('i.fa.fa-check'), ' Choose Blocks to Remove'),
-                    m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList.length},
-                        m('i.fa.fa-minus-square'), ' Remove Choosen Blocks'),
-                ])
-            ]),
-            m('.row',[
-                m('.col',{style:{'margin-bottom':'7px'}},[
-                    m('.btn-group btn-group-toggle', {style:{'data-toggle':'buttons', float: 'right'}},[
-                        m('button.btn btn-secondary', 
-                            {title:'Reset all current fields to default values', onclick: function () { return ctrl.showReset(); }},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                        m('button.btn btn-danger',
-                            {title:'Clears all current values',onclick:function () { return ctrl.showClear(); }},
-                            m('i.fa.fa-trash-alt.fa-sm'), ' Clear')
+            m('.row.space.centrify',
+                m('.col-sm-8',
+                    m('.btn-group btn-group-toggle', [
+                        ctrl.blocks.length > 29 ? '' : //limit number of blocks to 30
+                            m('button.btn btn btn-info',{onclick: ctrl.addBlock},
+                                m('i.fa.fa-plus'),' Add Block'),
+                        !ctrl.chooseFlag() ?
+                            m('button.btn btn btn-warning',{onclick: ctrl.chooseBlocks},
+                                m('i.fa.fa-check'), ' Choose Blocks to Remove')
+                            : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                                m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
+                        !ctrl.choosenBlocksList().length ? '' :
+                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList().length},
+                                m('i.fa.fa-minus-square'), ' Remove Chosen Blocks')
                     ])
-                ])
-            ])
+                )
+            ), resetClearButtons(ctrl.showReset, ctrl.showClear)
         ]);
     }
 
@@ -21479,18 +21394,18 @@
         {name: 'instTemplateCategoryRight', label:'Block instructions when the single category is on the right'},
         {name: 'instTemplateCategoryLeft', label:'Block instructions when the single category is on the left'},
         {textOnError:'', leftKeyText:'', rightKeyText:'', orKeyText:'', remindErrorText:'',finalText:'',
-        instTemplatePractice:'', instTemplateCategoryRight:'', instTemplateCategoryLeft:''},
+            instTemplatePractice:'', instTemplateCategoryRight:'', instTemplateCategoryLeft:''},
         {} //an empty element
     ];
 
     var blocksDesc$1 = [
         {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'], desc: 'Change to \'startRight\' if you want the first block to show the single category on the right in the first block, \'startLeft\' if you want it to appear on the left side. If you choose \'random\', the program will randomly choose a side for each participant. The first attribute in the Attributes page appears on the left and the second attribute appears on the right. \n'},
         {name: 'switchSideBlock', label: 'Switch Side Block ', desc: 'By default, we switch on block 4 (i.e., after blocks 2 and 3 showed the first pairing condition).'},
-        {name: 'instHTML', label:'Block\'s Instructions:', desc: 'Empty field means we will create the instructions from a deafault template.'},
-        {name: 'miniBlocks', label:'Number of mini-blocks:', desc: 'Higher number reduces repetition of same group/response. Set to 1 if you don\'t need mini blocks. 0 will break the task.'},
-        {name: 'singleAttTrials', label:'Number of single attribute trials: ', desc: 'Number of trials of the attribute that does not share key with the category (in a mini block).'},
-        {name: 'sharedAttTrials', label:'Number of shared key attribute trials:', desc: 'Number of trials of the attribute that shares key with the category (in a mini block).'},
-        {name: 'categoryTrials', label:'Number of category trials:', desc: 'Number of trials of the category (in a mini-block). If 0, the label does not appear.'},
+        {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a deafault template.'},
+        {name: 'miniBlocks', label:'Number of mini-blocks', desc: 'Higher number reduces repetition of same group/response. Set to 1 if you don\'t need mini blocks. 0 will break the task.'},
+        {name: 'singleAttTrials', label:'Number of single attribute trials', desc: 'Number of trials of the attribute that does not share key with the category (in a mini block).'},
+        {name: 'sharedAttTrials', label:'Number of shared key attribute trials', desc: 'Number of trials of the attribute that shares key with the category (in a mini block).'},
+        {name: 'categoryTrials', label:'Number of category trials', desc: 'Number of trials of the category (in a mini-block). If 0, the label does not appear.'},
         {
             instHTML : '', 
             block : 1,
@@ -21503,31 +21418,35 @@
 
     var categoryClear$1 = [{
         name: '', 
-        title: {media: {word: ''},
-        css: {color: '#000000', 'font-size': '1em'}, height: 4},
+        title: {media: {word: ''}, css: {color: '#000000', 'font-size': '1em'}, height: 4},
         stimulusMedia: [],
         stimulusCss : {color:'#000000', 'font-size':'1em'}
     }];
 
-    var category = [
-        {value: 'category', text: 'Category'},
-    ];
+    var category = {
+        'category':{text: 'Category'}
+    };
 
-    var attributesTabs = [
-        {value: 'attribute1', text: 'First Attribute'},
-        {value: 'attribute2', text: 'Second Attribute'},
-    ];
+    var attributesTabs = {
+        'attribute1': {text: 'First Attribute'},
+        'attribute2': {text: 'Second Attribute'}
+    };
 
-    var tabs$1 = [
-        {value: 'parameters', text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$1 },
-        {value: 'blocks', text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc$1},
-        {value: 'category', text: 'Category', component: categoriesComponent$1, rowsDesc: categoryClear$1, subTabs:category},
-        {value: 'attributes', text: 'Attributes', component: categoriesComponent$1, rowsDesc: categoryClear$1, subTabs:attributesTabs},
-        {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc$1},
-        {value: 'output', text: 'Complete', component: outputComponent$1, rowsDesc: blocksDesc$1.slice(-1)[0]},
-        {value: 'import', text: 'Import', component: importComponent$1},
-        {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'STIAT'}
-    ];
+    var tabs$1 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$1},
+        'blocks': {text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc$1},
+        'category': {text: 'Category', component: categoriesComponent$1, rowsDesc: categoryClear$1, subTabs: category},
+        'attributes': {
+            text: 'Attributes',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear$1,
+            subTabs: attributesTabs
+        },
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$1},
+        'output': {text: 'Complete', component: outputComponent$1, rowsDesc: blocksDesc$1.slice(-1)[0]},
+        'import': {text: 'Import', component: importComponent$1},
+        'help': {text: 'Help', component: helpComponent, rowsDesc: 'STIAT'}
+    };
 
     var stiat = function (args, external) { return m.component(stiatComponent, args, external); };
 
@@ -21572,7 +21491,7 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$1[5].rowsDesc; //blockDesc inside output attribute
+            var blocksObject = tabs$1.blocks.rowsDesc; //blockDesc inside output attribute
             error_msg = validityCheck$1(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
@@ -21623,25 +21542,12 @@
     function view$3(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
-                ?
-                m('.loader')
-                :
-                m('.container.space',[
-                    m('div', ctrl.notifications.view()),
-                    m('div.space',[
-                        ctrl.is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                onclick: function () { return ctrl.show_do_save(); },
-                                disabled: !ctrl.is_settings_changed(),
-                                style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                            }, 'Save'),
-                    ]),
-                    m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-                ])
+                ? m('.loader')
+                : m('.container.space',
+                    m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container',
-            m('div', ctrl.notifications.view()),
             pageHeadLine('STIAT'),
             m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
@@ -21770,7 +21676,7 @@
         var error_msg = [];
         error_msg = validityCheck(error_msg, settings);
 
-        return {printToPage: printToPage, createFile: createFile, error_msg: error_msg};
+        return {createFile: createFile, error_msg: error_msg};
 
         function createFile(fileType){
             return function(){
@@ -21796,15 +21702,6 @@
                 downloadLink.click();
             };
         }
-
-        function printToPage(){
-            return function(){
-                var para = document.getElementById('textDiv');
-                para.style.visibility = 'visible';
-                var text_area = document.getElementById('textArea');
-                text_area.value = toString(settings);
-            };
-        }
     }
 
     function validityCheck(error_msg, settings){
@@ -21818,7 +21715,7 @@
         containsImage = temp1 || temp2 || temp3 || temp4;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         if(!settings.blocks.nTrialsPerPrimeTargetPair)
@@ -21880,7 +21777,7 @@
     }
 
     function view$2(ctrl, settings){
-        return viewOutput(ctrl, settings)
+        return viewOutput(ctrl, settings, toString);
     }
 
     var importComponent = {
@@ -21889,7 +21786,7 @@
     };
 
     function view$1(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$1(settings) {
@@ -21923,7 +21820,7 @@
         delete settings.targetCats.rightAttTargets;
         delete settings.targetCats.leftAttTargets;
         delete settings.targetCats;
-        return settings
+        return settings;
     }
     function updateSettings(settings, input) {
         settings.primeStimulusCSS = input.primeStimulusCSS;
@@ -21972,12 +21869,11 @@
     ];
 
     var textDesc=[
-        {name: 'firstBlock', label:'First Block\'\s Instructions'},
-        {name: 'middleBlock', label:'Middle Block\'\s Instructions'},
-        {name: 'lastBlock', label:'Last Block\'\s Instructions'},
+        {name: 'firstBlock', label:'First Block\'s Instructions'},
+        {name: 'middleBlock', label:'Middle Block\'s Instructions'},
+        {name: 'lastBlock', label:'Last Block\'s Instructions'},
         {firstBlock: '', middleBlock:'', lastBlock:''},
         {} //an empty element
-
     ];
 
     var blocksDesc = [
@@ -21997,30 +21893,40 @@
     var primeClear = [{
         name : '',  //Will be used in the logging
         mediaArray : []
-
     }];
 
-    var categoriesTabs = [
-        {value: 'rightAttTargets', text: 'First Category'},
-        {value: 'leftAttTargets', text: 'Second Category'},
-    ];
+    var categoriesTabs = {
+        'rightAttTargets':{text: 'First Category'},
+        'leftAttTargets':{text: 'Second Category'},
+    };
 
-    var primesTabs = [
-        {value: 'prime1', text: 'First Category'},
-        {value: 'prime2', text: 'Second Category'},
-        {value:'primeStimulusCSS', text:'Prime Appearance'}
-    ];
+    var primesTabs = {
+        'prime1':{text: 'First Category'},
+        'prime2':{text: 'Second Category'},
+        'primeStimulusCSS':{text:'Prime Appearance'}
+    };
 
-    var tabs = [
-        {value: 'parameters', text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc },
-        {value: 'blocks', text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc},
-        {value: 'prime', text: 'Prime Categories', component: categoriesComponent$1, rowsDesc: primeClear, subTabs:primesTabs, type: 'EP'},
-        {value: 'categories', text: 'Target Categories', component: categoriesComponent$1, rowsDesc: categoryClear, subTabs:categoriesTabs},
-        {value: 'text', text: 'Texts', component: textComponent, rowsDesc: textDesc},
-        {value: 'output', text: 'Complete', component: outputComponent},
-        {value: 'import', text: 'Import', component: importComponent},
-        {value: 'help', text: 'Help', component: helpComponent, rowsDesc:'EP'}
-    ];
+    var tabs = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc},
+        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc},
+        'prime': {
+            text: 'Prime Categories',
+            component: categoriesComponent$1,
+            rowsDesc: primeClear,
+            subTabs: primesTabs,
+            type: 'EP'
+        },
+        'categories': {
+            text: 'Target Categories',
+            component: categoriesComponent$1,
+            rowsDesc: categoryClear,
+            subTabs: categoriesTabs
+        },
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
+        'output': {text: 'Complete', component: outputComponent},
+        'import': {text: 'Import', component: importComponent},
+        'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
+    };
 
     var ep = function (args, external) { return m.component(biatComponent, args, external); };
 
@@ -22116,25 +22022,12 @@
     function view(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
-                ?
-                m('.loader')
-                :
-                m('.container.space',[
-                    m('div', ctrl.notifications.view()),
-                    m('div.space',[
-                        ctrl.is_locked() ? '' :
-                            m('button.btn btn btn-primary', {
-                                title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                onclick: function () { return ctrl.show_do_save(); },
-                                disabled: !ctrl.is_settings_changed(),
-                                style: {float: 'right', 'margin-top': '7px', 'margin-left': '15px'}
-                            }, 'Save'),
-                    ]),
-                    m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-                ])
+                ? m('.loader')
+                : m('.container.space',
+                    m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
         }
         return m('.container',
-            m('div', ctrl.notifications.view()),
             pageHeadLine('Evaluative Priming'),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );

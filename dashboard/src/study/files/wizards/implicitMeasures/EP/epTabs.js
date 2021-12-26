@@ -25,12 +25,11 @@ let parametersDesc = [
 ];
 
 let textDesc=[
-    {name: 'firstBlock', label:'First Block\'\s Instructions'},
-    {name: 'middleBlock', label:'Middle Block\'\s Instructions'},
-    {name: 'lastBlock', label:'Last Block\'\s Instructions'},
+    {name: 'firstBlock', label:'First Block\'s Instructions'},
+    {name: 'middleBlock', label:'Middle Block\'s Instructions'},
+    {name: 'lastBlock', label:'Last Block\'s Instructions'},
     {firstBlock: '', middleBlock:'', lastBlock:''},
     {} //an empty element
-
 ];
 
 let blocksDesc = [
@@ -50,19 +49,18 @@ let categoryClear = [{
 let primeClear = [{
     name : '',  //Will be used in the logging
     mediaArray : []
-
-}]
+}];
 
 let categoriesTabs = {
     'rightAttTargets':{text: 'First Category'},
     'leftAttTargets':{text: 'Second Category'},
-    }
+};
 
 let primesTabs = {
     'prime1':{text: 'First Category'},
     'prime2':{text: 'Second Category'},
     'primeStimulusCSS':{text:'Prime Appearance'}
-}
+};
 
 let tabs = {
     'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},

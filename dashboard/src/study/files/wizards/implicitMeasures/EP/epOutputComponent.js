@@ -48,13 +48,13 @@ export function validityCheck(error_msg, settings){
     containsImage = temp1 || temp2 || temp3 || temp4;
 
     if(settings.parameters.base_url.image.length === 0 && containsImage)
-        error_msg.push('Image\'s\ url is missing and there is an image in the study');
+        error_msg.push('Image\'s url is missing and there is an image in the study');
 
     //check for blocks problems
     if(!settings.blocks.nTrialsPerPrimeTargetPair)
         error_msg.push('Number of trials in a block, per prime-target combination equals to zero, this will result in not showing the trials.')
     if(!settings.blocks.nBlocks)
-        error_msg.push('Number of blocks equals to zero, this will result in skipping the task.')
+        error_msg.push('Number of blocks equals to zero, this will result in skipping the task.');
     return error_msg;
 }
 
@@ -64,21 +64,21 @@ export function toString(settings, external){
 
 export function updateMediaSettings(settings){
     //update attributes names to be compatible to EP
-    let settings_output = clone(settings)
-    settings_output.targetCats = {}
-    settings_output.targetCats.rightAttTargets = settings_output.rightAttTargets
-    settings_output.targetCats.rightAttTargets.mediaArray = settings_output.rightAttTargets.stimulusMedia
-    delete settings_output.rightAttTargets.stimulusMedia
-    settings_output.targetCats.leftAttTargets = settings_output.leftAttTargets
-    settings_output.targetCats.leftAttTargets.mediaArray = settings_output.leftAttTargets.stimulusMedia
-    delete settings_output.leftAttTargets.stimulusMedia
+    let settings_output = clone(settings);
+    settings_output.targetCats = {};
+    settings_output.targetCats.rightAttTargets = settings_output.rightAttTargets;
+    settings_output.targetCats.rightAttTargets.mediaArray = settings_output.rightAttTargets.stimulusMedia;
+    delete settings_output.rightAttTargets.stimulusMedia;
+    settings_output.targetCats.leftAttTargets = settings_output.leftAttTargets;
+    settings_output.targetCats.leftAttTargets.mediaArray = settings_output.leftAttTargets.stimulusMedia;
+    delete settings_output.leftAttTargets.stimulusMedia;
 
-    settings_output.targetCats.rightAttTargets.stimulusCSS = settings_output.rightAttTargets.stimulusCss
-    settings_output.targetCats.leftAttTargets.stimulusCSS = settings_output.leftAttTargets.stimulusCss
-    delete settings_output.rightAttTargets.stimulusCss
-    delete settings_output.leftAttTargets.stimulusCss
-    delete settings_output.rightAttTargets
-    delete settings_output.leftAttTargets
+    settings_output.targetCats.rightAttTargets.stimulusCSS = settings_output.rightAttTargets.stimulusCss;
+    settings_output.targetCats.leftAttTargets.stimulusCSS = settings_output.leftAttTargets.stimulusCss;
+    delete settings_output.rightAttTargets.stimulusCss;
+    delete settings_output.leftAttTargets.stimulusCss;
+    delete settings_output.rightAttTargets;
+    delete settings_output.leftAttTargets;
 
     return settings_output;
 }
@@ -110,7 +110,7 @@ export function toScript(output, external){
 }
 
 export function view(ctrl, settings){
-    return viewOutput(ctrl, settings, toString)
+    return viewOutput(ctrl, settings, toString);
 }
 
 

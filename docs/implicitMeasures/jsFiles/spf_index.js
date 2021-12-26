@@ -15,9 +15,9 @@
 
         },
         view:
-            function(ctrl, tabs, settings, defaultSettings, external = false, notifications = null,
-                    is_locked = null, is_settings_changed = null, show_do_save = null){
-                return m('.container',[
+            function(ctrl, tabs, settings, defaultSettings, external = false, notifications,
+                is_locked, is_settings_changed, show_do_save){
+                return m('.container-fluid',[
                     m('.row',[
                         m('.col-md-11',
                             m('.tab',
@@ -27,27 +27,27 @@
                                     if (tab === 'practice' && settings.parameters.practiceBlock === false)
                                         return;
                                     return m('button.tablinks', {
-                                            class: ctrl.tab === tab ? 'active' : '',
-                                            onclick:function(){
-                                                ctrl.tab = tab;
-                                                !tabs[tab].subTabs ? ''
-                                                    : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
-                                            }}, tabs[tab].text);})),
-                            ),
-                        m('.col-sm-1.text-center',
+                                        class: ctrl.tab === tab ? 'active' : '',
+                                        onclick:function(){
+                                            ctrl.tab = tab;
+                                            !tabs[tab].subTabs ? ''
+                                                : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
+                                        }}, tabs[tab].text);}))
+                        ),
+                        m('.col-sm-1-text-center',
                             !external ?
                                 is_locked() ? '' :
-                                m('button.btn btn btn-primary', {
-                                    id:'save_button',
-                                    title: 'Update the script file (the .js file).\nThis will override the current script file.',
-                                    disabled: !is_settings_changed(),
-                                    onclick: () => show_do_save(),
-                                }, 'Save')
+                                    m('button.btn btn btn-primary', {
+                                        id:'save_button',
+                                        title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                        disabled: !is_settings_changed(),
+                                        onclick: () => show_do_save(),
+                                    }, 'Save')
                                 : m('a.btn btn-info btn-lg',{
-                                        href:'https://minnojs.github.io/minno-server/implicitMeasures/',
-                                        role:'button',
-                                        title:'Main Page'}
-                                    ,m('i.fa.fa-home'))
+                                    href:'https://minnojs.github.io/minno-server/implicitMeasures/',
+                                    role:'button',
+                                    title:'Main Page'}
+                                ,m('i.fa.fa-home'))
                         )
                     ]),
                     !tabs[ctrl.tab].subTabs ? '' :
@@ -58,18 +58,17 @@
                                         return m('button',{
                                             class: ctrl.currSubTab === subTab ? 'active' : '',
                                             onclick:function(){
-                                            ctrl.currSubTab = subTab;
-                                        }} ,tabs[ctrl.tab].subTabs[subTab].text);
-                                }))
+                                                ctrl.currSubTab = subTab;
+                                            }} ,tabs[ctrl.tab].subTabs[subTab].text);
+                                    }))
                             ])
                         ]),
                     m('.row',[
                         external ? '' : m('div', notifications.view()),
-                        m('.col-sm-12',{key:tabs[ctrl.tab]},
+                        m('.col-sm-11',{key:tabs[ctrl.tab]},
                             m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
                     ])
-                ]);
-        }
+                ]);}
     };
 
     function defaultSettings(external) {
@@ -286,41 +285,42 @@
         return JSON.parse(JSON.stringify(obj));
     }
 
-    function resetClearButtons(reset, clear, curr_tab = null){
-        return m('.row',[
-            m('.col.pull-xs-right',[
-                m('.btn-group btn-group-toggle',[
+    function resetClearButtons(reset, clear, curr_tab = null, isBiat = false){
+        let showReset = !(isBiat && curr_tab > 1); //if the condition holds, don't show the reset button
+        return m('.pull-xs-right',[
+            m('.btn-group btn-group-toggle',[
+                !showReset ? '' :
                     m('button.btn btn btn-secondary',
-                        {title:'Reset all current fields to default values', onclick: () => reset(curr_tab)},
+                        {title:'Reset all current fields to default values',
+                            onclick: () => reset(curr_tab)},
                         m('i.fa.fa-undo.fa-sm'), ' Reset'),
-                    m('button.btn btn btn-danger',
-                        {title:'Clears all current values',onclick:() => clear(curr_tab)},
-                        m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                ])
+                m('button.btn btn btn-danger',
+                    {title:'Clears all current values',onclick:() => clear(curr_tab)},
+                    m('i.fa.fa-trash.fa-sm'), ' Clear'),
             ])
-        ])
+        ]);
     }
 
     function pageHeadLine(task){
         return m('.row',[
-            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'),)
-        ])
+            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
+        ]);
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
         let containsImage = false;
         //check for missing titles and names
         if(element.name.length === 0)
-            error_msg.push(name_to_display+'\'s\ name is missing');
+            error_msg.push(name_to_display+'\'s name is missing');
 
         if(element.title.media.image !== undefined){
             containsImage = true;
             if(element.title.media.image.length === 0)
-                error_msg.push(name_to_display+'\'s\ title is missing');
+                error_msg.push(name_to_display+'\'s title is missing');
         }
         else {
             if(element.title.media.word.length === 0)
-                error_msg.push(name_to_display+'\'s\ title is missing');
+                error_msg.push(name_to_display+'\'s title is missing');
         }
         let stimulusMedia = element.stimulusMedia;
 
@@ -335,11 +335,10 @@
         if(element.title.startStimulus) //for biat only, checking if startStimulus contains image
             element.title.startStimulus.media.image ? containsImage = true : '';
 
-        return containsImage
+        return containsImage;
     }
 
     function showClearOrReset(element, value, action){
-        console.log('here reset');
         let msg_text = {
             'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
             'clear':{text: 'This will delete all current properties.', title: 'Clear?'}
@@ -364,34 +363,32 @@
     function viewOutput(ctrl, settings, toString){
         return m('.space',[
             !ctrl.error_msg.length ? '' :
-            m('.alert alert-danger', [
-                m('strong','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
-                m('ul',[
-                    ctrl.error_msg.map(function(err){
-                        return m('li',err);
-                    })
-                ])
-            ]),
-            m('.row.space',
-                    m('.col-md-8.offset-sm-3',
-                        m('.btn-group', [
-                            m('button.btn btn btn-success', {
-                                onclick: ctrl.createFile(settings,'JS'),
-                                title:'Download the JavaScript file. For more details how to use it, see the “Help” page.'},
-                                [m('i.fa.fa-download'), ' Download Script']),
-                            m('button.btn btn btn-success', {
-                                onclick: ctrl.createFile(settings,'JSON'),
-                                title:'Importing this file to this tool, will load all your parameters to this tool.'},
-                                [m('i.fa.fa-download'), ' Download JSON']),
-                            m('button.btn btn btn-light', {
-                                onclick: () => printFlag(true)},
-                                [m('i.fa.fa-file'), ' Print to Browser'])
-            ]))),
+                m('.alert alert-danger', [
+                    m('strong','Some problems were found in your script, it\'s recommended to fix them before proceeding to download:'),
+                    m('ul',[
+                        ctrl.error_msg.map(function(err){
+                            return m('li',err);
+                        })
+                    ])
+                ]),
+            m('.row',
+                m('.col-md-8.offset-sm-3',
+                    m('.btn-group', [
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JS'),
+                            title:'Download the JavaScript file. For more details how to use it, see the “Help” page.'}, [m('i.fa.fa-download'), ' Download Script']),
+                        m('button.btn btn btn-success', {
+                            onclick: ctrl.createFile(settings,'JSON'),
+                            title:'Importing this file to this tool, will load all your parameters to this tool.'}, [m('i.fa.fa-download'), ' Download JSON']),
+                        m('button.btn btn btn-light', {
+                            onclick: () => printFlag(true)}, [m('i.fa.fa-file'), ' Print to Browser'])
+                    ])
+                )),
             !printFlag() ? '' :
                 m('.row.space',
                     m('.col-md-10.offset-sm-1',
                         m('textarea.form-control', {value: toString(settings), rows:20})
-                ))
+                    ))
         ]);
     }
 
@@ -400,10 +397,10 @@
             m('.col-sm-5',
                 m('.card.border-info.mb-3', [
                     m('.card-header','Upload a JSON file: ' ),
-                        m('card-body.text-info',[
-                            m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
-                            m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
-                        ])
+                    m('card-body.text-info',[
+                        m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
+                    ])
                 ])
             )]
         );
@@ -429,7 +426,7 @@
                         : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
                 )
             ])
-        ])
+        ]);
     }
 
     let parametersComponent$1 = {
@@ -438,9 +435,9 @@
     };
 
     function controller$a(settings, defaultSettings, rows) {
-        var parameters = settings.parameters;
-        var external = settings.external;
-        var qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
+        let parameters = settings.parameters;
+        let external = settings.external;
+        let qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
         return {reset, clear, set, get, rows, qualtricsParameters, external};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
@@ -449,18 +446,18 @@
 
         function get(name, object, parameter) {
             if (name === 'base_url')
-                return parameters[name][object]
+                return parameters[name][object];
             if (name === 'isTouch')
-                if (parameters[name] === true) return 'Touch'
+                if (parameters[name] === true) return 'Touch';
                 else return 'Keyboard';
             if (name === 'isQualtrics')
                 if (parameters[name] === true) {
-                    return 'Qualtrics'
+                    return 'Qualtrics';
                 } else return 'Regular';
             if (object && parameter) {
                 if (parameter === 'font-size')
-                    return parseFloat((parameters[name][object][parameter].replace("em", "")));
-                return parameters[name][object][parameter]
+                    return parseFloat((parameters[name][object][parameter].replace('em', '')));
+                return parameters[name][object][parameter];
             }
             return parameters[name];
         }
@@ -468,27 +465,27 @@
         function set(name, object, parameter) {
             return function (value) {
                 if (name === 'base_url')
-                    return parameters[name][object] = value
+                    return parameters[name][object] = value;
                 if (name === 'isTouch')
                     if (value === 'Keyboard') return parameters[name] = false;
                     else return parameters[name] = true;
                 if (name === 'isQualtrics')
                     if (value === 'Regular') return parameters[name] = false;
                     else return parameters[name] = true;
-                if (name.includes('Duration')) return parameters[name] = Math.abs(value)
+                if (name.includes('Duration')) return parameters[name] = Math.abs(value);
                 if (object && parameter) {
                     if (parameter === 'font-size') {
                         value = Math.abs(value);
                         if (value === 0) {
-                            showRestrications('error', 'Font\'s size must be bigger than 0.', 'Error');
+                            showRestrictions('error', 'Font\'s size must be bigger than 0.', 'Error');
                             return parameters[name][object][parameter];
                         }
-                        return parameters[name][object][parameter] = value + "em";
+                        return parameters[name][object][parameter] = value + 'em';
                     }
-                    return parameters[name][object][parameter] = value
+                    return parameters[name][object][parameter] = value;
                 }
                 return parameters[name] = value;
-            }
+            };
         }
 
     }
@@ -500,35 +497,35 @@
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
-                            row.desc ?
-                            m('.col-sm-4', [
-                                m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{
-                                    title:row.desc
-                                }),
-                            ]) :
-                            m('.col-sm-4',m('span', [' ', row.label])),
-                            row.name === ('base_url') ?
-                                m('.col-md-6',
-                                    m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
-                            : row.name.toLowerCase().includes('key') ? //case of keys parameters
-                                m('.col-md-2.col-lg-1',
-                                    m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))})
-                                ) : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
-                                        editStimulusObject(row.name, ctrl.get, ctrl.set)
+                    row.desc ?
+                        m('.col-sm-4', [
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            }),
+                        ]) :
+                        m('.col-sm-4',m('span', [' ', row.label])),
+                    row.name === ('base_url') ?
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
+                        : row.name.toLowerCase().includes('key') ? //case of keys parameters
+                            m('.col-md-2.col-lg-1',
+                                m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
+                            : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
+                                editStimulusObject(row.name, ctrl.get, ctrl.set)
                                 : m('.col-sm-4.col-lg-2',
                                     row.options ? //case of isTouch and isQualtrics
                                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
                                             row.options.map(function(option){return m('option', option);})])
-                                            : row.name.includes('Duration') ? //case of duration parameter
-                                                m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(row.name), onchange:m.withAttr('value', ctrl.set(row.name))})
-                                                : (row.name === 'sortingLabel1' || row.name === 'sortingLabel2' || row.name === 'targetCat') ?
-                                                    m('input[type=text].form-control', {value:ctrl.get(row.name) ,oninput:m.withAttr('value', ctrl.set(row.name))})
-                                                        : m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name)), checked: ctrl.get(row.name)})
+                                        : row.name.includes('Duration') ? //case of duration parameter
+                                            m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(row.name), onchange:m.withAttr('value', ctrl.set(row.name))})
+                                            : (row.name === 'sortingLabel1' || row.name === 'sortingLabel2' || row.name === 'targetCat') ?
+                                                m('input[type=text].form-control', {value:ctrl.get(row.name) ,oninput:m.withAttr('value', ctrl.set(row.name))})
+                                                : m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name)), checked: ctrl.get(row.name)})
                                 )
-                ])
+                ]);
             }), resetClearButtons(ctrl.reset, ctrl.clear)
-            ])
+        ]);
     }
 
     let outputComponent = {
@@ -599,7 +596,7 @@
         let containsImage = temp1 || temp2 || temp3 || temp4;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
-            error_msg.push('Image\'s\ url is missing and there is an image in the study');
+            error_msg.push('Image\'s url is missing and there is an image in the study');
 
         //check for blocks problems
         let currBlocks = clone(settings.blocks);
@@ -617,7 +614,7 @@
     }
 
     function view$9(ctrl, settings){
-        return viewOutput(ctrl, settings, toString)
+        return viewOutput(ctrl, settings, toString);
     }
 
     let textComponent = {
@@ -653,17 +650,17 @@
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
                 return m('.row.line',[
-                        row.desc ?
-                            m('.col-md-4.space',[
-                                m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{
-                                    title:row.desc
-                                })
-                            ])
-                            : m('.col-md-4.space', m('span', [' ', row.label])),
-                            m('.col-sm-7', [
-                                m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                    row.desc ?
+                        m('.col-md-4.space',[
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{
+                                title:row.desc
+                            })
                         ])
+                        : m('.col-md-4.space', m('span', [' ', row.label])),
+                    m('.col-sm-8', [
+                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                    ])
                 ]);
             }), resetClearButtons(ctrl.reset, ctrl.clear)
         ]);
@@ -703,18 +700,18 @@
                                 title:row.desc
                             })
                         ]) : m('.col-md-4.space', m('span', [' ', row.label])),
-                        m('.col-sm-4.col-lg-2',
+                    m('.col-sm-4.col-lg-2',
                         row.options ?
                             m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
-                            row.options.map(function(option){return m('option', option);})
+                                row.options.map(function(option){return m('option', option);})
                             ])
-                        : row.name.includes('random') ?
-                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
-                        : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
-                    ),
-                ])
+                            : row.name.includes('random') ?
+                                m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                                : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
+                    )
+                ]);
             }), resetClearButtons(ctrl.reset, ctrl.clear)
-        ])
+        ]);
     }
 
     let elementComponent$2 = {
@@ -816,14 +813,14 @@
         return m('.space', [
             m('.row.line', [
                 m('.col-md-4',[
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data ']),
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
                 ]),
                 m('.col-md-4', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
             ]),
             m('.row.line', [
                 m('.col-md-4',[
-                    m('span', [' ',ctrl.fields.elementType()+' title as will appear to the user ']),
+                    m('span', ctrl.fields.elementType()+' name presented in the task '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
                 ]),
                 m('.col-md-4', [
@@ -846,56 +843,67 @@
                                 m('span', 'Font\'s size: '),
                                 m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('title','css','font-size'))})
                             ])
-                        ]),
-                    ])
-            ]),
-            m('.row',[
-                m('.col-md-6',[
-                    m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                        title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                    })),
-                    m('.h-25.d-inline-block',[
-                        m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                        m('.btn-group btn-group-toggle', [
-                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
-                                m('i.fa.fa-plus'), 'Add Word'
-                            ]),
-                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
-                                m('i.fa.fa-plus'), 'Add Image'
-                            ])
                         ])
                     ])
-                ]),
             ]),
             m('.row',[
                 m('.col-md-6',[
+                    m('.row',
+                        m('.col-md-6',
+                            m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                            ))
+                    ),
+                    m('.row',
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}
+                            ))
+                    ),
+                    m('.row',
+                        m('.col-md-7',
+                            m('.btn-group btn-group-toggle', [
+                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
+                                    m('i.fa.fa-plus'), 'Add Word'
+                                ]),
+                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
+                                    m('i.fa.fa-plus'), 'Add Image'
+                                ])
+                            ])
+                        )
+                    ),
                     m('.row',[
-                        m('.col-sm-6',
+                        m('.col-md-6',
                             m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
-                            ctrl.get('stimulusMedia').some(object => object.word) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
-                            ctrl.get('stimulusMedia').map(function(object){
-                                let value = object.word ? object.word : object.image;
-                                let option = value + (object.word ? ' [Word]' : ' [Image]');
-                                return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
-                            })
-                        ])),
-                        !ctrl.fields.stimuliHidden() ? '' :
-                            m('.col-md-3',[
-                                m('u','Stimuli font\'s design:'),m('br'),
-                                m('label','Font\'s color: '),m('br'),
-                                m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
-                                m('br'), m('label', 'Font\'s size:'), m('br'),
-                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
-                        ]),
-                    ]),
-                    m('.col.space',
-                            m('.btn-group-vertical',[
-                                m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: () => ctrl.removeChosenStimuli()},'Remove Chosen Stimuli'),
-                                m('button.btn btn btn-warning', {onclick: () => ctrl.removeAllStimuli()},'Remove All Stimuli'),
-                                m('button.btn btn btn-warning', {onclick: () => ctrl.resetStimuliList()},'Reset Stimuli List'),
-                        ]))
+                                ctrl.get('stimulusMedia').some(object => object.word) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
+                                ctrl.get('stimulusMedia').map(function(object){
+                                    let value = object.word ? object.word : object.image;
+                                    let option = value + (object.word ? ' [Word]' : ' [Image]');
+                                    return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                                })
+                            ])
+                        ),
+                        m('.col-md-6',
+                            !ctrl.fields.stimuliHidden() ? '' :
+                                m('.col-md-7',[
+                                    m('u','Stimuli font\'s design:'),m('br'),
+                                    m('label','Font\'s color: '),m('br'),
+                                    m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
+                                    m('br'), m('label', 'Font\'s size:'), m('br'),
+                                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
+                                ])
+                        )
+                    ])
                 ])
-            ])
+            ]),
+            m('.row',
+                m('.col.space',
+                    m('.btn-group-vertical',[
+                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: () => ctrl.removeChosenStimuli()},'Remove Chosen Stimuli'),
+                        m('button.btn btn btn-warning', {onclick: () => ctrl.removeAllStimuli()},'Remove All Stimuli'),
+                        m('button.btn btn btn-warning', {onclick: () => ctrl.resetStimuliList()},'Reset Stimuli List'),
+                    ])
+                )
+            )
         ]);
     }
 
@@ -1091,16 +1099,16 @@
         return m('.space', [
             m('.row.line', [
                 m('.col-md-4',[
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data ']),
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
                 ]),
                 m('.col-md-4', [
                     m('input[type=text].form-control',{value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
-                ]),
+                ])
             ]),
             m('.row.line', [
                 m('.col-md-4',[
-                    m('span', [' ',ctrl.fields.elementType()+' title as will appear to the user ']),
+                    m('span', ctrl.fields.elementType()+' name presented in the task '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
                 ]),
                 m('.col-md-4', [
@@ -1113,59 +1121,47 @@
                     ])
                 ]),
                 !ctrl.fields.titleHidden() ? '' :
-                m('.col-md-4',[
-                    m('.row',[
-                        m('.col-sm-4',[
-                            m('span', 'Font\'s color: '),
-                            m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
-                        ]),
-                        m('.col-sm-4',[
-                            m('span', 'Font\'s size: '),
-                            m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
+                    m('.col-md-4',[
+                        m('.row',[
+                            m('.col-sm-4',[
+                                m('span', 'Font\'s color: '),
+                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                            ]),
+                            m('.col-sm-4',[
+                                m('span', 'Font\'s size: '),
+                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
+                            ])
                         ])
                     ])
-                ])
             ]),
             m('.row',[
                 m('.col-md-6',[
-                    m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                        title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                    })),
-                    m('.h-25.d-inline-block',[
-                        m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                        m('.btn-group btn-group-toggle', [
-                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
-                                m('i.fa.fa-plus'), 'Add Word'
-                            ]),
-                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
-                                m('i.fa.fa-plus'), 'Add Image'
+                    m('.row',
+                        m('.col-md-6',
+                            m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
+                            }))
+                        )
+                    ),
+                    m('.row',
+                        m('.col-md-6',
+                            m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)})
+                        )
+                    ),
+                    m('.row',
+                        m('.col-md-7',[
+                            m('.btn-group btn-group-toggle', [
+                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                                    m('i.fa.fa-plus'), 'Add Word'
+                                ]),
+                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                                    m('i.fa.fa-plus'), 'Add Image'
+                                ])
                             ])
                         ])
-                    ]),
-                ]),
-                ///startStimulus
-                !ctrl.fields.startStimulus() ? '' :
-                m('.col-md-6', [
-                    m('p.h4','Stimuli Presented with Instructions: ', m('i.fa.fa-info-circle.text-muted',{
-                        title:'Here You can enter only one type of stimuli (image or words), if you enter an image you can only enter one and with its file extension.'
-                    })),
-                    m('.h-25.d-inline-block',[
-                        m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStartStimulus(), oninput: m.withAttr('value', ctrl.fields.newStartStimulus)}),
-                        m('.btn-group btn-group-toggle', [
-                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStartStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e,true)},[
-                                m('i.fa.fa-plus'), 'Add Word'
-                            ]),
-                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStartStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e,true)},[
-                                m('i.fa.fa-plus'), 'Add Image'
-                            ])
-                        ])
-                    ]),
-                ]),
-            ]),
-            m('.row',[
-                m('.col-md-6',[
+                    ),
                     m('.row',[
-                        m('.col-sm-6',
+                        m('.col-md-6',
                             m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e)},[
                                 ctrl.get('stimulusMedia').some(object => object.word) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
                                 ctrl.get('stimulusMedia').map(function(object){
@@ -1173,57 +1169,90 @@
                                     let option = value + (object.word ? ' [Word]' : ' [Image]');
                                     return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
                                 })
-                        ])),
+                            ])
+                        ),
+                        m('.col-md-6',
                             !ctrl.fields.stimuliHidden() ? '' :
-                            m('.col-md-3',[
-                                m('u','Stimuli font\'s design:'),m('br'),
-                                m('label','Font\'s color: '),m('br'),
-                                m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange:m.withAttr('value', ctrl.set('stimulusCss','color'))}),
-                                m('br'), m('label', 'Font\'s size:'), m('br'),
-                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
-                            ]),
-                    ]),
-                    m('.col.space',
-                        m('.btn-group-vertical', [
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli}, 'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                                ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:(e) => ctrl.resetStimuliList(e)}, 'Reset Stimuli List'),
-                    ]))
+                                m('.col-md-7',[
+                                    m('u','Stimuli font\'s design:'),m('br'),
+                                    m('label','Font\'s color: '),m('br'),
+                                    m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange:m.withAttr('value', ctrl.set('stimulusCss','color'))}),
+                                    m('br'), m('label', 'Font\'s size:'), m('br'),
+                                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('stimulusCss','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('stimulusCss','font-size'))})
+                                ])
+                        )
+                    ])
                 ]),
                 ///startStimulus
                 !ctrl.fields.startStimulus() ? '' :
-                m('.col-md-6',[
-                    m('.row',[
-                        m('.col-sm-6',
-                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e, true)},[
-                                !ctrl.fields.startStimulus()  ||
-                                ctrl.get('title','startStimulus','media').some(object => object.includes('.')) ||
-                                !ctrl.get('title','startStimulus','media').length ? ctrl.fields.startStimuliHidden(false) : ctrl.fields.startStimuliHidden(true),
-                                ctrl.get('title','startStimulus','media').map(function(object){
-                                    let type = object.includes('.') ? ' [Image]' : ' [Word]';
-                                    let option = object + type;
-                                    return m('option', {value:object, selected : ctrl.fields.selectedStartStimuli().includes(object)} ,option);
-                                })
-                            ])),
-                        m('.col-md-3',
-                            !ctrl.fields.startStimuliHidden() ? '' :
-                                m('.space',[
-                                    m('u','Stimuli font\'s design:'),m('br'),
-                                    m('label','Font\'s color: '),m('br'),
-                                    m('input[type=color].form-control', {value: ctrl.get('title','startStimulus','css','color'), onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','color'))}),
-                                    m('br'), m('label', 'Font\'s size:'), m('br'),
-                                    m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','startStimulus','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','font-size'))})
-                                ]),
+                    m('.col-md-6', [
+                        m('.row',
+                            m('.col-md-12',
+                                m('p.h4','Stimuli Presented with Instructions: ', m('i.fa.fa-info-circle.text-muted',{
+                                    title:'Here You can enter only one type of stimuli (image or words), if you enter an image you can only enter one and with its file extension.'
+                                }))
+                            )
+                        ),
+                        m('.row',
+                            m('.col-md-6',
+                                m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStartStimulus(), oninput: m.withAttr('value', ctrl.fields.newStartStimulus)})
+                            )
+                        ),
+                        m('.row',
+                            m('.col-md-7',
+                                m('.btn-group btn-group-toggle', [
+                                    m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStartStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e,true)},[
+                                        m('i.fa.fa-plus'), 'Add Word'
+                                    ]),
+                                    m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStartStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e,true)},[
+                                        m('i.fa.fa-plus'), 'Add Image'
+                                    ])
+                                ])
+                            )
+                        ),
+                        m('.row',[
+                            m('.col-md-6',
+                                m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e, true)},[
+                                    !ctrl.fields.startStimulus()  ||
+                                    ctrl.get('title','startStimulus','media').some(object => object.includes('.')) ||
+                                    !ctrl.get('title','startStimulus','media').length ? ctrl.fields.startStimuliHidden(false) : ctrl.fields.startStimuliHidden(true),
+                                    ctrl.get('title','startStimulus','media').map(function(object){
+                                        let type = object.includes('.') ? ' [Image]' : ' [Word]';
+                                        let option = object + type;
+                                        return m('option', {value:object, selected : ctrl.fields.selectedStartStimuli().includes(object)} ,option);
+                                    })
+                                ])
                             ),
-                        ]),
-                        m('.col.space',
+                            m('.col-md-6',
+                                !ctrl.fields.startStimuliHidden() ? '' :
+                                    m('.col-md-7',[
+                                        m('u','Stimuli font\'s design:'),m('br'),
+                                        m('label','Font\'s color: '),m('br'),
+                                        m('input[type=color].form-control', {value: ctrl.get('title','startStimulus','css','color'), onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','color'))}),
+                                        m('br'), m('label', 'Font\'s size:'), m('br'),
+                                        m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','startStimulus','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','font-size'))})
+                                    ])
+                            )
+                        ])
+                    ])
+            ]),
+            m('.row',[
+                m('.col-md-6.space',
+                    m('.btn-group-vertical', [
+                        m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli}, 'Remove Chosen Stimuli'),
+                        m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                        ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:(e) => ctrl.resetStimuliList(e)}, 'Reset Stimuli List'),
+                    ])),
+                ///startStimulus
+                !ctrl.fields.startStimulus() ? '' :
+                    m('.col-md-6.space',[
                         m('.btn-group-vertical', [
                             m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStartStimuli().length, onclick: (e) => ctrl.removeChosenStartStimuli(e)}, 'Remove Chosen Stimuli'),
                             m('button.btn btn btn-warning', {onclick: (e) => ctrl.removeAllStimuli(e,true)}, 'Remove All Stimuli'),
                             ctrl.fields.isNewCategory() ? '' : m('button.btn btn btn-warning', {onclick:(e) => ctrl.resetStimuliList(e,true)}, 'Reset Stimuli List'),
-                        ])),
+                        ])
                     ])
-                ])
+            ]),
         ]);
     }
 
@@ -1245,7 +1274,7 @@
         function get(name, media, type){
             if (media != null && type != null){
                 if (type === 'font-size'){
-                    return parseFloat((element[name][media][type].replace("em","")));
+                    return parseFloat((element[name][media][type].replace('em','')));
                 }
                 return element[name][media][type];
             }
@@ -1262,7 +1291,7 @@
                             showRestrictions('Font\'s size must be bigger than 0.', 'error');
                             return element[name][media][type];
                         }
-                        return element[name][media][type] = value + "em";
+                        return element[name][media][type] = value + 'em';
                     }
                     return element[name][media][type] = value;
                 }
@@ -1273,10 +1302,10 @@
                         showRestrictions('Font\'s size must be bigger than 0.', 'error');
                         return element[name][media];
                     }
-                    return element[name][media] = value + "em";
+                    return element[name][media] = value + 'em';
                 }
                 return element[name] = value;
-            }
+            };
         }
         function addStimulus(event){
             let new_stimuli = fields.newStimulus();
@@ -1302,7 +1331,7 @@
         return m('.space', [
             m('.row.line',[
                 m('.col-md-4',[
-                    m('span', [' ',ctrl.fields.elementType()+' name as will appear in the data ']),
+                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{
                         title:'Will appear in the data and in the default feedback message.'
                     }),
@@ -1326,8 +1355,8 @@
                                 m('i.fa.fa-plus'), 'Add Image'
                             ])
                         ])
-                    ]),
-                ]),
+                    ])
+                ])
             ]),
             m('.row',[
                 m('.col-md-6',[
@@ -1345,28 +1374,28 @@
                     m('.row.space',
                         m('.col-sm-5',
                             m('.btn-group-vertical',[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                            m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
-                        ]))
+                                m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+                                m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                                m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                            ]))
                     )
                 ])
             ])
         ]);
     }
 
-    var parametersComponent = {
+    let parametersComponent = {
         controller:controller$3,
         view:view$3
     };
 
     function controller$3(settings){
-        var primeCss = settings.primeStimulusCSS;
+        let primeCss = settings.primeStimulusCSS;
         return {set, get};
 
         function get(parameter){
             if (parameter === 'font-size') return parseFloat((primeCss[parameter]).substring(0,3));
-            return primeCss[parameter]
+            return primeCss[parameter];
         }
         function set(parameter){
             return function(value){
@@ -1376,10 +1405,10 @@
                         showRestrictions('Font\'s size must be bigger than 0.', 'error');
                         return primeCss[parameter];
                     }
-                    return primeCss[parameter] = value + "em";
+                    return primeCss[parameter] = value + 'em';
                 }
                 return primeCss[parameter] = value;
-            }
+            };
         }
     }
 
@@ -1395,9 +1424,9 @@
                         m('span', 'Font\'s size: '),
                         m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
                     ])
-                ]),
+                ])
             ])
-        ])
+        ]);
     }
 
     let categoriesComponent = {
@@ -1424,10 +1453,12 @@
                         defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
                     : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
                         m.component(parametersComponent, settings)
-                    : taskType === 'EP' ?
-                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
-                        : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
-            ), resetClearButtons(ctrl.reset, ctrl.clear, currTab)
+                        : taskType === 'EP' ?
+                            m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                            : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
+            ),
+            m('hr')
+            ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
         ]);
     }
 
@@ -1490,8 +1521,8 @@
     let helpComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
-    		return m('.alert.alert-info',
-    				m('p',
+    		return m('.space',
+    				m('.alert.alert-info',
     					!settings.external ? //only show this text if we are in the dashboard
     					['This will create a script for our '+type+' extension.' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
@@ -1510,8 +1541,7 @@
     					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
     						'this script directly from Qualtrics.')
     					]
-    				)
-    			);
+    			));
     	}
     };
 
@@ -1525,9 +1555,9 @@
     ];
 
     let textDesc=[
-        {name: 'firstBlock', label:'First Block\'\s Instructions'},
-        {name: 'middleBlock', label:'Middle Block\'\s Instructions'},
-        {name: 'lastBlock', label:'Last Block\'\s Instructions'},
+        {name: 'firstBlock', label:'First Block\'s Instructions'},
+        {name: 'middleBlock', label:'Middle Block\'s Instructions'},
+        {name: 'lastBlock', label:'Last Block\'s Instructions'},
         {firstBlock: '', middleBlock:'', lastBlock:''},
         {} //an empty element
 
@@ -1543,8 +1573,7 @@
 
     let categoryClear = [{
         name: '', 
-        title: {media: {word: ''}, 
-        css: {color: '#000000', 'font-size': '1em'}, height: 4},
+        title: {media: {word: ''}, css: {color: '#000000', 'font-size': '1em'}, height: 4},
         stimulusMedia: [],
         stimulusCss : {color:'#000000', 'font-size':'1em'}
     }];
@@ -1769,7 +1798,7 @@
                 ? m('.loader')
                 : m('.container.space',
                     m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
-                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container',
             pageHeadLine('SPF'),

@@ -7,7 +7,7 @@ let iatOutputComponent = {
 
 function controller(settings, defaultSettings, blocksObject){
     let error_msg = [];
-    error_msg = validityCheck(error_msg, settings, blocksObject)
+    error_msg = validityCheck(error_msg, settings, blocksObject);
 
     return {error_msg, createFile, settings};
 
@@ -35,32 +35,32 @@ function controller(settings, defaultSettings, blocksObject){
 }
 
 export function validityCheck(error_msg, settings, blocksObject){
-    let containsImage
-    let temp1 = checkMissingElementName(settings.category1, 'First Category', error_msg)
-    let temp2 = checkMissingElementName(settings.category2, 'Second Category', error_msg)
-    let temp3 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg)
-    let temp4 = checkMissingElementName(settings.attribute2, 'Second Attribute', error_msg)
+    let containsImage;
+    let temp1 = checkMissingElementName(settings.category1, 'First Category', error_msg);
+    let temp2 = checkMissingElementName(settings.category2, 'Second Category', error_msg);
+    let temp3 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg);
+    let temp4 = checkMissingElementName(settings.attribute2, 'Second Attribute', error_msg);
 
     temp1 || temp2 || temp3 || temp4 ? containsImage = true : containsImage = false;
 
     if(settings.parameters.base_url.image.length === 0 && containsImage)
-        error_msg.push('Image\'s\ url is missing and there is an image in the study');
+        error_msg.push('Image\'s url is missing and there is an image in the study');
 
     //check for blocks problems
-    let currBlocks = clone(settings.blocks)
+    let currBlocks = clone(settings.blocks);
     let clearBlocks = blocksObject.slice(-1)[0]; //blocks parameters with zeros as the values, used to check if the current parameters are also zeros.
 
     ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparsion
         delete currBlocks[key];
         delete clearBlocks[key];
-    })
+    });
 
     if(JSON.stringify(currBlocks) === JSON.stringify(clearBlocks))
         error_msg.push('All the block\'s parameters equals to 0, that will result in not showing the task at all');
     blocksObject.slice(0,-1).map(function(block){
         if(settings.blocks[block.numTrialBlocks] !== 0 && settings.blocks[block.numMiniBlocks] === 0)
             error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parametrs to 0.')
-    })
+    });
     return error_msg;
 }
 

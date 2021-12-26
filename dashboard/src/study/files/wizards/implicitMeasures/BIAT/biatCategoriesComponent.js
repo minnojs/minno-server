@@ -1,5 +1,5 @@
 import elementComponent from './biatElementComponent.js';
-import {clone, showClearOrReset, showRestrictions} from '../resources/utilities.js';
+import {clone, resetClearButtons, showClearOrReset, showRestrictions} from '../resources/utilities.js';
 import messages from '../../../../../utils/messagesComponent';
 
 let categoriesComponent = {
@@ -16,23 +16,23 @@ function controller(settings, defaultSettings, clearElement){
     let chooseFlag = m.prop(false);
     let choosenCategoriesList = m.prop([]);
     let chooseClicked = m.prop(false);
-    let curr_tab = m.prop(0)
+    let curr_tab = m.prop(0);
 
     return {reset, clear, chooseFlag, unChooseCategories,categories, headlines, addCategory, choosenCategoriesList,
         updateChoosenBlocks, showRemoveCategories, chooseCategories, curr_tab, getDefaultValues};
 
-    function clear(){showClearOrReset(categories[curr_tab()], clearElement[0], 'clear')}
-    function reset(){showClearOrReset(categories[curr_tab()], defaultSettings.categories[curr_tab()], 'reset')
+    function clear(curr_tab){showClearOrReset(categories[curr_tab], clearElement[0], 'clear');}
+    function reset(curr_tab){showClearOrReset(categories[curr_tab], defaultSettings.categories[curr_tab], 'reset');
     }
     function addCategory() {
         categories.push(clone(clearElement[0]));
-        let last = categories.length - 1
-        categories[last].key = Math.random()
+        let last = categories.length - 1;
+        categories[last].key = Math.random();
     }
     function updateChoosenBlocks(e, index){
         //if clicked the checkbox to uncheck the item
         if (choosenCategoriesList().includes(index) && !e.target.checked){
-            var i = choosenCategoriesList().indexOf(index);
+            let i = choosenCategoriesList().indexOf(index);
             if (i !== -1) choosenCategoriesList().splice(i, 1);
             return;
         }
@@ -50,7 +50,7 @@ function controller(settings, defaultSettings, clearElement){
         chooseFlag(true);
         if (!chooseClicked()) { //show the info msg only for the first time the choose button has been clicked
             showRestrictions('info','To choose categories to remove, please tik the checkbox near the wanted category, and to remove them click the \'Remove Choosen Categories\' button.', 'Choose categories to remove')
-            chooseClicked(true)
+            chooseClicked(true);
         }
     }
     function showRemoveCategories(){
@@ -62,7 +62,7 @@ function controller(settings, defaultSettings, clearElement){
                 m('', 'This action is permanent')})
             .then(response => {
                 if (response) {
-                    removeCategories()
+                    removeCategories();
                     m.redraw();
                 }
                 else {
@@ -76,7 +76,7 @@ function controller(settings, defaultSettings, clearElement){
         function removeCategories(){
             choosenCategoriesList().sort();
             for (let i = choosenCategoriesList().length - 1; i >=0; i--)
-                categories.splice(choosenCategoriesList()[i],1)
+                categories.splice(choosenCategoriesList()[i],1);
 
             choosenCategoriesList().length = 0;
             chooseFlag(false);
@@ -91,57 +91,46 @@ function controller(settings, defaultSettings, clearElement){
             stimulusMedia = defaultSettings.categories[curr_tab()].stimulusMedia;
             startStimulus = defaultSettings.categories[curr_tab()].title.startStimulus;
         }
-        return [stimulusMedia, startStimulus]
+        return [stimulusMedia, startStimulus];
     }
 }
 
 function view(ctrl,settings) {
     return m('.space',[
         m('.row',[
-            m('.col-md-11',
+            m('.col-md-12',
                 m('.subtab', ctrl.categories.map(function(tab, index){
                     return m('button',{
-                            class: ctrl.curr_tab() === index ? 'active' : '',
-                            onclick:function(){
-                                ctrl.curr_tab(index);
-                            }}, ctrl.headlines[index] + ' Category ',
-                        !ctrl.chooseFlag() ? '' :
-                            m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: (e) => ctrl.updateChoosenBlocks(e, index)}));
-                })),
+                        class: ctrl.curr_tab() === index ? 'active' : '',
+                        onclick:function(){
+                            ctrl.curr_tab(index);
+                        }}, ctrl.headlines[index] + ' Category ',
+                    !ctrl.chooseFlag() ? '' :
+                        m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: (e) => ctrl.updateChoosenBlocks(e, index)}));
+                }))
             )
         ]),
         m('.row.space.centrify',[
-            m('.col-sm-8',
-            m('.btn-group btn-group-toggle', [
-                ctrl.categories.length > 7 ? '' :
-                m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory}, [m('i.fa.fa-plus')],' Add Category'),
-                !ctrl.chooseFlag() ?
-                    m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
-                        m('i.fa.fa-check'), ' Choose Categories to Remove'])
-                    :
-                    m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
-                        m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                !ctrl.choosenCategoriesList().length ? '' :
-                    m('button.btn btn btn-danger',{onclick: ctrl.showRemoveCategories},[
-                        m('i.fa.fa-eraser'), ' Remove Chosen Categories'])
-
-            ]))
-        ]),
-        m('.row.line',{key:ctrl.categories[ctrl.curr_tab()].key},
-            m.component(elementComponent, {key:'categories'}, settings, ctrl.getDefaultValues()[0], ctrl.getDefaultValues()[1], ctrl.curr_tab())),
-        m('.row.space',[
-            m('.col.pull-xs-right',[
+            m('.col-sm-9',
                 m('.btn-group btn-group-toggle', [
-                    ctrl.curr_tab() < 2?
-                        m('button.btn btn-secondary',
-                            {title:'Reset all current fields to default values', onclick: () => ctrl.reset()},
-                            m('i.fa.fa-undo.fa-sm'), ' Reset') : null,
-                    m('button.btn btn-danger',
-                        {title:'Clears all current values',onclick:() => ctrl.clear()},
-                        m('i.fa.fa-trash.fa-sm'), ' Clear'),
-                ])
-            ])
-        ])
+                    ctrl.categories.length > 7 ? '' :
+                        m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory}, [m('i.fa.fa-plus')],' Add Category'),
+                    !ctrl.chooseFlag() ?
+                        m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
+                            m('i.fa.fa-check'), ' Choose Categories to Remove'])
+                        :
+                        m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                            m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
+                    !ctrl.choosenCategoriesList().length ? '' :
+                        m('button.btn btn btn-danger',{onclick: ctrl.showRemoveCategories},[
+                            m('i.fa.fa-eraser'), ' Remove Chosen Categories'])
+
+                ]))
+        ]),
+        m('.space',{key:ctrl.categories[ctrl.curr_tab()].key},
+            m.component(elementComponent, {key:'categories'}, settings, ctrl.getDefaultValues()[0], ctrl.getDefaultValues()[1], ctrl.curr_tab())),
+        m('hr'),
+        resetClearButtons(ctrl.reset, ctrl.clear, ctrl.curr_tab(), true)
     ]);
 }
 

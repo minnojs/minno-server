@@ -47,8 +47,8 @@ function controller({file, study}, external = false){
     }
 
     function show_do_save(){
-        let error_msg = []
-        error_msg = validityCheck(error_msg, ctrl.settings)
+        let error_msg = [];
+        error_msg = validityCheck(error_msg, ctrl.settings);
         if(error_msg.length !== 0) {
             return messages.confirm({
                 header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',

@@ -47,9 +47,9 @@ function controller({file, study}, external = false){
     }
 
     function show_do_save(){
-        let error_msg = []
-        let blocksObject = tabs.blocks.rowsDesc //blockDesc inside output attribute
-        error_msg = validityCheck(error_msg, ctrl.settings, blocksObject)
+        let error_msg = [];
+        let blocksObject = tabs.blocks.rowsDesc; //blockDesc inside output attribute
+        error_msg = validityCheck(error_msg, ctrl.settings, blocksObject);
         if(error_msg.length !== 0) {
             return messages.confirm({
                 header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -64,7 +64,7 @@ function controller({file, study}, external = false){
                         ]),
                         m('strong','Do you want to save anyway?')
                     ])
-                })
+            })
                 .then(response => {
                     if (response) do_save();
                 }).catch(error => messages.alert({
@@ -86,7 +86,7 @@ function controller({file, study}, external = false){
             .then(() => ctrl.notifications.show_success(`BIAT Script successfully saved`))
             .then(m.redraw)
             .catch(err => ctrl.notifications.show_danger('Error Saving:', err.message));
-        ctrl.prev_settings = clone(ctrl.settings)
+        ctrl.prev_settings = clone(ctrl.settings);
         m.redraw();
     }
 
@@ -105,12 +105,12 @@ function view(ctrl){
     if(!ctrl.external) {
         return !ctrl.loaded()
             ? m('.loader')
-            : m('.container.space',
+            : m('.container-fluid.space',
                 m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                     ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
     }
-    return m('.container',
+    return m('.container-fluid',[
         pageHeadLine('BIAT'),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-    );
+    ]);
 }

@@ -22,7 +22,7 @@ let textDesc = [
     {name: 'instTemplateCategoryRight', label:'Block instructions when the single category is on the right'},
     {name: 'instTemplateCategoryLeft', label:'Block instructions when the single category is on the left'},
     {textOnError:'', leftKeyText:'', rightKeyText:'', orKeyText:'', remindErrorText:'',finalText:'',
-    instTemplatePractice:'', instTemplateCategoryRight:'', instTemplateCategoryLeft:''},
+        instTemplatePractice:'', instTemplateCategoryRight:'', instTemplateCategoryLeft:''},
     {} //an empty element
 ];
 
@@ -42,24 +42,23 @@ let blocksDesc = [
         sharedAttTrials : 0, 
         categoryTrials : 0 
     }
-]
+];
 
 let categoryClear = [{
     name: '', 
-    title: {media: {word: ''},
-    css: {color: '#000000', 'font-size': '1em'}, height: 4},
+    title: {media: {word: ''}, css: {color: '#000000', 'font-size': '1em'}, height: 4},
     stimulusMedia: [],
     stimulusCss : {color:'#000000', 'font-size':'1em'}
 }];
 
 let category = {
     'category':{text: 'Category'}
-}
+};
 
 let attributesTabs = {
     'attribute1': {text: 'First Attribute'},
     'attribute2': {text: 'Second Attribute'}
-}
+};
 
 let tabs = {
     'parameters': {text: 'General parameters', component: parametersComponent, rowsDesc: parametersDesc},

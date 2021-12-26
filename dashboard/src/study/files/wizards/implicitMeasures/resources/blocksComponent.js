@@ -34,18 +34,18 @@ function view(ctrl, settings){
                             title:row.desc
                         })
                     ]) : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-4.col-lg-2',
+                m('.col-sm-4.col-lg-2',
                     row.options ?
                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
-                        row.options.map(function(option){return m('option', option);})
+                            row.options.map(function(option){return m('option', option);})
                         ])
-                    : row.name.includes('random') ?
-                        m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
-                    : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
-                ),
-            ])
+                        : row.name.includes('random') ?
+                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                            : m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
+                )
+            ]);
         }), resetClearButtons(ctrl.reset, ctrl.clear)
-    ])
+    ]);
 }
 
 export default blocksComponent;
