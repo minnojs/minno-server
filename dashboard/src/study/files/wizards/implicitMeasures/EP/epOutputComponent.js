@@ -6,8 +6,8 @@ let outputComponent = {
 };
 
 function controller(settings){
-    let error_msg = []
-    error_msg = validityCheck(error_msg, settings)
+    let error_msg = [];
+    error_msg = validityCheck(error_msg, settings);
 
     return{createFile, error_msg};
 
@@ -38,21 +38,19 @@ function controller(settings){
 }
 
 export function validityCheck(error_msg, settings){
-    let containsImage = false
+    let temp1 = checkPrime(settings.prime1, 'First Prime Category', error_msg);
+    let temp2 = checkPrime(settings.prime2, 'Second Prime Category', error_msg);
+    let temp3 = checkMissingElementName(settings.rightAttTargets, 'First Target Category', error_msg);
+    let temp4 = checkMissingElementName(settings.leftAttTargets, 'Second Target Category', error_msg);
 
-    let temp1 = checkPrime(settings.prime1, 'First Prime Category', error_msg)
-    let temp2 = checkPrime(settings.prime2, 'Second Prime Category', error_msg)
-    let temp3 = checkMissingElementName(settings.rightAttTargets, 'First Target Category', error_msg)
-    let temp4 = checkMissingElementName(settings.leftAttTargets, 'Second Target Category', error_msg)
-
-    containsImage = temp1 || temp2 || temp3 || temp4;
+    let containsImage = temp1 || temp2 || temp3 || temp4;
 
     if(settings.parameters.base_url.image.length === 0 && containsImage)
         error_msg.push('Image\'s url is missing and there is an image in the study');
 
     //check for blocks problems
     if(!settings.blocks.nTrialsPerPrimeTargetPair)
-        error_msg.push('Number of trials in a block, per prime-target combination equals to zero, this will result in not showing the trials.')
+        error_msg.push('Number of trials in a block, per prime-target combination equals to zero, this will result in not showing the trials.');
     if(!settings.blocks.nBlocks)
         error_msg.push('Number of blocks equals to zero, this will result in skipping the task.');
     return error_msg;

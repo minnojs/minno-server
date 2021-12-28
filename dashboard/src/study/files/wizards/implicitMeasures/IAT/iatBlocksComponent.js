@@ -20,37 +20,38 @@ function controller(settings, defaultSettings, rows){
 }
 
 function view(ctrl){
-    return m('.col-sm-12.space',[
+    return m('.col-12',[
         m('.row',[
             m('.col-md-8',
                 ctrl.rows.slice(0,-1).map(function(row) {
                     return m('.row.line', [
-                        m('.col-md-5.space',[
+                        m('.col-sm-4.space',[
                             m('span', [' ', row.label, ' ']),
                             m('i.fa.fa-info-circle.text-muted',{
                                 title:row.desc
                             }),
                         ]),
-                        row.name ?  //case of randomBlockOrder & randomAttSide
-                            m('.col-md-7',
-                                m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)}))
-                            : m('.col-md-7',[
-                                m('.row', [
-                                    m('.col-sm-6', 'Number of trials: '),
-                                    m('.col-sm-4', [
-                                        m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
+                        m('.col-sm-8.space',
+                            row.name ?  //case of randomBlockOrder & randomAttSide
+                                m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                                : [
+                                    m('.row', [
+                                        m('.col-sm-6', 'Number of trials: '),
+                                        m('.col-sm-4', [
+                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
+                                        ])
+                                    ]),
+                                    m('.row.space',[
+                                        m('.col-sm-6', 'Number of mini-blocks: '),
+                                        m('.col-sm-4', [
+                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
+                                        ])
                                     ])
-                                ]),
-                                m('.row.space',[
-                                    m('.col-sm-6', 'Number of mini-blocks: '),
-                                    m('.col-sm-4', [
-                                        m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
-                                    ])
-                                ])
-                            ])
+                                ]
+                        )
                     ]);
-                })
-            ),
+                }
+                )),
             m('.col-md-4.double_space',
                 m('.alert.alert-info',[
                     m('h4','More information:'),

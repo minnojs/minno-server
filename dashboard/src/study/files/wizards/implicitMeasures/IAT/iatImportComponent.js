@@ -6,7 +6,7 @@ let iatImportComponent = {
 };
 
 function view(ctrl){
-    return viewImport(ctrl)
+    return viewImport(ctrl);
 }
 
 export default iatImportComponent;

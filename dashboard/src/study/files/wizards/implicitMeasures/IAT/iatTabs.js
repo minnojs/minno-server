@@ -37,13 +37,13 @@ let textDesc=[
 ];
 
 let blocksDesc = [
-    {label:'Block 1', numTrialBlocks:'blockCategories_nTrials', numMiniBlocks: 'blockCategories_nMiniBlocks', desc:'Will present the categories.'},
-    {label:'Block 2', numTrialBlocks:'blockAttributes_nTrials', numMiniBlocks: 'blockAttributes_nMiniBlocks', desc:'Will present the attributes.'},
-    {label:'Blocks 3 and 6', numTrialBlocks:'blockFirstCombined_nTrials', numMiniBlocks: 'blockFirstCombined_nMiniBlocks', desc:'The first combined block.'},
-    {label:'Blocks 4 and 7', numTrialBlocks:'blockSecondCombined_nTrials', numMiniBlocks: 'blockSecondCombined_nMiniBlocks', desc:'The second combined block.'},
-    {label:'Block 5', numTrialBlocks:'blockSwitch_nTrials', numMiniBlocks: 'blockSwitch_nMiniBlocks', desc:'Flipping the sides of the categories. Some have recommended using 50 trials in this block.'},
-    {name:'randomBlockOrder' ,label:'Randomly choose categories location in Block 1', desc:'If not randomized: the First Category (in the Categories page) will appear on the left in Blocks 1,3, and 4.'},
-    {name:'randomAttSide',label:'Randomly choose attributes location in the task', desc: 'If not randomized: the First Attribute (in the Attributes page) will appear on the left.'},
+    {label:'Block #1', numTrialBlocks:'blockCategories_nTrials', numMiniBlocks: 'blockCategories_nMiniBlocks', desc:'Will present the categories.'},
+    {label:'Block #2', numTrialBlocks:'blockAttributes_nTrials', numMiniBlocks: 'blockAttributes_nMiniBlocks', desc:'Will present the attributes.'},
+    {label:'Blocks #3 and #6', numTrialBlocks:'blockFirstCombined_nTrials', numMiniBlocks: 'blockFirstCombined_nMiniBlocks', desc:'The first combined block.'},
+    {label:'Blocks #4 and #7', numTrialBlocks:'blockSecondCombined_nTrials', numMiniBlocks: 'blockSecondCombined_nMiniBlocks', desc:'The second combined block.'},
+    {label:'Block #5', numTrialBlocks:'blockSwitch_nTrials', numMiniBlocks: 'blockSwitch_nMiniBlocks', desc:'Flipping the sides of the categories. Some have recommended using 50 trials in this block.'},
+    {name:'randomBlockOrder' ,label:'Randomly choose categories\' location in Block #1', desc:'If not randomized: the First Category (in the Categories page) will appear on the left in Blocks #1,#3, and #4.'},
+    {name:'randomAttSide',label:'Randomly choose attributes\' location in the task', desc: 'If not randomized: the First Attribute (in the Attributes page) will appear on the left.'},
     {blockCategories_nTrials: 0,blockCategories_nMiniBlocks:0, blockAttributes_nTrials:0,blockAttributes_nMiniBlocks:0,
         blockFirstCombined_nTrials:0, blockFirstCombined_nMiniBlocks:0, blockSecondCombined_nTrials:0, blockSecondCombined_nMiniBlocks:0,
         blockSwitch_nTrials:0, blockSwitch_nMiniBlocks:0, randomBlockOrder: false, randomAttSide : false}

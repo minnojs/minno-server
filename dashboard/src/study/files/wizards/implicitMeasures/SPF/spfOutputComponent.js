@@ -8,7 +8,7 @@ let outputComponent = {
 function controller(settings, defaultSettings, blocksObject){
     let error_msg = [];
 
-    error_msg = validityCheck(error_msg, settings, blocksObject)
+    error_msg = validityCheck(error_msg, settings, blocksObject);
 
     return{createFile, error_msg};
 
@@ -54,7 +54,7 @@ export function toString(settings, external){
 
 export function toScript(output, external){
     let textForInternal = '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
-    let script = `define(['pipAPI' ,'${'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'}'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
+    let script = `define(['pipAPI' ,'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
     external === false ? script = textForInternal + script : '';
     return script;
 }

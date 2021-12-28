@@ -22,17 +22,15 @@ function controller(settings, defaultSettings, clearElement){
 }
 
 function view(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
-    return m('.space', [
-        m('.space',
-            taskType === 'BIAT' ?
-                m.component(biatElementComponent,{key:currTab}, settings,
-                    defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
-                    m.component(epPrimeDesignComponent, settings)
-                    : taskType === 'EP' ?
-                        m.component(epPrimeComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
-                        : m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
-        ),
+    return m('div', [
+        taskType === 'BIAT' ?
+            m.component(biatElementComponent,{key:currTab}, settings,
+                defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
+            : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
+                m.component(epPrimeDesignComponent, settings)
+                : taskType === 'EP' ?
+                    m.component(epPrimeComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                    : m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
         m('hr')
         ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
     ]);

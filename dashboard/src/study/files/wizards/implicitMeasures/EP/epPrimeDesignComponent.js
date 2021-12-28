@@ -32,7 +32,7 @@ function controller(settings){
 function view(ctrl){
     return m('.row' , [
         m('.col-sm-12',[
-            m('.row.line',[
+            m('.row.space',[
                 m('.col-sm-2',[
                     m('span', 'Font\'s color: '),
                     m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})

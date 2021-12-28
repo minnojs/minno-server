@@ -41,11 +41,11 @@ export function validityCheck(error_msg, settings, blocksObject){
 
     let temp1,temp2,temp3 = false;
     if(settings.parameters.practiceBlock){
-        temp1 = checkMissingElementName(settings.practiceCategory1, 'First Pratice Category', error_msg)
-        temp2 = checkMissingElementName(settings.practiceCategory2, 'Second Pratice Category', error_msg)
+        temp1 = checkMissingElementName(settings.practiceCategory1, 'First Practice Category', error_msg);
+        temp2 = checkMissingElementName(settings.practiceCategory2, 'Second Practice Category', error_msg);
     }
     settings.categories.map(function(category, index){
-        let temp = checkMissingElementName(category, category_headlines[index]+' Category', error_msg)
+        let temp = checkMissingElementName(category, category_headlines[index]+' Category', error_msg);
         if (temp) temp3 = true;
     });
 

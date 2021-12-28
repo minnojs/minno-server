@@ -7,7 +7,7 @@ let outputComponent = {
 
 function controller(settings, defaultSettings, clearBlock){
     let error_msg = [];
-    error_msg = validityCheck(error_msg, settings, clearBlock)
+    error_msg = validityCheck(error_msg, settings, clearBlock);
     return{error_msg, createFile};
 
     function createFile(fileType){
@@ -98,10 +98,10 @@ export function validityCheck(error_msg, settings, clearBlock){
 
     let count = 0;
     let temp_err_msg = [];
-    currBlocks.forEach(function(element, index){ //remove those parameters for the comparsion
+    currBlocks.forEach(function(element, index){ //remove those parameters for the comparison
         delete element.block;
         if(JSON.stringify(element) === JSON.stringify(clearBlock)){
-            temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skiping this block');
+            temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skipping this block');
             count++;
         }
     });

@@ -21,20 +21,21 @@ function view(ctrl, settings){
     return m('.space' , [
         //create numbers inputs
         ctrl.rows.map(function(row){
-            //if user chooses not to have a prcatice block set it's parameter to 0
+            //if user chooses not to have a practice block set its parameter to 0
             if (row.name === 'nPracticeBlockTrials' && settings.parameters.practiceBlock === false) {
                 settings.blocks.nPracticeBlockTrials = 0;
                 return;
             }
             return m('.row.line', [
-                row.desc ?
-                    m('.col-md-4.space',[
-                        m('span', [' ', row.label, ' ']),
-                        m('i.fa.fa-info-circle.text-muted',{
-                            title:row.desc
-                        })
-                    ]) : m('.col-md-4.space', m('span', [' ', row.label])),
-                m('.col-sm-4.col-lg-2',
+                m('.col-md-4',
+                    row.desc ?
+                        [
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                        ]
+                        : m('span', [' ', row.label])
+                ),
+                m('.col-md-4.col-lg-2',
                     row.options ?
                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
                             row.options.map(function(option){return m('option', option);})

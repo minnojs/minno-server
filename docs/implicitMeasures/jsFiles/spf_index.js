@@ -34,12 +34,13 @@
                                                 : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
                                         }}, tabs[tab].text);}))
                         ),
-                        m('.col-sm-1-text-center',
+                        m('.col-md-1-text-center',
                             !external ?
                                 is_locked() ? '' :
                                     m('button.btn btn btn-primary', {
                                         id:'save_button',
-                                        title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                        title: !is_settings_changed() ? 'No changes were made'
+                                            : 'Update the script file (the .js file).\nThis will override the current script file.',
                                         disabled: !is_settings_changed(),
                                         onclick: () => show_do_save(),
                                     }, 'Save')
@@ -302,9 +303,7 @@
     }
 
     function pageHeadLine(task){
-        return m('.row',[
-            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
-        ]);
+        return m('h1.display-4', 'Create my '+task+' script')
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
@@ -324,7 +323,7 @@
         }
         let stimulusMedia = element.stimulusMedia;
 
-        //if there an empty stimulli list
+        //if there an empty stimuli list
         if (stimulusMedia.length === 0)
             error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -355,7 +354,8 @@
     }
 
     function showRestrictions(type, text, title = ''){
-        if(type === 'error') messages.alert({header: title , content: m('p.alert.alert-danger', text)});
+        if(type === 'error')
+            messages.alert({header: title , content: m('p.alert.alert-danger', text)});
         if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)});
     }
 
@@ -497,14 +497,14 @@
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
-                    row.desc ?
-                        m('.col-sm-4', [
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            }),
-                        ]) :
-                        m('.col-sm-4',m('span', [' ', row.label])),
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
                     row.name === ('base_url') ?
                         m('.col-md-6',
                             m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
@@ -513,7 +513,7 @@
                                 m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
                             : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
                                 editStimulusObject(row.name, ctrl.get, ctrl.set)
-                                : m('.col-sm-4.col-lg-2',
+                                : m('.col-md-4.col-lg-2',
                                     row.options ? //case of isTouch and isQualtrics
                                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
                                             row.options.map(function(option){return m('option', option);})])
@@ -582,7 +582,7 @@
 
     function toScript(output, external){
         let textForInternal = '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
-        let script = `define(['pipAPI' ,'${'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'}'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
+        let script = `define(['pipAPI' ,'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(${JSON.stringify(output,null,4)})});`;
         external === false ? script = textForInternal + script : '';
         return script;
     }
@@ -650,15 +650,15 @@
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
                 return m('.row.line',[
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ])
-                        : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-8', [
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-8', [
                         m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
                 ]);
@@ -687,20 +687,21 @@
         return m('.space' , [
             //create numbers inputs
             ctrl.rows.map(function(row){
-                //if user chooses not to have a prcatice block set it's parameter to 0
+                //if user chooses not to have a practice block set its parameter to 0
                 if (row.name === 'nPracticeBlockTrials' && settings.parameters.practiceBlock === false) {
                     settings.blocks.nPracticeBlockTrials = 0;
                     return;
                 }
                 return m('.row.line', [
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ]) : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-4.col-lg-2',
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-4.col-lg-2',
                         row.options ?
                             m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
                                 row.options.map(function(option){return m('option', option);})
@@ -896,7 +897,7 @@
                 ])
             ]),
             m('.row',
-                m('.col.space',
+                m('.col-md-6.space',
                     m('.btn-group-vertical',[
                         m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: () => ctrl.removeChosenStimuli()},'Remove Chosen Stimuli'),
                         m('button.btn btn btn-warning', {onclick: () => ctrl.removeAllStimuli()},'Remove All Stimuli'),
@@ -1415,7 +1416,7 @@
     function view$3(ctrl){
         return m('.row' , [
             m('.col-sm-12',[
-                m('.row.line',[
+                m('.row.space',[
                     m('.col-sm-2',[
                         m('span', 'Font\'s color: '),
                         m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
@@ -1446,17 +1447,15 @@
     }
 
     function view$2(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
-        return m('.space', [
-            m('.space',
-                taskType === 'BIAT' ?
-                    m.component(elementComponent$1,{key:currTab}, settings,
-                        defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                    : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
-                        m.component(parametersComponent, settings)
-                        : taskType === 'EP' ?
-                            m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
-                            : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
-            ),
+        return m('div', [
+            taskType === 'BIAT' ?
+                m.component(elementComponent$1,{key:currTab}, settings,
+                    defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
+                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
+                    m.component(parametersComponent, settings)
+                    : taskType === 'EP' ?
+                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                        : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
             m('hr')
             ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
         ]);
@@ -1468,7 +1467,7 @@
     };
 
     function view$1(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$1(settings){
@@ -1522,13 +1521,13 @@
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
     		return m('.space',
-    				m('.alert.alert-info',
-    					!settings.external ? //only show this text if we are in the dashboard
-    					['This will create a script for our '+type+' extension.' +
+    			m('.alert.alert-info',
+    				!settings.external ? //only show this text if we are in the dashboard
+    				['This will create a script for our '+type+' extension.' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
     					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
-    					]:
-    					['This tool creates a script for running an '+type+' in your online study. ' +
+    				]:
+    				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
     					m('a',{href: 'http://projectimplicit.net/'}, 'Project Implicit '), 'has developed MinnoJS to program web studies. ' +
     					'To create ' +type+'s, we programmed a general script (the “extension”) that runs an '+type+ ' based on parameters provided by another, ' + 'more simple script. ' +
@@ -1538,11 +1537,8 @@
     					'We run those scripts in ', m('a',{href: 'https://minnojs.github.io/docsite/minnosuitedashboard/'}, 'Open Minno Suite, '),
     					'our platform for running web studies. ' +
     					'You can install that platform on your own server, use a more simple ',
-    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
-    						'this script directly from Qualtrics.')
-    					]
-    			));
-    	}
+    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},'this script directly from Qualtrics.')
+    				]));}
     };
 
     let parametersDesc = [
@@ -1796,12 +1792,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('SPF'),
+            m.component(messages),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }

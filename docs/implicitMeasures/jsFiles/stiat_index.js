@@ -34,12 +34,13 @@
                                                 : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
                                         }}, tabs[tab].text);}))
                         ),
-                        m('.col-sm-1-text-center',
+                        m('.col-md-1-text-center',
                             !external ?
                                 is_locked() ? '' :
                                     m('button.btn btn btn-primary', {
                                         id:'save_button',
-                                        title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                        title: !is_settings_changed() ? 'No changes were made'
+                                            : 'Update the script file (the .js file).\nThis will override the current script file.',
                                         disabled: !is_settings_changed(),
                                         onclick: () => show_do_save(),
                                     }, 'Save')
@@ -352,9 +353,7 @@
     }
 
     function pageHeadLine(task){
-        return m('.row',[
-            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
-        ]);
+        return m('h1.display-4', 'Create my '+task+' script')
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
@@ -374,7 +373,7 @@
         }
         let stimulusMedia = element.stimulusMedia;
 
-        //if there an empty stimulli list
+        //if there an empty stimuli list
         if (stimulusMedia.length === 0)
             error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -405,7 +404,8 @@
     }
 
     function showRestrictions(type, text, title = ''){
-        if(type === 'error') messages.alert({header: title , content: m('p.alert.alert-danger', text)});
+        if(type === 'error')
+            messages.alert({header: title , content: m('p.alert.alert-danger', text)});
         if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)});
     }
 
@@ -547,14 +547,14 @@
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
-                    row.desc ?
-                        m('.col-sm-4', [
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            }),
-                        ]) :
-                        m('.col-sm-4',m('span', [' ', row.label])),
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
                     row.name === ('base_url') ?
                         m('.col-md-6',
                             m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
@@ -563,7 +563,7 @@
                                 m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
                             : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
                                 editStimulusObject(row.name, ctrl.get, ctrl.set)
-                                : m('.col-sm-4.col-lg-2',
+                                : m('.col-md-4.col-lg-2',
                                     row.options ? //case of isTouch and isQualtrics
                                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
                                             row.options.map(function(option){return m('option', option);})])
@@ -676,10 +676,10 @@
 
         let count = 0;
         let temp_err_msg = [];
-        currBlocks.forEach(function(element, index){ //remove those parameters for the comparsion
+        currBlocks.forEach(function(element, index){ //remove those parameters for the comparison
             delete element.block;
             if(JSON.stringify(element) === JSON.stringify(clearBlock)){
-                temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skiping this block');
+                temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skipping this block');
                 count++;
             }
         });
@@ -729,15 +729,15 @@
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
                 return m('.row.line',[
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ])
-                        : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-8', [
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-8', [
                         m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
                 ]);
@@ -751,14 +751,14 @@
     };
 
     function controller$7(settings, defaultSettings, rows){
-        var blocks = settings.trialsByBlock;
+        let blocks = settings.trialsByBlock;
         let chooseFlag = m.prop(false);
-        let choosenBlocksList = m.prop([]);
+        let chosenBlocksList = m.prop([]);
         let chooseClicked = m.prop(false);
         let clearBlock = rows.slice(-1)[0];
         
         return {showReset, showClear, set, get, blocks, getParameters, setParameters, unChooseCategories,
-            chooseFlag, addBlock, showRemoveBlocks, choosenBlocksList, updateChoosenBlocks, chooseBlocks, rows};
+            chooseFlag, addBlock, showRemoveBlocks, chosenBlocksList, updateChosenBlocks, chooseBlocks, rows};
 
         function beforeClearReset(action, func){
             let msg_text = {
@@ -780,12 +780,12 @@
             beforeClearReset('reset', reset);
             function reset(){
                 Object.assign(blocks, clone(defaultSettings.trialsByBlock));
-                if(blocks.length>5){
-                    blocks.length=5;
+                if(blocks.length > 5){
+                    blocks.length = 5;
                 }
                 settings.switchSideBlock = defaultSettings.switchSideBlock;
                 settings.blockOrder = defaultSettings.blockOrder;
-                choosenBlocksList().length = 0;
+                chosenBlocksList().length = 0;
             }
         }
         function showClear(){
@@ -815,26 +815,26 @@
         }
         function unChooseCategories(){
             chooseFlag(false);
-            choosenBlocksList().length = 0;
+            chosenBlocksList().length = 0;
         }
-        function updateChoosenBlocks(e, index){
-            if (choosenBlocksList().includes(index) && !e.target.checked){
-                let i = choosenBlocksList().indexOf(index);
+        function updateChosenBlocks(e, index){
+            if (chosenBlocksList().includes(index) && !e.target.checked){
+                let i = chosenBlocksList().indexOf(index);
                 if (i !== -1) {
-                    choosenBlocksList().splice(i, 1);
+                    chosenBlocksList().splice(i, 1);
                 }
                 return;
             } 
-            if (e.target.checked) choosenBlocksList().push(index);
+            if (e.target.checked) chosenBlocksList().push(index);
         }
         function chooseBlocks(){
             if (blocks.length < 4) {
-                showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Choosen Blocks');
+                showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Chosen Blocks');
                 return;
             }
             chooseFlag(true);
             if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
-                showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.', 'Choose Blocks to Remove');
+                showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Chosen Blocks\' button.', 'Choose Blocks to Remove');
                 chooseClicked(true);
             }
         }
@@ -843,8 +843,8 @@
             blocks.slice(-1)[0]['block'] = blocks.length;
         }
         function showRemoveBlocks(){
-            if ((blocks.length - choosenBlocksList().length) < 3){
-                showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Choosen Blocks');
+            if ((blocks.length - chosenBlocksList().length) < 3){
+                showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Chosen Blocks');
                 return;
             }
             return messages.confirm({header: 'Are you sure?', content:
@@ -855,21 +855,21 @@
                         m.redraw();
                     }
                     else {
-                        choosenBlocksList().length = 0;
+                        chosenBlocksList().length = 0;
                         chooseFlag(false);
                         m.redraw();
                     }
                 }).catch((error) => {showRestrictions('error', 'Something went wrong on the page!\n'+error, 'Oops!');})
                 .then(m.redraw());
             function removeBlocks(){
-                choosenBlocksList().sort();
-                for (let i = choosenBlocksList().length - 1; i >=0; i--)
-                    blocks.splice(choosenBlocksList()[i],1);
+                chosenBlocksList().sort();
+                for (let i = chosenBlocksList().length - 1; i >=0; i--)
+                    blocks.splice(chosenBlocksList()[i],1);
                 
                 for (let i = 0; i < blocks.length; i++) 
                     blocks[i]['block'] = i+1;
                 
-                choosenBlocksList().length = 0;
+                chosenBlocksList().length = 0;
                 chooseFlag(true);
             }
         }
@@ -885,12 +885,14 @@
                             title:row.desc
                         })
                     ]),
-                    m('.col-md-2',
                         row.options ?
-                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
-                                row.options.map(function(option){return m('option', option);})])
-                            : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
-                    )
+                            m('.col-md-2',
+                                m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                    row.options.map(function(option){return m('option', option);})])
+                                )
+                            : m('.col-md-2.col-lg-1',
+                                m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                                )
                 ]);
             }),
             ctrl.blocks.map(function(block) {
@@ -898,7 +900,7 @@
                 return m('.row.line', [
                     m('.col-md-3',[
                         !ctrl.chooseFlag() ? ' ' :
-                            m('input[type=checkbox]', {checked : ctrl.choosenBlocksList().includes(index), onclick: (e) => ctrl.updateChoosenBlocks(e, index)}),
+                            m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: (e) => ctrl.updateChosenBlocks(e, index)}),
                         m('span', [' ','Block '+parseInt(index+1), ' ']),
                         index !== 0 ? ' ' :
                             m('i.fa.fa-info-circle.text-muted', {
@@ -910,17 +912,17 @@
                     m('.col-md-9',[
                         ctrl.rows.slice(2,-1).map(function(row) {
                             return m('.row.space', [
-                                m('.col-sm-4.space',[
+                                m('.col-md-5.space',[
                                     m('span', [' ', row.label, ' ']),
                                     m('i.fa.fa-info-circle.text-muted',{
                                         title:row.desc
                                     }),
                                 ]),
                                 row.name === 'instHTML' ?
-                                    m('.col-md-4', [
-                                        m('textarea.form-control',{rows:4, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
+                                    m('.col-md-5', [
+                                        m('textarea.form-control',{rows:5, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
                                     ]) :
-                                    m('.col-md-2',
+                                    m('.col-md-3.col-lg-2',
                                         m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
                                     )
                             ]);
@@ -928,7 +930,7 @@
                     ])
                 ]);
             }),
-            m('.row.space.centrify',
+            m('.row.space',
                 m('.col-sm-8',
                     m('.btn-group btn-group-toggle', [
                         ctrl.blocks.length > 29 ? '' : //limit number of blocks to 30
@@ -939,8 +941,8 @@
                                 m('i.fa.fa-check'), ' Choose Blocks to Remove')
                             : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
                                 m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                        !ctrl.choosenBlocksList().length ? '' :
-                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList().length},
+                        !ctrl.chosenBlocksList().length ? '' :
+                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.chosenBlocksList().length},
                                 m('i.fa.fa-minus-square'), ' Remove Chosen Blocks')
                     ])
                 )
@@ -1130,7 +1132,7 @@
                 ])
             ]),
             m('.row',
-                m('.col.space',
+                m('.col-md-6.space',
                     m('.btn-group-vertical',[
                         m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: () => ctrl.removeChosenStimuli()},'Remove Chosen Stimuli'),
                         m('button.btn btn btn-warning', {onclick: () => ctrl.removeAllStimuli()},'Remove All Stimuli'),
@@ -1649,7 +1651,7 @@
     function view$3(ctrl){
         return m('.row' , [
             m('.col-sm-12',[
-                m('.row.line',[
+                m('.row.space',[
                     m('.col-sm-2',[
                         m('span', 'Font\'s color: '),
                         m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
@@ -1680,17 +1682,15 @@
     }
 
     function view$2(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
-        return m('.space', [
-            m('.space',
-                taskType === 'BIAT' ?
-                    m.component(elementComponent$1,{key:currTab}, settings,
-                        defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                    : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
-                        m.component(parametersComponent, settings)
-                        : taskType === 'EP' ?
-                            m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
-                            : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
-            ),
+        return m('div', [
+            taskType === 'BIAT' ?
+                m.component(elementComponent$1,{key:currTab}, settings,
+                    defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
+                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
+                    m.component(parametersComponent, settings)
+                    : taskType === 'EP' ?
+                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                        : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
             m('hr')
             ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
         ]);
@@ -1702,7 +1702,7 @@
     };
 
     function view$1(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$1(settings) {
@@ -1771,13 +1771,13 @@
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
     		return m('.space',
-    				m('.alert.alert-info',
-    					!settings.external ? //only show this text if we are in the dashboard
-    					['This will create a script for our '+type+' extension.' +
+    			m('.alert.alert-info',
+    				!settings.external ? //only show this text if we are in the dashboard
+    				['This will create a script for our '+type+' extension.' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
     					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
-    					]:
-    					['This tool creates a script for running an '+type+' in your online study. ' +
+    				]:
+    				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
     					m('a',{href: 'http://projectimplicit.net/'}, 'Project Implicit '), 'has developed MinnoJS to program web studies. ' +
     					'To create ' +type+'s, we programmed a general script (the “extension”) that runs an '+type+ ' based on parameters provided by another, ' + 'more simple script. ' +
@@ -1787,11 +1787,8 @@
     					'We run those scripts in ', m('a',{href: 'https://minnojs.github.io/docsite/minnosuitedashboard/'}, 'Open Minno Suite, '),
     					'our platform for running web studies. ' +
     					'You can install that platform on your own server, use a more simple ',
-    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
-    						'this script directly from Qualtrics.')
-    					]
-    			));
-    	}
+    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},'this script directly from Qualtrics.')
+    				]));}
     };
 
     let parametersDesc = [
@@ -1817,7 +1814,7 @@
     let blocksDesc = [
         {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'], desc: 'Change to \'startRight\' if you want the first block to show the single category on the right in the first block, \'startLeft\' if you want it to appear on the left side. If you choose \'random\', the program will randomly choose a side for each participant. The first attribute in the Attributes page appears on the left and the second attribute appears on the right. \n'},
         {name: 'switchSideBlock', label: 'Switch Side Block ', desc: 'By default, we switch on block 4 (i.e., after blocks 2 and 3 showed the first pairing condition).'},
-        {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a deafault template.'},
+        {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a default template.'},
         {name: 'miniBlocks', label:'Number of mini-blocks', desc: 'Higher number reduces repetition of same group/response. Set to 1 if you don\'t need mini blocks. 0 will break the task.'},
         {name: 'singleAttTrials', label:'Number of single attribute trials', desc: 'Number of trials of the attribute that does not share key with the category (in a mini block).'},
         {name: 'sharedAttTrials', label:'Number of shared key attribute trials', desc: 'Number of trials of the attribute that shares key with the category (in a mini block).'},
@@ -2050,12 +2047,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('STIAT'),
+            m.component(messages),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
 

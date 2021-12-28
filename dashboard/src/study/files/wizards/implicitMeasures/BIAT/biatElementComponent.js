@@ -62,7 +62,7 @@ function controller(object, settings,stimuliList, startStimulusList ,index){
                 if (type === 'font-size'){
                     value = Math.abs(value);
                     if (!value){
-                        showRestrictions('error','Font\'s size must be bigger than 0.', 'Error')
+                        showRestrictions('error','Font\'s size must be bigger than 0.', 'Error');
                         return element[name][media][type];
                     }
                     return element[name][media][type] = value + 'em';
@@ -71,7 +71,7 @@ function controller(object, settings,stimuliList, startStimulusList ,index){
                     if(startStimulus === 'font-size'){
                         value = Math.abs(value);
                         if (!value){
-                            showRestrictions('error','Font\'s size must be bigger than 0.', 'Error')
+                            showRestrictions('error','Font\'s size must be bigger than 0.', 'Error');
                             return element[name][media][type][startStimulus];
                         }
                         return element[name][media][type][startStimulus] = value + 'em';
@@ -84,7 +84,7 @@ function controller(object, settings,stimuliList, startStimulusList ,index){
             else if (media === 'font-size'){
                 value = Math.abs(value);
                 if (!value){
-                    showRestrictions('error','Font\'s size must be bigger than 0.', 'Error')
+                    showRestrictions('error','Font\'s size must be bigger than 0.', 'Error');
                     return element[name][media];
                 }
                 return element[name][media] = value + 'em';

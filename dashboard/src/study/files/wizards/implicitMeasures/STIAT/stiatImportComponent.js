@@ -6,7 +6,7 @@ let importComponent = {
 };
 
 function view(ctrl){
-    return viewImport(ctrl)
+    return viewImport(ctrl);
 }
 
 function controller(settings) {

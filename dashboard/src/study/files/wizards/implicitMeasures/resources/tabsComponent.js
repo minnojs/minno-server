@@ -1,4 +1,3 @@
-
 let tabsComponent = {
     controller: function(tabs){
         let tab = Object.keys(tabs)[0];
@@ -27,12 +26,13 @@ let tabsComponent = {
                                             : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
                                     }}, tabs[tab].text);}))
                     ),
-                    m('.col-sm-1-text-center',
+                    m('.col-md-1-text-center',
                         !external ?
                             is_locked() ? '' :
                                 m('button.btn btn btn-primary', {
                                     id:'save_button',
-                                    title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                    title: !is_settings_changed() ? 'No changes were made'
+                                        : 'Update the script file (the .js file).\nThis will override the current script file.',
                                     disabled: !is_settings_changed(),
                                     onclick: () => show_do_save(),
                                 }, 'Save')

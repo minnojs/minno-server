@@ -29,7 +29,7 @@ function controller({file, study}, external = false){
         is_locked:m.prop(study ? study.is_locked : null),
         show_do_save,
         is_settings_changed
-    }
+    };
 
     ctrl.settings.external = ctrl.external;
 
@@ -101,12 +101,13 @@ function view(ctrl){
     if(!ctrl.external) {
         return !ctrl.loaded()
             ? m('.loader')
-            : m('.container.space',
+            : m('.wizard.container-fluid.space',
                 m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                     ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
     }
-    return m('.container',
+    return m('.container-fluid',
         pageHeadLine('SPF'),
+        m.component(messages),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 }

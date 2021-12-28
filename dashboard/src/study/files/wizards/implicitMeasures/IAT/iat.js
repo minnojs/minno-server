@@ -100,12 +100,13 @@ function view(ctrl){
     if(!ctrl.external) {
         return !ctrl.loaded()
             ? m('.loader')
-            : m('.container.space',
+            : m('.wizard.container-fluid.space',
                 m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                     ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
     }
-    return m('.container',
+    return m('.container-fluid',
         pageHeadLine('IAT'),
+        m.component(messages),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 }

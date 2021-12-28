@@ -68,14 +68,14 @@ function view(ctrl, settings){
             if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
             if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
             return m('.row.line', [
-                row.desc ?
-                    m('.col-sm-4', [
-                        m('span', [' ', row.label, ' ']),
-                        m('i.fa.fa-info-circle.text-muted',{
-                            title:row.desc
-                        }),
-                    ]) :
-                    m('.col-sm-4',m('span', [' ', row.label])),
+                m('.col-md-4',
+                    row.desc ?
+                        [
+                            m('span', [' ', row.label, ' ']),
+                            m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                        ]
+                        : m('span', [' ', row.label])
+                ),
                 row.name === ('base_url') ?
                     m('.col-md-6',
                         m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
@@ -84,7 +84,7 @@ function view(ctrl, settings){
                             m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
                         : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
                             editStimulusObject(row.name, ctrl.get, ctrl.set)
-                            : m('.col-sm-4.col-lg-2',
+                            : m('.col-md-4.col-lg-2',
                                 row.options ? //case of isTouch and isQualtrics
                                     m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
                                         row.options.map(function(option){return m('option', option);})])

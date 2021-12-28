@@ -50,7 +50,7 @@ export function validityCheck(error_msg, settings, blocksObject){
     let currBlocks = clone(settings.blocks);
     let clearBlocks = blocksObject.slice(-1)[0]; //blocks parameters with zeros as the values, used to check if the current parameters are also zeros.
 
-    ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparsion
+    ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparison
         delete currBlocks[key];
         delete clearBlocks[key];
     });
@@ -59,7 +59,7 @@ export function validityCheck(error_msg, settings, blocksObject){
         error_msg.push('All the block\'s parameters equals to 0, that will result in not showing the task at all');
     blocksObject.slice(0,-1).map(function(block){
         if(settings.blocks[block.numTrialBlocks] !== 0 && settings.blocks[block.numMiniBlocks] === 0)
-            error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parametrs to 0.')
+            error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parameters to 0.');
     });
     return error_msg;
 }

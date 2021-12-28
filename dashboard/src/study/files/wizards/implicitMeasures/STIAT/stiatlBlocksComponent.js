@@ -1,4 +1,4 @@
-import {clone, resetClearButtons, showRestrictions} from "../resources/utilities";
+import {clone, resetClearButtons, showRestrictions} from '../resources/utilities';
 import messages from '../../../../../utils/messagesComponent';
 
 let blocksComponent = {
@@ -7,14 +7,14 @@ let blocksComponent = {
 };
 
 function controller(settings, defaultSettings, rows){
-    var blocks = settings.trialsByBlock;
+    let blocks = settings.trialsByBlock;
     let chooseFlag = m.prop(false);
-    let choosenBlocksList = m.prop([]);
+    let chosenBlocksList = m.prop([]);
     let chooseClicked = m.prop(false);
     let clearBlock = rows.slice(-1)[0];
     
     return {showReset, showClear, set, get, blocks, getParameters, setParameters, unChooseCategories,
-        chooseFlag, addBlock, showRemoveBlocks, choosenBlocksList, updateChoosenBlocks, chooseBlocks, rows};
+        chooseFlag, addBlock, showRemoveBlocks, chosenBlocksList, updateChosenBlocks, chooseBlocks, rows};
 
     function beforeClearReset(action, func){
         let msg_text = {
@@ -36,12 +36,12 @@ function controller(settings, defaultSettings, rows){
         beforeClearReset('reset', reset);
         function reset(){
             Object.assign(blocks, clone(defaultSettings.trialsByBlock));
-            if(blocks.length>5){
-                blocks.length=5
+            if(blocks.length > 5){
+                blocks.length = 5;
             }
             settings.switchSideBlock = defaultSettings.switchSideBlock;
             settings.blockOrder = defaultSettings.blockOrder;
-            choosenBlocksList().length = 0;
+            chosenBlocksList().length = 0;
         }
     }
     function showClear(){
@@ -71,26 +71,26 @@ function controller(settings, defaultSettings, rows){
     }
     function unChooseCategories(){
         chooseFlag(false);
-        choosenBlocksList().length = 0;
+        chosenBlocksList().length = 0;
     }
-    function updateChoosenBlocks(e, index){
-        if (choosenBlocksList().includes(index) && !e.target.checked){
-            let i = choosenBlocksList().indexOf(index);
+    function updateChosenBlocks(e, index){
+        if (chosenBlocksList().includes(index) && !e.target.checked){
+            let i = chosenBlocksList().indexOf(index);
             if (i !== -1) {
-                choosenBlocksList().splice(i, 1);
+                chosenBlocksList().splice(i, 1);
             }
             return;
         } 
-        if (e.target.checked) choosenBlocksList().push(index);
+        if (e.target.checked) chosenBlocksList().push(index);
     }
     function chooseBlocks(){
         if (blocks.length < 4) {
-            showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Choosen Blocks');
+            showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Chosen Blocks');
             return;
         }
         chooseFlag(true);
         if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
-            showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.', 'Choose Blocks to Remove');
+            showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Chosen Blocks\' button.', 'Choose Blocks to Remove');
             chooseClicked(true);
         }
     }
@@ -99,8 +99,8 @@ function controller(settings, defaultSettings, rows){
         blocks.slice(-1)[0]['block'] = blocks.length;
     }
     function showRemoveBlocks(){
-        if ((blocks.length - choosenBlocksList().length) < 3){
-            showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Choosen Blocks');
+        if ((blocks.length - chosenBlocksList().length) < 3){
+            showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Chosen Blocks');
             return;
         }
         return messages.confirm({header: 'Are you sure?', content:
@@ -111,21 +111,21 @@ function controller(settings, defaultSettings, rows){
                     m.redraw();
                 }
                 else {
-                    choosenBlocksList().length = 0;
+                    chosenBlocksList().length = 0;
                     chooseFlag(false);
                     m.redraw();
                 }
             }).catch((error) => {showRestrictions('error', 'Something went wrong on the page!\n'+error, 'Oops!');})
             .then(m.redraw());
         function removeBlocks(){
-            choosenBlocksList().sort();
-            for (let i = choosenBlocksList().length - 1; i >=0; i--)
-                blocks.splice(choosenBlocksList()[i],1);
+            chosenBlocksList().sort();
+            for (let i = chosenBlocksList().length - 1; i >=0; i--)
+                blocks.splice(chosenBlocksList()[i],1);
             
             for (let i = 0; i < blocks.length; i++) 
                 blocks[i]['block'] = i+1;
             
-            choosenBlocksList().length = 0;
+            chosenBlocksList().length = 0;
             chooseFlag(true);
         }
     }
@@ -141,12 +141,14 @@ function view(ctrl){
                         title:row.desc
                     })
                 ]),
-                m('.col-md-2',
                     row.options ?
-                        m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
-                            row.options.map(function(option){return m('option', option);})])
-                        : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
-                )
+                        m('.col-md-2',
+                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                row.options.map(function(option){return m('option', option);})])
+                            )
+                        : m('.col-md-2.col-lg-1',
+                            m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                            )
             ]);
         }),
         ctrl.blocks.map(function(block) {
@@ -154,7 +156,7 @@ function view(ctrl){
             return m('.row.line', [
                 m('.col-md-3',[
                     !ctrl.chooseFlag() ? ' ' :
-                        m('input[type=checkbox]', {checked : ctrl.choosenBlocksList().includes(index), onclick: (e) => ctrl.updateChoosenBlocks(e, index)}),
+                        m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: (e) => ctrl.updateChosenBlocks(e, index)}),
                     m('span', [' ','Block '+parseInt(index+1), ' ']),
                     index !== 0 ? ' ' :
                         m('i.fa.fa-info-circle.text-muted', {
@@ -166,17 +168,17 @@ function view(ctrl){
                 m('.col-md-9',[
                     ctrl.rows.slice(2,-1).map(function(row) {
                         return m('.row.space', [
-                            m('.col-sm-4.space',[
+                            m('.col-md-5.space',[
                                 m('span', [' ', row.label, ' ']),
                                 m('i.fa.fa-info-circle.text-muted',{
                                     title:row.desc
                                 }),
                             ]),
                             row.name === 'instHTML' ?
-                                m('.col-md-4', [
-                                    m('textarea.form-control',{rows:4, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
+                                m('.col-md-5', [
+                                    m('textarea.form-control',{rows:5, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
                                 ]) :
-                                m('.col-md-2',
+                                m('.col-md-3.col-lg-2',
                                     m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
                                 )
                         ]);
@@ -184,7 +186,7 @@ function view(ctrl){
                 ])
             ]);
         }),
-        m('.row.space.centrify',
+        m('.row.space',
             m('.col-sm-8',
                 m('.btn-group btn-group-toggle', [
                     ctrl.blocks.length > 29 ? '' : //limit number of blocks to 30
@@ -195,8 +197,8 @@ function view(ctrl){
                             m('i.fa.fa-check'), ' Choose Blocks to Remove')
                         : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
                             m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                    !ctrl.choosenBlocksList().length ? '' :
-                        m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList().length},
+                    !ctrl.chosenBlocksList().length ? '' :
+                        m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.chosenBlocksList().length},
                             m('i.fa.fa-minus-square'), ' Remove Chosen Blocks')
                 ])
             )

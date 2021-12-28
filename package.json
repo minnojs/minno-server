@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "buble": "^0.12.3",
-    "eslint": "^5.15.1",
+    "eslint": "^5.16.0",
     "eslint-plugin-import": "^2.16.0",
     "mithril": "^0.2.8",
     "npm-run-all": "^2.3.0",

@@ -9,9 +9,9 @@ import messages from '../../../../../utils/messagesComponent';
 
 export default ep;
 
-const ep = (args, external) => m.component(biatComponent, args, external);
+const ep = (args, external) => m.component(epComponent, args, external);
 
-let biatComponent = {
+let epComponent = {
     controller: controller,
     view: view
 };
@@ -29,9 +29,9 @@ function controller({file, study}, external = false){
         is_locked:m.prop(study ? study.is_locked : null),
         show_do_save,
         is_settings_changed
-    }
+    };
 
-    ctrl.settings.external = ctrl.external
+    ctrl.settings.external = ctrl.external;
 
     function load() {
         return ctrl.file.get()
@@ -79,13 +79,13 @@ function controller({file, study}, external = false){
         let studyId  =  m.route.param('studyId');
         let fileId = m.route.param('fileId');
         let jsFileId =  fileId.split('.')[0]+'.js';
-        save('biat', studyId, fileId, ctrl.settings)
-            .then (() => saveToJS('biat', studyId, jsFileId, toString(ctrl.settings, ctrl.external)))
+        save('ep', studyId, fileId, ctrl.settings)
+            .then (() => saveToJS('ep', studyId, jsFileId, toString(ctrl.settings, ctrl.external)))
             .then(ctrl.study.get())
             .then(() => ctrl.notifications.show_success(`EP Script successfully saved`))
             .then(m.redraw)
             .catch(err => ctrl.notifications.show_danger('Error Saving:', err.message));
-        ctrl.prev_settings = clone(ctrl.settings)
+        ctrl.prev_settings = clone(ctrl.settings);
         m.redraw();
     }
 
@@ -100,12 +100,13 @@ function view(ctrl){
     if(!ctrl.external) {
         return !ctrl.loaded()
             ? m('.loader')
-            : m('.container.space',
+            : m('.wizard.container-fluid.space',
                 m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
-                    ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
+                    ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
     }
-    return m('.container',
+    return m('.container-fluid',
         pageHeadLine('Evaluative Priming'),
+        m.component(messages),
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 }

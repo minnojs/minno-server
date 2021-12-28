@@ -18100,12 +18100,13 @@
                                                 : ctrl.currSubTab = Object.keys(tabs[tab].subTabs)[0];
                                         }}, tabs[tab].text);}))
                         ),
-                        m('.col-sm-1-text-center',
+                        m('.col-md-1-text-center',
                             !external ?
                                 is_locked() ? '' :
                                     m('button.btn btn btn-primary', {
                                         id:'save_button',
-                                        title: 'Update the script file (the .js file).\nThis will override the current script file.',
+                                        title: !is_settings_changed() ? 'No changes were made'
+                                            : 'Update the script file (the .js file).\nThis will override the current script file.',
                                         disabled: !is_settings_changed(),
                                         onclick: function () { return show_do_save(); },
                                     }, 'Save')
@@ -18232,9 +18233,7 @@
     }
 
     function pageHeadLine(task){
-        return m('.row',[
-            m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
-        ]);
+        return m('h1.display-4', 'Create my '+task+' script')
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
@@ -18254,7 +18253,7 @@
         }
         var stimulusMedia = element.stimulusMedia;
 
-        //if there an empty stimulli list
+        //if there an empty stimuli list
         if (stimulusMedia.length === 0)
             error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -18276,7 +18275,7 @@
 
         var mediaArray = element.mediaArray;
 
-        //if there an empty stimulli list
+        //if there an empty stimuli list
         if (mediaArray.length === 0)
             error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -18306,7 +18305,8 @@
     function showRestrictions(type, text, title){
         if ( title === void 0 ) title = '';
 
-        if(type === 'error') messages.alert({header: title , content: m('p.alert.alert-danger', text)});
+        if(type === 'error')
+            messages.alert({header: title , content: m('p.alert.alert-danger', text)});
         if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)});
     }
 
@@ -18448,14 +18448,14 @@
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
-                    row.desc ?
-                        m('.col-sm-4', [
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            }),
-                        ]) :
-                        m('.col-sm-4',m('span', [' ', row.label])),
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
                     row.name === ('base_url') ?
                         m('.col-md-6',
                             m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
@@ -18464,7 +18464,7 @@
                                 m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
                             : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
                                 editStimulusObject(row.name, ctrl.get, ctrl.set)
-                                : m('.col-sm-4.col-lg-2',
+                                : m('.col-md-4.col-lg-2',
                                     row.options ? //case of isTouch and isQualtrics
                                         m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name)), style: {width: '8.3rem', height:'2.8rem'}},[
                                             row.options.map(function(option){return m('option', option);})])
@@ -18529,7 +18529,7 @@
         var currBlocks = clone(settings.blocks);
         var clearBlocks = blocksObject.slice(-1)[0]; //blocks parameters with zeros as the values, used to check if the current parameters are also zeros.
 
-        ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparsion
+        ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparison
             delete currBlocks[key];
             delete clearBlocks[key];
         });
@@ -18538,7 +18538,7 @@
             error_msg.push('All the block\'s parameters equals to 0, that will result in not showing the task at all');
         blocksObject.slice(0,-1).map(function(block){
             if(settings.blocks[block.numTrialBlocks] !== 0 && settings.blocks[block.numMiniBlocks] === 0)
-                error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parametrs to 0.');
+                error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parameters to 0.');
         });
         return error_msg;
     }
@@ -18617,15 +18617,15 @@
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
                 return m('.row.line',[
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ])
-                        : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-8', [
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-8', [
                         m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
                 ]);
@@ -18653,37 +18653,38 @@
     }
 
     function view$m(ctrl){
-        return m('.col-sm-12.space',[
+        return m('.col-12',[
             m('.row',[
                 m('.col-md-8',
                     ctrl.rows.slice(0,-1).map(function(row) {
                         return m('.row.line', [
-                            m('.col-md-5.space',[
+                            m('.col-sm-4.space',[
                                 m('span', [' ', row.label, ' ']),
                                 m('i.fa.fa-info-circle.text-muted',{
                                     title:row.desc
                                 }),
                             ]),
-                            row.name ?  //case of randomBlockOrder & randomAttSide
-                                m('.col-md-7',
-                                    m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)}))
-                                : m('.col-md-7',[
-                                    m('.row', [
-                                        m('.col-sm-6', 'Number of trials: '),
-                                        m('.col-sm-4', [
-                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
+                            m('.col-sm-8.space',
+                                row.name ?  //case of randomBlockOrder & randomAttSide
+                                    m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                                    : [
+                                        m('.row', [
+                                            m('.col-sm-6', 'Number of trials: '),
+                                            m('.col-sm-4', [
+                                                m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numTrialBlocks, 'number')), value: ctrl.get(row.numTrialBlocks), min:'0'})
+                                            ])
+                                        ]),
+                                        m('.row.space',[
+                                            m('.col-sm-6', 'Number of mini-blocks: '),
+                                            m('.col-sm-4', [
+                                                m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
+                                            ])
                                         ])
-                                    ]),
-                                    m('.row.space',[
-                                        m('.col-sm-6', 'Number of mini-blocks: '),
-                                        m('.col-sm-4', [
-                                            m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.numMiniBlocks, 'number')), value: ctrl.get(row.numMiniBlocks), min:'0'})
-                                        ])
-                                    ])
-                                ])
+                                    ]
+                            )
                         ]);
-                    })
-                ),
+                    }
+                    )),
                 m('.col-md-4.double_space',
                     m('.alert.alert-info',[
                         m('h4','More information:'),
@@ -18883,7 +18884,7 @@
                 ])
             ]),
             m('.row',
-                m('.col.space',
+                m('.col-md-6.space',
                     m('.btn-group-vertical',[
                         m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: function () { return ctrl.removeChosenStimuli(); }},'Remove Chosen Stimuli'),
                         m('button.btn btn btn-warning', {onclick: function () { return ctrl.removeAllStimuli(); }},'Remove All Stimuli'),
@@ -19410,7 +19411,7 @@
     function view$i(ctrl){
         return m('.row' , [
             m('.col-sm-12',[
-                m('.row.line',[
+                m('.row.space',[
                     m('.col-sm-2',[
                         m('span', 'Font\'s color: '),
                         m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
@@ -19441,17 +19442,15 @@
     }
 
     function view$h(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
-        return m('.space', [
-            m('.space',
-                taskType === 'BIAT' ?
-                    m.component(elementComponent$1,{key:currTab}, settings,
-                        defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                    : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs differnet component.
-                        m.component(parametersComponent, settings)
-                        : taskType === 'EP' ?
-                            m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
-                            : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia)
-            ),
+        return m('div', [
+            taskType === 'BIAT' ?
+                m.component(elementComponent$1,{key:currTab}, settings,
+                    defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
+                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
+                    m.component(parametersComponent, settings)
+                    : taskType === 'EP' ?
+                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                        : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
             m('hr')
             ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
         ]);
@@ -19463,7 +19462,7 @@
     };
 
     function view$g(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$g(settings) {
@@ -19547,13 +19546,13 @@
     	view: function(ctrl, settings, defaultSettings, type){
     		var extension = '.'+type.toLowerCase();
     		return m('.space',
-    				m('.alert.alert-info',
-    					!settings.external ? //only show this text if we are in the dashboard
-    					['This will create a script for our '+type+' extension.' +
+    			m('.alert.alert-info',
+    				!settings.external ? //only show this text if we are in the dashboard
+    				['This will create a script for our '+type+' extension.' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
     					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
-    					]:
-    					['This tool creates a script for running an '+type+' in your online study. ' +
+    				]:
+    				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
     					m('a',{href: 'http://projectimplicit.net/'}, 'Project Implicit '), 'has developed MinnoJS to program web studies. ' +
     					'To create ' +type+'s, we programmed a general script (the “extension”) that runs an '+type+ ' based on parameters provided by another, ' + 'more simple script. ' +
@@ -19563,11 +19562,8 @@
     					'We run those scripts in ', m('a',{href: 'https://minnojs.github.io/docsite/minnosuitedashboard/'}, 'Open Minno Suite, '),
     					'our platform for running web studies. ' +
     					'You can install that platform on your own server, use a more simple ',
-    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},
-    						'this script directly from Qualtrics.')
-    					]
-    			));
-    	}
+    					m('a',{href: 'https://minnojs.github.io/minnojs-blog/csv-server/'}, 'php server for Minno, '), 'or run ', m('a',{href: links[type]},'this script directly from Qualtrics.')
+    				]));}
     };
 
     var parametersDesc$4 = [
@@ -19601,13 +19597,13 @@
     ];
 
     var blocksDesc$4 = [
-        {label:'Block 1', numTrialBlocks:'blockCategories_nTrials', numMiniBlocks: 'blockCategories_nMiniBlocks', desc:'Will present the categories.'},
-        {label:'Block 2', numTrialBlocks:'blockAttributes_nTrials', numMiniBlocks: 'blockAttributes_nMiniBlocks', desc:'Will present the attributes.'},
-        {label:'Blocks 3 and 6', numTrialBlocks:'blockFirstCombined_nTrials', numMiniBlocks: 'blockFirstCombined_nMiniBlocks', desc:'The first combined block.'},
-        {label:'Blocks 4 and 7', numTrialBlocks:'blockSecondCombined_nTrials', numMiniBlocks: 'blockSecondCombined_nMiniBlocks', desc:'The second combined block.'},
-        {label:'Block 5', numTrialBlocks:'blockSwitch_nTrials', numMiniBlocks: 'blockSwitch_nMiniBlocks', desc:'Flipping the sides of the categories. Some have recommended using 50 trials in this block.'},
-        {name:'randomBlockOrder' ,label:'Randomly choose categories location in Block 1', desc:'If not randomized: the First Category (in the Categories page) will appear on the left in Blocks 1,3, and 4.'},
-        {name:'randomAttSide',label:'Randomly choose attributes location in the task', desc: 'If not randomized: the First Attribute (in the Attributes page) will appear on the left.'},
+        {label:'Block #1', numTrialBlocks:'blockCategories_nTrials', numMiniBlocks: 'blockCategories_nMiniBlocks', desc:'Will present the categories.'},
+        {label:'Block #2', numTrialBlocks:'blockAttributes_nTrials', numMiniBlocks: 'blockAttributes_nMiniBlocks', desc:'Will present the attributes.'},
+        {label:'Blocks #3 and #6', numTrialBlocks:'blockFirstCombined_nTrials', numMiniBlocks: 'blockFirstCombined_nMiniBlocks', desc:'The first combined block.'},
+        {label:'Blocks #4 and #7', numTrialBlocks:'blockSecondCombined_nTrials', numMiniBlocks: 'blockSecondCombined_nMiniBlocks', desc:'The second combined block.'},
+        {label:'Block #5', numTrialBlocks:'blockSwitch_nTrials', numMiniBlocks: 'blockSwitch_nMiniBlocks', desc:'Flipping the sides of the categories. Some have recommended using 50 trials in this block.'},
+        {name:'randomBlockOrder' ,label:'Randomly choose categories\' location in Block #1', desc:'If not randomized: the First Category (in the Categories page) will appear on the left in Blocks #1,#3, and #4.'},
+        {name:'randomAttSide',label:'Randomly choose attributes\' location in the task', desc: 'If not randomized: the First Attribute (in the Attributes page) will appear on the left.'},
         {blockCategories_nTrials: 0,blockCategories_nMiniBlocks:0, blockAttributes_nTrials:0,blockAttributes_nMiniBlocks:0,
             blockFirstCombined_nTrials:0, blockFirstCombined_nMiniBlocks:0, blockSecondCombined_nTrials:0, blockSecondCombined_nMiniBlocks:0,
             blockSwitch_nTrials:0, blockSwitch_nMiniBlocks:0, randomBlockOrder: false, randomAttSide : false}
@@ -19761,12 +19757,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('IAT'),
+            m.component(messages),
             m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
@@ -19970,20 +19967,21 @@
         return m('.space' , [
             //create numbers inputs
             ctrl.rows.map(function(row){
-                //if user chooses not to have a prcatice block set it's parameter to 0
+                //if user chooses not to have a practice block set its parameter to 0
                 if (row.name === 'nPracticeBlockTrials' && settings.parameters.practiceBlock === false) {
                     settings.blocks.nPracticeBlockTrials = 0;
                     return;
                 }
                 return m('.row.line', [
-                    row.desc ?
-                        m('.col-md-4.space',[
-                            m('span', [' ', row.label, ' ']),
-                            m('i.fa.fa-info-circle.text-muted',{
-                                title:row.desc
-                            })
-                        ]) : m('.col-md-4.space', m('span', [' ', row.label])),
-                    m('.col-sm-4.col-lg-2',
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-4.col-lg-2',
                         row.options ?
                             m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
                                 row.options.map(function(option){return m('option', option);})
@@ -20009,12 +20007,12 @@
         });
         var headlines = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth'];
         var chooseFlag = m.prop(false);
-        var choosenCategoriesList = m.prop([]);
+        var chosenCategoriesList = m.prop([]);
         var chooseClicked = m.prop(false);
         var curr_tab = m.prop(0);
 
-        return {reset: reset, clear: clear, chooseFlag: chooseFlag, unChooseCategories: unChooseCategories,categories: categories, headlines: headlines, addCategory: addCategory, choosenCategoriesList: choosenCategoriesList,
-            updateChoosenBlocks: updateChoosenBlocks, showRemoveCategories: showRemoveCategories, chooseCategories: chooseCategories, curr_tab: curr_tab, getDefaultValues: getDefaultValues};
+        return {reset: reset, clear: clear, chooseFlag: chooseFlag, unChooseCategories: unChooseCategories,categories: categories, headlines: headlines, addCategory: addCategory, chosenCategoriesList: chosenCategoriesList,
+            updateChosenBlocks: updateChosenBlocks, showRemoveCategories: showRemoveCategories, chooseCategories: chooseCategories, curr_tab: curr_tab, getDefaultValues: getDefaultValues};
 
         function clear(curr_tab){showClearOrReset(categories[curr_tab], clearElement[0], 'clear');}
         function reset(curr_tab){showClearOrReset(categories[curr_tab], defaultSettings.categories[curr_tab], 'reset');
@@ -20024,18 +20022,18 @@
             var last = categories.length - 1;
             categories[last].key = Math.random();
         }
-        function updateChoosenBlocks(e, index){
+        function updateChosenBlocks(e, index){
             //if clicked the checkbox to uncheck the item
-            if (choosenCategoriesList().includes(index) && !e.target.checked){
-                var i = choosenCategoriesList().indexOf(index);
-                if (i !== -1) choosenCategoriesList().splice(i, 1);
+            if (chosenCategoriesList().includes(index) && !e.target.checked){
+                var i = chosenCategoriesList().indexOf(index);
+                if (i !== -1) chosenCategoriesList().splice(i, 1);
                 return;
             }
-            if (e.target.checked) choosenCategoriesList().push(index);
+            if (e.target.checked) chosenCategoriesList().push(index);
         }
         function unChooseCategories(){
             chooseFlag(false);
-            choosenCategoriesList().length = 0;
+            chosenCategoriesList().length = 0;
         }
         function chooseCategories(){
             if(categories.length < 3){
@@ -20044,13 +20042,13 @@
             }
             chooseFlag(true);
             if (!chooseClicked()) { //show the info msg only for the first time the choose button has been clicked
-                showRestrictions('info','To choose categories to remove, please tik the checkbox near the wanted category, and to remove them click the \'Remove Choosen Categories\' button.', 'Choose categories to remove');
+                showRestrictions('info','To choose categories to remove, please tik the checkbox near the wanted category, and to remove them click the \'Remove Chosen Categories\' button.', 'Choose categories to remove');
                 chooseClicked(true);
             }
         }
         function showRemoveCategories(){
-            if ((categories.length - choosenCategoriesList().length) < 2){
-                showRestrictions('error','Minimum number of categories needs to be 2, please choose less categories to remove', 'Error Removing Choosen Categories');
+            if ((categories.length - chosenCategoriesList().length) < 2){
+                showRestrictions('error','Minimum number of categories needs to be 2, please choose less categories to remove', 'Error Removing Chosen Categories');
                 return;
             }
             return messages.confirm({header: 'Are you sure?', content:
@@ -20061,7 +20059,7 @@
                         m.redraw();
                     }
                     else {
-                        choosenCategoriesList().length = 0;
+                        chosenCategoriesList().length = 0;
                         chooseFlag(false);
                         m.redraw();
                     }
@@ -20069,11 +20067,11 @@
                 .then(m.redraw());
 
             function removeCategories(){
-                choosenCategoriesList().sort();
-                for (var i = choosenCategoriesList().length - 1; i >=0; i--)
-                    categories.splice(choosenCategoriesList()[i],1);
+                chosenCategoriesList().sort();
+                for (var i = chosenCategoriesList().length - 1; i >=0; i--)
+                    categories.splice(chosenCategoriesList()[i],1);
 
-                choosenCategoriesList().length = 0;
+                chosenCategoriesList().length = 0;
                 chooseFlag(false);
                 curr_tab(categories.length - 1);
             }
@@ -20101,28 +20099,28 @@
                                 ctrl.curr_tab(index);
                             }}, ctrl.headlines[index] + ' Category ',
                         !ctrl.chooseFlag() ? '' :
-                            m('input[type=checkbox].space', {checked : ctrl.choosenCategoriesList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}));
+                            m('input[type=checkbox].space', {checked : ctrl.chosenCategoriesList().includes(index), onclick: function (e) { return ctrl.updateChosenBlocks(e, index); }}));
                     }))
                 )
             ]),
-            m('.row.space.centrify',[
-                m('.col-sm-9',
+            m('.row.space',[
+                m('.col-md-9',
                     m('.btn-group btn-group-toggle', [
                         ctrl.categories.length > 7 ? '' :
                             m('button.btn btn btn-info',{title:'You can add up to 8 categories',onclick: ctrl.addCategory}, [m('i.fa.fa-plus')],' Add Category'),
                         !ctrl.chooseFlag() ?
                             m('button.btn btn btn-secondary',{onclick: ctrl.chooseCategories},[
                                 m('i.fa.fa-check'), ' Choose Categories to Remove'])
-                            :
-                            m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                            : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
                                 m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                        !ctrl.choosenCategoriesList().length ? '' :
+                        !ctrl.chosenCategoriesList().length ? '' :
                             m('button.btn btn btn-danger',{onclick: ctrl.showRemoveCategories},[
                                 m('i.fa.fa-eraser'), ' Remove Chosen Categories'])
 
-                    ]))
+                    ])
+                )
             ]),
-            m('.space',{key:ctrl.categories[ctrl.curr_tab()].key},
+            m('div',{key:ctrl.categories[ctrl.curr_tab()].key},
                 m.component(elementComponent$1, {key:'categories'}, settings, ctrl.getDefaultValues()[0], ctrl.getDefaultValues()[1], ctrl.curr_tab())),
             m('hr'),
             resetClearButtons(ctrl.reset, ctrl.clear, ctrl.curr_tab(), true)
@@ -20170,8 +20168,8 @@
 
         var temp1,temp2,temp3 = false;
         if(settings.parameters.practiceBlock){
-            temp1 = checkMissingElementName(settings.practiceCategory1, 'First Pratice Category', error_msg);
-            temp2 = checkMissingElementName(settings.practiceCategory2, 'Second Pratice Category', error_msg);
+            temp1 = checkMissingElementName(settings.practiceCategory1, 'First Practice Category', error_msg);
+            temp2 = checkMissingElementName(settings.practiceCategory2, 'Second Practice Category', error_msg);
         }
         settings.categories.map(function(category, index){
             var temp = checkMissingElementName(category, category_headlines[index]+' Category', error_msg);
@@ -20251,7 +20249,7 @@
     };
 
     function view$b(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$b(settings) {
@@ -20391,9 +20389,9 @@
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'BIAT'}
     };
 
-    var biat = function (args, external) { return m.component(biatComponent$1, args, external); };
+    var biat = function (args, external) { return m.component(biatComponent, args, external); };
 
-    var biatComponent$1 = {
+    var biatComponent = {
         controller: controller$a,
         view: view$a
     };
@@ -20491,12 +20489,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container-fluid.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
-                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',[
             pageHeadLine('BIAT'),
+            m.component(messages),
             m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         ]);
     }
@@ -20622,7 +20621,7 @@
 
     function toScript$2(output, external){
         var textForInternal = '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
-        var script = "define(['pipAPI' ,'" + ('https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js') + "'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(" + (JSON.stringify(output,null,4)) + ")});";
+        var script = "define(['pipAPI' ,'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(" + (JSON.stringify(output,null,4)) + ")});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
@@ -20663,7 +20662,7 @@
     };
 
     function view$8(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$8(settings){
@@ -20866,12 +20865,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('SPF'),
+            m.component(messages),
             m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
@@ -21091,10 +21091,10 @@
 
         var count = 0;
         var temp_err_msg = [];
-        currBlocks.forEach(function(element, index){ //remove those parameters for the comparsion
+        currBlocks.forEach(function(element, index){ //remove those parameters for the comparison
             delete element.block;
             if(JSON.stringify(element) === JSON.stringify(clearBlock)){
-                temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skiping this block');
+                temp_err_msg.push('All block #'+(index+1)+' parameters equals to 0, that will result in skipping this block');
                 count++;
             }
         });
@@ -21119,12 +21119,12 @@
     function controller$5(settings, defaultSettings, rows){
         var blocks = settings.trialsByBlock;
         var chooseFlag = m.prop(false);
-        var choosenBlocksList = m.prop([]);
+        var chosenBlocksList = m.prop([]);
         var chooseClicked = m.prop(false);
         var clearBlock = rows.slice(-1)[0];
         
         return {showReset: showReset, showClear: showClear, set: set, get: get, blocks: blocks, getParameters: getParameters, setParameters: setParameters, unChooseCategories: unChooseCategories,
-            chooseFlag: chooseFlag, addBlock: addBlock, showRemoveBlocks: showRemoveBlocks, choosenBlocksList: choosenBlocksList, updateChoosenBlocks: updateChoosenBlocks, chooseBlocks: chooseBlocks, rows: rows};
+            chooseFlag: chooseFlag, addBlock: addBlock, showRemoveBlocks: showRemoveBlocks, chosenBlocksList: chosenBlocksList, updateChosenBlocks: updateChosenBlocks, chooseBlocks: chooseBlocks, rows: rows};
 
         function beforeClearReset(action, func){
             var msg_text = {
@@ -21146,12 +21146,12 @@
             beforeClearReset('reset', reset);
             function reset(){
                 Object.assign(blocks, clone(defaultSettings.trialsByBlock));
-                if(blocks.length>5){
-                    blocks.length=5;
+                if(blocks.length > 5){
+                    blocks.length = 5;
                 }
                 settings.switchSideBlock = defaultSettings.switchSideBlock;
                 settings.blockOrder = defaultSettings.blockOrder;
-                choosenBlocksList().length = 0;
+                chosenBlocksList().length = 0;
             }
         }
         function showClear(){
@@ -21181,26 +21181,26 @@
         }
         function unChooseCategories(){
             chooseFlag(false);
-            choosenBlocksList().length = 0;
+            chosenBlocksList().length = 0;
         }
-        function updateChoosenBlocks(e, index){
-            if (choosenBlocksList().includes(index) && !e.target.checked){
-                var i = choosenBlocksList().indexOf(index);
+        function updateChosenBlocks(e, index){
+            if (chosenBlocksList().includes(index) && !e.target.checked){
+                var i = chosenBlocksList().indexOf(index);
                 if (i !== -1) {
-                    choosenBlocksList().splice(i, 1);
+                    chosenBlocksList().splice(i, 1);
                 }
                 return;
             } 
-            if (e.target.checked) choosenBlocksList().push(index);
+            if (e.target.checked) chosenBlocksList().push(index);
         }
         function chooseBlocks(){
             if (blocks.length < 4) {
-                showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Choosen Blocks');
+                showRestrictions('error','It\'s not possible to remove blocks because there must be at least 3 blocks.', 'Error in Removing Chosen Blocks');
                 return;
             }
             chooseFlag(true);
             if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
-                showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.', 'Choose Blocks to Remove');
+                showRestrictions('info', 'To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Chosen Blocks\' button.', 'Choose Blocks to Remove');
                 chooseClicked(true);
             }
         }
@@ -21209,8 +21209,8 @@
             blocks.slice(-1)[0]['block'] = blocks.length;
         }
         function showRemoveBlocks(){
-            if ((blocks.length - choosenBlocksList().length) < 3){
-                showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Choosen Blocks');
+            if ((blocks.length - chosenBlocksList().length) < 3){
+                showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Chosen Blocks');
                 return;
             }
             return messages.confirm({header: 'Are you sure?', content:
@@ -21221,21 +21221,21 @@
                         m.redraw();
                     }
                     else {
-                        choosenBlocksList().length = 0;
+                        chosenBlocksList().length = 0;
                         chooseFlag(false);
                         m.redraw();
                     }
                 }).catch(function (error) {showRestrictions('error', 'Something went wrong on the page!\n'+error, 'Oops!');})
                 .then(m.redraw());
             function removeBlocks(){
-                choosenBlocksList().sort();
-                for (var i = choosenBlocksList().length - 1; i >=0; i--)
-                    blocks.splice(choosenBlocksList()[i],1);
+                chosenBlocksList().sort();
+                for (var i = chosenBlocksList().length - 1; i >=0; i--)
+                    blocks.splice(chosenBlocksList()[i],1);
                 
                 for (var i$1 = 0; i$1 < blocks.length; i$1++) 
                     blocks[i$1]['block'] = i$1+1;
                 
-                choosenBlocksList().length = 0;
+                chosenBlocksList().length = 0;
                 chooseFlag(true);
             }
         }
@@ -21251,12 +21251,14 @@
                             title:row.desc
                         })
                     ]),
-                    m('.col-md-2',
                         row.options ?
-                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
-                                row.options.map(function(option){return m('option', option);})])
-                            : m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
-                    )
+                            m('.col-md-2',
+                                m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                    row.options.map(function(option){return m('option', option);})])
+                                )
+                            : m('.col-md-2.col-lg-1',
+                                m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                                )
                 ]);
             }),
             ctrl.blocks.map(function(block) {
@@ -21264,7 +21266,7 @@
                 return m('.row.line', [
                     m('.col-md-3',[
                         !ctrl.chooseFlag() ? ' ' :
-                            m('input[type=checkbox]', {checked : ctrl.choosenBlocksList().includes(index), onclick: function (e) { return ctrl.updateChoosenBlocks(e, index); }}),
+                            m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: function (e) { return ctrl.updateChosenBlocks(e, index); }}),
                         m('span', [' ','Block '+parseInt(index+1), ' ']),
                         index !== 0 ? ' ' :
                             m('i.fa.fa-info-circle.text-muted', {
@@ -21276,17 +21278,17 @@
                     m('.col-md-9',[
                         ctrl.rows.slice(2,-1).map(function(row) {
                             return m('.row.space', [
-                                m('.col-sm-4.space',[
+                                m('.col-md-5.space',[
                                     m('span', [' ', row.label, ' ']),
                                     m('i.fa.fa-info-circle.text-muted',{
                                         title:row.desc
                                     }),
                                 ]),
                                 row.name === 'instHTML' ?
-                                    m('.col-md-4', [
-                                        m('textarea.form-control',{rows:4, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
+                                    m('.col-md-5', [
+                                        m('textarea.form-control',{rows:5, oninput: m.withAttr('value', ctrl.set(row.name, index, 'text')), value: ctrl.get(row.name, index)})
                                     ]) :
-                                    m('.col-md-2',
+                                    m('.col-md-3.col-lg-2',
                                         m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, index,'number')), value: ctrl.get(row.name, index), min:0})
                                     )
                             ]);
@@ -21294,7 +21296,7 @@
                     ])
                 ]);
             }),
-            m('.row.space.centrify',
+            m('.row.space',
                 m('.col-sm-8',
                     m('.btn-group btn-group-toggle', [
                         ctrl.blocks.length > 29 ? '' : //limit number of blocks to 30
@@ -21305,8 +21307,8 @@
                                 m('i.fa.fa-check'), ' Choose Blocks to Remove')
                             : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
                                 m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
-                        !ctrl.choosenBlocksList().length ? '' :
-                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.choosenBlocksList().length},
+                        !ctrl.chosenBlocksList().length ? '' :
+                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.chosenBlocksList().length},
                                 m('i.fa.fa-minus-square'), ' Remove Chosen Blocks')
                     ])
                 )
@@ -21320,7 +21322,7 @@
     };
 
     function view$4(ctrl){
-        return viewImport(ctrl)
+        return viewImport(ctrl);
     }
 
     function controller$4(settings) {
@@ -21401,7 +21403,7 @@
     var blocksDesc$1 = [
         {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'], desc: 'Change to \'startRight\' if you want the first block to show the single category on the right in the first block, \'startLeft\' if you want it to appear on the left side. If you choose \'random\', the program will randomly choose a side for each participant. The first attribute in the Attributes page appears on the left and the second attribute appears on the right. \n'},
         {name: 'switchSideBlock', label: 'Switch Side Block ', desc: 'By default, we switch on block 4 (i.e., after blocks 2 and 3 showed the first pairing condition).'},
-        {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a deafault template.'},
+        {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a default template.'},
         {name: 'miniBlocks', label:'Number of mini-blocks', desc: 'Higher number reduces repetition of same group/response. Set to 1 if you don\'t need mini blocks. 0 will break the task.'},
         {name: 'singleAttTrials', label:'Number of single attribute trials', desc: 'Number of trials of the attribute that does not share key with the category (in a mini block).'},
         {name: 'sharedAttTrials', label:'Number of shared key attribute trials', desc: 'Number of trials of the attribute that shares key with the category (in a mini block).'},
@@ -21543,12 +21545,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('STIAT'),
+            m.component(messages),
             m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
 
@@ -21705,14 +21708,12 @@
     }
 
     function validityCheck(error_msg, settings){
-        var containsImage = false;
-
         var temp1 = checkPrime(settings.prime1, 'First Prime Category', error_msg);
         var temp2 = checkPrime(settings.prime2, 'Second Prime Category', error_msg);
         var temp3 = checkMissingElementName(settings.rightAttTargets, 'First Target Category', error_msg);
         var temp4 = checkMissingElementName(settings.leftAttTargets, 'Second Target Category', error_msg);
 
-        containsImage = temp1 || temp2 || temp3 || temp4;
+        var containsImage = temp1 || temp2 || temp3 || temp4;
 
         if(settings.parameters.base_url.image.length === 0 && containsImage)
             error_msg.push('Image\'s url is missing and there is an image in the study');
@@ -21852,7 +21853,7 @@
 
     var parametersDesc = [
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this Evaluative Priming task to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'}, 'this blog post '),'to see how.']},
-        {name: 'separateStimulusSelection', label: 'Seperate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
+        {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
                 '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
                 'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
         {name: 'primeDuration', label: 'Prime Duration'},
@@ -21928,9 +21929,9 @@
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
     };
 
-    var ep = function (args, external) { return m.component(biatComponent, args, external); };
+    var ep = function (args, external) { return m.component(epComponent, args, external); };
 
-    var biatComponent = {
+    var epComponent = {
         controller: controller,
         view: view
     };
@@ -22002,8 +22003,8 @@
             var studyId  =  m.route.param('studyId');
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
-            save('biat', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('biat', studyId, jsFileId, toString(ctrl.settings, ctrl.external)); })
+            save('ep', studyId, fileId, ctrl.settings)
+                .then (function () { return saveToJS('ep', studyId, jsFileId, toString(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("EP Script successfully saved"); })
                 .then(m.redraw)
@@ -22023,12 +22024,13 @@
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
-                : m('.container.space',
+                : m('.wizard.container-fluid.space',
                     m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
-                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save))
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container',
+        return m('.container-fluid',
             pageHeadLine('Evaluative Priming'),
+            m.component(messages),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }

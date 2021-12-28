@@ -182,7 +182,7 @@ function view(ctrl) {
             ])
         ]),
         m('.row',
-            m('.col.space',
+            m('.col-md-6.space',
                 m('.btn-group-vertical',[
                     m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick: () => ctrl.removeChosenStimuli()},'Remove Chosen Stimuli'),
                     m('button.btn btn btn-warning', {onclick: () => ctrl.removeAllStimuli()},'Remove All Stimuli'),

@@ -21,9 +21,7 @@ export function resetClearButtons(reset, clear, curr_tab = null, isBiat = false)
 }
 
 export function pageHeadLine(task){
-    return m('.row',[
-        m('.col-sm-11', m('h1.display-4', 'Create my '+task+' script'))
-    ]);
+    return m('h1.display-4', 'Create my '+task+' script')
 }
 
 export function checkMissingElementName(element, name_to_display, error_msg){
@@ -43,7 +41,7 @@ export function checkMissingElementName(element, name_to_display, error_msg){
     }
     let stimulusMedia = element.stimulusMedia;
 
-    //if there an empty stimulli list
+    //if there an empty stimuli list
     if (stimulusMedia.length === 0)
         error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -65,7 +63,7 @@ export function checkPrime(element, name_to_display, error_msg){
 
     let mediaArray = element.mediaArray;
 
-    //if there an empty stimulli list
+    //if there an empty stimuli list
     if (mediaArray.length === 0)
         error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
 
@@ -93,7 +91,8 @@ export function showClearOrReset(element, value, action){
 }
 
 export function showRestrictions(type, text, title = ''){
-    if(type === 'error') messages.alert({header: title , content: m('p.alert.alert-danger', text)});
+    if(type === 'error')
+        messages.alert({header: title , content: m('p.alert.alert-danger', text)});
     if(type === 'info') messages.alert({header: title , content: m('p.alert.alert-info', text)});
 }
 

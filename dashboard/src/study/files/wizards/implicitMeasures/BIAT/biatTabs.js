@@ -59,7 +59,7 @@ let elementClear = [{
 let attributesTabs = {
     'attribute1': {text: 'First Attribute'},
     'attribute2': {text: 'Second Attribute'}
-}
+};
 
 let practiceTabs = {
     'practiceCategory1':{text: 'First Practice Category'},

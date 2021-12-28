@@ -8,7 +8,7 @@ import helpComponent from '../resources/helpComponent.js';
 
 let parametersDesc = [
     {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this Evaluative Priming task to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'}, 'this blog post '),'to see how.']},
-    {name: 'separateStimulusSelection', label: 'Seperate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
+    {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
             '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
             'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
     {name: 'primeDuration', label: 'Prime Duration'},
