@@ -27,7 +27,7 @@ function view(ctrl, settings){
                 return;
             }
             return m('.row.line', [
-                m('.col-md-3',
+                m('.col-md-4',
                     row.desc ?
                         [
                             m('span', [' ', row.label, ' ']),
@@ -35,18 +35,18 @@ function view(ctrl, settings){
                         ]
                         : m('span', [' ', row.label])
                 ),
-                    row.options ?
-                        m('.col-md-3.col-lg-2',
-                            m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
+                row.options ?
+                    m('.col-md-3.col-lg-2',
+                        m('select.form-control',{value: ctrl.get(row.name), onchange:m.withAttr('value',ctrl.set(row.name))},[
                             row.options.map(function(option){return m('option', option);})
                         ]))
-                        : row.name.includes('random') ?
-                            m('.col-md-3.col-lg-1',
-                                m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
-                            )
-                        : m('.col-md-3.col-lg-1',
+                    : row.name.includes('random') ?
+                        m('.col-md-3.col-lg-1',
+                            m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set(row.name,'checkbox')), checked: ctrl.get(row.name)})
+                        )
+                        : m('.col-md-3.col-lg-2',
                             m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0})
-                            )
+                        )
 
             ]);
         }), resetClearButtons(ctrl.reset, ctrl.clear)

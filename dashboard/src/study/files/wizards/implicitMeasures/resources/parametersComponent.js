@@ -68,7 +68,7 @@ function view(ctrl, settings){
             if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
             if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
             return m('.row.line', [
-                m('.col-md-3',
+                m('.col-md-4',
                     row.desc ?
                         [
                             m('span', [' ', row.label, ' ']),
@@ -77,7 +77,7 @@ function view(ctrl, settings){
                         : m('span', [' ', row.label])
                 ),
                 row.name === ('base_url') ?
-                    m('.col-md-5',
+                    m('.col-md-6',
                         m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
                     : row.name.toLowerCase().includes('key') ? //case of keys parameters
                         m('.col-md-6.col-lg-1',

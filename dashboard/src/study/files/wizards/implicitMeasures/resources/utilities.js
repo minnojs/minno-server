@@ -136,7 +136,7 @@ export function viewImport(ctrl){
                 m('.card-header',m('strong','Upload a JSON file: ')),
                 m('card-body.text-info',[
                     m('.col-sm-12',
-                        m('p.space','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        m('p.space','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.')
                     ),
                     m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
                 ])

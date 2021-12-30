@@ -33,7 +33,7 @@ function view(ctrl){
             if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                 return;
             return m('.row.line',[
-                m('.col-md-3',
+                m('.col-md-4',
                     row.desc ?
                         [
                             m('span', [' ', row.label, ' ']),
@@ -41,7 +41,7 @@ function view(ctrl){
                         ]
                         : m('span', [' ', row.label])
                 ),
-                m('.col-md-9', [
+                m('.col-md-8', [
                     m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                 ])
             ]);

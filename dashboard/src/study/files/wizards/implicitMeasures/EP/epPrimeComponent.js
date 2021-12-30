@@ -85,27 +85,32 @@ function view(ctrl) {
             ])
         ]),
         m('.row',[
-            m('.col-md-12',[
-                m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                    title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                })),
-                m('.h-25.d-inline-block',[
-                    m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
-                    m('.btn-group btn-group-toggle', [
-                        m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Word'
-                        ]),
-                        m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
-                            m('i.fa.fa-plus'), 'Add Image'
-                        ])
-                    ])
-                ])
-            ])
-        ]),
-        m('.row',[
             m('.col-md-6',[
                 m('.row',
-                    m('.col-sm-6',
+                    m('.col-md-6',
+                        m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
+                            title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                        ))
+                ),
+                m('.row',
+                    m('.col-md-7',
+                        m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}
+                        ))
+                ),
+                m('.row',
+                    m('.col-md-9',
+                        m('.btn-group btn-group-toggle', [
+                            m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
+                                m('i.fa.fa-plus'), 'Add Word'
+                            ]),
+                            m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
+                                m('i.fa.fa-plus'), 'Add Image'
+                            ])
+                        ])
+                    )
+                ),
+                m('.row',[
+                    m('.col-md-7',
                         m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
                             ctrl.get('mediaArray').map(function(object){
                                 let value = object.word ? object.word : object.image;
@@ -113,18 +118,19 @@ function view(ctrl) {
                                 return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
                             })
                         ])
-                    )
-                ),
-                m('.row.space',
-                    m('.col-sm-5',
-                        m('.btn-group-vertical',[
-                            m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
-                            m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
-                            m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
-                        ]))
-                )
+                    ),
+                ]),
             ])
-        ])
+        ]),
+
+        m('.row',
+            m('.col-sm-5.space',
+                m('.btn-group-vertical',[
+                    m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+                    m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                    m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                ]))
+        )
     ]);
 }
 
