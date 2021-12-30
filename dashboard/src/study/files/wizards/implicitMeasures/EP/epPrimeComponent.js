@@ -74,13 +74,13 @@ function controller(object, settings, stimuliList){
 function view(ctrl) {
     return m('.space', [
         m('.row.line',[
-            m('.col-md-4',[
+            m('.col-sm-3',[
                 m('span', ctrl.fields.elementType()+' name logged in the data file '),
                 m('i.fa.fa-info-circle.text-muted',{
                     title:'Will appear in the data and in the default feedback message.'
                 }),
             ]),
-            m('.col-md-4', [
+            m('.col-sm-3', [
                 m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
             ])
         ]),
@@ -92,10 +92,10 @@ function view(ctrl) {
                 m('.h-25.d-inline-block',[
                     m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
                     m('.btn-group btn-group-toggle', [
-                        m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                        m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
                             m('i.fa.fa-plus'), 'Add Word'
                         ]),
-                        m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                        m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
                             m('i.fa.fa-plus'), 'Add Image'
                         ])
                     ])

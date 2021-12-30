@@ -131,11 +131,13 @@ export function viewOutput(ctrl, settings, toString){
 
 export function viewImport(ctrl){
     return m('.row.centrify.space',[
-        m('.col-sm-5',
-            m('.card.border-info.mb-3', [
-                m('.card-header','Upload a JSON file: ' ),
+        m('.col-sm-4',
+            m('.card.border-info', [
+                m('.card-header',m('strong','Upload a JSON file: ')),
                 m('card-body.text-info',[
-                    m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                    m('.col-sm-12',
+                        m('p.space','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                    ),
                     m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
                 ])
             ])

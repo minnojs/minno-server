@@ -444,11 +444,13 @@
 
     function viewImport(ctrl){
         return m('.row.centrify.space',[
-            m('.col-sm-5',
-                m('.card.border-info.mb-3', [
-                    m('.card-header','Upload a JSON file: ' ),
+            m('.col-sm-4',
+                m('.card.border-info', [
+                    m('.card-header',m('strong','Upload a JSON file: ')),
                     m('card-body.text-info',[
-                        m('p.space.offset-xs-1','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        m('.col-sm-12',
+                            m('p.space','If you saved a JSON file from a previous session, you can upload that file here to edit the parameters.'),
+                        ),
                         m('input[type=file].form-control',{id:'uploadFile', onchange: ctrl.handleFile})
                     ])
                 ])
@@ -547,7 +549,7 @@
                 if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
-                    m('.col-md-4',
+                    m('.col-md-3',
                         row.desc ?
                             [
                                 m('span', [' ', row.label, ' ']),
@@ -556,10 +558,10 @@
                             : m('span', [' ', row.label])
                     ),
                     row.name === ('base_url') ?
-                        m('.col-md-6',
+                        m('.col-md-5',
                             m('input[type=text].form-control', {value:ctrl.get('base_url','image'), oninput: m.withAttr('value', ctrl.set(row.name, 'image'))}))
                         : row.name.toLowerCase().includes('key') ? //case of keys parameters
-                            m('.col-md-2.col-lg-1',
+                            m('.col-md-6.col-lg-1',
                                 m('input[type=text].form-control',{value:ctrl.get(row.name), oninput:m.withAttr('value', ctrl.set(row.name))}))
                             : (row.name === 'fixationStimulus') ||  (row.name === 'deadlineStimulus' || row.name === 'maskStimulus') ?
                                 editStimulusObject(row.name, ctrl.get, ctrl.set)
@@ -729,7 +731,7 @@
                 if(ctrl.isQualtrics === false && row.name === 'preDebriefingText')
                     return;
                 return m('.row.line',[
-                    m('.col-md-4',
+                    m('.col-md-3',
                         row.desc ?
                             [
                                 m('span', [' ', row.label, ' ']),
@@ -737,7 +739,7 @@
                             ]
                             : m('span', [' ', row.label])
                     ),
-                    m('.col-md-8', [
+                    m('.col-md-9', [
                         m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
                     ])
                 ]);
@@ -1048,36 +1050,49 @@
     function view$6(ctrl) {
         return m('.space', [
             m('.row.line', [
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
                 ]),
-                m('.col-md-4', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
+                m('.col-sm-3', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
             ]),
             m('.row.line', [
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('span', ctrl.fields.elementType()+' name presented in the task '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
                 ]),
-                m('.col-md-4', [
-                    m('input[type=text].form-control',{value: ctrl.get('title'), oninput: m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
-                    m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
-                        ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
-                        ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
-                        m('option', 'word'),
-                        m('option', 'image')
-                    ])
+                m('.col-sm-3', [
+                    m('input[type=text].form-control',{value: ctrl.get('title'), oninput:m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
                 ]),
+                m('.col-sm-3',
+                    m('.row',[
+                        m('.col-sm-6',m('span', 'Category\'s Type:')),
+                        m('.col-sm-5',[
+                            m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
+                                ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
+                                ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
+                                m('option', 'word'),
+                                m('option', 'image')
+                            ])
+                        ])
+                    ])
+                ),
                 !ctrl.fields.titleHidden() ? '' :
-                    m('.col-md-4',[
+                    m('.col-sm-3',[
                         m('.row',[
-                            m('.col-sm-4',[
-                                m('span','Font\'s color: '),
-                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange: m.withAttr('value', ctrl.set('title','css','color'))})
+                            m('.col-sm-5',[
+                                m('span', 'Font\'s color:'),
                             ]),
-                            m('.col-sm-4',[
-                                m('span', 'Font\'s size: '),
-                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('title','css','font-size'))})
+                            m('.col-sm-5',[
+                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                            ])
+                        ]),
+                        m('.row.space',[
+                            m('.col-sm-5',[
+                                m('span', 'Font\'s size:'),
+                            ]),
+                            m('.col-sm-5',[
+                                m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
                             ])
                         ])
                     ])
@@ -1098,10 +1113,10 @@
                     m('.row',
                         m('.col-md-7',
                             m('.btn-group btn-group-toggle', [
-                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
+                                m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
                                     m('i.fa.fa-plus'), 'Add Word'
                                 ]),
-                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
+                                m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
                                     m('i.fa.fa-plus'), 'Add Image'
                                 ])
                             ])
@@ -1120,7 +1135,7 @@
                         ),
                         m('.col-md-6',
                             !ctrl.fields.stimuliHidden() ? '' :
-                                m('.col-md-7',[
+                                m('.col-md-6',[
                                     m('u','Stimuli font\'s design:'),m('br'),
                                     m('label','Font\'s color: '),m('br'),
                                     m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
@@ -1334,37 +1349,48 @@
     function view$5(ctrl) {
         return m('.space', [
             m('.row.line', [
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
                 ]),
-                m('.col-md-4', [
-                    m('input[type=text].form-control',{value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
-                ])
+                m('.col-sm-3', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
             ]),
             m('.row.line', [
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('span', ctrl.fields.elementType()+' name presented in the task '),
                     m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
                 ]),
-                m('.col-md-4', [
+                m('.col-sm-3', [
                     m('input[type=text].form-control',{value: ctrl.get('title'), oninput:m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
-                    m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
-                        ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
-                        ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
-                        m('option', 'word'),
-                        m('option', 'image')
-                    ])
                 ]),
+                m('.col-sm-3',
+                    m('.row',[
+                        m('.col-sm-6',m('span', 'Category\'s Type:')),
+                        m('.col-sm-5',[
+                            m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
+                                ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
+                                ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
+                                m('option', 'word'),
+                                m('option', 'image')
+                            ])
+                        ])
+                    ])
+                ),
                 !ctrl.fields.titleHidden() ? '' :
-                    m('.col-md-4',[
+                    m('.col-sm-3',[
                         m('.row',[
-                            m('.col-sm-4',[
-                                m('span', 'Font\'s color: '),
-                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                            m('.col-sm-5',[
+                                m('span', 'Font\'s color:'),
                             ]),
-                            m('.col-sm-4',[
-                                m('span', 'Font\'s size: '),
+                            m('.col-sm-5',[
+                                m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                            ])
+                        ]),
+                        m('.row.space',[
+                            m('.col-sm-5',[
+                                m('span', 'Font\'s size:'),
+                            ]),
+                            m('.col-sm-5',[
                                 m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
                             ])
                         ])
@@ -1387,10 +1413,10 @@
                     m('.row',
                         m('.col-md-7',[
                             m('.btn-group btn-group-toggle', [
-                                m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                                m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
                                     m('i.fa.fa-plus'), 'Add Word'
                                 ]),
-                                m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                                m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
                                     m('i.fa.fa-plus'), 'Add Image'
                                 ])
                             ])
@@ -1409,7 +1435,7 @@
                         ),
                         m('.col-md-6',
                             !ctrl.fields.stimuliHidden() ? '' :
-                                m('.col-md-7',[
+                                m('.col-md-6',[
                                     m('u','Stimuli font\'s design:'),m('br'),
                                     m('label','Font\'s color: '),m('br'),
                                     m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange:m.withAttr('value', ctrl.set('stimulusCss','color'))}),
@@ -1433,14 +1459,15 @@
                             m('.col-md-6',
                                 m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStartStimulus(), oninput: m.withAttr('value', ctrl.fields.newStartStimulus)})
                             )
+
                         ),
                         m('.row',
                             m('.col-md-7',
                                 m('.btn-group btn-group-toggle', [
-                                    m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStartStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e,true)},[
+                                    m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStartStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e,true)},[
                                         m('i.fa.fa-plus'), 'Add Word'
                                     ]),
-                                    m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStartStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e,true)},[
+                                    m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStartStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e,true)},[
                                         m('i.fa.fa-plus'), 'Add Image'
                                     ])
                                 ])
@@ -1461,7 +1488,7 @@
                             ),
                             m('.col-md-6',
                                 !ctrl.fields.startStimuliHidden() ? '' :
-                                    m('.col-md-7',[
+                                    m('.col-md-6',[
                                         m('u','Stimuli font\'s design:'),m('br'),
                                         m('label','Font\'s color: '),m('br'),
                                         m('input[type=color].form-control', {value: ctrl.get('title','startStimulus','css','color'), onchange:m.withAttr('value', ctrl.set('title','startStimulus','css','color'))}),
@@ -1566,13 +1593,13 @@
     function view$4(ctrl) {
         return m('.space', [
             m('.row.line',[
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('span', ctrl.fields.elementType()+' name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{
                         title:'Will appear in the data and in the default feedback message.'
                     }),
                 ]),
-                m('.col-md-4', [
+                m('.col-sm-3', [
                     m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
                 ])
             ]),
@@ -1584,10 +1611,10 @@
                     m('.h-25.d-inline-block',[
                         m('input[type=text].form-control', {placeholder:'Enter Stimulus content here', 'aria-label':'Enter Stimulus content', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
                         m('.btn-group btn-group-toggle', [
-                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
+                            m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: ctrl.addStimulus},[
                                 m('i.fa.fa-plus'), 'Add Word'
                             ]),
-                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
+                            m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: ctrl.addStimulus},[
                                 m('i.fa.fa-plus'), 'Add Image'
                             ])
                         ])

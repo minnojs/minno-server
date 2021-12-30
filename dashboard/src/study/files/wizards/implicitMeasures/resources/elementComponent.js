@@ -98,36 +98,49 @@ function controller(object, settings, stimuliList){
 function view(ctrl) {
     return m('.space', [
         m('.row.line', [
-            m('.col-md-4',[
+            m('.col-sm-3',[
                 m('span', ctrl.fields.elementType()+' name logged in the data file '),
                 m('i.fa.fa-info-circle.text-muted',{title:'Will appear in the data and in the default feedback message.'})
             ]),
-            m('.col-md-4', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
+            m('.col-sm-3', m('input[type=text].form-control',{value:ctrl.get('name'), oninput: m.withAttr('value', ctrl.set('name'))})),
         ]),
         m('.row.line', [
-            m('.col-md-4',[
+            m('.col-sm-3',[
                 m('span', ctrl.fields.elementType()+' name presented in the task '),
                 m('i.fa.fa-info-circle.text-muted',{title:'Name of the ' +ctrl.fields.elementType()+' presented in the task'}),
             ]),
-            m('.col-md-4', [
-                m('input[type=text].form-control',{value: ctrl.get('title'), oninput: m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
-                m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
-                    ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
-                    ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
-                    m('option', 'word'),
-                    m('option', 'image')
-                ])
+            m('.col-sm-3', [
+                m('input[type=text].form-control',{value: ctrl.get('title'), oninput:m.withAttr('value', ctrl.set('title', 'media', ctrl.fields.titleType()))}),
             ]),
+            m('.col-sm-3',
+                m('.row',[
+                    m('.col-sm-6',m('span', 'Category\'s Type:')),
+                    m('.col-sm-5',[
+                        m('select.custom-select',{value: ctrl.get('title','media','word') === undefined ? 'image' : 'word', onchange:m.withAttr('value',ctrl.updateTitleType())},[
+                            ctrl.fields.titleType(ctrl.get('title','media','word') === undefined ? 'image' : 'word'),
+                            ctrl.fields.titleHidden(ctrl.fields.titleType() === 'word'),
+                            m('option', 'word'),
+                            m('option', 'image')
+                        ])
+                    ])
+                ])
+            ),
             !ctrl.fields.titleHidden() ? '' :
-                m('.col-md-4',[
+                m('.col-sm-3',[
                     m('.row',[
-                        m('.col-sm-4',[
-                            m('span','Font\'s color: '),
-                            m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange: m.withAttr('value', ctrl.set('title','css','color'))})
+                        m('.col-sm-5',[
+                            m('span', 'Font\'s color:'),
                         ]),
-                        m('.col-sm-4',[
-                            m('span', 'Font\'s size: '),
-                            m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange: m.withAttr('value', ctrl.set('title','css','font-size'))})
+                        m('.col-sm-5',[
+                            m('input[type=color].form-control',{value: ctrl.get('title','css','color'), onchange:m.withAttr('value', ctrl.set('title','css','color'))})
+                        ])
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-5',[
+                            m('span', 'Font\'s size:'),
+                        ]),
+                        m('.col-sm-5',[
+                            m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('title','css','font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('title','css','font-size'))})
                         ])
                     ])
                 ])
@@ -148,10 +161,10 @@ function view(ctrl) {
                 m('.row',
                     m('.col-md-7',
                         m('.btn-group btn-group-toggle', [
-                            m('button[type=button].btn btn-outline-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
+                            m('button[type=button].btn btn-secondary',{disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: (e) => ctrl.addStimulus(e)},[
                                 m('i.fa.fa-plus'), 'Add Word'
                             ]),
-                            m('button[type=button].btn btn-outline-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
+                            m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: (e) => ctrl.addStimulus(e)},[
                                 m('i.fa.fa-plus'), 'Add Image'
                             ])
                         ])
@@ -170,7 +183,7 @@ function view(ctrl) {
                     ),
                     m('.col-md-6',
                         !ctrl.fields.stimuliHidden() ? '' :
-                            m('.col-md-7',[
+                            m('.col-md-6',[
                                 m('u','Stimuli font\'s design:'),m('br'),
                                 m('label','Font\'s color: '),m('br'),
                                 m('input[type=color].form-control', {value: ctrl.get('stimulusCss','color'), onchange: m.withAttr('value', ctrl.set('stimulusCss','color'))}),
