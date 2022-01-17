@@ -4,7 +4,6 @@ let tabsComponent = {
         let subTabs = null;
         let currSubTab = null;
         return {tab, subTabs, currSubTab};
-
     },
     view:
         function(ctrl, tabs, settings, defaultSettings, external = false, notifications,
@@ -16,7 +15,9 @@ let tabsComponent = {
                             Object.keys(tabs).map(function(tab){
                                 if (!external && (tab === 'output' || tab === 'import'))
                                     return;
-                                if (tab === 'practice' && settings.parameters.practiceBlock === false)
+                                if (tab === 'practice' && !settings.parameters.practiceBlock)
+                                    return;
+                                if (tab === 'exampleBlock' && !settings.parameters.exampleBlock)
                                     return;
                                 return m('button.tablinks', {
                                     class: ctrl.tab === tab ? 'active' : '',

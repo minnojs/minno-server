@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2021)
+ * @license Apache-2.0 (2022)
  */
 
 (function () {
@@ -18076,7 +18076,6 @@
             var subTabs = null;
             var currSubTab = null;
             return {tab: tab, subTabs: subTabs, currSubTab: currSubTab};
-
         },
         view:
             function(ctrl, tabs, settings, defaultSettings, external, notifications,
@@ -18090,7 +18089,9 @@
                                 Object.keys(tabs).map(function(tab){
                                     if (!external && (tab === 'output' || tab === 'import'))
                                         return;
-                                    if (tab === 'practice' && settings.parameters.practiceBlock === false)
+                                    if (tab === 'practice' && !settings.parameters.practiceBlock)
+                                        return;
+                                    if (tab === 'exampleBlock' && !settings.parameters.exampleBlock)
                                         return;
                                     return m('button.tablinks', {
                                         class: ctrl.tab === tab ? 'active' : '',
@@ -18138,7 +18139,7 @@
                 ]);}
     };
 
-    function defaultSettings$4(external) {
+    function defaultSettings$5(external) {
         return {
             parameters: {
                 isTouch: false, isQualtrics: false, leftKey: 'E', rightKey: 'I', fullscreen: false, showDebriefing: false,
@@ -18383,11 +18384,11 @@
     }
 
     var parametersComponent$1 = {
-        controller:controller$p,
-        view:view$p
+        controller:controller$u,
+        view:view$u
     };
 
-    function controller$p(settings, defaultSettings, rows) {
+    function controller$u(settings, defaultSettings, rows) {
         var parameters = settings.parameters;
         var external = settings.external;
         var qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
@@ -18443,7 +18444,7 @@
 
     }
 
-    function view$p(ctrl, settings){
+    function view$u(ctrl, settings){
         return m('.space' ,[
             ctrl.rows.slice(0,-1).map(function (row) {
                 if(!ctrl.external && row.name === 'isQualtrics') return;
@@ -18481,14 +18482,14 @@
         ]);
     }
 
-    var iatOutputComponent = {
-        controller: controller$o,
-        view: view$o
+    var iatOutputComponent$1 = {
+        controller: controller$t,
+        view: view$t
     };
 
-    function controller$o(settings, defaultSettings, blocksObject){
+    function controller$t(settings, defaultSettings, blocksObject){
         var error_msg = [];
-        error_msg = validityCheck$4(error_msg, settings, blocksObject);
+        error_msg = validityCheck$5(error_msg, settings, blocksObject);
 
         return {error_msg: error_msg, createFile: createFile, settings: settings};
 
@@ -18497,11 +18498,11 @@
                 var output,textFileAsBlob;
                 var downloadLink = document.createElement('a');
                 if (fileType === 'JS') {
-                    output = toString$4(settings);
+                    output = toString$5(settings);
                     textFileAsBlob = new Blob([output], {type:'text/plain'});
                     downloadLink.download = 'IAT.js'; }
                 else {
-                    output = updateSettings$9(settings);
+                    output = updateSettings$b(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
                     downloadLink.download = 'IAT.json'; }
                 if (window.webkitURL) {downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);}
@@ -18515,7 +18516,7 @@
         }
     }
 
-    function validityCheck$4(error_msg, settings, blocksObject){
+    function validityCheck$5(error_msg, settings, blocksObject){
         var containsImage;
         var temp1 = checkMissingElementName(settings.category1, 'First Category', error_msg);
         var temp2 = checkMissingElementName(settings.category2, 'Second Category', error_msg);
@@ -18545,11 +18546,11 @@
         return error_msg;
     }
 
-    function toString$4(settings, external){
-        return toScript$4(updateSettings$9(settings), external);
+    function toString$5(settings, external){
+        return toScript$5(updateSettings$b(settings), external);
     }
 
-    function updateSettings$9(settings){
+    function updateSettings$b(settings){
         var output={
             category1: settings.category1,
             category2: settings.category2,
@@ -18575,42 +18576,54 @@
         return output;
     }
 
-    function toScript$4(output, external){
+    function toScript$5(output, external){
         var textForInternal = '//Note: This script was created by the IAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
         var script = "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualtrics/quiat10.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/iat9.js') + "'], function(APIConstructor, iatExtension){\n\tvar API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
 
-    function view$o(ctrl,settings){
-        return viewOutput(ctrl, settings, toString$4);
+    function view$t(ctrl,settings){
+        return viewOutput(ctrl, settings, toString$5);
     }
 
     var textComponent = {
-        controller:controller$n,
-        view:view$n
+        controller:controller$s,
+        view:view$s
     };
 
-    function controller$n(settings, defaultSettings, rows){
+    function controller$s(settings, defaultSettings, rows){
         var isTouch = settings.parameters.isTouch;
         var isQualtrics = settings.parameters.isQualtrics;
         var textparameters;
         isTouch ? textparameters = settings.touch_text : textparameters = settings.text;
-        return {reset: reset, clear: clear, set: set, get: get, rows: rows.slice(0,-2), isTouch: isTouch, isQualtrics: isQualtrics};
+        //for AMP
+        var isSeven = settings.parameters.responses;
+        if(isSeven === '7') {
+            textparameters = settings.text_seven;
+            isSeven = true;
+        }
+        else {
+            textparameters = settings.text;
+            isSeven = false;
+        }
+        return {reset: reset, clear: clear, set: set, get: get, rows: rows.slice(0,-2), isTouch: isTouch, isQualtrics: isQualtrics, isSeven: isSeven};
 
         function reset(){
-            var valueToSet = isTouch ? defaultSettings.touch_text : defaultSettings.text;
+            var valueToSet = isTouch ? defaultSettings.touch_text
+                : isSeven ?  defaultSettings.text_seven
+                    : defaultSettings.text;
             showClearOrReset(textparameters, valueToSet, 'reset');
         }
         function clear(){
-            var valueToSet = isTouch ? rows.slice(-1)[0] :  rows.slice(-2)[0];
+            var valueToSet = isTouch || isSeven ? rows.slice(-1)[0] :  rows.slice(-2)[0];
             showClearOrReset(textparameters, valueToSet, 'clear');
         }
         function get(name){return textparameters[name];}
         function set(name){return function(value){return textparameters[name] = value;};}
     }
 
-    function view$n(ctrl){
+    function view$s(ctrl){
         return m('.space' ,[
             ctrl.rows.map(function(row){
                 //if touch parameter is chosen, don't show the irrelevant text parameters
@@ -18628,7 +18641,7 @@
                             : m('span', [' ', row.label])
                     ),
                     m('.col-md-8', [
-                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : ctrl.isSeven? row.nameSeven : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : ctrl.isSeven ? row.nameSeven : row.name))})
                     ])
                 ]);
             }), resetClearButtons(ctrl.reset, ctrl.clear)
@@ -18636,11 +18649,11 @@
     }
 
     var iatBlocksComponent = {
-        controller:controller$m,
-        view:view$m
+        controller:controller$r,
+        view:view$r
     };
 
-    function controller$m(settings, defaultSettings, rows){
+    function controller$r(settings, defaultSettings, rows){
         var blocks = settings.blocks;
         return {reset: reset, clear: clear, set: set, get: get, rows: rows};
 
@@ -18654,7 +18667,7 @@
         }
     }
 
-    function view$m(ctrl){
+    function view$r(ctrl){
         return m('.col-12',[
             m('.row',[
                 m('.col-md-8',
@@ -18705,11 +18718,11 @@
     }
 
     var elementComponent$2 = {
-        controller:controller$l,
-        view:view$l,
+        controller:controller$q,
+        view:view$q,
     };
 
-    function controller$l(object, settings, stimuliList){
+    function controller$q(object, settings, stimuliList){
         var element = settings[object.key];
         var fields = {
             newStimulus : m.prop(''),
@@ -18799,7 +18812,7 @@
         function resetStimuliList() {element.stimulusMedia = clone(stimuliList);}
     }
 
-    function view$l(ctrl) {
+    function view$q(ctrl) {
         return m('.space', [
             m('.row.line', [
                 m('.col-sm-3',[
@@ -18925,11 +18938,11 @@
     }
 
     var elementComponent$1 = {
-        controller: controller$k,
-        view: view$k,
+        controller: controller$p,
+        view: view$p,
     };
 
-    function controller$k(object, settings,stimuliList, startStimulusList ,index){
+    function controller$p(object, settings,stimuliList, startStimulusList ,index){
         var element = settings[object.key];
         if (Array.isArray(element)) element = element[index]; //in case of 'categories' in BIAT
         var fields = {
@@ -19120,7 +19133,7 @@
         }
     }
 
-    function view$k(ctrl) {
+    function view$p(ctrl) {
         return m('.space', [
             m('.row.line', [
                 m('.col-sm-3',[
@@ -19320,11 +19333,11 @@
     }
 
     var elementComponent = {
-        controller:controller$j,
-        view:view$j,
+        controller:controller$o,
+        view:view$o,
     };
 
-    function controller$j(object, settings, stimuliList){
+    function controller$o(object, settings, stimuliList){
         var element = settings[object.key];
         var fields = {
             newStimulus : m.prop(''),
@@ -19390,7 +19403,7 @@
         function resetStimuliList(){element.mediaArray = clone(stimuliList);}
     }
 
-    function view$j(ctrl) {
+    function view$o(ctrl) {
         return m('.space', [
             m('.row.line',[
                 m('.col-sm-3',[
@@ -19454,11 +19467,11 @@
     }
 
     var parametersComponent = {
-        controller:controller$i,
-        view:view$i
+        controller:controller$n,
+        view:view$n
     };
 
-    function controller$i(settings){
+    function controller$n(settings){
         var primeCss = settings.primeStimulusCSS;
         return {set: set, get: get};
 
@@ -19481,7 +19494,7 @@
         }
     }
 
-    function view$i(ctrl){
+    function view$n(ctrl){
         return m('.row' , [
             m('.col-sm-12',[
                 m('.row.space',[
@@ -19499,11 +19512,11 @@
     }
 
     var categoriesComponent$1 = {
-        controller:controller$h,
-        view:view$h
+        controller:controller$m,
+        view:view$m
     };
 
-    function controller$h(settings, defaultSettings, clearElement){
+    function controller$m(settings, defaultSettings, clearElement){
 
         return {reset: reset, clear: clear};
 
@@ -19514,7 +19527,7 @@
         }
     }
 
-    function view$h(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
+    function view$m(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
         return m('div', [
             taskType === 'BIAT' ?
                 m.component(elementComponent$1,{key:currTab}, settings,
@@ -19530,16 +19543,16 @@
     }
 
     var iatImportComponent = {
-        controller:controller$g,
-        view:view$g
+        controller:controller$l,
+        view:view$l
     };
 
-    function view$g(ctrl){
+    function view$l(ctrl){
         return viewImport(ctrl);
     }
 
-    function controller$g(settings) {
-        return {handleFile: handleFile, updateSettings: updateSettings$8};
+    function controller$l(settings) {
+        return {handleFile: handleFile, updateSettings: updateSettings$a};
 
         function handleFile(){
             var importedFile = document.getElementById('uploadFile').files[0];
@@ -19547,11 +19560,11 @@
             reader.readAsText(importedFile); 
             reader.onload = function() {
                 var fileContent = JSON.parse(reader.result);
-                settings = updateSettings$8(settings, fileContent);
+                settings = updateSettings$a(settings, fileContent);
             };
         }
     }
-    function updateSettings$8(settings, input) {
+    function updateSettings$a(settings, input) {
         settings.category1 = input.category1;
         settings.category2 = input.category2;
         settings.attribute1 = input.attribute1;
@@ -19639,7 +19652,7 @@
     				]));}
     };
 
-    var parametersDesc$4 = [
+    var parametersDesc$5 = [
         {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'Minno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
         {name: 'leftKey', label: 'Left Key'},
@@ -19652,7 +19665,7 @@
         {isTouch:false, isQualtrics:false, leftKey:'', rightKey:'' ,fullscreen:false, showDebriefing:false, remindError:false, errorCorrection:false, base_url:{image:''}}
     ];
 
-    var textDesc$4=[
+    var textDesc$5=[
         {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch', label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error. Replace this text if you do not require participants to correct their error responses (see General Parameters page).'},
         {name: 'leftKeyText', label:'Top-left text (about the left key)', desc: 'We use this text to remind participants what key to use for a left response.'},
         {name: 'rightKeyText', label:'Top-right text (about the right key)', desc: 'We use this text to remind participants what key to use for a right response.'},
@@ -19669,7 +19682,7 @@
             instFirstCombinedTouch:'', instSecondCombinedTouch:'', instSwitchCategoriesTouch:'',preDebriefingTouchText:''}
     ];
 
-    var blocksDesc$4 = [
+    var blocksDesc$5 = [
         {label:'Block #1', numTrialBlocks:'blockCategories_nTrials', numMiniBlocks: 'blockCategories_nMiniBlocks', desc:'Will present the categories.'},
         {label:'Block #2', numTrialBlocks:'blockAttributes_nTrials', numMiniBlocks: 'blockAttributes_nMiniBlocks', desc:'Will present the attributes.'},
         {label:'Blocks #3 and #6', numTrialBlocks:'blockFirstCombined_nTrials', numMiniBlocks: 'blockFirstCombined_nMiniBlocks', desc:'The first combined block.'},
@@ -19700,9 +19713,9 @@
         'attribute2':{text: 'Second Attribute'}
     };
 
-    var tabs$4 = {
-        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$4},
-        'blocks': {text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc$4},
+    var tabs$5 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$5},
+        'blocks': {text: 'Blocks', component: iatBlocksComponent, rowsDesc: blocksDesc$5},
         'categories': {
             text: 'Categories',
             component: categoriesComponent$1,
@@ -19715,8 +19728,8 @@
             rowsDesc: categoryClear$3,
             subTabs: attributesTabs$3
         },
-        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$4},
-        'output': {text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc$4},
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$5},
+        'output': {text: 'Complete', component: iatOutputComponent$1, rowsDesc: blocksDesc$5},
         'import': {text: 'Import', component: iatImportComponent},
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'IAT'}
     };
@@ -19738,11 +19751,11 @@
     var iat = function (args, external) { return m.component(iatComponent, args, external); };
 
     var iatComponent = {
-        controller: controller$f,
-        view: view$f
+        controller: controller$k,
+        view: view$k
     };
 
-    function controller$f(ref, external){
+    function controller$k(ref, external){
         var file = ref.file;
         var study = ref.study;
         if ( external === void 0 ) external = false;
@@ -19753,8 +19766,8 @@
             err : m.prop([]),
             loaded : m.prop(false),
             notifications : createNotifications(),
-            defaultSettings : clone(defaultSettings$4(external)),
-            settings : clone(defaultSettings$4(external)),
+            defaultSettings : clone(defaultSettings$5(external)),
+            settings : clone(defaultSettings$5(external)),
             external: external,
             is_locked:m.prop(study ? study.is_locked : null),
             show_do_save: show_do_save,
@@ -19778,8 +19791,8 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$4.blocks.rowsDesc; //blockDesc inside output attribute
-            error_msg = validityCheck$4(error_msg, ctrl.settings, blocksObject);
+            var blocksObject = tabs$5.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck$5(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -19810,7 +19823,7 @@
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
             save('iat', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('iat', studyId, jsFileId, toString$4(ctrl.settings, ctrl.external)); })
+                .then (function () { return saveToJS('iat', studyId, jsFileId, toString$5(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("IAT Script successfully saved"); })
                 .then(m.redraw)
@@ -19826,22 +19839,22 @@
         external ? null : load();
         return ctrl;
     }
-    function view$f(ctrl){
+    function view$k(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
                 : m('.wizard.container-fluid.space',
-                    m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                    m.component(tabsComponent, tabs$5, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',
             pageHeadLine('IAT'),
             m.component(messages),
-            m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            m.component(tabsComponent, tabs$5, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
 
-    function defaultSettings$3(external){
+    function defaultSettings$4(external){
         return {
             parameters : {isTouch:false, isQualtrics:false, practiceBlock:true,
                 showStimuliWithInst:true, remindError:true,
@@ -20019,12 +20032,12 @@
         };
     }
 
-    var blocksComponent$1 = {
-        controller:controller$e,
-        view:view$e
+    var blocksComponent$2 = {
+        controller:controller$j,
+        view:view$j
     };
 
-    function controller$e(settings, defaultSettings, rows){
+    function controller$j(settings, defaultSettings, rows){
         var blocks = settings.blocks;
         return {set: set, get: get, rows:rows.slice(0,-1), reset: reset, clear: clear};
 
@@ -20036,7 +20049,7 @@
             return function(value){return blocks[name] = value;};
         }
     }
-    function view$e(ctrl, settings){
+    function view$j(ctrl, settings){
         return m('.space' , [
             //create numbers inputs
             ctrl.rows.map(function(row){
@@ -20073,11 +20086,11 @@
     }
 
     var categoriesComponent = {
-        controller:controller$d,
-        view:view$d
+        controller:controller$i,
+        view:view$i
     };
 
-    function controller$d(settings, defaultSettings, clearElement){
+    function controller$i(settings, defaultSettings, clearElement){
         var categories = settings.categories;
         categories.forEach(function (element) { //adding a random key for each category
             element.key = Math.random();
@@ -20165,7 +20178,7 @@
         }
     }
 
-    function view$d(ctrl,settings) {
+    function view$i(ctrl,settings) {
         return m('.space',[
             m('.row',[
                 m('.col-md-12',
@@ -20205,13 +20218,13 @@
     }
 
     var outputComponent$3 = {
-        controller: controller$c,
-        view:view$c
+        controller: controller$h,
+        view:view$h
     };
 
-    function controller$c(settings, defaultSettings, blocksObject){
+    function controller$h(settings, defaultSettings, blocksObject){
         var error_msg = [];
-        error_msg = validityCheck$3(error_msg, settings, blocksObject);
+        error_msg = validityCheck$4(error_msg, settings, blocksObject);
 
         return {createFile: createFile, error_msg: error_msg};
 
@@ -20220,12 +20233,12 @@
                 var output,textFileAsBlob;
                 var downloadLink = document.createElement('a');
                 if (type === 'JS'){
-                    output = toString$3(settings);
+                    output = toString$4(settings);
                     textFileAsBlob = new Blob([output], {type:'text/plain'});
                     downloadLink.download = 'BIAT.js';
                 }
                 else {
-                    output = updateSettings$7(settings);
+                    output = updateSettings$9(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
                     downloadLink.download = 'BIAT.json';
                 }
@@ -20240,7 +20253,7 @@
         }
 
     }
-    function validityCheck$3(error_msg, settings, blocksObject){
+    function validityCheck$4(error_msg, settings, blocksObject){
         var category_headlines = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth'];
 
         var temp1,temp2,temp3 = false;
@@ -20280,11 +20293,11 @@
         return settings;
     }
 
-    function toString$3(settings, external){
-        return toScript$3(updateSettings$7(settings), external);
+    function toString$4(settings, external){
+        return toScript$4(updateSettings$9(settings), external);
     }
 
-    function updateSettings$7(settings){
+    function updateSettings$9(settings){
         // remove added keys and put in a temp var to keep keys on original settings
         var temp_settings = clone(settings);
         temp_settings = removeIndexFromCategories(temp_settings);
@@ -20309,28 +20322,28 @@
         return output;
     }
 
-    function toScript$3(output, external){
+    function toScript$4(output, external){
         var textForInternal = '//Note: This script was created by the BIAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
         var script = "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/qualtrics/qbiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/BIAT/biat6.js') + "'], function(APIConstructor, iatExtension){\n\tvar API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
 
-    function view$c(ctrl, settings){
-        return viewOutput(ctrl, settings, toString$3);
+    function view$h(ctrl, settings){
+        return viewOutput(ctrl, settings, toString$4);
     }
 
-    var importComponent$3 = {
-        controller:controller$b,
-        view:view$b
+    var importComponent$4 = {
+        controller:controller$g,
+        view:view$g
     };
 
-    function view$b(ctrl){
+    function view$g(ctrl){
         return viewImport(ctrl);
     }
 
-    function controller$b(settings) {
-        return {handleFile: handleFile, updateSettings: updateSettings$6};
+    function controller$g(settings) {
+        return {handleFile: handleFile, updateSettings: updateSettings$8};
 
         function handleFile(){
             var importedFile = document.getElementById('uploadFile').files[0];
@@ -20338,11 +20351,11 @@
             reader.readAsText(importedFile);
             reader.onload = function(){
                 var fileContent = JSON.parse(reader.result);
-                settings = updateSettings$6(settings, fileContent);
+                settings = updateSettings$8(settings, fileContent);
             };
         }
     }
-    function updateSettings$6(settings, input) {
+    function updateSettings$8(settings, input) {
         if(input.practiceBlock) {
             settings.practiceCategory1 = input.practiceCategory1;
             settings.practiceCategory2 = input.practiceCategory2;
@@ -20383,7 +20396,7 @@
         return settings;
     }
 
-    var parametersDesc$3 = [
+    var parametersDesc$4 = [
         {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'Minno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
         {name: 'isQualtrics', options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this BIAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-biat/'}, 'this blog post '),'to see how.']},
         {name: 'practiceBlock', label: 'Practice Block', desc: 'Should the task start with a practice block?'},
@@ -20393,7 +20406,7 @@
         {istouch:false, isQualtrics:false, practiceBlock:false, showStimuliWithInst:false, remindError:false, base_url:{image:''}}
     ];
 
-    var blocksDesc$3 = [
+    var blocksDesc$4 = [
         {name: 'nMiniBlocks', label: 'Mini Blocks', desc: 'Each block can be separated to a number of mini-blocks, to reduce repetition of the same response in consecutive trials. The default, 1, means that we don\'t actually use mini blocks.'},
         {name: 'nTrialsPerMiniBlock', label: 'Trials in Mini Blocks', desc: '50% on the right, 50% left, 50% attributes, 50% categories.'},
         {name: 'nPracticeBlockTrials', label: 'Trials in Practice Block', desc:'Should be at least 8 trials'},
@@ -20405,7 +20418,7 @@
             focalAttribute: 'attribute1', firstFocalAttribute : 'random', focalCategoryOrder: 'random'}
     ];
 
-    var textDesc$3 = [
+    var textDesc$4 = [
         {name: 'instTemplate', nameTouch: 'instTemplateTouch',label:'Instructions'},
         {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch' , label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error. Replace this text if you do not require participants to correct their error responses (see General Parameters page).'},
         {name: 'leftKeyText', nameTouch:'leftKeyTextTouch',label:'Top-left text (about the left key)', desc: 'We use this text to remind participants what key to use for a left response.'},
@@ -20442,9 +20455,9 @@
         'practiceCategory2':{text: 'Second Practice Category'}
     };
 
-    var tabs$3 = {
-        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$3},
-        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$3},
+    var tabs$4 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$4},
+        'blocks': {text: 'Blocks', component: blocksComponent$2, rowsDesc: blocksDesc$4},
         'practice': {
             text: 'Practice Block',
             component: categoriesComponent$1,
@@ -20460,20 +20473,20 @@
             subTabs: attributesTabs$2,
             type: 'BIAT'
         },
-        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$3},
-        'output': {text: 'Complete', component: outputComponent$3, rowsDesc: blocksDesc$3},
-        'import': {text: 'Import', component: importComponent$3},
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$4},
+        'output': {text: 'Complete', component: outputComponent$3, rowsDesc: blocksDesc$4},
+        'import': {text: 'Import', component: importComponent$4},
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'BIAT'}
     };
 
     var biat = function (args, external) { return m.component(biatComponent, args, external); };
 
     var biatComponent = {
-        controller: controller$a,
-        view: view$a
+        controller: controller$f,
+        view: view$f
     };
 
-    function controller$a(ref, external){
+    function controller$f(ref, external){
         var file = ref.file;
         var study = ref.study;
         if ( external === void 0 ) external = false;
@@ -20484,8 +20497,8 @@
             err : m.prop([]),
             loaded : m.prop(false),
             notifications : createNotifications(),
-            defaultSettings : clone(defaultSettings$3(external)),
-            settings : clone(defaultSettings$3(external)),
+            defaultSettings : clone(defaultSettings$4(external)),
+            settings : clone(defaultSettings$4(external)),
             external: external,
             is_locked:m.prop(study ? study.is_locked : null),
             show_do_save: show_do_save,
@@ -20509,8 +20522,8 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$3.blocks.rowsDesc; //blockDesc inside output attribute
-            error_msg = validityCheck$3(error_msg, ctrl.settings, blocksObject);
+            var blocksObject = tabs$4.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck$4(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -20542,7 +20555,7 @@
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
             save('biat', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('biat', studyId, jsFileId, toString$3(ctrl.settings, ctrl.external)); })
+                .then (function () { return saveToJS('biat', studyId, jsFileId, toString$4(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("BIAT Script successfully saved"); })
                 .then(m.redraw)
@@ -20562,22 +20575,22 @@
         external ? null : load();
         return ctrl;
     }
-    function view$a(ctrl){
+    function view$f(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
                 : m('.wizard.container-fluid.space',
-                    m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                    m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',[
             pageHeadLine('BIAT'),
             m.component(messages),
-            m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            m.component(tabsComponent, tabs$4, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         ]);
     }
 
-    function defaultSettings$2(external) {
+    function defaultSettings$3(external) {
 
         return {
             parameters: {
@@ -20645,14 +20658,14 @@
     }
 
     var outputComponent$2 = {
-        controller: controller$9,
-        view:view$9
+        controller: controller$e,
+        view:view$e
     };
 
-    function controller$9(settings, defaultSettings, blocksObject){
+    function controller$e(settings, defaultSettings, blocksObject){
         var error_msg = [];
 
-        error_msg = validityCheck$2(error_msg, settings, blocksObject);
+        error_msg = validityCheck$3(error_msg, settings, blocksObject);
 
         return {createFile: createFile, error_msg: error_msg};
 
@@ -20661,11 +20674,11 @@
                 var output,textFileAsBlob;
                 var downloadLink = document.createElement('a');
                 if (fileType === 'JS') {
-                    output = toString$2(settings);
+                    output = toString$3(settings);
                     textFileAsBlob = new Blob([output], {type:'text/plain'});
                     downloadLink.download = 'SPF.js'; }
                 else {
-                    output = updateSettings$5(settings);
+                    output = updateSettings$7(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
                     downloadLink.download = 'SPF.json'; }
                 if (window.webkitURL != null) {downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);}
@@ -20679,7 +20692,7 @@
         }
     }
 
-    function updateSettings$5(settings){
+    function updateSettings$7(settings){
         var output={
             objectCat1: settings.objectCat1,
             objectCat2: settings.objectCat2,
@@ -20692,18 +20705,18 @@
         return output;
     }
 
-    function toString$2(settings, external){
-        return toScript$2(updateSettings$5(settings), external);
+    function toString$3(settings, external){
+        return toScript$3(updateSettings$7(settings), external);
     }
 
-    function toScript$2(output, external){
+    function toScript$3(output, external){
         var textForInternal = '//Note: This script was created by the SPF wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
         var script = "define(['pipAPI' ,'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/spf/spf4.js'], function(APIConstructor, spfExtension){\n\tvar API = new APIConstructor(); return spfExtension(" + (JSON.stringify(output,null,4)) + ")});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
 
-    function validityCheck$2(error_msg, settings, blocksObject){
+    function validityCheck$3(error_msg, settings, blocksObject){
         var temp1 = checkMissingElementName(settings.objectCat1, 'First Category', error_msg);
         var temp2 = checkMissingElementName(settings.objectCat2, 'Second Category', error_msg);
         var temp3 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg);
@@ -20729,22 +20742,22 @@
 
     }
 
-    function view$9(ctrl, settings){
-        return viewOutput(ctrl, settings, toString$2);
+    function view$e(ctrl, settings){
+        return viewOutput(ctrl, settings, toString$3);
     }
 
-    var importComponent$2 = {
-        controller:controller$8,
-        view:view$8
+    var importComponent$3 = {
+        controller:controller$d,
+        view:view$d
     };
 
-    function view$8(ctrl){
+    function view$d(ctrl){
         return viewImport(ctrl);
     }
 
-    function controller$8(settings){
+    function controller$d(settings){
         var fileInput = m.prop('');
-        return {fileInput: fileInput, handleFile: handleFile, updateSettings: updateSettings$4};
+        return {fileInput: fileInput, handleFile: handleFile, updateSettings: updateSettings$6};
 
         function handleFile(){
             var importedFile = document.getElementById('uploadFile').files[0];
@@ -20752,12 +20765,12 @@
             reader.readAsText(importedFile); 
             reader.onload = function(){
                 var fileContent = JSON.parse(reader.result);
-                settings = updateSettings$4(settings, fileContent);
+                settings = updateSettings$6(settings, fileContent);
             };
         }
     }
 
-    function updateSettings$4(settings, input){
+    function updateSettings$6(settings, input){
         settings.objectCat1 = input.objectCat1;
         settings.objectCat2 = input.objectCat2;
         settings.attribute1 = input.attribute1;
@@ -20782,7 +20795,7 @@
 
     }
 
-    var parametersDesc$2 = [
+    var parametersDesc$3 = [
         {name: 'keyTopLeft', label:'Top left key'},
         {name: 'keyTopRight', label:'Top right key'},
         {name: 'keyBottomLeft', label:'Bottom left key'},
@@ -20791,7 +20804,7 @@
         {keyTopLeft: '', keyTopRight: '', keyBottomLeft: '', keyBottomRight: '', base_url:{image:''}}
     ];
 
-    var textDesc$2=[
+    var textDesc$3=[
         {name: 'firstBlock', label:'First Block\'s Instructions'},
         {name: 'middleBlock', label:'Middle Block\'s Instructions'},
         {name: 'lastBlock', label:'Last Block\'s Instructions'},
@@ -20800,7 +20813,7 @@
 
     ];
 
-    var blocksDesc$2 = [
+    var blocksDesc$3 = [
         {name: 'nBlocks', label: 'Number of blocks'},
         {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per category-attribute combination', desc: 'How many trials in each block, for each of the four category-attribute combinations.'},
         {name: 'randomCategoryLocation', label: 'Randomly choose categories location', desc: 'Whether to randomly select which category is on top. If false, then the first category is on top.'},
@@ -20825,9 +20838,9 @@
         'attribute2': {text: 'Second Attribute'}
     };
 
-    var tabs$2 = {
-        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$2},
-        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$2},
+    var tabs$3 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$3},
+        'blocks': {text: 'Blocks', component: blocksComponent$2, rowsDesc: blocksDesc$3},
         'categories': {
             text: 'Categories',
             component: categoriesComponent$1,
@@ -20840,20 +20853,20 @@
             rowsDesc: categoryClear$2,
             subTabs: attributesTabs$1
         },
-        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$2},
-        'output': {text: 'Complete', component: outputComponent$2, rowsDesc: blocksDesc$2},
-        'import': {text: 'Import', component: importComponent$2},
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$3},
+        'output': {text: 'Complete', component: outputComponent$2, rowsDesc: blocksDesc$3},
+        'import': {text: 'Import', component: importComponent$3},
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'SPF'}
     };
 
     var spf = function (args, external) { return m.component(spfComponent, args, external); };
 
     var spfComponent = {
-        controller: controller$7,
-        view: view$7
+        controller: controller$c,
+        view: view$c
     };
 
-    function controller$7(ref, external){
+    function controller$c(ref, external){
         var file = ref.file;
         var study = ref.study;
         if ( external === void 0 ) external = false;
@@ -20864,8 +20877,8 @@
             err : m.prop([]),
             loaded : m.prop(false),
             notifications : createNotifications(),
-            defaultSettings : clone(defaultSettings$2(external)),
-            settings : clone(defaultSettings$2(external)),
+            defaultSettings : clone(defaultSettings$3(external)),
+            settings : clone(defaultSettings$3(external)),
             external: external,
             is_locked:m.prop(study ? study.is_locked : null),
             show_do_save: show_do_save,
@@ -20889,8 +20902,8 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$2.blocks.rowsDesc; //blockDesc inside output attribute
-            error_msg = validityCheck$2(error_msg, ctrl.settings, blocksObject);
+            var blocksObject = tabs$3.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck$3(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -20922,7 +20935,7 @@
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
             save('spf', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('spf', studyId, jsFileId, toString$2(ctrl.settings, ctrl.external)); })
+                .then (function () { return saveToJS('spf', studyId, jsFileId, toString$3(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("SPF Script successfully saved"); })
                 .then(m.redraw)
@@ -20938,22 +20951,22 @@
         external ? null : load();
         return ctrl;
     }
-    function view$7(ctrl){
+    function view$c(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
                 : m('.wizard.container-fluid.space',
-                    m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                    m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',
             pageHeadLine('SPF'),
             m.component(messages),
-            m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            m.component(tabsComponent, tabs$3, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
     }
 
-    function defaultSettings$1(external) {
+    function defaultSettings$2(external) {
 
         return {
             parameters: {
@@ -21071,13 +21084,13 @@
     }
 
     var outputComponent$1 = {
-        view:view$6,
-        controller:controller$6,
+        view:view$b,
+        controller:controller$b,
     };
 
-    function controller$6(settings, defaultSettings, clearBlock){
+    function controller$b(settings, defaultSettings, clearBlock){
         var error_msg = [];
-        error_msg = validityCheck$1(error_msg, settings, clearBlock);
+        error_msg = validityCheck$2(error_msg, settings, clearBlock);
         return {error_msg: error_msg, createFile: createFile};
 
         function createFile(fileType){
@@ -21085,11 +21098,11 @@
                 var output,textFileAsBlob;
                 var downloadLink = document.createElement('a');
                 if (fileType === 'JS') {
-                    output = toString$1(settings);
+                    output = toString$2(settings);
                     textFileAsBlob = new Blob([output], {type:'text/plain'});
                     downloadLink.download = 'STIAT.js'; }
                 else {
-                    output = updateSettings$3(settings);
+                    output = updateSettings$5(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
                     downloadLink.download = 'STIAT.json'; }
                 if (window.webkitURL != null) {downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);}
@@ -21103,8 +21116,8 @@
         }
     }
 
-    function toString$1(settings, external){
-        return toScript$1(updateSettings$3(settings), external);
+    function toString$2(settings, external){
+        return toScript$2(updateSettings$5(settings), external);
     }
 
     function updateMediaSettings$3(settings){
@@ -21126,7 +21139,7 @@
         return settings_output;
     }
 
-    function updateSettings$3(settings){
+    function updateSettings$5(settings){
         settings = updateMediaSettings$3(settings);
         var output={
             category: settings.category,
@@ -21144,14 +21157,14 @@
         return output;
     }
 
-    function toScript$1(output, external){
+    function toScript$2(output, external){
         var textForInternal = '//Note: This script was created by the STIAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
         var script = "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/qualtrics/qstiat6.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/stiat/stiat6.js') + "'], function(APIConstructor, stiatExtension){\n\tvar API = new APIConstructor(); return stiatExtension(" + (JSON.stringify(output,null,4)) + ");});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
 
-    function validityCheck$1(error_msg, settings, clearBlock){
+    function validityCheck$2(error_msg, settings, clearBlock){
         var temp1 = checkMissingElementName(settings.category, 'Category', error_msg);
         var temp2 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg);
         var temp3 = checkMissingElementName(settings.attribute2, 'Second Attribute', error_msg);
@@ -21184,16 +21197,16 @@
 
     }
 
-    function view$6(ctrl, settings){
-        return viewOutput(ctrl, settings, toString$1);
+    function view$b(ctrl, settings){
+        return viewOutput(ctrl, settings, toString$2);
     }
 
-    var blocksComponent = {
-        controller:controller$5,
-        view:view$5
+    var blocksComponent$1 = {
+        controller:controller$a,
+        view:view$a
     };
 
-    function controller$5(settings, defaultSettings, rows){
+    function controller$a(settings, defaultSettings, rows){
         var blocks = settings.trialsByBlock;
         var chooseFlag = m.prop(false);
         var chosenBlocksList = m.prop([]);
@@ -21318,7 +21331,7 @@
         }
     }
 
-    function view$5(ctrl){
+    function view$a(ctrl){
         return m('.space' , [
             ctrl.rows.slice(0,2).map(function(row) {
                 return m('.row.line', [
@@ -21328,14 +21341,14 @@
                             title:row.desc
                         })
                     ]),
-                        row.options ?
-                            m('.col-md-2',
-                                m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
-                                    row.options.map(function(option){return m('option', option);})])
-                                )
-                            : m('.col-md-2.col-lg-1',
-                                m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
-                                )
+                    row.options ?
+                        m('.col-md-2',
+                            m('select.form-control',{value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name, 'select'))},[
+                                row.options.map(function(option){return m('option', option);})])
+                        )
+                        : m('.col-md-2.col-lg-1',
+                            m('input[type=number].form-control',{placeholder:'0', value: ctrl.getParameters(row.name), onchange:m.withAttr('value',ctrl.setParameters(row.name)), min:0})
+                        )
                 ]);
             }),
             ctrl.blocks.map(function(block) {
@@ -21393,17 +21406,17 @@
         ]);
     }
 
-    var importComponent$1 = {
-        controller:controller$4,
-        view:view$4
+    var importComponent$2 = {
+        controller:controller$9,
+        view:view$9
     };
 
-    function view$4(ctrl){
+    function view$9(ctrl){
         return viewImport(ctrl);
     }
 
-    function controller$4(settings) {
-        return {handleFile: handleFile, updateSettings: updateSettings$2};
+    function controller$9(settings) {
+        return {handleFile: handleFile, updateSettings: updateSettings$4};
 
         function handleFile(){
             var importedFile = document.getElementById('uploadFile').files[0];
@@ -21411,7 +21424,7 @@
             reader.readAsText(importedFile); 
             reader.onload = function() {
                 var fileContent = JSON.parse(reader.result);
-                settings = updateSettings$2(settings, fileContent);
+                settings = updateSettings$4(settings, fileContent);
             };
         }
     }
@@ -21434,7 +21447,7 @@
         return settings;
     }
 
-    function updateSettings$2(settings, input) {
+    function updateSettings$4(settings, input) {
         settings.category = input.category;
         settings.attribute1 = input.attribute1;
         settings.attribute2 = input.attribute2;
@@ -21457,13 +21470,13 @@
 
     }
 
-    var parametersDesc$1 = [
+    var parametersDesc$2 = [
         {name: 'isQualtrics', options:['Regular','Qualtrics'],label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
         {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
         {isQualtrics:false, base_url:{image:''}}
     ];
 
-    var textDesc$1 = [
+    var textDesc$2 = [
         {name: 'leftKeyText', label:'Top-left text (about the left key)', desc: 'We use this text to remind participants what key to use for a left response.'},
         {name: 'rightKeyText', label:'Top-right text (about the right key)', desc: 'We use this text to remind participants what key to use for a right response.'},
         {name: 'orKeyText', label:'Or', desc: 'We show this text in the combined blocks to separate between the two categories that use the same key.'},
@@ -21477,7 +21490,7 @@
         {} //an empty element
     ];
 
-    var blocksDesc$1 = [
+    var blocksDesc$2 = [
         {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'], desc: 'Change to \'startRight\' if you want the first block to show the single category on the right in the first block, \'startLeft\' if you want it to appear on the left side. If you choose \'random\', the program will randomly choose a side for each participant. The first attribute in the Attributes page appears on the left and the second attribute appears on the right. \n'},
         {name: 'switchSideBlock', label: 'Switch Side Block ', desc: 'By default, we switch on block 4 (i.e., after blocks 2 and 3 showed the first pairing condition).'},
         {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a default template.'},
@@ -21511,9 +21524,9 @@
         'attribute2': {text: 'Second Attribute'}
     };
 
-    var tabs$1 = {
-        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$1},
-        'blocks': {text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc$1},
+    var tabs$2 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$2},
+        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc$2},
         'category': {text: 'Category', component: categoriesComponent$1, rowsDesc: categoryClear$1, subTabs: category},
         'attributes': {
             text: 'Attributes',
@@ -21521,20 +21534,20 @@
             rowsDesc: categoryClear$1,
             subTabs: attributesTabs
         },
-        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$1},
-        'output': {text: 'Complete', component: outputComponent$1, rowsDesc: blocksDesc$1.slice(-1)[0]},
-        'import': {text: 'Import', component: importComponent$1},
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$2},
+        'output': {text: 'Complete', component: outputComponent$1, rowsDesc: blocksDesc$2.slice(-1)[0]},
+        'import': {text: 'Import', component: importComponent$2},
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'STIAT'}
     };
 
     var stiat = function (args, external) { return m.component(stiatComponent, args, external); };
 
     var stiatComponent = {
-        controller: controller$3,
-        view: view$3
+        controller: controller$8,
+        view: view$8
     };
 
-    function controller$3(ref, external){
+    function controller$8(ref, external){
         var file = ref.file;
         var study = ref.study;
         if ( external === void 0 ) external = false;
@@ -21545,8 +21558,8 @@
             err : m.prop([]),
             loaded : m.prop(false),
             notifications : createNotifications(),
-            settings : clone(defaultSettings$1(external)),
-            defaultSettings : clone(defaultSettings$1(external)),
+            settings : clone(defaultSettings$2(external)),
+            defaultSettings : clone(defaultSettings$2(external)),
             external: external,
             is_locked:m.prop(study ? study.is_locked : null),
             show_do_save: show_do_save,
@@ -21570,8 +21583,8 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs$1.blocks.rowsDesc; //blockDesc inside output attribute
-            error_msg = validityCheck$1(error_msg, ctrl.settings, blocksObject);
+            var blocksObject = tabs$2.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck$2(error_msg, ctrl.settings, blocksObject);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -21602,7 +21615,7 @@
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
             save('stiat', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('stiat', studyId, jsFileId, toString$1(ctrl.settings, ctrl.external)); })
+                .then (function () { return saveToJS('stiat', studyId, jsFileId, toString$2(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("STIAT Script successfully saved"); })
                 .then(m.redraw)
@@ -21618,24 +21631,24 @@
         external ? null : load();
         return ctrl;
     }
-    function view$3(ctrl){
+    function view$8(ctrl){
         if(!ctrl.external) {
             return !ctrl.loaded()
                 ? m('.loader')
                 : m('.wizard.container-fluid.space',
-                    m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                    m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',
             pageHeadLine('STIAT'),
             m.component(messages),
-            m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+            m.component(tabsComponent, tabs$2, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         );
 
 
     }
 
-    function defaultSettings(external) {
+    function defaultSettings$1(external) {
 
         return {
             parameters: {
@@ -21748,13 +21761,13 @@
     }
 
     var outputComponent = {
-        controller: controller$2,
-        view:view$2
+        controller: controller$7,
+        view:view$7
     };
 
-    function controller$2(settings){
+    function controller$7(settings){
         var error_msg = [];
-        error_msg = validityCheck(error_msg, settings);
+        error_msg = validityCheck$1(error_msg, settings);
 
         return {createFile: createFile, error_msg: error_msg};
 
@@ -21763,12 +21776,12 @@
                 var output,textFileAsBlob;
                 var downloadLink = document.createElement('a');
                 if (fileType === 'JS'){
-                    output = toString(settings);
+                    output = toString$1(settings);
                     textFileAsBlob = new Blob([output], {type:'text/plain'});
                     downloadLink.download = 'EP.js';
                 }
                 else {
-                    output = updateSettings$1(settings);
+                    output = updateSettings$3(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
                     downloadLink.download = 'EP.json';
                 }
@@ -21784,7 +21797,7 @@
         }
     }
 
-    function validityCheck(error_msg, settings){
+    function validityCheck$1(error_msg, settings){
         var temp1 = checkPrime(settings.prime1, 'First Prime Category', error_msg);
         var temp2 = checkPrime(settings.prime2, 'Second Prime Category', error_msg);
         var temp3 = checkMissingElementName(settings.rightAttTargets, 'First Target Category', error_msg);
@@ -21803,8 +21816,8 @@
         return error_msg;
     }
 
-    function toString(settings, external){
-        return toScript(updateSettings$1(settings), external);
+    function toString$1(settings, external){
+        return toScript$1(updateSettings$3(settings), external);
     }
 
     function updateMediaSettings$1(settings){
@@ -21828,7 +21841,7 @@
         return settings_output;
     }
 
-    function updateSettings$1(settings){
+    function updateSettings$3(settings){
         settings = updateMediaSettings$1(settings);
 
         var output={
@@ -21847,29 +21860,29 @@
         return output;
     }
 
-    function toScript(output, external){
+    function toScript$1(output, external){
         var textForInternal = '//Note: This script was created by the EP wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
         var script = "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/ep/qualtrics/quep5.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/ep/ep5.js') + "'], function(APIConstructor, epExtension) {var API = new APIConstructor(); return epExtension(" + (JSON.stringify(output,null,4)) + ");});";
         external === false ? script = textForInternal + script : '';
         return script;
     }
 
-    function view$2(ctrl, settings){
-        return viewOutput(ctrl, settings, toString);
+    function view$7(ctrl, settings){
+        return viewOutput(ctrl, settings, toString$1);
     }
 
-    var importComponent = {
-        controller:controller$1,
-        view:view$1
+    var importComponent$1 = {
+        controller:controller$6,
+        view:view$6
     };
 
-    function view$1(ctrl){
+    function view$6(ctrl){
         return viewImport(ctrl);
     }
 
-    function controller$1(settings) {
+    function controller$6(settings) {
         var fileInput = m.prop('');
-        return {fileInput: fileInput, handleFile: handleFile, updateSettings: updateSettings};
+        return {fileInput: fileInput, handleFile: handleFile, updateSettings: updateSettings$2};
 
         function handleFile(){
             var importedFile = document.getElementById('uploadFile').files[0];
@@ -21877,7 +21890,7 @@
             reader.readAsText(importedFile);
             reader.onload = function() {
                 var fileContent = JSON.parse(reader.result);
-                updateSettings(settings, fileContent);
+                updateSettings$2(settings, fileContent);
             };
         }
     }
@@ -21900,7 +21913,7 @@
         delete settings.targetCats;
         return settings;
     }
-    function updateSettings(settings, input) {
+    function updateSettings$2(settings, input) {
         settings.primeStimulusCSS = input.primeStimulusCSS;
         settings.prime1 = input.prime1;
         settings.prime2 = input.prime2;
@@ -21928,7 +21941,7 @@
         return settings;
     }
 
-    var parametersDesc = [
+    var parametersDesc$1 = [
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this Evaluative Priming task to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'}, 'this blog post '),'to see how.']},
         {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
                 '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
@@ -21946,7 +21959,7 @@
             deadlineDuration:0, deadlineMsgDuration:0, base_url:{image:''}}
     ];
 
-    var textDesc=[
+    var textDesc$1=[
         {name: 'firstBlock', label:'First Block\'s Instructions'},
         {name: 'middleBlock', label:'Middle Block\'s Instructions'},
         {name: 'lastBlock', label:'Last Block\'s Instructions'},
@@ -21954,7 +21967,7 @@
         {} //an empty element
     ];
 
-    var blocksDesc = [
+    var blocksDesc$1 = [
         {name: 'nBlocks', label: 'Number of blocks'},
         {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per prime-target combination', desc: 'How many trials in a block, per prime-target combination (always three blocks).'},
         {nBlocks: 0, nTrialsPerPrimeTargetPair: 0}
@@ -21984,9 +21997,9 @@
         'primeStimulusCSS':{text:'Prime Appearance'}
     };
 
-    var tabs = {
-        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc},
-        'blocks': {text: 'Blocks', component: blocksComponent$1, rowsDesc: blocksDesc},
+    var tabs$1 = {
+        'parameters': {text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc$1},
+        'blocks': {text: 'Blocks', component: blocksComponent$2, rowsDesc: blocksDesc$1},
         'prime': {
             text: 'Prime Categories',
             component: categoriesComponent$1,
@@ -22000,20 +22013,20 @@
             rowsDesc: categoryClear,
             subTabs: categoriesTabs
         },
-        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
+        'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$1},
         'output': {text: 'Complete', component: outputComponent},
-        'import': {text: 'Import', component: importComponent},
+        'import': {text: 'Import', component: importComponent$1},
         'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
     };
 
     var ep = function (args, external) { return m.component(epComponent, args, external); };
 
     var epComponent = {
-        controller: controller,
-        view: view
+        controller: controller$5,
+        view: view$5
     };
 
-    function controller(ref, external){
+    function controller$5(ref, external){
         var file = ref.file;
         var study = ref.study;
         if ( external === void 0 ) external = false;
@@ -22024,8 +22037,8 @@
             err : m.prop([]),
             loaded : m.prop(false),
             notifications : createNotifications(),
-            settings : clone(defaultSettings(external)),
-            defaultSettings : clone(defaultSettings(external)),
+            settings : clone(defaultSettings$1(external)),
+            defaultSettings : clone(defaultSettings$1(external)),
             external: external,
             is_locked:m.prop(study ? study.is_locked : null),
             show_do_save: show_do_save,
@@ -22049,7 +22062,7 @@
 
         function show_do_save(){
             var error_msg = [];
-            error_msg = validityCheck(error_msg, ctrl.settings);
+            error_msg = validityCheck$1(error_msg, ctrl.settings);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -22081,9 +22094,821 @@
             var fileId = m.route.param('fileId');
             var jsFileId =  fileId.split('.')[0]+'.js';
             save('ep', studyId, fileId, ctrl.settings)
-                .then (function () { return saveToJS('ep', studyId, jsFileId, toString(ctrl.settings, ctrl.external)); })
+                .then (function () { return saveToJS('ep', studyId, jsFileId, toString$1(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
                 .then(function () { return ctrl.notifications.show_success("EP Script successfully saved"); })
+                .then(m.redraw)
+                .catch(function (err) { return ctrl.notifications.show_danger('Error Saving:', err.message); });
+            ctrl.prev_settings = clone(ctrl.settings);
+            m.redraw();
+        }
+
+        function is_settings_changed(){
+            return JSON.stringify(ctrl.prev_settings) !== JSON.stringify(ctrl.settings);
+        }
+
+        external ? null : load();
+        return ctrl;
+    }
+    function view$5(ctrl){
+        if(!ctrl.external) {
+            return !ctrl.loaded()
+                ? m('.loader')
+                : m('.wizard.container-fluid.space',
+                    m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
+                        ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
+        }
+        return m('.container-fluid',
+            pageHeadLine('Evaluative Priming'),
+            m.component(messages),
+            m.component(tabsComponent, tabs$1, ctrl.settings, ctrl.defaultSettings, ctrl.external)
+        );
+    }
+
+    function defaultSettings(external) {
+        return {
+            parameters: {
+                isQualtrics: false,
+                exampleBlock: true,
+                targetCat: 'Chinese symbol',
+                primeDuration: 100,
+                fixationDuration: 0,
+                postPrimeDuration: 100,
+                targetDuration: 100,
+                showRatingDuration: 300,
+                responses: 2,
+                sortingLabel1: 'Pleasant', //Response is coded as 0.
+                sortingLabel2: 'Unpleasant',  //Response is coded as 1.
+                randomizeLabelSides: false, //If false, then label1 is on the left, and label2 is on the right.
+                rightKey: 'i',
+                leftKey: 'e',
+                fixationStimulus: { //The fixation stimulus
+                    css: {color: '#000000', 'font-size': '3em'},
+                    media: {word: '+'}
+                },
+                maskStimulus: { //The mask stimulus
+                    css: {color: '000000', 'font-size': '3em'},
+                    media: {image: 'ampmask.jpg'}
+                },
+                base_url: {image: external ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/docs/images/' : './images'}
+            },
+            exampleBlock: {
+                exampleTargetStimulus:
+                    {
+                        nameForLogging: 'exampleTarget', //Will be used in the logging
+                        sameAsTargets: true //Use the same media array as the first targetCat.
+                    },
+                exampleFixationStimulus: { //The fixation stimulus in the example block
+                    css: {color: '000000', 'font-size': '3em'},
+                    media: {word: '+'}
+                },
+                exampleMaskStimulus: { //The mask stimulus in the example block
+                    css: {color: '000000', 'font-size': '3em'},
+                    media: {image: 'ampmaskr.jpg'}
+                },
+                exampleBlock_fixationDuration: -1,
+                exampleBlock_primeDuration: 100,
+                exampleBlock_postPrimeDuration: 100,
+                exampleBlock_targetDuration: 300,
+                examplePrimeStimulus: {
+                    nameForLogging: 'examplePrime', //Will be used in the logging
+                    //An array of all media objects for this category.
+                    mediaArray: [{word: 'Table'}, {word: 'Chair'}]
+                }
+            },
+
+            primeStimulusCSS: {color: '#0000FF', 'font-size': '2.3em'}, //The CSS for all the prime stimuli.
+            primeCats: [
+                {
+                    nameForFeedback: 'positive words',  //Will be used in the user feedback
+                    nameForLogging: 'positive', //Will be used in the logging
+                    //An array of all media objects for this category.
+                    mediaArray: [{word: 'Wonderful'}, {word: 'Great'}]
+                },
+                {
+                    nameForFeedback: 'negative words',  //Will be used in the user feedback
+                    nameForLogging: 'negative', //Will be used in the logging
+                    mediaArray: [{word: 'Awful'}, {word: 'Horrible'}]
+                }
+            ],
+
+            targetStimulusCSS: {color: '#0000FF', 'font-size': '2.3em'}, //The CSS for all the target stimuli (usually irrelevant because the targets are Chinese pictographs.
+            //The prime categories.
+            targetCats: [
+                {
+                    nameForLogging: 'chinese',  //Will be used in the logging
+                    //An array of all media objects for this category. The default is pic1-pic200.jpg
+                    mediaArray: [
+                        {image: 'pic1.jpg'}, {image: 'pic2.jpg'}, {image: 'pic3.jpg'}, {image: 'pic4.jpg'}, {image: 'pic5.jpg'}, {image: 'pic6.jpg'}, {image: 'pic7.jpg'}, {image: 'pic8.jpg'}, {image: 'pic9.jpg'},
+                        {image: 'pic10.jpg'}, {image: 'pic11.jpg'}, {image: 'pic12.jpg'}, {image: 'pic13.jpg'}, {image: 'pic14.jpg'}, {image: 'pic15.jpg'}, {image: 'pic16.jpg'}, {image: 'pic17.jpg'}, {image: 'pic18.jpg'}, {image: 'pic19.jpg'},
+                        {image: 'pic20.jpg'}, {image: 'pic21.jpg'}, {image: 'pic22.jpg'}, {image: 'pic23.jpg'}, {image: 'pic24.jpg'}, {image: 'pic25.jpg'}, {image: 'pic26.jpg'}, {image: 'pic27.jpg'}, {image: 'pic28.jpg'}, {image: 'pic29.jpg'},
+                        {image: 'pic30.jpg'}, {image: 'pic31.jpg'}, {image: 'pic32.jpg'}, {image: 'pic33.jpg'}, {image: 'pic34.jpg'}, {image: 'pic35.jpg'}, {image: 'pic36.jpg'}, {image: 'pic37.jpg'}, {image: 'pic38.jpg'}, {image: 'pic39.jpg'},
+                        {image: 'pic40.jpg'}, {image: 'pic41.jpg'}, {image: 'pic42.jpg'}, {image: 'pic43.jpg'}, {image: 'pic44.jpg'}, {image: 'pic45.jpg'}, {image: 'pic46.jpg'}, {image: 'pic47.jpg'}, {image: 'pic48.jpg'}, {image: 'pic49.jpg'},
+                        {image: 'pic50.jpg'}, {image: 'pic51.jpg'}, {image: 'pic52.jpg'}, {image: 'pic53.jpg'}, {image: 'pic54.jpg'}, {image: 'pic55.jpg'}, {image: 'pic56.jpg'}, {image: 'pic57.jpg'}, {image: 'pic58.jpg'}, {image: 'pic59.jpg'},
+                        {image: 'pic60.jpg'}, {image: 'pic61.jpg'}, {image: 'pic62.jpg'}, {image: 'pic63.jpg'}, {image: 'pic64.jpg'}, {image: 'pic65.jpg'}, {image: 'pic66.jpg'}, {image: 'pic67.jpg'}, {image: 'pic68.jpg'}, {image: 'pic69.jpg'},
+                        {image: 'pic70.jpg'}, {image: 'pic71.jpg'}, {image: 'pic72.jpg'}, {image: 'pic73.jpg'}, {image: 'pic74.jpg'}, {image: 'pic75.jpg'}, {image: 'pic76.jpg'}, {image: 'pic77.jpg'}, {image: 'pic78.jpg'}, {image: 'pic79.jpg'},
+                        {image: 'pic80.jpg'}, {image: 'pic81.jpg'}, {image: 'pic82.jpg'}, {image: 'pic83.jpg'}, {image: 'pic84.jpg'}, {image: 'pic85.jpg'}, {image: 'pic86.jpg'}, {image: 'pic87.jpg'}, {image: 'pic88.jpg'}, {image: 'pic89.jpg'},
+                        {image: 'pic90.jpg'}, {image: 'pic91.jpg'}, {image: 'pic92.jpg'}, {image: 'pic93.jpg'}, {image: 'pic94.jpg'}, {image: 'pic95.jpg'}, {image: 'pic96.jpg'}, {image: 'pic97.jpg'}, {image: 'pic98.jpg'}, {image: 'pic99.jpg'},
+                        {image: 'pic110.jpg'}, {image: 'pic111.jpg'}, {image: 'pic112.jpg'}, {image: 'pic113.jpg'}, {image: 'pic114.jpg'}, {image: 'pic115.jpg'}, {image: 'pic116.jpg'}, {image: 'pic117.jpg'}, {image: 'pic118.jpg'}, {image: 'pic119.jpg'},
+                        {image: 'pic120.jpg'}, {image: 'pic121.jpg'}, {image: 'pic122.jpg'}, {image: 'pic123.jpg'}, {image: 'pic124.jpg'}, {image: 'pic125.jpg'}, {image: 'pic126.jpg'}, {image: 'pic127.jpg'}, {image: 'pic128.jpg'}, {image: 'pic129.jpg'},
+                        {image: 'pic130.jpg'}, {image: 'pic131.jpg'}, {image: 'pic132.jpg'}, {image: 'pic133.jpg'}, {image: 'pic134.jpg'}, {image: 'pic135.jpg'}, {image: 'pic136.jpg'}, {image: 'pic137.jpg'}, {image: 'pic138.jpg'}, {image: 'pic139.jpg'},
+                        {image: 'pic140.jpg'}, {image: 'pic141.jpg'}, {image: 'pic142.jpg'}, {image: 'pic143.jpg'}, {image: 'pic144.jpg'}, {image: 'pic145.jpg'}, {image: 'pic146.jpg'}, {image: 'pic147.jpg'}, {image: 'pic148.jpg'}, {image: 'pic149.jpg'},
+                        {image: 'pic150.jpg'}, {image: 'pic151.jpg'}, {image: 'pic152.jpg'}, {image: 'pic153.jpg'}, {image: 'pic154.jpg'}, {image: 'pic155.jpg'}, {image: 'pic156.jpg'}, {image: 'pic157.jpg'}, {image: 'pic158.jpg'}, {image: 'pic159.jpg'},
+                        {image: 'pic160.jpg'}, {image: 'pic161.jpg'}, {image: 'pic162.jpg'}, {image: 'pic163.jpg'}, {image: 'pic164.jpg'}, {image: 'pic165.jpg'}, {image: 'pic166.jpg'}, {image: 'pic167.jpg'}, {image: 'pic168.jpg'}, {image: 'pic169.jpg'},
+                        {image: 'pic170.jpg'}, {image: 'pic171.jpg'}, {image: 'pic172.jpg'}, {image: 'pic173.jpg'}, {image: 'pic174.jpg'}, {image: 'pic175.jpg'}, {image: 'pic176.jpg'}, {image: 'pic177.jpg'}, {image: 'pic178.jpg'}, {image: 'pic179.jpg'},
+                        {image: 'pic180.jpg'}, {image: 'pic181.jpg'}, {image: 'pic182.jpg'}, {image: 'pic183.jpg'}, {image: 'pic184.jpg'}, {image: 'pic185.jpg'}, {image: 'pic186.jpg'}, {image: 'pic187.jpg'}, {image: 'pic188.jpg'}, {image: 'pic189.jpg'},
+                        {image: 'pic190.jpg'}, {image: 'pic191.jpg'}, {image: 'pic192.jpg'}, {image: 'pic193.jpg'}, {image: 'pic194.jpg'}, {image: 'pic195.jpg'}, {image: 'pic196.jpg'}, {image: 'pic197.jpg'}, {image: 'pic198.jpg'}, {image: 'pic199.jpg'},
+                        {image: 'pic200.jpg'}
+                    ]
+                }
+            ],
+            blocks: {
+                trialsInBlock: [40, 40, 40], trialsInExample: 3,
+            },
+            text: { //Instructions text for the 2-responses version.
+                exampleBlockInst: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Press the key <B>rightKey</B> if the targetCat is more rightAttribute than average. ' +
+                    'Hit the <b>leftKey</b> key if it is more leftAttribute than average.<br/><br/>' +
+                    'The items appear and disappear quickly.  ' +
+                    'Remember to ignore the item that appears before the targetCat and evaluate only the targetCat.<br/><br/></p>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'When you are ready to try a few practice responses, hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round 1 of nBlocks]</p></div>',
+                firstBlockInst: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    "See how fast it is? Don't worry if you miss some. " +
+                    'Go with your gut feelings.<br/><br/>' +
+                    'Concentrate on each targetCat and rate it as more rightAttribute than the average targetCat with the <b>rightKey</b> key, ' +
+                    'or more leftAttribute than average with the <b>leftKey</b> key.<br/><br/>' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round 2 of nBlocks]</p></div>',
+                middleBlockInst: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Continue to another round of this task. ' +
+                    'The rules are exactly the same:<br/><br/>' +
+                    'Concentrate on the targetCat and rate it as more rightAttribute than average with the <b>rightKey</b> key, ' +
+                    'or more leftAttribute than average with the <b>leftKey</b> key.<br/><br/>' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting. Go with your gut feelings.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round blockNum of nBlocks]</p></div>',
+                lastBlockInst: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Ready for the FINAL round? ' +
+                    'The rules are exactly the same:<br/><br/>' +
+                    'Concentrate on the targetCat and rate it as more rightAttribute than average with the <b>rightKey</b> key, ' +
+                    'or more leftAttribute than average with the <b>leftKey</b> key.<br/><br/>' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting. Go with your gut feelings.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round blockNum of nBlocks]</p></div>',
+                endText: '<div><p style="font-size:20px; text-align:left; vertical-align:bottom; margin-left:10px; font-family:arial"><color="FFFFFF">' +
+                    'You have completed the task<br/><br/>Press "space" to continue to next task.</p></div>',
+            },
+            text_seven: { //Instructions text for the 7-responses version.
+                exampleBlockInst7: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Rate your feelings toward the targetCats from <i>Extremely negativeAdj</i> to <i>Extremely positiveAdj</i>. ' +
+                    'The items appear and disappear quickly.  ' +
+                    'Remember to ignore the item that appears before the targetCat and evaluate only the targetCat.<br/><br/></p>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'When you are ready to try a few practice responses, hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round 1 of nBlocks]</p></div>',
+                firstBlockInst7: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    "See how fast it is? Don't worry if you miss some. " +
+                    'Go with your gut feelings.<br/><br/>' +
+                    'Concentrate on each targetCat and rate it based on your own feelings. ' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting.<br/><br/>' +
+                    'Notice: you can respond with your mouse or the keys 1-7.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round 2 of nBlocks]</p></div>',
+                middleBlockInst7: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Continue to another round of this task. ' +
+                    'The rules are exactly the same:<br/><br/>' +
+                    'Concentrate on each targetCat and rate it based on your own feelings. ' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round blockNum of nBlocks]</p></div>',
+                lastBlockInst7: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
+                    'Ready for the FINAL round? ' +
+                    'The rules are exactly the same:<br/><br/>' +
+                    'Concentrate on each targetCat and rate it based on your own feelings. ' +
+                    'Evaluate each targetCat and not the item that appears before it. ' +
+                    'Those items are sometimes distracting.<br/><br/>' +
+                    '<p style="font-size:16px; text-align:center; font-family:arial"><color="000000"><br/><br/>' +
+                    'Ready? Hit the <b>space bar</b>.</p>' +
+                    '<p style="font-size:12px; text-align:center; font-family:arial">' +
+                    '<color="000000">[Round blockNum of nBlocks]</p></div>',
+                endText: '<div><p style="font-size:20px; text-align:left; vertical-align:bottom; margin-left:10px; font-family:arial"><color="FFFFFF">' +
+                    'You have completed the task<br/><br/>Press "space" to continue to next task.</p></div>',
+            }
+        };
+    }
+
+    var iatOutputComponent = {
+        controller: controller$4,
+        view: view$4
+    };
+
+    function controller$4(settings, defaultSettings, blocksObject){
+        var error_msg = [];
+        error_msg = validityCheck(error_msg, settings, blocksObject);
+
+        return {error_msg: error_msg, createFile: createFile, settings: settings};
+
+        function createFile(settings, fileType){
+            return function(){
+                var output,textFileAsBlob;
+                var downloadLink = document.createElement('a');
+                if (fileType === 'JS') {
+                    output = toString(settings);
+                    textFileAsBlob = new Blob([output], {type:'text/plain'});
+                    downloadLink.download = 'IAT.js'; }
+                else {
+                    output = updateSettings$1(settings);
+                    textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
+                    downloadLink.download = 'IAT.json'; }
+                if (window.webkitURL) {downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);}
+                else {
+                    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+                    downloadLink.style.display = 'none';
+                    document.body.appendChild(downloadLink);
+                }
+                downloadLink.click();
+            };
+        }
+    }
+
+    function validityCheck(error_msg, settings, blocksObject){
+        var containsImage;
+        var temp1 = checkMissingElementName(settings.category1, 'First Category', error_msg);
+        var temp2 = checkMissingElementName(settings.category2, 'Second Category', error_msg);
+        var temp3 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg);
+        var temp4 = checkMissingElementName(settings.attribute2, 'Second Attribute', error_msg);
+
+        temp1 || temp2 || temp3 || temp4 ? containsImage = true : containsImage = false;
+
+        if(settings.parameters.base_url.image.length === 0 && containsImage)
+            error_msg.push('Image\'s url is missing and there is an image in the study');
+
+        //check for blocks problems
+        var currBlocks = clone(settings.blocks);
+        var clearBlocks = blocksObject.slice(-1)[0]; //blocks parameters with zeros as the values, used to check if the current parameters are also zeros.
+
+        ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparison
+            delete currBlocks[key];
+            delete clearBlocks[key];
+        });
+
+        if(JSON.stringify(currBlocks) === JSON.stringify(clearBlocks))
+            error_msg.push('All the block\'s parameters equals to 0, that will result in not showing the task at all');
+        blocksObject.slice(0,-1).map(function(block){
+            if(settings.blocks[block.numTrialBlocks] !== 0 && settings.blocks[block.numMiniBlocks] === 0)
+                error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parameters to 0.');
+        });
+        return error_msg;
+    }
+
+    function toString(settings, external){
+        return toScript(updateSettings$1(settings), external);
+    }
+
+    function updateSettings$1(settings){
+        var output={
+            primeStimulusCSS: settings.primeStimulusCSS,
+            primeCats: settings.primeCats,
+            targetStimulusCSS: settings.targetStimulusCSS,
+            targetCats: settings.targetCats,
+        };
+        Object.assign(output, settings.exampleBlock);
+        Object.assign(output, settings.blocks);
+        Object.assign(output, settings.parameters);
+        settings.parameters.responses === 2 ?
+            Object.assign(output, settings.text)
+            :
+            Object.assign(output, settings.text_seven);
+        return output;
+    }
+
+    function toScript(output, external){
+        var textForInternal = '//Note: This script was created by the IAT wizard.\n//Modification of this file won\'t be reflected in the wizard.\n';
+        var script = "define(['pipAPI' ,'" + (output.isQualtrics ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/amp/qualtrics/qamp.js': 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/amp/amp4.js') + "'], function(APIConstructor, iatExtension){\n\tvar API = new APIConstructor(); return iatExtension(" + (JSON.stringify(output,null,4)) + ");});";
+        external === false ? script = textForInternal + script : '';
+        return script;
+    }
+
+    function view$4(ctrl,settings){
+        return viewOutput(ctrl, settings, toString);
+    }
+
+    var exampleComponent = {
+        controller:controller$3,
+        view:view$3
+    };
+
+    function controller$3(settings, defaultSettings, exampleParameters){
+        var exampleBlock = settings.exampleBlock;
+        var element = settings.exampleBlock.examplePrimeStimulus;
+        var stimuliList = defaultSettings.exampleBlock.examplePrimeStimulus.mediaArray;
+        var fields = {
+            newStimulus : m.prop(''),
+            selectedStimuli: m.prop(''),
+        };
+        return {fields: fields, reset: reset, clear: clear, set: set, get: get, exampleParameters: exampleParameters,
+            addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli, removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli, resetStimuliList: resetStimuliList};
+
+        function reset(){showClearOrReset(exampleBlock, defaultSettings.parameters, 'reset');}
+        function clear(){showClearOrReset(exampleBlock, rows.slice(-1)[0],'clear');}
+
+        function get(name, object, parameter){
+            if(object && parameter){
+                if (parameter === 'font-size')
+                    return parseFloat((exampleBlock[name][object][parameter].replace('em','')));
+                return exampleBlock[name][object][parameter];
+            }
+            if(name && object) return exampleBlock[name][object];
+            return exampleBlock[name];
+        }
+        function set(name, object, parameter){
+            return function(value){
+                if(name.includes('Duration')) return exampleBlock[name] = Math.abs(value);
+                if(object && parameter) {
+                    if (parameter === 'font-size'){
+                        value = Math.abs(value);
+                        if (value === 0){
+                            showRestrictions('Font\'s size must be bigger than 0.', 'error');
+                            return exampleBlock[name][object][parameter];
+                        }
+                        return exampleBlock[name][object][parameter] = value + 'em';
+                    }
+                    return exampleBlock[name][object][parameter] = value;
+                }
+                if(name && object) return exampleBlock[name][object] = value;
+                return exampleBlock[name] = value;
+            };
+        }
+        function addStimulus(event){
+            var new_stimuli = fields.newStimulus();
+            event = event.target.id; //button name, to know the kind of the stimulus added
+            element.mediaArray.push( (event === 'addWord') ? {word : new_stimuli} : {image : new_stimuli});
+            fields.newStimulus(''); //reset the field
+        }
+        function updateSelectedStimuli(select){
+            var list = element.mediaArray.filter(function (val,i) { return select.target.options[i].selected; });
+            fields.selectedStimuli(list);
+        }
+
+        function removeChosenStimuli(){
+            element.mediaArray = element.mediaArray.filter(function (element){ return !fields.selectedStimuli().includes(element); });
+            fields.selectedStimuli([]);
+        }
+
+        function removeAllStimuli(){element.mediaArray.length = 0;}
+        function resetStimuliList(){element.mediaArray = clone(stimuliList);}
+    }
+
+    function view$3(ctrl){
+        return m('.space' , [
+            ctrl.exampleParameters.map(function(row){
+                return m('.row.line', [
+                    m('.col-md-4',
+                        row.desc ?
+                            [
+                                m('span', [' ', row.label, ' ']),
+                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                            ]
+                            : m('span', [' ', row.label])
+                    ),
+                    m('.col-md-3.col-lg-2', m('input[type=number].form-control',{placeholder:'0', onchange: m.withAttr('value', ctrl.set(row.name, 'number')), value: ctrl.get(row.name), min:0}))
+                ]);
+            }),
+            m('.row.space',
+                m('.col-md-5',
+                    m('p.h4','Example Target Stimulus: ',
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
+                        )
+                    )
+                )
+            ),
+            m('.row.space.line',[
+                m('.col-md-4.space',[
+                    m('span', [' ', 'Example Target Stimulus']),
+                ]),
+                m('.col-md-8',[
+                    m('.row',[
+                        m('.col-sm-5', m('span' ,'Name of target stimulus for logging: ')),
+                        m('.col-sm-4', m('input[type=text].form-control', {value:ctrl.get('exampleTargetStimulus', 'nameForLogging') ,onchange:m.withAttr('value', ctrl.set('exampleTargetStimulus', 'nameForLogging'))}))
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-5', m('span' ,'Use the same media array as the first Target Category')),
+                        m('.col-sm-4', m('input[type=checkbox]', {onclick: m.withAttr('checked', ctrl.set('exampleTargetStimulus', 'sameAsTargets')), checked: ctrl.get('exampleTargetStimulus', 'sameAsTargets')}))
+                    ])
+                ])
+            ]),
+            m('.row.line',[
+                m('.col-md-4','Example Fixation Stimulus'),
+                editStimulusObject('exampleFixationStimulus', ctrl.get, ctrl.set)
+            ]),
+            m('.row.line',[
+                m('.col-md-4', 'Example Mask Stimulus'),
+                editStimulusObject('exampleMaskStimulus', ctrl.get, ctrl.set)
+            ]),
+            m('.row.space.line',[
+                m('.col-md-4.space',[
+                    m('span', [' ', 'Example Prime Stimulus']),
+                ]),
+                m('.col-md-8',[
+                    m('.row',[
+                        m('.col-sm-5', m('span' ,'Name of target stimulus for logging: ')),
+                        m('.col-sm-4', m('input[type=text].form-control', {value:ctrl.get('examplePrimeStimulus', 'nameForLogging') ,onchange:m.withAttr('value', ctrl.set('examplePrimeStimulus', 'nameForLogging'))}))
+                    ]),
+                    m('.row.space',[
+                        m('.col-sm-5', 'Media objects for this category'),
+                        m('.col-sm-5',
+                            m('input[type=text].form-control',
+                                {placeholder:'Enter media content here', 'aria-label':'Enter media content', 'aria-describedby':'basic-addon2', value: ctrl.fields.newStimulus(), oninput: m.withAttr('value', ctrl.fields.newStimulus)}),
+                            m('.btn-group btn-group-toggle', [
+                                m('button[type=button].btn btn-secondary',
+                                    {disabled:!ctrl.fields.newStimulus().length, id:'addWord', onclick: function (e) { return ctrl.addStimulus(e); }},[
+                                        m('i.fa.fa-plus'), 'Add Word'
+                                    ]),
+                                m('button[type=button].btn btn-secondary', {disabled:!ctrl.fields.newStimulus().length, id:'addImage', onclick: function (e) { return ctrl.addStimulus(e); }},[
+                                    m('i.fa.fa-plus'), 'Add Image'
+                                ])
+                            ]),
+                            m('select.form-control', {multiple : 'multiple', size : '4' ,onchange:function (e) { return ctrl.updateSelectedStimuli(e); }},[
+                                ctrl.get('examplePrimeStimulus', 'mediaArray').map(function(object){
+                                    var value = object.word ? object.word : object.image;
+                                    var option = value + (object.word ? ' [Word]' : ' [Image]');
+                                    return m('option', {value:value, selected : ctrl.fields.selectedStimuli().includes(object)}, option);
+                                })
+                            ]),
+                            m('.btn-group-vertical.space',[
+                                m('button.btn btn btn-warning', {title:'To select multiple stimuli, please press the ctrl key while selecting the desired stimuli', disabled: !ctrl.fields.selectedStimuli().length, onclick:ctrl.removeChosenStimuli},'Remove Chosen Stimuli'),
+                                m('button.btn btn btn-warning', {onclick:ctrl.removeAllStimuli},'Remove All Stimuli'),
+                                m('button.btn btn btn-warning', {onclick: ctrl.resetStimuliList},'Reset Stimuli List')
+                            ])
+                        ),
+                    ])
+                ])
+            ])
+        ]);
+    }
+
+    var blocksComponent = {
+        controller:controller$2,
+        view:view$2
+    };
+    var deafaultNumOfTrials = 40;
+    function controller$2(settings, defaultSettings, rows){
+        var blocks = settings.blocks;
+        var trialsInBlock = blocks.trialsInBlock;
+        var chooseFlag = m.prop(false);
+        var chosenBlocksList = m.prop([]);
+        var chooseClicked = m.prop(false);
+        return {trialsInBlock: trialsInBlock, set: set, get: get, rows: rows, reset: reset, clear: clear,
+            chooseFlag: chooseFlag, chosenBlocksList: chosenBlocksList, chooseClicked: chooseClicked, unChooseCategories: unChooseCategories,
+            chooseBlocks: chooseBlocks, addBlock: addBlock, updateChosenBlocks: updateChosenBlocks, showRemoveBlocks: showRemoveBlocks};
+
+        function reset(){showClearOrReset(blocks, defaultSettings.blocks, 'reset');}
+        function clear(){showClearOrReset(blocks, rows.slice(-1)[0], 'clear');}
+        function get(name, index){
+            if(name === 'trialsInBlock')
+                return trialsInBlock[index];
+            return blocks[name];
+        }
+        function set(name, index){
+            if(name === 'trialsInBlock')
+                return function(value){return trialsInBlock[index] = Math.abs(Math.round(value));};
+            return function(value){return blocks[name] = value;};
+        }
+        function updateChosenBlocks(e, index){
+            if (chosenBlocksList().includes(index) && !e.target.checked){
+                var i = chosenBlocksList().indexOf(index);
+                if (i !== -1)
+                    chosenBlocksList().splice(i, 1);
+                return;
+            }
+            if (e.target.checked) chosenBlocksList().push(index);
+        }
+        function chooseBlocks(){
+            if (blocks.length < 2) {
+                showRestrictions('It\'s not possible to remove more blocks because there must be at least one block.', 'error');
+                return;
+            }
+            chooseFlag(true);
+            if(!chooseClicked()){  //show info message only for the first time the choose button has been clicked
+                showRestrictions('To choose blocks to remove, please tik the checkbox near the wanted block, and to remove them click the \'Remove Choosen Blocks\' button.','info');
+                chooseClicked(true);
+            }
+        }
+        function addBlock(){
+            trialsInBlock.push(deafaultNumOfTrials);
+        }
+        function unChooseCategories(){
+            chooseFlag(false);
+            chosenBlocksList().length = 0;
+        }
+        function showRemoveBlocks(){
+            if ((trialsInBlock.length - chosenBlocksList().length) < 1){
+                showRestrictions('error','Minimum number of blocks needs to be 3, please choose less blocks to remove','Error in Removing Chosen Blocks');
+                return;
+            }
+            return messages.confirm({header: 'Are you sure?', content:
+                    m('strong', 'This action is permanent')})
+                .then(function (response) {
+                    if (response) {
+                        removeBlocks();
+                        m.redraw();
+                    }
+                    else {
+                        chosenBlocksList().length = 0;
+                        chooseFlag(false);
+                        m.redraw();
+                    }
+                }).catch(function (error) {showRestrictions('error', 'Something went wrong on the page!\n'+error, 'Oops!');})
+                .then(m.redraw());
+
+            function removeBlocks(){
+
+                chosenBlocksList().sort();
+                for (var i = chosenBlocksList().length - 1; i >=0; i--)
+                    trialsInBlock.splice(chosenBlocksList()[i],1);
+
+                chosenBlocksList().length = 0;
+                chooseFlag(false);
+            }
+        }
+    }
+    function view$2(ctrl){
+        return m('.space' , [
+            m('.row.line', [
+                m('.col-md-3',
+                    m('span', [' ', 'Trials In Example Block', ' ']),
+                    m('i.fa.fa-info-circle.text-muted',{title:'Change to 0 if you don\'t want an example block'})
+                ),
+                m('.col-md-3.col-lg-2.space',
+                    m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInExample')), value: ctrl.get('trialsInExample'), min:0}))
+            ]),
+            m('.row.line',
+                m('.col-md-5',
+                    m('p.h4','Number of Trials in Each Block: ',
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
+                        )
+                    )
+                )
+            ),
+            ctrl.trialsInBlock.map(function(block, index) {
+                return m('.row.line', [
+                    m('.col-md-3',[
+                        !ctrl.chooseFlag() ? ' ' :
+                            m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: function (e) { return ctrl.updateChosenBlocks(e, index); }}),
+                        m('span', [' ','Block '+parseInt(index+1)])
+                    ]),
+                    m('.col-md-3.col-lg-2.space',
+                        m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInBlock', index)), value: ctrl.get('trialsInBlock', index), min:0})
+                    )
+                ]);
+            }),
+            m('.row.space',
+                m('.col-md-9',
+                    m('.btn-group btn-group-toggle',[
+                        m('button.btn btn btn-info',{onclick: ctrl.addBlock}, 
+                            m('i.fa.fa-plus'),' Add Block'),
+                        !ctrl.chooseFlag() ?
+                            m('button.btn btn btn-warning',{onclick: ctrl.chooseBlocks},
+                                m('i.fa.fa-check'), ' Choose Blocks to Remove')
+                            : m('button.btn btn btn-warning',{onclick: ctrl.unChooseCategories},[
+                                m('i.fa.fa-minus-circle'), ' Un-Choose Categories to Remove']),
+                        !ctrl.chosenBlocksList().length ? '' :
+                            m('button.btn btn btn-danger',{onclick: ctrl.showRemoveBlocks, disabled: !ctrl.chosenBlocksList().length},
+                                m('i.fa.fa-minus-square'), ' Remove Chosen Blocks'),
+                    ])
+                )
+            ), resetClearButtons(ctrl.reset, ctrl.clear)
+        ]);
+    }
+
+    var importComponent = {
+        controller:controller$1,
+        view:view$1
+    };
+
+    function view$1(ctrl){
+        return viewImport(ctrl);
+    }
+
+    function controller$1(settings) {
+        return {handleFile: handleFile, updateSettings: updateSettings};
+
+        function handleFile(){
+            var importedFile = document.getElementById('uploadFile').files[0];
+            var reader = new FileReader();
+            reader.readAsText(importedFile);
+            reader.onload = function(){
+                var fileContent = JSON.parse(reader.result);
+                settings = updateSettings(settings, fileContent);
+            };
+        }
+    }
+    function updateSettings(settings, input) {
+        //updating the settings variable in parameters group according
+        //to the DefaultSettings file pattern
+        var parameters = ['isQualtrics', 'targetCat', 'primeDuration',
+            'fixationDuration', 'postPrimeDuration', 'targetDuration',
+            'showRatingDuration', 'responses',
+            'sortingLabel1', 'sortingLabel2',
+            'randomizeLabelSides', 'rightKey', 'leftKey',
+            'fixationStimulus', 'maskStimulus', 'base_url'
+        ];
+        parameters.forEach(function (parameter) {settings.parameters[parameter] = input[parameter];});
+
+        var variousParams = ['exampleTargetStimulus', 'exampleFixationStimulus',
+            'exampleMaskStimulus', 'exampleBlock_fixationDuration',
+            'exampleBlock_primeDuration', 'exampleBlock_postPrimeDuration',
+            'exampleBlock_targetDuration', 'examplePrimeStimulus',
+            'primeStimulusCSS', 'primeCats', 'targetStimulusCSS',
+            'trialsInBlock', 'trialsInExample'
+        ];
+        variousParams.forEach(function (parameter) {settings[parameter] = input[parameter];});
+        var textParams = [];
+        if(input.responses === 2){
+            textParams = ['exampleBlockInst', 'firstBlockInst',
+                'middleBlockInst', 'lastBlockInst', 'endText'
+            ];
+        }
+        else {
+            textParams = ['exampleBlockInst7', 'firstBlockInst7',
+                'middleBlockInst7', 'lastBlockInst7', 'endText'
+            ];
+        }
+        textParams.forEach(function (param) {settings.text[param] = input.param;});
+        return settings;
+    }
+
+    var parametersDesc = [
+        {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
+        {name: 'exampleBlock', label:'Example Block', desc: ['Should the task start with an example block?']},
+        {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating'},
+        {name: 'leftKey', label: 'Left Key', desc: 'Change the left key'},
+        {name: 'rightKey', label: 'Right Key', desc: 'Change the right key'},
+        {name: 'sortingLabel1', label: 'First Sorting Label',desc: 'Response is coded as 0.'},
+        {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1. '},
+        {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then label1 is on the left, and label2 is on the right.'},
+        {name: 'primeDuration', label: 'Prime Duration', desc: 'Default prime duration'},
+        {name: 'maskStimulus', label: 'Mask Stimulus', desc: 'The mask stimulus '},
+        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
+        {name: 'fixationStimulus', label: 'Fixation Stimulus', desc: 'Change the fixation stimulus here'},
+        {name: 'postPrimeDuration', label: 'Post Prime Duration', desc: 'Duration of blank screen between prime and target.'},
+        {name: 'targetDuration', label: 'Target Duration', desc: 'Duration of target presentation.'},
+        {name: 'targetCat', label: 'Target Category', desc: 'The name of the targets (used in the instructions).'},
+        {name: 'showRatingDuration', label: 'Show Rating Duration ', desc: 'In the 7-responses option, for how long to show the selected rating.'},
+        {isTouch:false, separateStimulusSelection:0, primeDuration:0, fixationDuration:0 ,deadlineDuration:0, deadlineMsgDuration:0, base_url:{regular:{image:''}, qualtrics:{image:''}}}
+    ];
+
+    var textDesc=[
+        {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'\s Instructions', desc:'Example Block\'\s Instructions'},
+        {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'\s Instructions', desc:'First Block\'\s Instructions'},
+        {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'\s Instructions', desc: 'Middle Block\'\s Instructions'},
+        {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'\s Instructions', desc: 'Last Block\'\s Instructions'},
+        {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions', desc: 'End Block\'\s Instructions'},
+        {exampleBlockInst: '', firstBlockInst: '', middleBlockInst:'', lastBlockInst:'', endText:''},
+        {exampleBlockInst7: '', firstBlockInst7: '', middleBlockInst7:'', lastBlockInst7:'', endText:''}
+    ];
+
+    var blocksDesc = [
+        {name: 'trialsInExample', label: 'Number of trials in example block', desc: 'Change to 0 if you don\'t want an example block'},
+        {name: 'trialsInBlock', label: 'Number of trials in a block', desc: 'Number of trials in each block'},
+        {trialsInExample: 0, trialsInBlock: [0,0,0]}
+    ];
+
+    var exampleBlock = [
+        {name: 'exampleBlock_fixationDuration', label: 'Fixation Duration'},
+        {name: 'exampleBlock_primeDuration', label: 'Prime Duration'},
+        {name: 'exampleBlock_postPrimeDuration', label: 'Post Prime Duration'},
+        {name: 'exampleBlock_targetDuration', label: 'Target Duration'},
+    ];
+
+    // let categoryClear = [{
+    //     name: '',
+    //     title: {media: {word: ''},
+    //         css: {color: '#000000', 'font-size': '1em'}, height: 4},
+    //     stimulusMedia: [],
+    //     stimulusCss : {color:'#000000', 'font-size':'1em'}
+    // }];
+
+    // let primeClear = [{
+    //     name : '',  //Will be used in the logging
+    //     mediaArray : []
+    //
+    // }]
+
+
+    var tabs = {
+        'parameters':{text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc },
+        'blocks':{text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
+        'exampleBlock':{text: 'Example Block', component: exampleComponent, rowsDesc: exampleBlock},
+        // {value: 'prime', text: 'Prime Categories', component: categoriesComponent, rowsDesc: primeClear, subTabs:primesTabs, type: 'EP'},
+        // {value: 'categories', text: 'Target Categories', component: categoriesComponent, rowsDesc: categoryClear, subTabs:categoriesTabs},
+        'text':{text: 'Texts', component: textComponent, rowsDesc: textDesc},
+        'output':{text: 'Complete', component: iatOutputComponent},
+        'import':{text: 'Import', component: importComponent},
+        'help':{text: 'Help', component: helpComponent, rowsDesc:'AMP'}
+    };
+
+    var amp = function (args, external) { return m.component(ampComponent, args, external); };
+
+    var ampComponent = {
+        controller: controller,
+        view: view
+    };
+
+    function controller(ref, external){
+        var file = ref.file;
+        var study = ref.study;
+        if ( external === void 0 ) external = false;
+
+        var ctrl = {
+            study: study ? study : null,
+            file : file ? file : null,
+            err : m.prop([]),
+            loaded : m.prop(false),
+            notifications : createNotifications(),
+            defaultSettings : clone(defaultSettings(external)),
+            settings : clone(defaultSettings(external)),
+            external: external,
+            is_locked:m.prop(study ? study.is_locked : null),
+            show_do_save: show_do_save,
+            is_settings_changed: is_settings_changed
+        };
+
+        ctrl.settings.external = ctrl.external;
+
+        function load() {
+            return ctrl.file.get()
+                .catch(ctrl.err)
+                .then(function () {
+                    if (ctrl.file.content() !== '') {
+                        ctrl.settings = JSON.parse(ctrl.file.content());
+                        ctrl.prev_settings = clone(ctrl.settings);
+                    }
+                    ctrl.loaded(true);
+                })
+                .then(m.redraw);
+        }
+
+        function show_do_save(){
+            var error_msg = [];
+            var blocksObject = tabs.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck(error_msg, ctrl.settings, blocksObject);
+            if(error_msg.length !== 0) {
+                return messages.confirm({
+                    header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
+                    content:
+                        m('div',[
+                            m('.alert alert-danger', [
+                                m('ul', [
+                                    error_msg.map(function (err) {
+                                        return m('li', err);
+                                    })
+                                ])
+                            ]),
+                            m('strong','Do you want to save anyway?')
+                        ])
+                })
+                    .then(function (response) {
+                        if (response) do_save();
+                    }).catch(function (error) { return messages.alert({
+                        content: m('p.alert.alert-danger', error.message)
+                    }); })
+                    .then(m.redraw());
+            }
+            else do_save();
+
+        }
+        function do_save(){
+            ctrl.err([]);
+            var studyId  =  m.route.param('studyId');
+            var fileId = m.route.param('fileId');
+            var jsFileId =  fileId.split('.')[0]+'.js';
+            save('amp', studyId, fileId, ctrl.settings)
+                .then (function () { return saveToJS('amp', studyId, jsFileId, toString(ctrl.settings, ctrl.external)); })
+                .then(ctrl.study.get())
+                .then(function () { return ctrl.notifications.show_success("amp Script successfully saved"); })
                 .then(m.redraw)
                 .catch(function (err) { return ctrl.notifications.show_danger('Error Saving:', err.message); });
             ctrl.prev_settings = clone(ctrl.settings);
@@ -22105,11 +22930,11 @@
                     m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external, ctrl.notifications,
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
-        return m('.container-fluid',
-            pageHeadLine('Evaluative Priming'),
+        return m('.container-fluid',[
+            pageHeadLine('amp'),
             m.component(messages),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
-        );
+        ]);
     }
 
     var editors = {
@@ -22145,7 +22970,8 @@
         biat: biat,
         spf: spf,
         stiat: stiat,
-        ep: ep
+        ep: ep,
+        amp: amp
 
     };
 
@@ -22417,7 +23243,7 @@
                     {text:'SPF task', action: createImplicitMeasure(study, path, 'spf')},
                     {text:'Single Target-IAT task', action: createImplicitMeasure(study, path, 'stiat')},
                     {text:'Evaluative Priming task', action: createImplicitMeasure(study, path, 'ep')},
-                    ]}
+                    {text:'AMP task', action: createImplicitMeasure(study, path, 'amp')}]}
             ]);
         }
 

@@ -9,6 +9,7 @@ import biatEditor from './wizards/implicitMeasures/BIAT/biat.js';
 import spfEditor from './wizards/implicitMeasures/SPF/spf.js';
 import stiatEditor from './wizards/implicitMeasures/STIAT/stiat.js';
 import epEditor from './wizards/implicitMeasures/EP/ep.js';
+import ampEditor from './wizards/implicitMeasures/AMP/amp.js';
 
 export default fileEditorComponent;
 
@@ -45,7 +46,8 @@ let editors = {
     biat: biatEditor,
     spf: spfEditor,
     stiat: stiatEditor,
-    ep: epEditor
+    ep: epEditor,
+    amp: ampEditor
 
 };
 
