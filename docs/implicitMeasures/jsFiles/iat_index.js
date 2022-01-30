@@ -1,6 +1,6 @@
 /**
     * @preserve minnojs-iat-dashboard v1.0.0
-    * @license Apache-2.0 (2021)
+    * @license Apache-2.0 (2022)
     */
     
 (function () {
@@ -12,7 +12,6 @@
             let subTabs = null;
             let currSubTab = null;
             return {tab, subTabs, currSubTab};
-
         },
         view:
             function(ctrl, tabs, settings, defaultSettings, external = false, notifications,
@@ -24,7 +23,9 @@
                                 Object.keys(tabs).map(function(tab){
                                     if (!external && (tab === 'output' || tab === 'import'))
                                         return;
-                                    if (tab === 'practice' && settings.parameters.practiceBlock === false)
+                                    if (tab === 'practice' && !settings.parameters.practiceBlock)
+                                        return;
+                                    if (tab === 'exampleBlock' && !settings.parameters.exampleBlock)
                                         return;
                                     return m('button.tablinks', {
                                         class: ctrl.tab === tab ? 'active' : '',
@@ -67,7 +68,7 @@
                     m('.row',[
                         external ? '' : m('div', notifications.view()),
                         m('.col-sm-11',{key:tabs[ctrl.tab]},
-                            m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
+                            m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].type, ctrl.currSubTab))
                     ])
                 ]);}
     };
@@ -307,7 +308,7 @@
     }
 
     function pageHeadLine(task){
-        return m('h1.display-4', 'Create my '+task+' script')
+        return m('h1.display-4', 'Create my '+task+' script');
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
@@ -340,7 +341,6 @@
 
         return containsImage;
     }
-
     function showClearOrReset(element, value, action){
         let msg_text = {
             'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
@@ -426,10 +426,10 @@
                 m('.col-sm-4',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('span', 'Text: ') :  m('span', 'Image: ')),
-                m('.col-sm-8',
+                m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
-                        : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+                        ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
+                        : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,oninput:m.withAttr('value', set(fieldName,'media','image'))})
                 )
             ])
         ]);
@@ -447,7 +447,6 @@
         return {reset, clear, set, get, rows, qualtricsParameters, external};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
-
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
 
         function get(name, object, parameter) {
@@ -500,7 +499,7 @@
         return m('.space' ,[
             ctrl.rows.slice(0,-1).map((row) => {
                 if(!ctrl.external && row.name === 'isQualtrics') return;
-                if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
+                if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
@@ -649,14 +648,26 @@
         let isQualtrics = settings.parameters.isQualtrics;
         let textparameters;
         isTouch ? textparameters = settings.touch_text : textparameters = settings.text;
-        return {reset, clear, set, get, rows: rows.slice(0,-2), isTouch, isQualtrics};
+        //for AMP
+        let isSeven = settings.parameters.responses;
+        if(isSeven == 7) {
+            textparameters = settings.text_seven;
+            isSeven = true;
+        }
+        else if(isSeven == 2){
+            textparameters = settings.text;
+            isSeven = false;
+        }
+        return {reset, clear, set, get, rows: rows.slice(0,-2), isTouch, isQualtrics, isSeven};
 
         function reset(){
-            let valueToSet = isTouch ? defaultSettings.touch_text : defaultSettings.text;
+            let valueToSet = isTouch ? defaultSettings.touch_text
+                : isSeven ?  defaultSettings.text_seven
+                    : defaultSettings.text;
             showClearOrReset(textparameters, valueToSet, 'reset');
         }
         function clear(){
-            let valueToSet = isTouch ? rows.slice(-1)[0] :  rows.slice(-2)[0];
+            let valueToSet = isTouch || isSeven ? rows.slice(-1)[0] :  rows.slice(-2)[0];
             showClearOrReset(textparameters, valueToSet, 'clear');
         }
         function get(name){return textparameters[name];}
@@ -681,7 +692,7 @@
                             : m('span', [' ', row.label])
                     ),
                     m('.col-md-8', [
-                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : row.name))})
+                        m('textarea.form-control',{rows:5, value:ctrl.get(ctrl.isTouch ? row.nameTouch : ctrl.isSeven? row.nameSeven : row.name), oninput:m.withAttr('value', ctrl.set(ctrl.isTouch ? row.nameTouch : ctrl.isSeven ? row.nameSeven : row.name))})
                     ])
                 ]);
             }), resetClearButtons(ctrl.reset, ctrl.clear)
@@ -1369,15 +1380,18 @@
         view:view$4,
     };
 
-    function controller$4(object, settings, stimuliList){
+    function controller$4(object, settings, stimuliList, taskType){
         let element = settings[object.key];
         let fields = {
             newStimulus : m.prop(''),
-            elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
             selectedStimuli: m.prop(''),
+            isAMP: taskType === 'AMP',
+            elementType: m.prop(object.key.includes('target') ? 'Target' : 'Prime'),
+            isTarget: m.prop(object.key.includes('target'))
         };
 
-        return {fields, set, get, addStimulus, updateSelectedStimuli, removeChosenStimuli, removeAllStimuli, resetStimuliList};
+        return {fields ,set, get, addStimulus, updateSelectedStimuli,
+            removeChosenStimuli, removeAllStimuli, resetStimuliList};
 
         function get(name, media, type){
             if (media != null && type != null){
@@ -1392,7 +1406,7 @@
         }
         function set(name, media, type){
             return function(value){
-                if (media != null && type != null){
+                if (media && type){
                     if (type === 'font-size'){
                         value = Math.abs(value);
                         if (value === 0){
@@ -1439,7 +1453,7 @@
         return m('.space', [
             m('.row.line',[
                 m('.col-sm-3',[
-                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                    m('span', ctrl.fields.elementType()+' category\'s name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{
                         title:'Will appear in the data and in the default feedback message.'
                     }),
@@ -1448,6 +1462,20 @@
                     m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
                 ])
             ]),
+            !ctrl.fields.isAMP ? '' : //AMP has this additional field
+                m('.row.line',[
+                    m('.col-sm-3',[
+                        m('span', ctrl.fields.elementType()+' category\'s name presented in the feedback page '),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title: !ctrl.fields.isTarget() ? 'Will appear in the default feedback message'
+                                : 'The name of the targets (used in the instructions)'
+                        }),
+                    ]),
+                    m('.col-sm-3', [
+                        m('input[type=text].form-control', {value:ctrl.get('nameForFeedback'),
+                            oninput:m.withAttr('value', ctrl.set('nameForFeedback'))})
+                    ])
+                ]),
             m('.row',[
                 m('.col-md-6',[
                     m('.row',
@@ -1503,9 +1531,11 @@
         view:view$3
     };
 
-    function controller$3(settings){
-        let primeCss = settings.primeStimulusCSS;
-        return {set, get};
+    function controller$3(taskType, settings, elementName){
+        let primeCss = settings[elementName];
+        let elementType = m.prop(elementName.includes('target') ? 'Target' : 'Prime');
+        let durationFieldName = m.prop(elementType() === 'Target' ? 'targetDuration' : 'primeDuration');
+        return {set, get, elementType, durationFieldName, primeCss};
 
         function get(parameter){
             if (parameter === 'font-size') return parseFloat((primeCss[parameter]).substring(0,3));
@@ -1513,6 +1543,8 @@
         }
         function set(parameter){
             return function(value){
+                if(parameter.includes('Duration')) //Duration parameter is under settings directly
+                    return primeCss[parameter] = Math.abs(value);
                 if (parameter === 'font-size'){
                     value = Math.abs(value);
                     if (value === 0){
@@ -1526,20 +1558,30 @@
         }
     }
 
-    function view$3(ctrl){
-        return m('.row' , [
-            m('.col-sm-12',[
-                m('.row.space',[
-                    m('.col-sm-2',[
-                        m('span', 'Font\'s color: '),
-                        m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
-                    ]),
-                    m('.col-sm-2',[
-                        m('span', 'Font\'s size: '),
-                        m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
-                    ])
+    function view$3(ctrl, taskType){
+        return m('.space' , [
+            m('.row.line',[
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12', m('span', 'Font\'s color: '))),
+                    m('.row.space', m('.col-sm-6', m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})))
+                ]),
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12',m('span', 'Font\'s size: '))),
+                    m('.row.space', m('.col-sm-6',m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})))
                 ])
+            ]),
+            m('.row.space',[
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
+                ]),
+                ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
+                    m('.col-sm-4',[
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
+                    ]) : ''
             ])
+
         ]);
     }
 
@@ -1548,26 +1590,27 @@
         view:view$2
     };
 
-    function controller$2(settings, defaultSettings, clearElement){
-
+    function controller$2(settings, defaultSettings, clearElement) {
         return {reset, clear};
 
         function reset(curr_tab){showClearOrReset(settings[curr_tab], defaultSettings[curr_tab],'reset');}
         function clear(curr_tab){
-            curr_tab === 'primeStimulusCSS' ? showClearOrReset(settings[curr_tab], {color:'#000000','font-size':'0em'}, 'clear')
+            curr_tab.includes('StimulusCSS') ?
+                showClearOrReset(settings[curr_tab], clearElement[1], 'clear')
                 : showClearOrReset(settings[curr_tab], clearElement[0], 'clear');
         }
     }
 
-    function view$2(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
+    function view$2(ctrl, settings, defaultSettings, clearElement, taskType, currTab) {
         return m('div', [
             taskType === 'BIAT' ?
                 m.component(elementComponent$1,{key:currTab}, settings,
                     defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
-                    m.component(parametersComponent, settings)
-                    : taskType === 'EP' ?
-                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                //in EP & AMP there is additional sub tab called Target/Prime Appearance, it needs a different component.
+                : currTab.includes('StimulusCSS') ?
+                    m.component(parametersComponent, taskType, settings, currTab)
+                    : taskType === 'EP' || taskType === 'AMP' ?
+                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray, taskType)
                         : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
             m('hr')
             ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)

@@ -18134,7 +18134,7 @@
                     m('.row',[
                         external ? '' : m('div', notifications.view()),
                         m('.col-sm-11',{key:tabs[ctrl.tab]},
-                            m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
+                            m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].type, ctrl.currSubTab))
                     ])
                 ]);}
     };
@@ -18234,7 +18234,7 @@
     }
 
     function pageHeadLine(task){
-        return m('h1.display-4', 'Create my '+task+' script')
+        return m('h1.display-4', 'Create my '+task+' script');
     }
 
     function checkMissingElementName(element, name_to_display, error_msg){
@@ -18271,14 +18271,25 @@
     function checkPrime(element, name_to_display, error_msg){
         var containsImage = false;
         //check for missing titles and names
-        if(element.name.length === 0)
-            error_msg.push(name_to_display+'\'s name is missing');
+        if(element.name !== undefined) {
+            if (element.name.length === 0)
+                error_msg.push(name_to_display + ' name for logging is missing');
+        }
+        //In AMP, prime and target has additional fields
+        if(element.nameForFeedback !== undefined){
+            if(element.nameForFeedback.length === 0)
+                error_msg.push(name_to_display+' name for feedback is missing');
+        }
+        if(element.nameForLogging !== undefined){
+            if(element.nameForLogging.length === 0)
+                error_msg.push(name_to_display+' name for logging is missing');
+        }
 
         var mediaArray = element.mediaArray;
 
         //if there an empty stimuli list
         if (mediaArray.length === 0)
-            error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
+            error_msg.push(name_to_display+' stimuli list is empty, please enter at least one stimulus.');
 
         //check if the stimuli contains images
         for(var i = 0; i < mediaArray.length ;i++)
@@ -18286,7 +18297,11 @@
 
         return containsImage;
     }
-
+    function checkStimulus(element, name_to_display, type, error_msg) {
+        if(element.media[type].length === 0){
+            error_msg.push(name_to_display+' is missing.');
+        }
+    }
     function showClearOrReset(element, value, action){
         var msg_text = {
             'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
@@ -18374,10 +18389,10 @@
                 m('.col-sm-4',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('span', 'Text: ') :  m('span', 'Image: ')),
-                m('.col-sm-8',
+                m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
-                        : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+                        ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
+                        : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,oninput:m.withAttr('value', set(fieldName,'media','image'))})
                 )
             ])
         ]);
@@ -18395,7 +18410,6 @@
         return {reset: reset, clear: clear, set: set, get: get, rows: rows, qualtricsParameters: qualtricsParameters, external: external};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
-
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
 
         function get(name, object, parameter) {
@@ -18448,7 +18462,7 @@
         return m('.space' ,[
             ctrl.rows.slice(0,-1).map(function (row) {
                 if(!ctrl.external && row.name === 'isQualtrics') return;
-                if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
+                if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
@@ -18599,11 +18613,11 @@
         isTouch ? textparameters = settings.touch_text : textparameters = settings.text;
         //for AMP
         var isSeven = settings.parameters.responses;
-        if(isSeven === '7') {
+        if(isSeven == 7) {
             textparameters = settings.text_seven;
             isSeven = true;
         }
-        else {
+        else if(isSeven == 2){
             textparameters = settings.text;
             isSeven = false;
         }
@@ -19337,15 +19351,18 @@
         view:view$o,
     };
 
-    function controller$o(object, settings, stimuliList){
+    function controller$o(object, settings, stimuliList, taskType){
         var element = settings[object.key];
         var fields = {
             newStimulus : m.prop(''),
-            elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
             selectedStimuli: m.prop(''),
+            isAMP: taskType === 'AMP',
+            elementType: m.prop(object.key.includes('target') ? 'Target' : 'Prime'),
+            isTarget: m.prop(object.key.includes('target'))
         };
 
-        return {fields: fields, set: set, get: get, addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli, removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli, resetStimuliList: resetStimuliList};
+        return {fields: fields ,set: set, get: get, addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli,
+            removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli, resetStimuliList: resetStimuliList};
 
         function get(name, media, type){
             if (media != null && type != null){
@@ -19360,7 +19377,7 @@
         }
         function set(name, media, type){
             return function(value){
-                if (media != null && type != null){
+                if (media && type){
                     if (type === 'font-size'){
                         value = Math.abs(value);
                         if (value === 0){
@@ -19407,7 +19424,7 @@
         return m('.space', [
             m('.row.line',[
                 m('.col-sm-3',[
-                    m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                    m('span', ctrl.fields.elementType()+' category\'s name logged in the data file '),
                     m('i.fa.fa-info-circle.text-muted',{
                         title:'Will appear in the data and in the default feedback message.'
                     }),
@@ -19416,6 +19433,20 @@
                     m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
                 ])
             ]),
+            !ctrl.fields.isAMP ? '' : //AMP has this additional field
+                m('.row.line',[
+                    m('.col-sm-3',[
+                        m('span', ctrl.fields.elementType()+' category\'s name presented in the feedback page '),
+                        m('i.fa.fa-info-circle.text-muted',{
+                            title: !ctrl.fields.isTarget() ? 'Will appear in the default feedback message'
+                                : 'The name of the targets (used in the instructions)'
+                        }),
+                    ]),
+                    m('.col-sm-3', [
+                        m('input[type=text].form-control', {value:ctrl.get('nameForFeedback'),
+                            oninput:m.withAttr('value', ctrl.set('nameForFeedback'))})
+                    ])
+                ]),
             m('.row',[
                 m('.col-md-6',[
                     m('.row',
@@ -19471,9 +19502,11 @@
         view:view$n
     };
 
-    function controller$n(settings){
-        var primeCss = settings.primeStimulusCSS;
-        return {set: set, get: get};
+    function controller$n(taskType, settings, elementName){
+        var primeCss = settings[elementName];
+        var elementType = m.prop(elementName.includes('target') ? 'Target' : 'Prime');
+        var durationFieldName = m.prop(elementType() === 'Target' ? 'targetDuration' : 'primeDuration');
+        return {set: set, get: get, elementType: elementType, durationFieldName: durationFieldName, primeCss: primeCss};
 
         function get(parameter){
             if (parameter === 'font-size') return parseFloat((primeCss[parameter]).substring(0,3));
@@ -19481,6 +19514,8 @@
         }
         function set(parameter){
             return function(value){
+                if(parameter.includes('Duration')) //Duration parameter is under settings directly
+                    return primeCss[parameter] = Math.abs(value);
                 if (parameter === 'font-size'){
                     value = Math.abs(value);
                     if (value === 0){
@@ -19494,20 +19529,30 @@
         }
     }
 
-    function view$n(ctrl){
-        return m('.row' , [
-            m('.col-sm-12',[
-                m('.row.space',[
-                    m('.col-sm-2',[
-                        m('span', 'Font\'s color: '),
-                        m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})
-                    ]),
-                    m('.col-sm-2',[
-                        m('span', 'Font\'s size: '),
-                        m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})
-                    ])
+    function view$n(ctrl, taskType){
+        return m('.space' , [
+            m('.row.line',[
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12', m('span', 'Font\'s color: '))),
+                    m('.row.space', m('.col-sm-6', m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})))
+                ]),
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12',m('span', 'Font\'s size: '))),
+                    m('.row.space', m('.col-sm-6',m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})))
                 ])
+            ]),
+            m('.row.space',[
+                m('.col-sm-3',[
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
+                ]),
+                ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
+                    m('.col-sm-4',[
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
+                    ]) : ''
             ])
+
         ]);
     }
 
@@ -19516,26 +19561,27 @@
         view:view$m
     };
 
-    function controller$m(settings, defaultSettings, clearElement){
-
+    function controller$m(settings, defaultSettings, clearElement) {
         return {reset: reset, clear: clear};
 
         function reset(curr_tab){showClearOrReset(settings[curr_tab], defaultSettings[curr_tab],'reset');}
         function clear(curr_tab){
-            curr_tab === 'primeStimulusCSS' ? showClearOrReset(settings[curr_tab], {color:'#000000','font-size':'0em'}, 'clear')
+            curr_tab.includes('StimulusCSS') ?
+                showClearOrReset(settings[curr_tab], clearElement[1], 'clear')
                 : showClearOrReset(settings[curr_tab], clearElement[0], 'clear');
         }
     }
 
-    function view$m(ctrl, settings, defaultSettings, clearElement, subTabs, taskType, currTab) {
+    function view$m(ctrl, settings, defaultSettings, clearElement, taskType, currTab) {
         return m('div', [
             taskType === 'BIAT' ?
                 m.component(elementComponent$1,{key:currTab}, settings,
                     defaultSettings[currTab].stimulusMedia, defaultSettings[currTab].title.startStimulus)
-                : currTab === 'primeStimulusCSS' ? //in EP there is additional subtab called Prime Design, it needs different component.
-                    m.component(parametersComponent, settings)
-                    : taskType === 'EP' ?
-                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray)
+                //in EP & AMP there is additional sub tab called Target/Prime Appearance, it needs a different component.
+                : currTab.includes('StimulusCSS') ?
+                    m.component(parametersComponent, taskType, settings, currTab)
+                    : taskType === 'EP' || taskType === 'AMP' ?
+                        m.component(elementComponent, {key:currTab}, settings, defaultSettings[currTab].mediaArray, taskType)
                         : m.component(elementComponent$2, {key:currTab}, settings, defaultSettings[currTab].stimulusMedia),
             m('hr')
             ,resetClearButtons(ctrl.reset, ctrl.clear, currTab)
@@ -21120,7 +21166,7 @@
         return toScript$2(updateSettings$5(settings), external);
     }
 
-    function updateMediaSettings$3(settings){
+    function updateMediaSettings$5(settings){
         //update attributes to be compatible to STIAT
         var settings_output = clone(settings);
         settings_output.category.media = settings_output.category.stimulusMedia;
@@ -21140,7 +21186,7 @@
     }
 
     function updateSettings$5(settings){
-        settings = updateMediaSettings$3(settings);
+        settings = updateMediaSettings$5(settings);
         var output={
             category: settings.category,
             attribute1: settings.attribute1,
@@ -21429,20 +21475,20 @@
         }
     }
 
-    function updateMediaSettings$2(settings, input){
+    function updateMediaSettings$4(settings){
         //update attributes to be compatible to IAT so that elementComponent can be used.
-        settings.category.stimulusMedia = input.category.media;
+        settings.category.stimulusMedia = settings.category.media;
         delete settings.category.media;
-        settings.attribute1.stimulusMedia = input.attribute1.media;
+        settings.attribute1.stimulusMedia = settings.attribute1.media;
         delete settings.attribute1.media;
-        settings.attribute2.stimulusMedia = input.attribute2.media;
+        settings.attribute2.stimulusMedia = settings.attribute2.media;
         delete settings.attribute2.media;
 
-        settings.category.stimulusCss = input.category.css;
+        settings.category.stimulusCss = settings.category.css;
         delete settings.category.css;
-        settings.attribute1.stimulusCss = input.attribute1.css;
+        settings.attribute1.stimulusCss = settings.attribute1.css;
         delete settings.attribute1.css;
-        settings.attribute2.stimulusCss = input.attribute2.css;
+        settings.attribute2.stimulusCss = settings.attribute2.css;
         delete settings.attribute2.css;
         return settings;
     }
@@ -21465,7 +21511,7 @@
         settings.blockOrder = input.blockOrder;
         settings.switchSideBlock = input.switchSideBlock;
 
-        settings = updateMediaSettings$2(settings, input);
+        settings = updateMediaSettings$4(settings);
         return settings;
 
     }
@@ -21649,12 +21695,10 @@
     }
 
     function defaultSettings$1(external) {
-
         return {
             parameters: {
                 isQualtrics: false,
                 separateStimulusSelection: true,
-                primeDuration: 200,
                 fixationDuration: 0,
                 deadlineDuration: 0,
                 deadlineMsgDuration: 750,
@@ -21669,11 +21713,13 @@
                 },
                 base_url: {image: external ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/docs/images/' : './images'}
             },
-            primeStimulusCSS: {color: '#0000FF', 'font-size': '2.3em'}, //The CSS for all the prime stimuli.
+            primeStimulusCSS: { //The CSS for all the prime stimuli.
+                primeDuration: 200,
+                color: '#0000FF', 'font-size': '2.3em'
+            },
             prime1: {
                 name: 'prime1',  //Will be used in the logging
                 mediaArray: [{word: 'prime1Stim1'}, {word: 'prime1Stim2'}] //An array of all media objects for this category.
-
             },
             prime2: {
                 name: 'prime2',
@@ -21798,8 +21844,8 @@
     }
 
     function validityCheck$1(error_msg, settings){
-        var temp1 = checkPrime(settings.prime1, 'First Prime Category', error_msg);
-        var temp2 = checkPrime(settings.prime2, 'Second Prime Category', error_msg);
+        var temp1 = checkPrime(settings.prime1, 'First Prime Category\'s', error_msg);
+        var temp2 = checkPrime(settings.prime2, 'Second Prime Category\'s', error_msg);
         var temp3 = checkMissingElementName(settings.rightAttTargets, 'First Target Category', error_msg);
         var temp4 = checkMissingElementName(settings.leftAttTargets, 'Second Target Category', error_msg);
 
@@ -21820,9 +21866,13 @@
         return toScript$1(updateSettings$3(settings), external);
     }
 
-    function updateMediaSettings$1(settings){
+    function updateMediaSettings$3(settings){
         //update attributes names to be compatible to EP
         var settings_output = clone(settings);
+
+        settings_output.primeDuration = settings_output.primeStimulusCSS.primeDuration;
+        delete settings_output.primeStimulusCSS.primeDuration;
+
         settings_output.targetCats = {};
         settings_output.targetCats.rightAttTargets = settings_output.rightAttTargets;
         settings_output.targetCats.rightAttTargets.mediaArray = settings_output.rightAttTargets.stimulusMedia;
@@ -21842,12 +21892,13 @@
     }
 
     function updateSettings$3(settings){
-        settings = updateMediaSettings$1(settings);
+        settings = updateMediaSettings$3(settings);
 
         var output={
-            primeStimulusCSS: settings.primeStimulusCSS,
             prime1: settings.prime1,
             prime2: settings.prime2,
+            primeStimulusCSS: settings.primeStimulusCSS,
+            primeDuration: settings.primeDuration,
             targetCats: settings.targetCats
         };
         if(settings.parameters.isQualtrics)
@@ -21894,18 +21945,21 @@
             };
         }
     }
-    function updateMediaSettings(settings, input){
+    function updateMediaSettings$2(settings){
         //update attributes to be compatible to IAT so that elementComponent can be used.
-        settings.rightAttTargets = input.targetCats.rightAttTargets;
-        settings.rightAttTargets.stimulusMedia = input.targetCats.rightAttTargets.mediaArray;
+        settings.primeStimulusCSS.primeDuration = settings.primeDuration;
+        delete settings.primeDuration;
+
+        settings.rightAttTargets = settings.targetCats.rightAttTargets;
+        settings.rightAttTargets.stimulusMedia = settings.targetCats.rightAttTargets.mediaArray;
         delete settings.targetCats.rightAttTargets.mediaArray;
 
-        settings.leftAttTargets = input.targetCats.leftAttTargets;
-        settings.leftAttTargets.stimulusMedia = input.targetCats.leftAttTargets.mediaArray;
+        settings.leftAttTargets = settings.targetCats.leftAttTargets;
+        settings.leftAttTargets.stimulusMedia = settings.targetCats.leftAttTargets.mediaArray;
         delete settings.targetCats.leftAttTargets.mediaArray;
 
-        settings.rightAttTargets.stimulusCss = input.targetCats.rightAttTargets.stimulusCSS;
-        settings.leftAttTargets.stimulusCss = input.targetCats.leftAttTargets.stimulusCSS;
+        settings.rightAttTargets.stimulusCss = settings.targetCats.rightAttTargets.stimulusCSS;
+        settings.leftAttTargets.stimulusCss = settings.targetCats.leftAttTargets.stimulusCSS;
         delete settings.rightAttTargets.stimulusCSS;
         delete settings.leftAttTargets.stimulusCSS;
         delete settings.targetCats.rightAttTargets;
@@ -21937,7 +21991,7 @@
         settings.blocks.nTrialsPerPrimeTargetPair = input.nTrialsPerPrimeTargetPair;
         settings.blocks.nBlocks = input.nBlocks;
 
-        settings = updateMediaSettings(settings, input);
+        settings = updateMediaSettings$2(settings);
         return settings;
     }
 
@@ -21946,14 +22000,14 @@
         {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
                 '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
                 'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
-        {name: 'primeDuration', label: 'Prime Duration'},
         {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
         {name: 'fixationStimulus', label: 'Fixation Stimulus'},
         {name: 'deadlineDuration', label: 'Deadline Duration', desc: '0 means no response deadline: we wait until response.'},
+        {name: 'deadlineMsgDuration', label: 'Deadline\'s Message Duration'},
         {name: 'deadlineStimulus', label: 'Deadline Stimulus'},
         {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
                                                     'It can be a full url, or a relative URL to the folder that will host this script'},
-        {isTouch:false, separateStimulusSelection:0, primeDuration:0, fixationDuration:0 ,
+        {isTouch:false, separateStimulusSelection:0, fixationDuration:0 ,
             fixationStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}},
             deadlineStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}, location: {bottom:10}},
             deadlineDuration:0, deadlineMsgDuration:0, base_url:{image:''}}
@@ -21981,17 +22035,24 @@
         stimulusCss : {color:'#000000', 'font-size':'1em'}
     }];
 
-    var primeClear = [{
-        name : '',  //Will be used in the logging
-        mediaArray : []
-    }];
+    var primeClear$1 = [
+        {
+            name : '',  //Will be used in the logging
+            mediaArray : []
+        },
+        { //CSS cleared
+            primeDuration: 0,
+            color: '#000000',
+            'font-size': '1em'
+        }
+    ];
 
     var categoriesTabs = {
         'rightAttTargets':{text: 'First Category'},
         'leftAttTargets':{text: 'Second Category'},
     };
 
-    var primesTabs = {
+    var primesTabs$1 = {
         'prime1':{text: 'First Category'},
         'prime2':{text: 'Second Category'},
         'primeStimulusCSS':{text:'Prime Appearance'}
@@ -22003,8 +22064,8 @@
         'prime': {
             text: 'Prime Categories',
             component: categoriesComponent$1,
-            rowsDesc: primeClear,
-            subTabs: primesTabs,
+            rowsDesc: primeClear$1,
+            subTabs: primesTabs$1,
             type: 'EP'
         },
         'categories': {
@@ -22130,18 +22191,14 @@
             parameters: {
                 isQualtrics: false,
                 exampleBlock: true,
-                targetCat: 'Chinese symbol',
-                primeDuration: 100,
                 fixationDuration: 0,
-                postPrimeDuration: 100,
-                targetDuration: 100,
                 showRatingDuration: 300,
                 responses: 2,
                 sortingLabel1: 'Pleasant', //Response is coded as 0.
                 sortingLabel2: 'Unpleasant',  //Response is coded as 1.
                 randomizeLabelSides: false, //If false, then label1 is on the left, and label2 is on the right.
-                rightKey: 'i',
-                leftKey: 'e',
+                rightkey: 'i',
+                leftkey: 'e',
                 fixationStimulus: { //The fixation stimulus
                     css: {color: '#000000', 'font-size': '3em'},
                     media: {word: '+'}
@@ -22150,7 +22207,7 @@
                     css: {color: '000000', 'font-size': '3em'},
                     media: {image: 'ampmask.jpg'}
                 },
-                base_url: {image: external ? 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/docs/images/' : './images'}
+                base_url: {image: external ? 'https://baranan.github.io/minno-tasks/images/ampImages' : './images'}
             },
             exampleBlock: {
                 exampleTargetStimulus:
@@ -22166,64 +22223,70 @@
                     css: {color: '000000', 'font-size': '3em'},
                     media: {image: 'ampmaskr.jpg'}
                 },
-                exampleBlock_fixationDuration: -1,
-                exampleBlock_primeDuration: 100,
-                exampleBlock_postPrimeDuration: 100,
-                exampleBlock_targetDuration: 300,
                 examplePrimeStimulus: {
                     nameForLogging: 'examplePrime', //Will be used in the logging
                     //An array of all media objects for this category.
                     mediaArray: [{word: 'Table'}, {word: 'Chair'}]
-                }
-            },
-
-            primeStimulusCSS: {color: '#0000FF', 'font-size': '2.3em'}, //The CSS for all the prime stimuli.
-            primeCats: [
-                {
-                    nameForFeedback: 'positive words',  //Will be used in the user feedback
-                    nameForLogging: 'positive', //Will be used in the logging
-                    //An array of all media objects for this category.
-                    mediaArray: [{word: 'Wonderful'}, {word: 'Great'}]
                 },
-                {
-                    nameForFeedback: 'negative words',  //Will be used in the user feedback
-                    nameForLogging: 'negative', //Will be used in the logging
-                    mediaArray: [{word: 'Awful'}, {word: 'Horrible'}]
-                }
-            ],
-
-            targetStimulusCSS: {color: '#0000FF', 'font-size': '2.3em'}, //The CSS for all the target stimuli (usually irrelevant because the targets are Chinese pictographs.
-            //The prime categories.
-            targetCats: [
-                {
-                    nameForLogging: 'chinese',  //Will be used in the logging
-                    //An array of all media objects for this category. The default is pic1-pic200.jpg
-                    mediaArray: [
-                        {image: 'pic1.jpg'}, {image: 'pic2.jpg'}, {image: 'pic3.jpg'}, {image: 'pic4.jpg'}, {image: 'pic5.jpg'}, {image: 'pic6.jpg'}, {image: 'pic7.jpg'}, {image: 'pic8.jpg'}, {image: 'pic9.jpg'},
-                        {image: 'pic10.jpg'}, {image: 'pic11.jpg'}, {image: 'pic12.jpg'}, {image: 'pic13.jpg'}, {image: 'pic14.jpg'}, {image: 'pic15.jpg'}, {image: 'pic16.jpg'}, {image: 'pic17.jpg'}, {image: 'pic18.jpg'}, {image: 'pic19.jpg'},
-                        {image: 'pic20.jpg'}, {image: 'pic21.jpg'}, {image: 'pic22.jpg'}, {image: 'pic23.jpg'}, {image: 'pic24.jpg'}, {image: 'pic25.jpg'}, {image: 'pic26.jpg'}, {image: 'pic27.jpg'}, {image: 'pic28.jpg'}, {image: 'pic29.jpg'},
-                        {image: 'pic30.jpg'}, {image: 'pic31.jpg'}, {image: 'pic32.jpg'}, {image: 'pic33.jpg'}, {image: 'pic34.jpg'}, {image: 'pic35.jpg'}, {image: 'pic36.jpg'}, {image: 'pic37.jpg'}, {image: 'pic38.jpg'}, {image: 'pic39.jpg'},
-                        {image: 'pic40.jpg'}, {image: 'pic41.jpg'}, {image: 'pic42.jpg'}, {image: 'pic43.jpg'}, {image: 'pic44.jpg'}, {image: 'pic45.jpg'}, {image: 'pic46.jpg'}, {image: 'pic47.jpg'}, {image: 'pic48.jpg'}, {image: 'pic49.jpg'},
-                        {image: 'pic50.jpg'}, {image: 'pic51.jpg'}, {image: 'pic52.jpg'}, {image: 'pic53.jpg'}, {image: 'pic54.jpg'}, {image: 'pic55.jpg'}, {image: 'pic56.jpg'}, {image: 'pic57.jpg'}, {image: 'pic58.jpg'}, {image: 'pic59.jpg'},
-                        {image: 'pic60.jpg'}, {image: 'pic61.jpg'}, {image: 'pic62.jpg'}, {image: 'pic63.jpg'}, {image: 'pic64.jpg'}, {image: 'pic65.jpg'}, {image: 'pic66.jpg'}, {image: 'pic67.jpg'}, {image: 'pic68.jpg'}, {image: 'pic69.jpg'},
-                        {image: 'pic70.jpg'}, {image: 'pic71.jpg'}, {image: 'pic72.jpg'}, {image: 'pic73.jpg'}, {image: 'pic74.jpg'}, {image: 'pic75.jpg'}, {image: 'pic76.jpg'}, {image: 'pic77.jpg'}, {image: 'pic78.jpg'}, {image: 'pic79.jpg'},
-                        {image: 'pic80.jpg'}, {image: 'pic81.jpg'}, {image: 'pic82.jpg'}, {image: 'pic83.jpg'}, {image: 'pic84.jpg'}, {image: 'pic85.jpg'}, {image: 'pic86.jpg'}, {image: 'pic87.jpg'}, {image: 'pic88.jpg'}, {image: 'pic89.jpg'},
-                        {image: 'pic90.jpg'}, {image: 'pic91.jpg'}, {image: 'pic92.jpg'}, {image: 'pic93.jpg'}, {image: 'pic94.jpg'}, {image: 'pic95.jpg'}, {image: 'pic96.jpg'}, {image: 'pic97.jpg'}, {image: 'pic98.jpg'}, {image: 'pic99.jpg'},
-                        {image: 'pic110.jpg'}, {image: 'pic111.jpg'}, {image: 'pic112.jpg'}, {image: 'pic113.jpg'}, {image: 'pic114.jpg'}, {image: 'pic115.jpg'}, {image: 'pic116.jpg'}, {image: 'pic117.jpg'}, {image: 'pic118.jpg'}, {image: 'pic119.jpg'},
-                        {image: 'pic120.jpg'}, {image: 'pic121.jpg'}, {image: 'pic122.jpg'}, {image: 'pic123.jpg'}, {image: 'pic124.jpg'}, {image: 'pic125.jpg'}, {image: 'pic126.jpg'}, {image: 'pic127.jpg'}, {image: 'pic128.jpg'}, {image: 'pic129.jpg'},
-                        {image: 'pic130.jpg'}, {image: 'pic131.jpg'}, {image: 'pic132.jpg'}, {image: 'pic133.jpg'}, {image: 'pic134.jpg'}, {image: 'pic135.jpg'}, {image: 'pic136.jpg'}, {image: 'pic137.jpg'}, {image: 'pic138.jpg'}, {image: 'pic139.jpg'},
-                        {image: 'pic140.jpg'}, {image: 'pic141.jpg'}, {image: 'pic142.jpg'}, {image: 'pic143.jpg'}, {image: 'pic144.jpg'}, {image: 'pic145.jpg'}, {image: 'pic146.jpg'}, {image: 'pic147.jpg'}, {image: 'pic148.jpg'}, {image: 'pic149.jpg'},
-                        {image: 'pic150.jpg'}, {image: 'pic151.jpg'}, {image: 'pic152.jpg'}, {image: 'pic153.jpg'}, {image: 'pic154.jpg'}, {image: 'pic155.jpg'}, {image: 'pic156.jpg'}, {image: 'pic157.jpg'}, {image: 'pic158.jpg'}, {image: 'pic159.jpg'},
-                        {image: 'pic160.jpg'}, {image: 'pic161.jpg'}, {image: 'pic162.jpg'}, {image: 'pic163.jpg'}, {image: 'pic164.jpg'}, {image: 'pic165.jpg'}, {image: 'pic166.jpg'}, {image: 'pic167.jpg'}, {image: 'pic168.jpg'}, {image: 'pic169.jpg'},
-                        {image: 'pic170.jpg'}, {image: 'pic171.jpg'}, {image: 'pic172.jpg'}, {image: 'pic173.jpg'}, {image: 'pic174.jpg'}, {image: 'pic175.jpg'}, {image: 'pic176.jpg'}, {image: 'pic177.jpg'}, {image: 'pic178.jpg'}, {image: 'pic179.jpg'},
-                        {image: 'pic180.jpg'}, {image: 'pic181.jpg'}, {image: 'pic182.jpg'}, {image: 'pic183.jpg'}, {image: 'pic184.jpg'}, {image: 'pic185.jpg'}, {image: 'pic186.jpg'}, {image: 'pic187.jpg'}, {image: 'pic188.jpg'}, {image: 'pic189.jpg'},
-                        {image: 'pic190.jpg'}, {image: 'pic191.jpg'}, {image: 'pic192.jpg'}, {image: 'pic193.jpg'}, {image: 'pic194.jpg'}, {image: 'pic195.jpg'}, {image: 'pic196.jpg'}, {image: 'pic197.jpg'}, {image: 'pic198.jpg'}, {image: 'pic199.jpg'},
-                        {image: 'pic200.jpg'}
-                    ]
-                }
-            ],
+                exampleBlock_fixationDuration: -1,
+                exampleBlock_primeDuration: 100,
+                exampleBlock_postPrimeDuration: 100,
+                exampleBlock_targetDuration: 300
+            },
+            primeStimulusCSS: { //The CSS for all the prime stimuli.
+                primeDuration: 100,
+                postPrimeDuration: 100,
+                color: '#0000FF',
+                'font-size': '2.3em'
+            },
+            //primeCats: [
+            prime1: {
+                nameForFeedback: 'positive words',  //Will be used in the user feedback
+                name: 'positive', //Will be used in the logging
+                //An array of all media objects for this category.
+                mediaArray: [{word: 'Wonderful'}, {word: 'Great'}]
+            },
+            prime2:{
+                nameForFeedback: 'negative words',  //Will be used in the user feedback
+                name: 'negative', //Will be used in the logging
+                mediaArray: [{word: 'Awful'}, {word: 'Horrible'}]
+            },
+            //],
+            targetStimulusCSS: { //The CSS for all the target stimuli (usually irrelevant because the targets are Chinese pictographs).
+                targetDuration: 100,
+                color: '#0000FF',
+                'font-size': '2.3em'},
+            //targetCats: [
+            targetCategory:{
+                nameForFeedback : 'Chinese symbol',  //The name of the targets (used in the instructions)
+                name: 'chinese',  //Will be used in the logging
+                //An array of all media objects for this category. The default is pic1-pic200.jpg
+                mediaArray: [
+                    {image: 'pic1.jpg'}, {image: 'pic2.jpg'}, {image: 'pic3.jpg'}, {image: 'pic4.jpg'}, {image: 'pic5.jpg'}, {image: 'pic6.jpg'}, {image: 'pic7.jpg'}, {image: 'pic8.jpg'}, {image: 'pic9.jpg'},
+                    {image: 'pic10.jpg'}, {image: 'pic11.jpg'}, {image: 'pic12.jpg'}, {image: 'pic13.jpg'}, {image: 'pic14.jpg'}, {image: 'pic15.jpg'}, {image: 'pic16.jpg'}, {image: 'pic17.jpg'}, {image: 'pic18.jpg'}, {image: 'pic19.jpg'},
+                    {image: 'pic20.jpg'}, {image: 'pic21.jpg'}, {image: 'pic22.jpg'}, {image: 'pic23.jpg'}, {image: 'pic24.jpg'}, {image: 'pic25.jpg'}, {image: 'pic26.jpg'}, {image: 'pic27.jpg'}, {image: 'pic28.jpg'}, {image: 'pic29.jpg'},
+                    {image: 'pic30.jpg'}, {image: 'pic31.jpg'}, {image: 'pic32.jpg'}, {image: 'pic33.jpg'}, {image: 'pic34.jpg'}, {image: 'pic35.jpg'}, {image: 'pic36.jpg'}, {image: 'pic37.jpg'}, {image: 'pic38.jpg'}, {image: 'pic39.jpg'},
+                    {image: 'pic40.jpg'}, {image: 'pic41.jpg'}, {image: 'pic42.jpg'}, {image: 'pic43.jpg'}, {image: 'pic44.jpg'}, {image: 'pic45.jpg'}, {image: 'pic46.jpg'}, {image: 'pic47.jpg'}, {image: 'pic48.jpg'}, {image: 'pic49.jpg'},
+                    {image: 'pic50.jpg'}, {image: 'pic51.jpg'}, {image: 'pic52.jpg'}, {image: 'pic53.jpg'}, {image: 'pic54.jpg'}, {image: 'pic55.jpg'}, {image: 'pic56.jpg'}, {image: 'pic57.jpg'}, {image: 'pic58.jpg'}, {image: 'pic59.jpg'},
+                    {image: 'pic60.jpg'}, {image: 'pic61.jpg'}, {image: 'pic62.jpg'}, {image: 'pic63.jpg'}, {image: 'pic64.jpg'}, {image: 'pic65.jpg'}, {image: 'pic66.jpg'}, {image: 'pic67.jpg'}, {image: 'pic68.jpg'}, {image: 'pic69.jpg'},
+                    {image: 'pic70.jpg'}, {image: 'pic71.jpg'}, {image: 'pic72.jpg'}, {image: 'pic73.jpg'}, {image: 'pic74.jpg'}, {image: 'pic75.jpg'}, {image: 'pic76.jpg'}, {image: 'pic77.jpg'}, {image: 'pic78.jpg'}, {image: 'pic79.jpg'},
+                    {image: 'pic80.jpg'}, {image: 'pic81.jpg'}, {image: 'pic82.jpg'}, {image: 'pic83.jpg'}, {image: 'pic84.jpg'}, {image: 'pic85.jpg'}, {image: 'pic86.jpg'}, {image: 'pic87.jpg'}, {image: 'pic88.jpg'}, {image: 'pic89.jpg'},
+                    {image: 'pic90.jpg'}, {image: 'pic91.jpg'}, {image: 'pic92.jpg'}, {image: 'pic93.jpg'}, {image: 'pic94.jpg'}, {image: 'pic95.jpg'}, {image: 'pic96.jpg'}, {image: 'pic97.jpg'}, {image: 'pic98.jpg'}, {image: 'pic99.jpg'},
+                    {image: 'pic110.jpg'}, {image: 'pic111.jpg'}, {image: 'pic112.jpg'}, {image: 'pic113.jpg'}, {image: 'pic114.jpg'}, {image: 'pic115.jpg'}, {image: 'pic116.jpg'}, {image: 'pic117.jpg'}, {image: 'pic118.jpg'}, {image: 'pic119.jpg'},
+                    {image: 'pic120.jpg'}, {image: 'pic121.jpg'}, {image: 'pic122.jpg'}, {image: 'pic123.jpg'}, {image: 'pic124.jpg'}, {image: 'pic125.jpg'}, {image: 'pic126.jpg'}, {image: 'pic127.jpg'}, {image: 'pic128.jpg'}, {image: 'pic129.jpg'},
+                    {image: 'pic130.jpg'}, {image: 'pic131.jpg'}, {image: 'pic132.jpg'}, {image: 'pic133.jpg'}, {image: 'pic134.jpg'}, {image: 'pic135.jpg'}, {image: 'pic136.jpg'}, {image: 'pic137.jpg'}, {image: 'pic138.jpg'}, {image: 'pic139.jpg'},
+                    {image: 'pic140.jpg'}, {image: 'pic141.jpg'}, {image: 'pic142.jpg'}, {image: 'pic143.jpg'}, {image: 'pic144.jpg'}, {image: 'pic145.jpg'}, {image: 'pic146.jpg'}, {image: 'pic147.jpg'}, {image: 'pic148.jpg'}, {image: 'pic149.jpg'},
+                    {image: 'pic150.jpg'}, {image: 'pic151.jpg'}, {image: 'pic152.jpg'}, {image: 'pic153.jpg'}, {image: 'pic154.jpg'}, {image: 'pic155.jpg'}, {image: 'pic156.jpg'}, {image: 'pic157.jpg'}, {image: 'pic158.jpg'}, {image: 'pic159.jpg'},
+                    {image: 'pic160.jpg'}, {image: 'pic161.jpg'}, {image: 'pic162.jpg'}, {image: 'pic163.jpg'}, {image: 'pic164.jpg'}, {image: 'pic165.jpg'}, {image: 'pic166.jpg'}, {image: 'pic167.jpg'}, {image: 'pic168.jpg'}, {image: 'pic169.jpg'},
+                    {image: 'pic170.jpg'}, {image: 'pic171.jpg'}, {image: 'pic172.jpg'}, {image: 'pic173.jpg'}, {image: 'pic174.jpg'}, {image: 'pic175.jpg'}, {image: 'pic176.jpg'}, {image: 'pic177.jpg'}, {image: 'pic178.jpg'}, {image: 'pic179.jpg'},
+                    {image: 'pic180.jpg'}, {image: 'pic181.jpg'}, {image: 'pic182.jpg'}, {image: 'pic183.jpg'}, {image: 'pic184.jpg'}, {image: 'pic185.jpg'}, {image: 'pic186.jpg'}, {image: 'pic187.jpg'}, {image: 'pic188.jpg'}, {image: 'pic189.jpg'},
+                    {image: 'pic190.jpg'}, {image: 'pic191.jpg'}, {image: 'pic192.jpg'}, {image: 'pic193.jpg'}, {image: 'pic194.jpg'}, {image: 'pic195.jpg'}, {image: 'pic196.jpg'}, {image: 'pic197.jpg'}, {image: 'pic198.jpg'}, {image: 'pic199.jpg'},
+                    {image: 'pic200.jpg'}
+                ]
+            },
+            //],
             blocks: {
-                trialsInBlock: [40, 40, 40], trialsInExample: 3,
+                trialsInExample: 3,trialsInBlock: [40, 40, 40]
             },
             text: { //Instructions text for the 2-responses version.
                 exampleBlockInst: '<div><p style="font-size:20px; text-align:left; margin-left:10px; font-family:arial"><color="000000"><br/>' +
@@ -22324,7 +22387,7 @@
 
     function controller$4(settings, defaultSettings, blocksObject){
         var error_msg = [];
-        error_msg = validityCheck(error_msg, settings, blocksObject);
+        error_msg = validityCheck(error_msg, settings);
 
         return {error_msg: error_msg, createFile: createFile, settings: settings};
 
@@ -22339,7 +22402,7 @@
                 else {
                     output = updateSettings$1(settings);
                     textFileAsBlob = new Blob([JSON.stringify(output,null,4)], {type : 'application/json'});
-                    downloadLink.download = 'IAT.json'; }
+                    downloadLink.download = 'AMP.json'; }
                 if (window.webkitURL) {downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);}
                 else {
                     downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
@@ -22351,33 +22414,52 @@
         }
     }
 
-    function validityCheck(error_msg, settings, blocksObject){
-        var containsImage;
-        var temp1 = checkMissingElementName(settings.category1, 'First Category', error_msg);
-        var temp2 = checkMissingElementName(settings.category2, 'Second Category', error_msg);
-        var temp3 = checkMissingElementName(settings.attribute1, 'First Attribute', error_msg);
-        var temp4 = checkMissingElementName(settings.attribute2, 'Second Attribute', error_msg);
+    function validityCheck(error_msg, settings){
+        //Parameters Tab
+        var textParameters= {
+            sortingLabel1: 'First Sorting Label',
+            sortingLabel2: 'Second Sorting Label',
+            rightkey: 'Right key',
+            leftkey: 'Left key'
+        };
+        Object.entries(textParameters).forEach(function (ref) {
+            var key = ref[0];
+            var value = ref[1];
 
-        temp1 || temp2 || temp3 || temp4 ? containsImage = true : containsImage = false;
+            if(!settings.parameters[key].length)
+                error_msg.push(value+' is missing');
+        });
+        checkStimulus(settings.parameters.fixationStimulus, 'Fixation stimulus', 'word' ,error_msg);
+        checkStimulus(settings.parameters.maskStimulus, 'Mask stimulus', 'image' ,error_msg);
+        //Prime, Target & Example Categories
+        var temp1 = checkPrime(settings.prime1, 'First Prime Category\'s', error_msg);
+        var temp2 = checkPrime(settings.prime2, 'Second Prime Category\'s', error_msg);
+        var temp3 = checkPrime(settings.targetCategory, 'Target Category\'s', error_msg);
+        var temp4 = false;
+        if(settings.parameters.exampleBlock)
+            temp4 = checkPrime(settings.exampleBlock.examplePrimeStimulus, 'Example Prime stimulus\'' ,error_msg);
 
+        //Blocks tab
+        if(!settings.blocks.trialsInBlock.reduce(function (a, b) { return a + b; }, 0))
+            error_msg.push('All the block\'s trials equals to 0, that will result in not showing the task at all');
+        if(settings.parameters.exampleBlock && !settings.blocks.trialsInExample)
+            error_msg.push('The example block in the Parameters tab is checked but the the ' +
+                'number of trials in example block (in the Blocks tab) is set to 0. ' +
+                'Please beware and change the parameters accordingly.');
+
+        //Example Block Check
+        if(settings.parameters.exampleBlock){
+            if(settings.exampleBlock.exampleTargetStimulus.nameForLogging.length === 0)
+                error_msg.push('Example Target stimulus\' name for logging is missing');
+            checkStimulus(settings.exampleBlock.exampleFixationStimulus, 'Example Fixation stimulus', 'word' ,error_msg);
+            checkStimulus(settings.exampleBlock.exampleMaskStimulus, 'Example Mask stimulus', 'image' ,error_msg);
+        }
+
+        //If  one of the categories is using an image and the user didn't set a base_url
+        var containsImage = temp1 || temp2 || temp3 || temp4;
         if(settings.parameters.base_url.image.length === 0 && containsImage)
             error_msg.push('Image\'s url is missing and there is an image in the study');
 
-        //check for blocks problems
-        var currBlocks = clone(settings.blocks);
-        var clearBlocks = blocksObject.slice(-1)[0]; //blocks parameters with zeros as the values, used to check if the current parameters are also zeros.
-
-        ['randomBlockOrder', 'randomAttSide'].forEach(function(key){ //remove those parameters for the comparison
-            delete currBlocks[key];
-            delete clearBlocks[key];
-        });
-
-        if(JSON.stringify(currBlocks) === JSON.stringify(clearBlocks))
-            error_msg.push('All the block\'s parameters equals to 0, that will result in not showing the task at all');
-        blocksObject.slice(0,-1).map(function(block){
-            if(settings.blocks[block.numTrialBlocks] !== 0 && settings.blocks[block.numMiniBlocks] === 0)
-                error_msg.push(block.label+'\'s number of trials is '+settings.blocks[block.numTrialBlocks]+' and the number of mini blocks is set as 0. If you wish to skip this block, set both of those parameters to 0.');
-        });
         return error_msg;
     }
 
@@ -22385,20 +22467,71 @@
         return toScript(updateSettings$1(settings), external);
     }
 
+    function updateMediaSettings$1(settings) {
+        //update PrimeCats and TargetCats names to be compatible to AMP
+        var settings_output = clone(settings);
+
+        settings_output.primeDuration = settings_output.primeStimulusCSS.primeDuration;
+        delete settings_output.primeStimulusCSS.primeDuration;
+        settings_output.postPrimeDuration = settings_output.primeStimulusCSS.postPrimeDuration;
+        delete settings_output.primeStimulusCSS.postPrimeDuration;
+        delete settings_output.primeStimulusCSS.targetDuration;
+        settings_output.targetDuration = settings_output.targetStimulusCSS.targetDuration;
+        delete settings_output.targetStimulusCSS.targetDuration;
+        delete settings_output.targetStimulusCSS.postPrimeDuration;
+        delete settings_output.targetStimulusCSS.primeDuration;
+
+        settings_output.primeCats = [{ //To order the attributes
+            nameForFeedback: settings_output.prime1.nameForFeedback,
+            nameForLogging: settings_output.prime1.name,
+            mediaArray: settings_output.prime1.mediaArray}, {
+            nameForFeedback: settings_output.prime2.nameForFeedback,
+            nameForLogging: settings_output.prime2.name,
+            mediaArray: settings_output.prime2.mediaArray}];
+
+        delete settings_output.prime1;
+        delete settings_output.prime2;
+
+        settings_output.targetCats=[{
+            nameForLogging: settings_output.targetCategory.name,
+            mediaArray: settings_output.targetCategory.mediaArray}];
+        settings_output.targetCat = settings.targetCategory.nameForFeedback;
+        delete settings_output.targetCategory;
+
+        settings_output.parameters.leftKey = settings.parameters.leftkey;
+        settings_output.parameters.rightKey = settings.parameters.rightkey;
+        delete settings_output.parameters.leftkey;
+        delete settings_output.parameters.rightkey;
+
+        return settings_output;
+    }
+
     function updateSettings$1(settings){
+        settings = updateMediaSettings$1(settings);
+
         var output={
             primeStimulusCSS: settings.primeStimulusCSS,
+            primeDuration: settings.primeDuration,
+            postPrimeDuration: settings.postPrimeDuration,
             primeCats: settings.primeCats,
             targetStimulusCSS: settings.targetStimulusCSS,
-            targetCats: settings.targetCats,
+            targetDuration: settings.targetDuration,
+            targetCat: settings.targetCat,
+            targetCats: settings.targetCats
         };
-        Object.assign(output, settings.exampleBlock);
         Object.assign(output, settings.blocks);
+        if(settings.parameters.exampleBlock){
+            Object.assign(output, settings.exampleBlock);
+        }
+        //delete settings.parameters.exampleBlock; //Remove an internal use flag
+        if(settings.parameters.isQualtrics)
+            output.isQualtrics = settings.parameters.isQualtrics;
+        delete settings.parameters.isQualtrics;
+
         Object.assign(output, settings.parameters);
         settings.parameters.responses === 2 ?
             Object.assign(output, settings.text)
-            :
-            Object.assign(output, settings.text_seven);
+            : Object.assign(output, settings.text_seven);
         return output;
     }
 
@@ -22429,8 +22562,8 @@
         return {fields: fields, reset: reset, clear: clear, set: set, get: get, exampleParameters: exampleParameters,
             addStimulus: addStimulus, updateSelectedStimuli: updateSelectedStimuli, removeChosenStimuli: removeChosenStimuli, removeAllStimuli: removeAllStimuli, resetStimuliList: resetStimuliList};
 
-        function reset(){showClearOrReset(exampleBlock, defaultSettings.parameters, 'reset');}
-        function clear(){showClearOrReset(exampleBlock, rows.slice(-1)[0],'clear');}
+        function reset(){showClearOrReset(exampleBlock, defaultSettings.exampleBlock, 'reset');}
+        function clear(){showClearOrReset(exampleBlock, exampleParameters.slice(-1)[0],'clear');}
 
         function get(name, object, parameter){
             if(object && parameter){
@@ -22481,7 +22614,7 @@
 
     function view$3(ctrl){
         return m('.space' , [
-            ctrl.exampleParameters.map(function(row){
+            ctrl.exampleParameters.slice(0,-1).map(function(row){
                 return m('.row.line', [
                     m('.col-md-4',
                         row.desc ?
@@ -22504,7 +22637,7 @@
                 )
             ),
             m('.row.space.line',[
-                m('.col-md-4.space',[
+                m('.col-md-4',[
                     m('span', [' ', 'Example Target Stimulus']),
                 ]),
                 m('.col-md-8',[
@@ -22527,12 +22660,12 @@
                 editStimulusObject('exampleMaskStimulus', ctrl.get, ctrl.set)
             ]),
             m('.row.space.line',[
-                m('.col-md-4.space',[
+                m('.col-md-4',[
                     m('span', [' ', 'Example Prime Stimulus']),
                 ]),
                 m('.col-md-8',[
                     m('.row',[
-                        m('.col-sm-5', m('span' ,'Name of target stimulus for logging: ')),
+                        m('.col-sm-5', m('span' ,'Name of prime stimulus for logging: ')),
                         m('.col-sm-4', m('input[type=text].form-control', {value:ctrl.get('examplePrimeStimulus', 'nameForLogging') ,onchange:m.withAttr('value', ctrl.set('examplePrimeStimulus', 'nameForLogging'))}))
                     ]),
                     m('.row.space',[
@@ -22564,7 +22697,7 @@
                         ),
                     ])
                 ])
-            ])
+            ]), resetClearButtons(ctrl.reset, ctrl.clear)
         ]);
     }
 
@@ -22579,12 +22712,42 @@
         var chooseFlag = m.prop(false);
         var chosenBlocksList = m.prop([]);
         var chooseClicked = m.prop(false);
-        return {trialsInBlock: trialsInBlock, set: set, get: get, rows: rows, reset: reset, clear: clear,
+        return {trialsInBlock: trialsInBlock, set: set, get: get, rows: rows, showReset: showReset, showClear: showClear,
             chooseFlag: chooseFlag, chosenBlocksList: chosenBlocksList, chooseClicked: chooseClicked, unChooseCategories: unChooseCategories,
             chooseBlocks: chooseBlocks, addBlock: addBlock, updateChosenBlocks: updateChosenBlocks, showRemoveBlocks: showRemoveBlocks};
 
-        function reset(){showClearOrReset(blocks, defaultSettings.blocks, 'reset');}
-        function clear(){showClearOrReset(blocks, rows.slice(-1)[0], 'clear');}
+        function beforeClearReset(action, func){
+            var msg_text = {
+                'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
+                'clear':{text: 'This will delete all current properties.', title: 'Clear?'}
+            };
+            return messages.confirm({header: msg_text[action].title, content:
+                    m('strong', msg_text[action].text)})
+                .then(function (response) {
+                    if (response) {
+                        func();
+                        m.redraw();
+                    }
+                }).catch(function (error) { return messages.alert({header: msg_text[action].title , content: m('p.alert.alert-danger', error.message)}); })
+                .then(m.redraw());
+
+        }
+        function showReset(){
+            beforeClearReset('reset', reset);
+            function reset(){
+                trialsInBlock.length = 3;
+                Object.assign(blocks.trialsInBlock, clone(defaultSettings.blocks.trialsInBlock));
+                blocks.trialsInExample = defaultSettings.blocks.trialsInExample;
+                chosenBlocksList().length = 0;
+            }
+        }
+        function showClear(){
+            beforeClearReset('clear', clear);
+            function clear(){
+                for (var i = 0; i < trialsInBlock.length; i++) trialsInBlock[i] = 0;
+                settings.blocks.trialsInExample = 0;
+            }
+        }
         function get(name, index){
             if(name === 'trialsInBlock')
                 return trialsInBlock[index];
@@ -22699,7 +22862,7 @@
                                 m('i.fa.fa-minus-square'), ' Remove Chosen Blocks'),
                     ])
                 )
-            ), resetClearButtons(ctrl.reset, ctrl.clear)
+            ), resetClearButtons(ctrl.showReset, ctrl.showClear)
         ]);
     }
 
@@ -22725,38 +22888,79 @@
             };
         }
     }
+    function updateMediaSettings(settings) {
+        //update attributes to be compatible to EP so that primeComponent & primeDesignComp can be used for AMP also.
+
+        settings.prime1 = settings.primeCats[0];
+        settings.prime2 = settings.primeCats[1];
+        delete settings.primeCats;
+        settings.prime1.name = settings.prime1.nameForLogging;
+        settings.prime2.name = settings.prime2.nameForLogging;
+
+        var temp = settings.targetCats[0];
+        delete settings.targetCats;
+        settings.targetCategory = temp;
+        settings.targetCategory.name = settings.targetCategory.nameForLogging;
+        settings.targetCategory.nameForFeedback = settings.targetCat;
+        delete settings.targetCategory.nameForLogging;
+        delete settings.targetCat;
+
+        return settings;
+    }
     function updateSettings(settings, input) {
         //updating the settings variable in parameters group according
         //to the DefaultSettings file pattern
-        var parameters = ['isQualtrics', 'targetCat', 'primeDuration',
-            'fixationDuration', 'postPrimeDuration', 'targetDuration',
+        var parameters = ['isQualtrics', 'exampleBlock',
+            'fixationDuration',
             'showRatingDuration', 'responses',
             'sortingLabel1', 'sortingLabel2',
             'randomizeLabelSides', 'rightKey', 'leftKey',
             'fixationStimulus', 'maskStimulus', 'base_url'
         ];
         parameters.forEach(function (parameter) {settings.parameters[parameter] = input[parameter];});
+        settings.parameters.leftkey = input.leftKey;
+        settings.parameters.rightkey = input.rightKey;
 
-        var variousParams = ['exampleTargetStimulus', 'exampleFixationStimulus',
-            'exampleMaskStimulus', 'exampleBlock_fixationDuration',
-            'exampleBlock_primeDuration', 'exampleBlock_postPrimeDuration',
-            'exampleBlock_targetDuration', 'examplePrimeStimulus',
-            'primeStimulusCSS', 'primeCats', 'targetStimulusCSS',
-            'trialsInBlock', 'trialsInExample'
+        //settings.parameters.exampleBlock = input.trialsInExample !== 0;
+        if(settings.parameters.exampleBlock){
+            var exampleBlock = [
+                'exampleTargetStimulus', 'exampleFixationStimulus',
+                'exampleMaskStimulus', 'exampleBlock_fixationDuration',
+                'exampleBlock_primeDuration', 'exampleBlock_postPrimeDuration',
+                'exampleBlock_targetDuration', 'examplePrimeStimulus',
+            ];
+            exampleBlock.forEach(function (parameter) {settings.exampleBlock[parameter] = input[parameter];});
+        }
+        var variousParams = [
+            'primeStimulusCSS', 'primeCats', 'targetStimulusCSS', 'targetCats', 'targetCat'
         ];
         variousParams.forEach(function (parameter) {settings[parameter] = input[parameter];});
+
+        var blocks = ['trialsInBlock', 'trialsInExample'];
+        blocks.forEach(function (parameter) {settings.blocks[parameter] = input[parameter];});
+
+        var primeParam = ['primeDuration', 'postPrimeDuration'];
+        primeParam.forEach(function (parameter) {settings.primeStimulusCSS[parameter] = input[parameter];});
+
+        settings.targetStimulusCSS.targetDuration = input.targetDuration;
+
         var textParams = [];
-        if(input.responses === 2){
+        if(input.responses === '2'){
             textParams = ['exampleBlockInst', 'firstBlockInst',
                 'middleBlockInst', 'lastBlockInst', 'endText'
             ];
+            textParams.forEach(function (param) {settings.text[param] = input[param];});
         }
         else {
             textParams = ['exampleBlockInst7', 'firstBlockInst7',
                 'middleBlockInst7', 'lastBlockInst7', 'endText'
             ];
+            textParams.forEach(function (param) {settings.text_seven[param] = input[param];});
         }
-        textParams.forEach(function (param) {settings.text[param] = input.param;});
+
+        settings = updateMediaSettings(settings);
+        m.redraw();
+
         return settings;
     }
 
@@ -22764,28 +22968,35 @@
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
         {name: 'exampleBlock', label:'Example Block', desc: ['Should the task start with an example block?']},
         {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating'},
-        {name: 'leftKey', label: 'Left Key', desc: 'Change the left key'},
-        {name: 'rightKey', label: 'Right Key', desc: 'Change the right key'},
+        {name: 'leftkey', label: 'Left Key'},
+        {name: 'rightkey', label: 'Right Key'},
         {name: 'sortingLabel1', label: 'First Sorting Label',desc: 'Response is coded as 0.'},
         {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1. '},
         {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then label1 is on the left, and label2 is on the right.'},
-        {name: 'primeDuration', label: 'Prime Duration', desc: 'Default prime duration'},
         {name: 'maskStimulus', label: 'Mask Stimulus', desc: 'The mask stimulus '},
         {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
         {name: 'fixationStimulus', label: 'Fixation Stimulus', desc: 'Change the fixation stimulus here'},
-        {name: 'postPrimeDuration', label: 'Post Prime Duration', desc: 'Duration of blank screen between prime and target.'},
-        {name: 'targetDuration', label: 'Target Duration', desc: 'Duration of target presentation.'},
-        {name: 'targetCat', label: 'Target Category', desc: 'The name of the targets (used in the instructions).'},
         {name: 'showRatingDuration', label: 'Show Rating Duration ', desc: 'In the 7-responses option, for how long to show the selected rating.'},
-        {isTouch:false, separateStimulusSelection:0, primeDuration:0, fixationDuration:0 ,deadlineDuration:0, deadlineMsgDuration:0, base_url:{regular:{image:''}, qualtrics:{image:''}}}
+        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
+                'It can be a full url, or a relative URL to the folder that will host this script'},
+        //Clearing Object
+        {
+            leftkey: '', rightkey: '',
+            sortingLabel1:'', sortingLabel2:'',
+            randomizeLabelSides: false,
+            maskStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {image:''}},
+            fixationDuration:0,
+            fixationStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}},
+            showRatingDuration: '', base_url:{image:''}
+        }
     ];
 
     var textDesc=[
-        {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'\s Instructions', desc:'Example Block\'\s Instructions'},
-        {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'\s Instructions', desc:'First Block\'\s Instructions'},
-        {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'\s Instructions', desc: 'Middle Block\'\s Instructions'},
-        {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'\s Instructions', desc: 'Last Block\'\s Instructions'},
-        {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions', desc: 'End Block\'\s Instructions'},
+        {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'s Instructions', desc:'Example Block\'s Instructions'},
+        {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'s Instructions', desc:'First Block\'s Instructions'},
+        {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'s Instructions', desc: 'Middle Block\'s Instructions'},
+        {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'s Instructions', desc: 'Last Block\'s Instructions'},
+        {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions', desc: 'End Block\'s Instructions'},
         {exampleBlockInst: '', firstBlockInst: '', middleBlockInst:'', lastBlockInst:'', endText:''},
         {exampleBlockInst7: '', firstBlockInst7: '', middleBlockInst7:'', lastBlockInst7:'', endText:''}
     ];
@@ -22801,31 +23012,79 @@
         {name: 'exampleBlock_primeDuration', label: 'Prime Duration'},
         {name: 'exampleBlock_postPrimeDuration', label: 'Post Prime Duration'},
         {name: 'exampleBlock_targetDuration', label: 'Target Duration'},
+        {   exampleBlock_fixationDuration: 0,
+            exampleBlock_primeDuration: 0,
+            exampleBlock_postPrimeDuration: 0,
+            exampleBlock_targetDuration:0,
+            exampleTargetStimulus: {nameForLogging: '', sameAsTargets: false},
+            exampleFixationStimulus: {css: {color: '000000', 'font-size': '1em'}, media: {word: ''}},
+            exampleMaskStimulus: {css: {color: '000000', 'font-size': '1em'}, media: {image: ''}},
+            examplePrimeStimulus: {nameForLogging: '', mediaArray: []}
+        }
     ];
 
-    // let categoryClear = [{
-    //     name: '',
-    //     title: {media: {word: ''},
-    //         css: {color: '#000000', 'font-size': '1em'}, height: 4},
-    //     stimulusMedia: [],
-    //     stimulusCss : {color:'#000000', 'font-size':'1em'}
-    // }];
+    var targetClear = [
+        {
+            name: '',
+            nameForFeedback : '',
+            mediaArray : []
+        },
+        {
+            targetDuration: 0,
+            color: '#000000',
+            'font-size': '1em',
+            primeDuration: 0,
+            postPrimeDuration: 0,
+        }
+    ];
 
-    // let primeClear = [{
-    //     name : '',  //Will be used in the logging
-    //     mediaArray : []
-    //
-    // }]
+    var targetTab = {
+        'targetCategory':{text: 'Target Category'},
+        'targetStimulusCSS':{text:'Target Appearance'}
+    };
+
+    var primeClear = [
+        {
+            name : '',
+            nameForFeedback: '',
+            mediaArray : []
+        },
+        { //CSS cleared
+            targetDuration: 0,
+            primeDuration: 0,
+            postPrimeDuration: 0,
+            color: '#000000',
+            'font-size': '1em'
+        }
+    ];
+
+    var primesTabs = {
+        'prime1':{text: 'First Category'},
+        'prime2':{text: 'Second Category'},
+        'primeStimulusCSS':{text:'Prime Appearance'}
+    };
 
 
     var tabs = {
         'parameters':{text: 'General parameters', component: parametersComponent$1, rowsDesc: parametersDesc },
         'blocks':{text: 'Blocks', component: blocksComponent, rowsDesc: blocksDesc},
         'exampleBlock':{text: 'Example Block', component: exampleComponent, rowsDesc: exampleBlock},
-        // {value: 'prime', text: 'Prime Categories', component: categoriesComponent, rowsDesc: primeClear, subTabs:primesTabs, type: 'EP'},
-        // {value: 'categories', text: 'Target Categories', component: categoriesComponent, rowsDesc: categoryClear, subTabs:categoriesTabs},
+        'prime': {
+            text: 'Prime Categories',
+            component: categoriesComponent$1,
+            rowsDesc: primeClear,
+            subTabs: primesTabs,
+            type: 'AMP'
+        },
+        'categories':{
+            text: 'Target Category',
+            component: categoriesComponent$1,
+            rowsDesc: targetClear,
+            subTabs: targetTab,
+            type: 'AMP'
+        },
         'text':{text: 'Texts', component: textComponent, rowsDesc: textDesc},
-        'output':{text: 'Complete', component: iatOutputComponent},
+        'output':{text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc},
         'import':{text: 'Import', component: importComponent},
         'help':{text: 'Help', component: helpComponent, rowsDesc:'AMP'}
     };
@@ -22873,8 +23132,8 @@
 
         function show_do_save(){
             var error_msg = [];
-            var blocksObject = tabs.blocks.rowsDesc; //blockDesc inside output attribute
-            error_msg = validityCheck(error_msg, ctrl.settings, blocksObject);
+            tabs.blocks.rowsDesc; //blockDesc inside output attribute
+            error_msg = validityCheck(error_msg, ctrl.settings);
             if(error_msg.length !== 0) {
                 return messages.confirm({
                     header: 'Some problems were found in your script, it\'s recommended to fix them before saving:',
@@ -22908,7 +23167,7 @@
             save('amp', studyId, fileId, ctrl.settings)
                 .then (function () { return saveToJS('amp', studyId, jsFileId, toString(ctrl.settings, ctrl.external)); })
                 .then(ctrl.study.get())
-                .then(function () { return ctrl.notifications.show_success("amp Script successfully saved"); })
+                .then(function () { return ctrl.notifications.show_success("AMP Script successfully saved"); })
                 .then(m.redraw)
                 .catch(function (err) { return ctrl.notifications.show_danger('Error Saving:', err.message); });
             ctrl.prev_settings = clone(ctrl.settings);
@@ -22931,7 +23190,7 @@
                         ctrl.is_locked, ctrl.is_settings_changed, ctrl.show_do_save));
         }
         return m('.container-fluid',[
-            pageHeadLine('amp'),
+            pageHeadLine('AMP'),
             m.component(messages),
             m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
         ]);

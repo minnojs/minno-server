@@ -11,14 +11,14 @@ let parametersDesc = [
     {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
             '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
             'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
-    {name: 'primeDuration', label: 'Prime Duration'},
     {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
     {name: 'fixationStimulus', label: 'Fixation Stimulus'},
     {name: 'deadlineDuration', label: 'Deadline Duration', desc: '0 means no response deadline: we wait until response.'},
+    {name: 'deadlineMsgDuration', label: 'Deadline\'s Message Duration'},
     {name: 'deadlineStimulus', label: 'Deadline Stimulus'},
     {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
                                                 'It can be a full url, or a relative URL to the folder that will host this script'},
-    {isTouch:false, separateStimulusSelection:0, primeDuration:0, fixationDuration:0 ,
+    {isTouch:false, separateStimulusSelection:0, fixationDuration:0 ,
         fixationStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}},
         deadlineStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}, location: {bottom:10}},
         deadlineDuration:0, deadlineMsgDuration:0, base_url:{image:''}}
@@ -46,10 +46,17 @@ let categoryClear = [{
     stimulusCss : {color:'#000000', 'font-size':'1em'}
 }];
 
-let primeClear = [{
-    name : '',  //Will be used in the logging
-    mediaArray : []
-}];
+let primeClear = [
+    {
+        name : '',  //Will be used in the logging
+        mediaArray : []
+    },
+    { //CSS cleared
+        primeDuration: 0,
+        color: '#000000',
+        'font-size': '1em'
+    }
+];
 
 let categoriesTabs = {
     'rightAttTargets':{text: 'First Category'},

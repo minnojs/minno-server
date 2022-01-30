@@ -1,19 +1,22 @@
-import {clone, showRestrictions} from '../resources/utilities.js';
+import {clone, showRestrictions} from './utilities.js';
 
 let elementComponent = {
     controller:controller,
     view:view,
 };
 
-function controller(object, settings, stimuliList){
+function controller(object, settings, stimuliList, taskType){
     let element = settings[object.key];
     let fields = {
         newStimulus : m.prop(''),
-        elementType: m.prop(object.key.includes('attribute') ? 'Attribute' : 'Category'),
         selectedStimuli: m.prop(''),
+        isAMP: taskType === 'AMP',
+        elementType: m.prop(object.key.includes('target') ? 'Target' : 'Prime'),
+        isTarget: m.prop(object.key.includes('target'))
     };
 
-    return {fields, set, get, addStimulus, updateSelectedStimuli, removeChosenStimuli, removeAllStimuli, resetStimuliList};
+    return {fields ,set, get, addStimulus, updateSelectedStimuli,
+        removeChosenStimuli, removeAllStimuli, resetStimuliList};
 
     function get(name, media, type){
         if (media != null && type != null){
@@ -28,7 +31,7 @@ function controller(object, settings, stimuliList){
     }
     function set(name, media, type){
         return function(value){
-            if (media != null && type != null){
+            if (media && type){
                 if (type === 'font-size'){
                     value = Math.abs(value);
                     if (value === 0){
@@ -75,7 +78,7 @@ function view(ctrl) {
     return m('.space', [
         m('.row.line',[
             m('.col-sm-3',[
-                m('span', ctrl.fields.elementType()+' name logged in the data file '),
+                m('span', ctrl.fields.elementType()+' category\'s name logged in the data file '),
                 m('i.fa.fa-info-circle.text-muted',{
                     title:'Will appear in the data and in the default feedback message.'
                 }),
@@ -84,6 +87,20 @@ function view(ctrl) {
                 m('input[type=text].form-control', {value:ctrl.get('name'), oninput:m.withAttr('value', ctrl.set('name'))})
             ])
         ]),
+        !ctrl.fields.isAMP ? '' : //AMP has this additional field
+            m('.row.line',[
+                m('.col-sm-3',[
+                    m('span', ctrl.fields.elementType()+' category\'s name presented in the feedback page '),
+                    m('i.fa.fa-info-circle.text-muted',{
+                        title: !ctrl.fields.isTarget() ? 'Will appear in the default feedback message'
+                            : 'The name of the targets (used in the instructions)'
+                    }),
+                ]),
+                m('.col-sm-3', [
+                    m('input[type=text].form-control', {value:ctrl.get('nameForFeedback'),
+                        oninput:m.withAttr('value', ctrl.set('nameForFeedback'))})
+                ])
+            ]),
         m('.row',[
             m('.col-md-6',[
                 m('.row',

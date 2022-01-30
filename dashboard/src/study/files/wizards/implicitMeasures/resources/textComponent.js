@@ -12,11 +12,11 @@ function controller(settings, defaultSettings, rows){
     isTouch ? textparameters = settings.touch_text : textparameters = settings.text;
     //for AMP
     let isSeven = settings.parameters.responses;
-    if(isSeven === '7') {
+    if(isSeven == 7) {
         textparameters = settings.text_seven;
         isSeven = true;
     }
-    else{
+    else if(isSeven == 2){
         textparameters = settings.text;
         isSeven = false;
     }

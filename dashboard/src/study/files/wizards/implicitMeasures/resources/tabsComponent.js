@@ -60,7 +60,7 @@ let tabsComponent = {
                 m('.row',[
                     external ? '' : m('div', notifications.view()),
                     m('.col-sm-11',{key:tabs[ctrl.tab]},
-                        m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].subTabs, tabs[ctrl.tab].type, ctrl.currSubTab))
+                        m.component(tabs[ctrl.tab].component, settings, defaultSettings, tabs[ctrl.tab].rowsDesc, tabs[ctrl.tab].type, ctrl.currSubTab))
                 ])
             ]);}
 };

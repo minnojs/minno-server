@@ -12,7 +12,6 @@ function controller(settings, defaultSettings, rows) {
     return {reset, clear, set, get, rows, qualtricsParameters, external};
 
     function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
-
     function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
 
     function get(name, object, parameter) {
@@ -65,7 +64,7 @@ function view(ctrl, settings){
     return m('.space' ,[
         ctrl.rows.slice(0,-1).map((row) => {
             if(!ctrl.external && row.name === 'isQualtrics') return;
-            if ((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
+            if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
             if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
             return m('.row.line', [
                 m('.col-md-4',

@@ -21,7 +21,7 @@ export function resetClearButtons(reset, clear, curr_tab = null, isBiat = false)
 }
 
 export function pageHeadLine(task){
-    return m('h1.display-4', 'Create my '+task+' script')
+    return m('h1.display-4', 'Create my '+task+' script');
 }
 
 export function checkMissingElementName(element, name_to_display, error_msg){
@@ -58,14 +58,25 @@ export function checkMissingElementName(element, name_to_display, error_msg){
 export function checkPrime(element, name_to_display, error_msg){
     let containsImage = false;
     //check for missing titles and names
-    if(element.name.length === 0)
-        error_msg.push(name_to_display+'\'s name is missing');
+    if(element.name !== undefined) {
+        if (element.name.length === 0)
+            error_msg.push(name_to_display + ' name for logging is missing');
+    }
+    //In AMP, prime and target has additional fields
+    if(element.nameForFeedback !== undefined){
+        if(element.nameForFeedback.length === 0)
+            error_msg.push(name_to_display+' name for feedback is missing');
+    }
+    if(element.nameForLogging !== undefined){
+        if(element.nameForLogging.length === 0)
+            error_msg.push(name_to_display+' name for logging is missing');
+    }
 
     let mediaArray = element.mediaArray;
 
     //if there an empty stimuli list
     if (mediaArray.length === 0)
-        error_msg.push(name_to_display+'\'s stimuli list is empty, please enter at least one stimulus.');
+        error_msg.push(name_to_display+' stimuli list is empty, please enter at least one stimulus.');
 
     //check if the stimuli contains images
     for(let i = 0; i < mediaArray.length ;i++)
@@ -73,7 +84,11 @@ export function checkPrime(element, name_to_display, error_msg){
 
     return containsImage;
 }
-
+export function checkStimulus(element, name_to_display, type, error_msg) {
+    if(element.media[type].length === 0){
+        error_msg.push(name_to_display+' is missing.');
+    }
+}
 export function showClearOrReset(element, value, action){
     let msg_text = {
         'reset':{text:'This will delete all current properties and reset them to default values.',title:'Reset?'},
@@ -159,10 +174,10 @@ export function editStimulusObject(fieldName, get, set){ //used in parameters co
             m('.col-sm-4',
                 !fieldName.toLowerCase().includes('maskstimulus')
                     ? m('span', 'Text: ') :  m('span', 'Image: ')),
-            m('.col-sm-8',
+            m('.col-sm-7',
                 !fieldName.toLowerCase().includes('maskstimulus')
-                    ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,onchange:m.withAttr('value', set(fieldName,'media','word'))})
-                    : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,onchange:m.withAttr('value', set(fieldName,'media','image'))})
+                    ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
+                    : m('input[type=text].form-control', {value:get(fieldName,'media','image') ,oninput:m.withAttr('value', set(fieldName,'media','image'))})
             )
         ])
     ]);

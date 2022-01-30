@@ -24,4 +24,4 @@ function configTask(type){
 
 
 export default [configTask('iat'), configTask('biat'), configTask('stiat'),
-    configTask('spf'), configTask('ep')];
+    configTask('spf'), configTask('ep'), configTask('amp')];
