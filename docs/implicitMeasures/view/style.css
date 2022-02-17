@@ -481,6 +481,10 @@ button.exportJSFile {
   border-color: #fff;
 }
 
+select.scroll {
+  overflow: auto;
+}
+
 html, body, .dasboard-root {
   height: 100%;
 }

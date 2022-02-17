@@ -128,7 +128,7 @@ function view(ctrl) {
                 ),
                 m('.row',[
                     m('.col-md-7',
-                        m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
+                        m('select.form-control.scroll', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
                             ctrl.get('mediaArray').map(function(object){
                                 let value = object.word ? object.word : object.image;
                                 let option = value + (object.word ? ' [Word]' : ' [Image]');

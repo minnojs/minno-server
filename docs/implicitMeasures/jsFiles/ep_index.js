@@ -1006,7 +1006,7 @@
                     ),
                     m('.row',[
                         m('.col-md-7',
-                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
+                            m('select.form-control.scroll', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
                                 ctrl.get('stimulusMedia').some(object => object.word) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
                                 ctrl.get('stimulusMedia').map(function(object){
                                     let value = object.word ? object.word : object.image;
@@ -1320,7 +1320,7 @@
                     ),
                     m('.row',[
                         m('.col-md-7',
-                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e)},[
+                            m('select.form-control.scroll', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e)},[
                                 ctrl.get('stimulusMedia').some(object => object.word) ? ctrl.fields.stimuliHidden(true) : ctrl.fields.stimuliHidden(false),
                                 ctrl.get('stimulusMedia').map(function(object){
                                     let value = object.word ? object.word : object.image;
@@ -1385,7 +1385,7 @@
                         ),
                         m('.row',[
                             m('.col-md-7',
-                                m('select.form-control', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e, true)},[
+                                m('select.form-control.scroll', {multiple : 'multiple', size : '8' ,onchange: (e) => ctrl.updateSelectedStimuli(e, true)},[
                                     !ctrl.fields.startStimulus()  ||
                                     ctrl.get('title','startStimulus','media').some(object => object.includes('.')) ||
                                     !ctrl.get('title','startStimulus','media').length ? ctrl.fields.startStimuliHidden(false) : ctrl.fields.startStimuliHidden(true),
@@ -1569,7 +1569,7 @@
                     ),
                     m('.row',[
                         m('.col-md-7',
-                            m('select.form-control', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
+                            m('select.form-control.scroll', {multiple : 'multiple', size : '8' ,onchange:(e) => ctrl.updateSelectedStimuli(e)},[
                                 ctrl.get('mediaArray').map(function(object){
                                     let value = object.word ? object.word : object.image;
                                     let option = value + (object.word ? ' [Word]' : ' [Image]');
@@ -1628,11 +1628,11 @@
         return m('.space' , [
             m('.row.line',[
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', 'Font\'s color: '))),
+                    m('.row.space', m('.col-sm-12', m('span', 'Font\'s color:'))),
                     m('.row.space', m('.col-sm-6', m('input[type=color].form-control', {value: ctrl.get('color'), onchange:m.withAttr('value', ctrl.set('color'))})))
                 ]),
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12',m('span', 'Font\'s size: '))),
+                    m('.row.space', m('.col-sm-12',m('span', 'Font\'s size:'))),
                     m('.row.space', m('.col-sm-6',m('input[type=number].form-control', {placeholder:'1', value:ctrl.get('font-size') ,min: '0' ,onchange:m.withAttr('value', ctrl.set('font-size'))})))
                 ])
             ]),
@@ -1642,12 +1642,12 @@
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
                 ]),
                 ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
-                    m('.col-sm-4',[
+                    m('.col-sm-3',[
                         m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
                         m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
-                    ]) : ''
+                    ])
+                    : ''
             ])
-
         ]);
     }
 
