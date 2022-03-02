@@ -123,26 +123,24 @@ function view(ctrl){
                 m('span', [' ', 'Trials In Example Block', ' ']),
                 m('i.fa.fa-info-circle.text-muted',{title:'Change to 0 if you don\'t want an example block'})
             ),
-            m('.col-md-3.col-lg-2.space',
+            m('.col-md-3.col-lg-2',
                 m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInExample')), value: ctrl.get('trialsInExample'), min:0}))
         ]),
-        m('.row.line',
+        m('.row.double_space',
             m('.col-md-5',
-                m('p.h4','Number of Trials in Each Block: ',
-                    m('i.fa.fa-info-circle.text-muted',{
-                        title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
-                    )
-                )
+                m('p.h5', 'Number of Trials in Each Block: ', m('i.fa.fa-info-circle.text-muted',{
+                    title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
+                ))
             )
         ),
         ctrl.trialsInBlock.map(function(block, index) {
-            return m('.row.line', [
+            return m('.row.space', [
                 m('.col-md-3',[
                     !ctrl.chooseFlag() ? ' ' :
                         m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: (e) => ctrl.updateChosenBlocks(e, index)}),
                     m('span', [' ','Block '+parseInt(index+1)])
                 ]),
-                m('.col-md-3.col-lg-2.space',
+                m('.col-md-3.col-lg-2',
                     m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInBlock', index)), value: ctrl.get('trialsInBlock', index), min:0})
                 )
             ]);

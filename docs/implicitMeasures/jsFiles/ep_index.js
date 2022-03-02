@@ -495,8 +495,7 @@
             ]),
             m('.row.space',[
                 m('.col-sm-4',
-                    !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                    m('span', 'Stimulus: ')),
                 m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
@@ -515,7 +514,14 @@
         let parameters = settings.parameters;
         let external = settings.external;
         let qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
-        return {reset, clear, set, get, rows, qualtricsParameters, external};
+
+        //There is versions to the image url description so- I added a special base url description
+        let baseURLDesc =  'If your task has any images, enter here the path to that images folder.' +
+            '\nIt can be a full url, or a relative URL to the folder that will host this script.';
+        if (!settings.external)
+            baseURLDesc+='\nThe default value reflects the assumption that your images are under an \'images\' folder under this study.';
+
+        return {reset, clear, set, get, rows, qualtricsParameters, external, baseURLDesc};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
@@ -572,12 +578,13 @@
                 if(!ctrl.external && row.name === 'isQualtrics') return;
                 if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
+                if(settings.parameters.responses === '7' && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
-                        row.desc ?
+                        row.desc || row.name === 'base_url' ?
                             [
                                 m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                                m('i.fa.fa-info-circle.text-muted',{title: row.name === 'base_url' ? ctrl.baseURLDesc : row.desc})
                             ]
                             : m('span', [' ', row.label])
                     ),
@@ -984,7 +991,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1297,8 +1304,8 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                            }))
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
+                            )
                         )
                     ),
                     m('.row',
@@ -1547,7 +1554,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1638,12 +1645,13 @@
             ]),
             m('.row.space',[
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display presentation:'))),
+
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
                 ]),
                 ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
                     m('.col-sm-3',[
-                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display presentation:'))),
                         m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
                     ])
                     : ''
@@ -1763,15 +1771,15 @@
     	EP: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'
     };
 
-    let helpComponent = {
+    let aboutComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
     		return m('.space',
     			m('.alert.alert-info',
     				!settings.external ? //only show this text if we are in the dashboard
-    				['This will create a script for our '+type+' extension.' +
+    				['This feature of the dashboard will create a script that uses Project Implicit\'s '+type+' extension. ' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
-    					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
+    					'You can edit that .js file further. However, note that every time you make (and save) changes to the .'+type.toLowerCase()+' file (this wizard),  these changes override your .js file. '
     				]:
     				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
@@ -1791,14 +1799,13 @@
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this Evaluative Priming task to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'}, 'this blog post '),'to see how.']},
         {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
                 '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
-                'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
-        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
+                '\nThis kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
+        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'Value of 0 means no fixation presentation.'},
         {name: 'fixationStimulus', label: 'Fixation Stimulus'},
-        {name: 'deadlineDuration', label: 'Deadline Duration', desc: '0 means no response deadline: we wait until response.'},
-        {name: 'deadlineMsgDuration', label: 'Deadline\'s Message Duration'},
-        {name: 'deadlineStimulus', label: 'Deadline Stimulus'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
-                                                    'It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'deadlineDuration', label: 'Response Deadline Duration', desc: 'Value of 0 means no response deadline, we\'ll wait until response.'},
+        {name: 'deadlineMsgDuration', label: 'Response Deadline\'s Message Duration', desc: 'How long the response deadline message will be presented?'},
+        {name: 'deadlineStimulus', label: 'Response Deadline Stimulus'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {isTouch:false, separateStimulusSelection:0, fixationDuration:0 ,
             fixationStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}},
             deadlineStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}, location: {bottom:10}},
@@ -1815,7 +1822,7 @@
 
     let blocksDesc = [
         {name: 'nBlocks', label: 'Number of blocks'},
-        {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per prime-target combination', desc: 'How many trials in a block, per prime-target combination (always three blocks).'},
+        {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per prime-target combination'},
         {nBlocks: 0, nTrialsPerPrimeTargetPair: 0}
     ];
 
@@ -1869,7 +1876,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
         'output': {text: 'Complete', component: outputComponent},
         'import': {text: 'Import', component: importComponent},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'EP'}
     };
 
     let checkStatus = response => {

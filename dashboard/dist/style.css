@@ -451,38 +451,12 @@ input.input_switch:checked + .slider:before {
   background-color: #85b9c9;
 }
 
-button.exportJSON_print {
-  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  width: 230px;
-  height: 50px;
-  background-color: #61cf77;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 6px;
-  display: block;
-  font-size: 13px;
-  margin: 15px auto;
-  border-color: #fff;
-}
-
-button.exportJSFile {
-  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  width: 250px;
-  height: 50px;
-  background-color: #4e925d;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 8px;
-  display: block;
-  font-size: 15px;
-  margin: 15px auto;
-  border-color: #fff;
-}
-
 select.scroll {
   overflow: auto;
+}
+
+input[type=color] {
+  height: 2.2em;
 }
 
 html, body, .dasboard-root {

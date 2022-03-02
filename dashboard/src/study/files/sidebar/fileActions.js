@@ -298,10 +298,10 @@ export let createImplicitMeasure = (study, path = '', type) => () => {
     let name = pathProp(path);
 
     let content = ()=>'';
-
+    let anWizards = ['iat', 'ep', 'amp']
     messages.prompt({
-        header: `Create ${type.toUpperCase()} task`,
-        content: 'Please insert task name:',
+        header: `Create ${anWizards.includes(type) ? 'an' : 'a'} ${type.toUpperCase()} task`,
+        content: 'Please insert task name (no file extension is needed):',
         prop: name
     }).then(response => {
 

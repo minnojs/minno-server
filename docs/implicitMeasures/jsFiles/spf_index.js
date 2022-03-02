@@ -420,8 +420,7 @@
             ]),
             m('.row.space',[
                 m('.col-sm-4',
-                    !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                    m('span', 'Stimulus: ')),
                 m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
@@ -440,7 +439,14 @@
         let parameters = settings.parameters;
         let external = settings.external;
         let qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
-        return {reset, clear, set, get, rows, qualtricsParameters, external};
+
+        //There is versions to the image url description so- I added a special base url description
+        let baseURLDesc =  'If your task has any images, enter here the path to that images folder.' +
+            '\nIt can be a full url, or a relative URL to the folder that will host this script.';
+        if (!settings.external)
+            baseURLDesc+='\nThe default value reflects the assumption that your images are under an \'images\' folder under this study.';
+
+        return {reset, clear, set, get, rows, qualtricsParameters, external, baseURLDesc};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
@@ -497,12 +503,13 @@
                 if(!ctrl.external && row.name === 'isQualtrics') return;
                 if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
+                if(settings.parameters.responses === '7' && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
-                        row.desc ?
+                        row.desc || row.name === 'base_url' ?
                             [
                                 m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                                m('i.fa.fa-info-circle.text-muted',{title: row.name === 'base_url' ? ctrl.baseURLDesc : row.desc})
                             ]
                             : m('span', [' ', row.label])
                     ),
@@ -882,7 +889,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1195,8 +1202,8 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                            }))
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
+                            )
                         )
                     ),
                     m('.row',
@@ -1445,7 +1452,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1536,12 +1543,13 @@
             ]),
             m('.row.space',[
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display presentation:'))),
+
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
                 ]),
                 ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
                     m('.col-sm-3',[
-                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display presentation:'))),
                         m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
                     ])
                     : ''
@@ -1637,15 +1645,15 @@
     	EP: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'
     };
 
-    let helpComponent = {
+    let aboutComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
     		return m('.space',
     			m('.alert.alert-info',
     				!settings.external ? //only show this text if we are in the dashboard
-    				['This will create a script for our '+type+' extension.' +
+    				['This feature of the dashboard will create a script that uses Project Implicit\'s '+type+' extension. ' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
-    					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
+    					'You can edit that .js file further. However, note that every time you make (and save) changes to the .'+type.toLowerCase()+' file (this wizard),  these changes override your .js file. '
     				]:
     				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
@@ -1662,11 +1670,11 @@
     };
 
     let parametersDesc = [
-        {name: 'keyTopLeft', label:'Top left key'},
+        {name: 'keyTopLeft', label:'Top left key', desc: 'It\'s recommended to use upper case letters for the key values.'},
         {name: 'keyTopRight', label:'Top right key'},
         {name: 'keyBottomLeft', label:'Bottom left key'},
         {name: 'keyBottomRight', label:'Bottom right key'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {keyTopLeft: '', keyTopRight: '', keyBottomLeft: '', keyBottomRight: '', base_url:{image:''}}
     ];
 
@@ -1682,8 +1690,8 @@
     let blocksDesc = [
         {name: 'nBlocks', label: 'Number of blocks'},
         {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per category-attribute combination', desc: 'How many trials in each block, for each of the four category-attribute combinations.'},
-        {name: 'randomCategoryLocation', label: 'Randomly choose categories location', desc: 'Whether to randomly select which category is on top. If false, then the first category is on top.'},
-        {name: 'randomAttributeLocation', label: 'Randomly choose attributes location', desc: 'Whether to randomly select which attribute is on the left. If false, the first attribute is on the left.'},
+        {name: 'randomCategoryLocation', label: 'Randomly choose categories location', desc: 'Whether to randomly select which category is on top.\nIf false, then the first category is on top.'},
+        {name: 'randomAttributeLocation', label: 'Randomly choose attributes location', desc: 'Whether to randomly select which attribute is on the left.\nIf false, the first attribute is on the left.'},
         {nBlocks: 0, nTrialsPerPrimeTargetPair: 0, randomCategoryLocation : false, randomAttributeLocation: false}
     ];
 
@@ -1722,7 +1730,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
         'output': {text: 'Complete', component: outputComponent, rowsDesc: blocksDesc},
         'import': {text: 'Import', component: importComponent},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'SPF'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'SPF'}
     };
 
     let checkStatus = response => {

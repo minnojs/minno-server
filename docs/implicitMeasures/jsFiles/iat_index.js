@@ -121,7 +121,7 @@
                 randomAttSide: false
             },
             text: {
-                remindErrorText: '<p style="font-size:0.6em;font-family:arial serif;text-align:center;">' + 'If you make a mistake, a red <font-color="#ff0000"><b>X</b></font> will appear. ' + 'Press the other key to continue.<p/>',
+                remindErrorText : '<p align="center" style="font-size:1em; font-family:arial; color:#000000">'+ 'If you make a mistake, a red <font color="#ff0000"><b>X</b></font> will appear. ' + 'Press the other key to continue.<p/>',
                 leftKeyText: 'Press "E" for ',
                 rightKeyText: 'Press "I" for',
                 orText: 'or',
@@ -424,8 +424,9 @@
             ]),
             m('.row.space',[
                 m('.col-sm-4',
-                    !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                    m('span', 'Stimulus: ')),
+                // !fieldName.toLowerCase().includes('maskstimulus')
+                    //     ? m('span', 'Text: ') :  m('span', 'Image: ')),
                 m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
@@ -444,7 +445,14 @@
         let parameters = settings.parameters;
         let external = settings.external;
         let qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
-        return {reset, clear, set, get, rows, qualtricsParameters, external};
+
+        //There is versions to the image url description so- I added a special base url description
+        let baseURLDesc =  'If your task has any images, enter here the path to that images folder.' +
+            '\nIt can be a full url, or a relative URL to the folder that will host this script.';
+        if (!settings.external)
+            baseURLDesc+='\nThe default value reflects the assumption that your images are under an \'images\' folder under this study.';
+
+        return {reset, clear, set, get, rows, qualtricsParameters, external, baseURLDesc};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
@@ -501,12 +509,13 @@
                 if(!ctrl.external && row.name === 'isQualtrics') return;
                 if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
+                if(settings.parameters.responses === '7' && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
-                        row.desc ?
+                        row.desc || row.name === 'base_url' ?
                             [
                                 m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                                m('i.fa.fa-info-circle.text-muted',{title: row.name === 'base_url' ? ctrl.baseURLDesc : row.desc})
                             ]
                             : m('span', [' ', row.label])
                     ),
@@ -918,7 +927,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1231,8 +1240,8 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                            }))
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
+                            )
                         )
                     ),
                     m('.row',
@@ -1481,7 +1490,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -1572,12 +1581,13 @@
             ]),
             m('.row.space',[
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display presentation:'))),
+
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
                 ]),
                 ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
                     m('.col-sm-3',[
-                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display presentation:'))),
                         m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
                     ])
                     : ''
@@ -1703,15 +1713,15 @@
     	EP: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'
     };
 
-    let helpComponent = {
+    let aboutComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		let extension = '.'+type.toLowerCase();
     		return m('.space',
     			m('.alert.alert-info',
     				!settings.external ? //only show this text if we are in the dashboard
-    				['This will create a script for our '+type+' extension.' +
+    				['This feature of the dashboard will create a script that uses Project Implicit\'s '+type+' extension. ' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
-    					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
+    					'You can edit that .js file further. However, note that every time you make (and save) changes to the .'+type.toLowerCase()+' file (this wizard),  these changes override your .js file. '
     				]:
     				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
@@ -1730,18 +1740,18 @@
     let parametersDesc = [
         {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'Minno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
-        {name: 'leftKey', label: 'Left Key'},
+        {name: 'leftKey', label: 'Left Key', desc: 'It\'s recommended to use upper case letters for the key values.'},
         {name: 'rightKey', label: 'Right Key'},
         {name: 'fullscreen', label:'Run Full Screen', desc: 'Do you want to enable a full screen option?'},
-        {name: 'showDebriefing', label:'Show results interpretation at the end', desc: 'Not recommended. A single IAT score is not a reliable estimate of any psychological construct.'},
-        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'It is recommended to show participants an error feedback on error responses.'},
-        {name: 'errorCorrection', label: 'Require correct response', desc: 'It is recommended to require participants to hit the correct response even after errors.'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'showDebriefing', label:'Show results interpretation at the end', desc: 'Not recommended.\nA single IAT score is not a reliable estimate of any psychological construct.'},
+        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'Should we show error feedback?\nIt is recommended to show participants an error feedback on error responses.'},
+        {name: 'errorCorrection', label: 'Require correct response', desc: 'Should we require the participant to respond correctly after a wrong response?\nIt is recommended to require participants to hit the correct response even after errors.'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {isTouch:false, isQualtrics:false, leftKey:'', rightKey:'' ,fullscreen:false, showDebriefing:false, remindError:false, errorCorrection:false, base_url:{image:''}}
     ];
 
     let textDesc=[
-        {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch', label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error. Replace this text if you do not require participants to correct their error responses (see General Parameters page).'},
+        {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch', label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error.\nDelete this text if you do not require participants to correct their error responses (see General Parameters page).'},
         {name: 'leftKeyText', label:'Top-left text (about the left key)', desc: 'We use this text to remind participants what key to use for a left response.'},
         {name: 'rightKeyText', label:'Top-right text (about the right key)', desc: 'We use this text to remind participants what key to use for a right response.'},
         {name: 'orText', label:'Or', desc: 'We show this text in the combined blocks to separate between the two categories that use the same key.'},
@@ -1750,7 +1760,7 @@
         {name: 'instFirstCombined', nameTouch: 'instFirstCombinedTouch', label: 'Instructions in Blocks 3 and 6', desc: 'The instructions in the first combined (4-groups) block.'},
         {name: 'instSecondCombined', nameTouch: 'instSecondCombinedTouch', label: 'Instructions in Blocks 4 and 7', desc: 'The instructions in the second combined (4-groups) block.'},
         {name: 'instSwitchCategories', nameTouch: 'instSwitchCategoriesTouch', label: 'Instructions in Block 5', desc: 'The instructions in the block that provides practice for the reversed categories.'},
-        {name: 'preDebriefingText', nameTouch: 'preDebriefingTouchText', label: 'Text before showing results', desc: 'Will be used only if you selected (in the General Parameters page) to show the participants an interpretation of the result. We recommend avoiding that.'},
+        {name: 'preDebriefingText', nameTouch: 'preDebriefingTouchText', label: 'Text before showing results', desc: 'Will be used only if you selected (in the General Parameters page) to show the participants an interpretation of the result.\nWe recommend avoiding that.'},
         {remindErrorText:'', leftKeyText:'', rightKeyText:'', orText:'', instAttributePractice:'',instCategoriesPractice:'',
             instFirstCombined:'', instSecondCombined:'', instSwitchCategories:'',preDebriefingText:''},
         {remindErrorTextTouch:'', instAttributePracticeTouch:'',instCategoriesPracticeTouch:'',
@@ -1806,7 +1816,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc},
         'output': {text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc},
         'import': {text: 'Import', component: iatImportComponent},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'IAT'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'IAT'}
     };
 
     let checkStatus = response => {

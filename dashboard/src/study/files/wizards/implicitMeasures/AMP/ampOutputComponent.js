@@ -115,8 +115,10 @@ export function updateMediaSettings(settings) {
     settings_output.targetCat = settings.targetCategory.nameForFeedback;
     delete settings_output.targetCategory;
 
-    settings_output.parameters.leftKey = settings.parameters.leftkey;
-    settings_output.parameters.rightKey = settings.parameters.rightkey;
+    if(settings.parameters.responses === '2'){
+        settings_output.parameters.leftKey = settings.parameters.leftkey;
+        settings_output.parameters.rightKey = settings.parameters.rightkey;
+    }
     delete settings_output.parameters.leftkey;
     delete settings_output.parameters.rightkey;
 
@@ -140,7 +142,6 @@ function updateSettings(settings){
     if(settings.parameters.exampleBlock){
         Object.assign(output, settings.exampleBlock);
     }
-    //delete settings.parameters.exampleBlock; //Remove an internal use flag
     if(settings.parameters.isQualtrics)
         output.isQualtrics = settings.parameters.isQualtrics;
     delete settings.parameters.isQualtrics;

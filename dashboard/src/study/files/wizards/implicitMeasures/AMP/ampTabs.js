@@ -4,24 +4,23 @@ import textComponent from '../resources/textComponent.js';
 import exampleComponent from './ampExampleBlockComponent.js';
 import blocksComponent from './ampBlocksComponent.js';
 import importComponent from './ampImportComponent.js';
-import helpComponent from '../resources/helpComponent.js';
+import aboutComponent from '../resources/aboutComponent.js';
 import categoriesComponent from '../resources/categoriesComponent.js';
 
 let parametersDesc = [
     {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
     {name: 'exampleBlock', label:'Example Block', desc: ['Should the task start with an example block?']},
-    {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating'},
+    {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating.'},
     {name: 'leftkey', label: 'Left Key'},
     {name: 'rightkey', label: 'Right Key'},
     {name: 'sortingLabel1', label: 'First Sorting Label',desc: 'Response is coded as 0.'},
-    {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1. '},
-    {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then label1 is on the left, and label2 is on the right.'},
-    {name: 'maskStimulus', label: 'Mask Stimulus', desc: 'The mask stimulus '},
-    {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
-    {name: 'fixationStimulus', label: 'Fixation Stimulus', desc: 'Change the fixation stimulus here'},
+    {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1.'},
+    {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then the first label is on the left, and the second is on the right.'},
+    {name: 'maskStimulus', label: 'Mask Stimulus'},
+    {name: 'fixationDuration', label: 'Fixation Duration', desc: 'Value of 0 means no fixation presentation.'},
+    {name: 'fixationStimulus', label: 'Fixation Stimulus'},
     {name: 'showRatingDuration', label: 'Show Rating Duration ', desc: 'In the 7-responses option, for how long to show the selected rating.'},
-    {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
-            'It can be a full url, or a relative URL to the folder that will host this script'},
+    {name: 'base_url', label: 'Image\'s URL'},
     //Clearing Object
     {
         leftkey: '', rightkey: '',
@@ -35,23 +34,23 @@ let parametersDesc = [
 ];
 
 let textDesc=[
-    {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'s Instructions', desc:'Example Block\'s Instructions'},
-    {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'s Instructions', desc:'First Block\'s Instructions'},
-    {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'s Instructions', desc: 'Middle Block\'s Instructions'},
-    {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'s Instructions', desc: 'Last Block\'s Instructions'},
-    {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions', desc: 'End Block\'s Instructions'},
+    {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'s Instructions'},
+    {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'s Instructions'},
+    {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'s Instructions'},
+    {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'s Instructions'},
+    {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions'},
     {exampleBlockInst: '', firstBlockInst: '', middleBlockInst:'', lastBlockInst:'', endText:''},
     {exampleBlockInst7: '', firstBlockInst7: '', middleBlockInst7:'', lastBlockInst7:'', endText:''}
 ];
 
 let blocksDesc = [
-    {name: 'trialsInExample', label: 'Number of trials in example block', desc: 'Change to 0 if you don\'t want an example block'},
-    {name: 'trialsInBlock', label: 'Number of trials in a block', desc: 'Number of trials in each block'},
+    {name: 'trialsInExample', label: 'Number of trials in example block', desc: 'Change to 0 if you don\'t want an example block.'},
+    {name: 'trialsInBlock', label: 'Number of trials in a block'},
     {trialsInExample: 0, trialsInBlock: [0,0,0]}
 ];
 
 let exampleBlock = [
-    {name: 'exampleBlock_fixationDuration', label: 'Fixation Duration'},
+    {name: 'exampleBlock_fixationDuration', label: 'Fixation Duration', desc: 'Value of -1 means no fixation presentation.'},
     {name: 'exampleBlock_primeDuration', label: 'Prime Duration'},
     {name: 'exampleBlock_postPrimeDuration', label: 'Post Prime Duration'},
     {name: 'exampleBlock_targetDuration', label: 'Target Duration'},
@@ -129,7 +128,7 @@ let tabs = {
     'text':{text: 'Texts', component: textComponent, rowsDesc: textDesc},
     'output':{text: 'Complete', component: outputComponent, rowsDesc: blocksDesc},
     'import':{text: 'Import', component: importComponent},
-    'help':{text: 'Help', component: helpComponent, rowsDesc:'AMP'}
+    'about': {text: 'About', component: aboutComponent, rowsDesc:'AMP'}
 };
 
 export default tabs;

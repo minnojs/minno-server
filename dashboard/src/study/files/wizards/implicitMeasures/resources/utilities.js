@@ -172,8 +172,7 @@ export function editStimulusObject(fieldName, get, set){ //used in parameters co
         ]),
         m('.row.space',[
             m('.col-sm-4',
-                !fieldName.toLowerCase().includes('maskstimulus')
-                    ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                m('span', 'Stimulus: ')),
             m('.col-sm-7',
                 !fieldName.toLowerCase().includes('maskstimulus')
                     ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})

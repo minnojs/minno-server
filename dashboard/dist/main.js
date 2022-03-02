@@ -13438,10 +13438,10 @@
         var name = pathProp(path);
 
         var content = function (){ return ''; };
-
+        var anWizards = ['iat', 'ep', 'amp'];
         messages.prompt({
-            header: ("Create " + (type.toUpperCase()) + " task"),
-            content: 'Please insert task name:',
+            header: ("Create " + (anWizards.includes(type) ? 'an' : 'a') + " " + (type.toUpperCase()) + " task"),
+            content: 'Please insert task name (no file extension is needed):',
             prop: name
         }).then(function (response) {
 
@@ -18187,7 +18187,7 @@
                 randomAttSide: false
             },
             text: {
-                remindErrorText: '<p style="font-size:0.6em;font-family:arial serif;text-align:center;">' + 'If you make a mistake, a red <font-color="#ff0000"><b>X</b></font> will appear. ' + 'Press the other key to continue.<p/>',
+                remindErrorText : '<p align="center" style="font-size:1em; font-family:arial; color:#000000">'+ 'If you make a mistake, a red <font color="#ff0000"><b>X</b></font> will appear. ' + 'Press the other key to continue.<p/>',
                 leftKeyText: 'Press "E" for ',
                 rightKeyText: 'Press "I" for',
                 orText: 'or',
@@ -18387,8 +18387,7 @@
             ]),
             m('.row.space',[
                 m('.col-sm-4',
-                    !fieldName.toLowerCase().includes('maskstimulus')
-                        ? m('span', 'Text: ') :  m('span', 'Image: ')),
+                    m('span', 'Stimulus: ')),
                 m('.col-sm-7',
                     !fieldName.toLowerCase().includes('maskstimulus')
                         ? m('input[type=text].form-control', {value:get(fieldName,'media','word') ,oninput:m.withAttr('value', set(fieldName,'media','word'))})
@@ -18407,7 +18406,14 @@
         var parameters = settings.parameters;
         var external = settings.external;
         var qualtricsParameters = ['leftKey', 'rightKey', 'fullscreen', 'showDebriefing'];
-        return {reset: reset, clear: clear, set: set, get: get, rows: rows, qualtricsParameters: qualtricsParameters, external: external};
+
+        //There is versions to the image url description so- I added a special base url description
+        var baseURLDesc =  'If your task has any images, enter here the path to that images folder.' +
+            '\nIt can be a full url, or a relative URL to the folder that will host this script.';
+        if (!settings.external)
+            baseURLDesc+='\nThe default value reflects the assumption that your images are under an \'images\' folder under this study.';
+
+        return {reset: reset, clear: clear, set: set, get: get, rows: rows, qualtricsParameters: qualtricsParameters, external: external, baseURLDesc: baseURLDesc};
 
         function reset(){showClearOrReset(parameters, defaultSettings.parameters, 'reset');}
         function clear(){showClearOrReset(parameters, rows.slice(-1)[0], 'clear');}
@@ -18464,12 +18470,13 @@
                 if(!ctrl.external && row.name === 'isQualtrics') return;
                 if((ctrl.qualtricsParameters.includes(row.name)) && ctrl.get('isQualtrics') === 'Regular') return;
                 if(settings.parameters.isTouch && row.name.toLowerCase().includes('key')) return;
+                if(settings.parameters.responses === '7' && row.name.toLowerCase().includes('key')) return;
                 return m('.row.line', [
                     m('.col-md-4',
-                        row.desc ?
+                        row.desc || row.name === 'base_url' ?
                             [
                                 m('span', [' ', row.label, ' ']),
-                                m('i.fa.fa-info-circle.text-muted',{title:row.desc})
+                                m('i.fa.fa-info-circle.text-muted',{title: row.name === 'base_url' ? ctrl.baseURLDesc : row.desc})
                             ]
                             : m('span', [' ', row.label])
                     ),
@@ -18881,7 +18888,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -19202,8 +19209,8 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'
-                            }))
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
+                            )
                         )
                     ),
                     m('.row',
@@ -19452,7 +19459,7 @@
                     m('.row',
                         m('.col-md-6',
                             m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                                title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                                title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                             ))
                     ),
                     m('.row',
@@ -19543,12 +19550,13 @@
             ]),
             m('.row.space',[
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display presentation:'))),
+
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
                 ]),
                 ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
                     m('.col-sm-3',[
-                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                        m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display presentation:'))),
                         m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
                     ])
                     : ''
@@ -19674,15 +19682,15 @@
     	EP: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'
     };
 
-    var helpComponent = {
+    var aboutComponent = {
     	view: function(ctrl, settings, defaultSettings, type){
     		var extension = '.'+type.toLowerCase();
     		return m('.space',
     			m('.alert.alert-info',
     				!settings.external ? //only show this text if we are in the dashboard
-    				['This will create a script for our '+type+' extension.' +
+    				['This feature of the dashboard will create a script that uses Project Implicit\'s '+type+' extension. ' +
     					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
-    					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
+    					'You can edit that .js file further. However, note that every time you make (and save) changes to the .'+type.toLowerCase()+' file (this wizard),  these changes override your .js file. '
     				]:
     				['This tool creates a script for running an '+type+' in your online study. ' +
     					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
@@ -19701,18 +19709,18 @@
     var parametersDesc$5 = [
         {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'Minno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
-        {name: 'leftKey', label: 'Left Key'},
+        {name: 'leftKey', label: 'Left Key', desc: 'It\'s recommended to use upper case letters for the key values.'},
         {name: 'rightKey', label: 'Right Key'},
         {name: 'fullscreen', label:'Run Full Screen', desc: 'Do you want to enable a full screen option?'},
-        {name: 'showDebriefing', label:'Show results interpretation at the end', desc: 'Not recommended. A single IAT score is not a reliable estimate of any psychological construct.'},
-        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'It is recommended to show participants an error feedback on error responses.'},
-        {name: 'errorCorrection', label: 'Require correct response', desc: 'It is recommended to require participants to hit the correct response even after errors.'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'showDebriefing', label:'Show results interpretation at the end', desc: 'Not recommended.\nA single IAT score is not a reliable estimate of any psychological construct.'},
+        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'Should we show error feedback?\nIt is recommended to show participants an error feedback on error responses.'},
+        {name: 'errorCorrection', label: 'Require correct response', desc: 'Should we require the participant to respond correctly after a wrong response?\nIt is recommended to require participants to hit the correct response even after errors.'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {isTouch:false, isQualtrics:false, leftKey:'', rightKey:'' ,fullscreen:false, showDebriefing:false, remindError:false, errorCorrection:false, base_url:{image:''}}
     ];
 
     var textDesc$5=[
-        {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch', label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error. Replace this text if you do not require participants to correct their error responses (see General Parameters page).'},
+        {name: 'remindErrorText', nameTouch: 'remindErrorTextTouch', label:'Screen\'s Bottom (error reminder)', desc:'We use this text to remind participants what happens on error.\nDelete this text if you do not require participants to correct their error responses (see General Parameters page).'},
         {name: 'leftKeyText', label:'Top-left text (about the left key)', desc: 'We use this text to remind participants what key to use for a left response.'},
         {name: 'rightKeyText', label:'Top-right text (about the right key)', desc: 'We use this text to remind participants what key to use for a right response.'},
         {name: 'orText', label:'Or', desc: 'We show this text in the combined blocks to separate between the two categories that use the same key.'},
@@ -19721,7 +19729,7 @@
         {name: 'instFirstCombined', nameTouch: 'instFirstCombinedTouch', label: 'Instructions in Blocks 3 and 6', desc: 'The instructions in the first combined (4-groups) block.'},
         {name: 'instSecondCombined', nameTouch: 'instSecondCombinedTouch', label: 'Instructions in Blocks 4 and 7', desc: 'The instructions in the second combined (4-groups) block.'},
         {name: 'instSwitchCategories', nameTouch: 'instSwitchCategoriesTouch', label: 'Instructions in Block 5', desc: 'The instructions in the block that provides practice for the reversed categories.'},
-        {name: 'preDebriefingText', nameTouch: 'preDebriefingTouchText', label: 'Text before showing results', desc: 'Will be used only if you selected (in the General Parameters page) to show the participants an interpretation of the result. We recommend avoiding that.'},
+        {name: 'preDebriefingText', nameTouch: 'preDebriefingTouchText', label: 'Text before showing results', desc: 'Will be used only if you selected (in the General Parameters page) to show the participants an interpretation of the result.\nWe recommend avoiding that.'},
         {remindErrorText:'', leftKeyText:'', rightKeyText:'', orText:'', instAttributePractice:'',instCategoriesPractice:'',
             instFirstCombined:'', instSecondCombined:'', instSwitchCategories:'',preDebriefingText:''},
         {remindErrorTextTouch:'', instAttributePracticeTouch:'',instCategoriesPracticeTouch:'',
@@ -19777,7 +19785,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$5},
         'output': {text: 'Complete', component: iatOutputComponent$1, rowsDesc: blocksDesc$5},
         'import': {text: 'Import', component: iatImportComponent},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'IAT'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'IAT'}
     };
 
     function url(study_type, study_id, file_id) {
@@ -20443,12 +20451,12 @@
     }
 
     var parametersDesc$4 = [
-        {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'Minno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
+        {name: 'isTouch', options:['Keyboard', 'Touch'], label:'Keyboard input or touch input?', desc:'The script can run on a desktop computer or a touch device. \nMinno does not auto-detect the input method. If you need a touch version and a keyboard version, create two different scripts with this tool.'},
         {name: 'isQualtrics', options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this BIAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-biat/'}, 'this blog post '),'to see how.']},
         {name: 'practiceBlock', label: 'Practice Block', desc: 'Should the task start with a practice block?'},
-        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'It is recommended to show participants an error feedback on error responses'},
+        {name: 'remindError', label: 'Error feedback on incorrect responses', desc: 'Should we show error feedback?\nIt is recommended to show participants an error feedback on error responses.'},
         {name: 'showStimuliWithInst', label: 'Show Stimuli with Instructions', desc: 'Whether to show the stimuli of the IN categories at the beginning of the block.'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder.\nIt can be a full url, or a relative URL to the folder that will host this script.'},
         {istouch:false, isQualtrics:false, practiceBlock:false, showStimuliWithInst:false, remindError:false, base_url:{image:''}}
     ];
 
@@ -20522,7 +20530,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$4},
         'output': {text: 'Complete', component: outputComponent$3, rowsDesc: blocksDesc$4},
         'import': {text: 'Import', component: importComponent$4},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'BIAT'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'BIAT'}
     };
 
     var biat = function (args, external) { return m.component(biatComponent, args, external); };
@@ -20842,11 +20850,11 @@
     }
 
     var parametersDesc$3 = [
-        {name: 'keyTopLeft', label:'Top left key'},
+        {name: 'keyTopLeft', label:'Top left key', desc: 'It\'s recommended to use upper case letters for the key values.'},
         {name: 'keyTopRight', label:'Top right key'},
         {name: 'keyBottomLeft', label:'Bottom left key'},
         {name: 'keyBottomRight', label:'Bottom right key'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {keyTopLeft: '', keyTopRight: '', keyBottomLeft: '', keyBottomRight: '', base_url:{image:''}}
     ];
 
@@ -20862,8 +20870,8 @@
     var blocksDesc$3 = [
         {name: 'nBlocks', label: 'Number of blocks'},
         {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per category-attribute combination', desc: 'How many trials in each block, for each of the four category-attribute combinations.'},
-        {name: 'randomCategoryLocation', label: 'Randomly choose categories location', desc: 'Whether to randomly select which category is on top. If false, then the first category is on top.'},
-        {name: 'randomAttributeLocation', label: 'Randomly choose attributes location', desc: 'Whether to randomly select which attribute is on the left. If false, the first attribute is on the left.'},
+        {name: 'randomCategoryLocation', label: 'Randomly choose categories location', desc: 'Whether to randomly select which category is on top.\nIf false, then the first category is on top.'},
+        {name: 'randomAttributeLocation', label: 'Randomly choose attributes location', desc: 'Whether to randomly select which attribute is on the left.\nIf false, the first attribute is on the left.'},
         {nBlocks: 0, nTrialsPerPrimeTargetPair: 0, randomCategoryLocation : false, randomAttributeLocation: false}
     ];
 
@@ -20902,7 +20910,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$3},
         'output': {text: 'Complete', component: outputComponent$2, rowsDesc: blocksDesc$3},
         'import': {text: 'Import', component: importComponent$3},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'SPF'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'SPF'}
     };
 
     var spf = function (args, external) { return m.component(spfComponent, args, external); };
@@ -21518,7 +21526,7 @@
 
     var parametersDesc$2 = [
         {name: 'isQualtrics', options:['Regular','Qualtrics'],label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {isQualtrics:false, base_url:{image:''}}
     ];
 
@@ -21537,13 +21545,16 @@
     ];
 
     var blocksDesc$2 = [
-        {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'], desc: 'Change to \'startRight\' if you want the first block to show the single category on the right in the first block, \'startLeft\' if you want it to appear on the left side. If you choose \'random\', the program will randomly choose a side for each participant. The first attribute in the Attributes page appears on the left and the second attribute appears on the right. \n'},
+        {name: 'blockOrder', label: 'Block Order', options: ['startRight','startLeft','random'],
+            desc: 'Applies to the single category\'s location on the first block. \n' +
+                'Choose \'startRight\' for it to appear on the right side, \'startLeft\' for it to appear on the left side, or \'random\' if you want to randomize the location.\n' +
+                'Note that the first Attribute on the Attributes page appears on the left side, and the second attribute appears on the right.'},
         {name: 'switchSideBlock', label: 'Switch Side Block ', desc: 'By default, we switch on block 4 (i.e., after blocks 2 and 3 showed the first pairing condition).'},
         {name: 'instHTML', label:'Block\'s Instructions', desc: 'Empty field means we will create the instructions from a default template.'},
-        {name: 'miniBlocks', label:'Number of mini-blocks', desc: 'Higher number reduces repetition of same group/response. Set to 1 if you don\'t need mini blocks. 0 will break the task.'},
+        {name: 'miniBlocks', label:'Number of mini-blocks', desc: 'Higher number reduces repetition of same group/response.\nSet to 1 if you don\'t need mini blocks.\nValue of 0 will break the task.'},
         {name: 'singleAttTrials', label:'Number of single attribute trials', desc: 'Number of trials of the attribute that does not share key with the category (in a mini block).'},
         {name: 'sharedAttTrials', label:'Number of shared key attribute trials', desc: 'Number of trials of the attribute that shares key with the category (in a mini block).'},
-        {name: 'categoryTrials', label:'Number of category trials', desc: 'Number of trials of the category (in a mini-block). If 0, the label does not appear.'},
+        {name: 'categoryTrials', label:'Number of category trials', desc: 'Number of trials of the category (in a mini-block).\nIf 0, the label does not appear.'},
         {
             instHTML : '', 
             block : 1,
@@ -21583,7 +21594,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$2},
         'output': {text: 'Complete', component: outputComponent$1, rowsDesc: blocksDesc$2.slice(-1)[0]},
         'import': {text: 'Import', component: importComponent$2},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'STIAT'}
+        'help': {text: 'Help', component: aboutComponent, rowsDesc: 'STIAT'}
     };
 
     var stiat = function (args, external) { return m.component(stiatComponent, args, external); };
@@ -21999,14 +22010,13 @@
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this Evaluative Priming task to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'}, 'this blog post '),'to see how.']},
         {name: 'separateStimulusSelection', label: 'Separate Stimulus Selection', desc: 'We select the stimuli randomly until exhaustion ' +
                 '(i.e., a stimulus would not appear again until all other stimuli of that category would appear). ' +
-                'This kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
-        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
+                '\nThis kind of selection can be done throughout the task or within each prime-target combination (if you keep this option checked).'},
+        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'Value of 0 means no fixation presentation.'},
         {name: 'fixationStimulus', label: 'Fixation Stimulus'},
-        {name: 'deadlineDuration', label: 'Deadline Duration', desc: '0 means no response deadline: we wait until response.'},
-        {name: 'deadlineMsgDuration', label: 'Deadline\'s Message Duration'},
-        {name: 'deadlineStimulus', label: 'Deadline Stimulus'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
-                                                    'It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'deadlineDuration', label: 'Response Deadline Duration', desc: 'Value of 0 means no response deadline, we\'ll wait until response.'},
+        {name: 'deadlineMsgDuration', label: 'Response Deadline\'s Message Duration', desc: 'How long the response deadline message will be presented?'},
+        {name: 'deadlineStimulus', label: 'Response Deadline Stimulus'},
+        {name: 'base_url', label: 'Image\'s URL'},
         {isTouch:false, separateStimulusSelection:0, fixationDuration:0 ,
             fixationStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}},
             deadlineStimulus:{css : {color:'#000000', 'font-size':'1em'}, media : {word:''}, location: {bottom:10}},
@@ -22023,7 +22033,7 @@
 
     var blocksDesc$1 = [
         {name: 'nBlocks', label: 'Number of blocks'},
-        {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per prime-target combination', desc: 'How many trials in a block, per prime-target combination (always three blocks).'},
+        {name: 'nTrialsPerPrimeTargetPair', label: 'Number of trials in a block, per prime-target combination'},
         {nBlocks: 0, nTrialsPerPrimeTargetPair: 0}
     ];
 
@@ -22077,7 +22087,7 @@
         'text': {text: 'Texts', component: textComponent, rowsDesc: textDesc$1},
         'output': {text: 'Complete', component: outputComponent},
         'import': {text: 'Import', component: importComponent$1},
-        'help': {text: 'Help', component: helpComponent, rowsDesc: 'EP'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc: 'EP'}
     };
 
     var ep = function (args, external) { return m.component(epComponent, args, external); };
@@ -22498,8 +22508,10 @@
         settings_output.targetCat = settings.targetCategory.nameForFeedback;
         delete settings_output.targetCategory;
 
-        settings_output.parameters.leftKey = settings.parameters.leftkey;
-        settings_output.parameters.rightKey = settings.parameters.rightkey;
+        if(settings.parameters.responses === '2'){
+            settings_output.parameters.leftKey = settings.parameters.leftkey;
+            settings_output.parameters.rightKey = settings.parameters.rightkey;
+        }
         delete settings_output.parameters.leftkey;
         delete settings_output.parameters.rightkey;
 
@@ -22523,7 +22535,6 @@
         if(settings.parameters.exampleBlock){
             Object.assign(output, settings.exampleBlock);
         }
-        //delete settings.parameters.exampleBlock; //Remove an internal use flag
         if(settings.parameters.isQualtrics)
             output.isQualtrics = settings.parameters.isQualtrics;
         delete settings.parameters.isQualtrics;
@@ -22823,26 +22834,24 @@
                     m('span', [' ', 'Trials In Example Block', ' ']),
                     m('i.fa.fa-info-circle.text-muted',{title:'Change to 0 if you don\'t want an example block'})
                 ),
-                m('.col-md-3.col-lg-2.space',
+                m('.col-md-3.col-lg-2',
                     m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInExample')), value: ctrl.get('trialsInExample'), min:0}))
             ]),
-            m('.row.line',
+            m('.row.double_space',
                 m('.col-md-5',
-                    m('p.h4','Number of Trials in Each Block: ',
-                        m('i.fa.fa-info-circle.text-muted',{
-                            title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
-                        )
-                    )
+                    m('p.h5', 'Number of Trials in Each Block: ', m('i.fa.fa-info-circle.text-muted',{
+                        title:'Here you can set the number of trials in each block.\nBelow you can add add additional blocks.'}
+                    ))
                 )
             ),
             ctrl.trialsInBlock.map(function(block, index) {
-                return m('.row.line', [
+                return m('.row.space', [
                     m('.col-md-3',[
                         !ctrl.chooseFlag() ? ' ' :
                             m('input[type=checkbox]', {checked : ctrl.chosenBlocksList().includes(index), onclick: function (e) { return ctrl.updateChosenBlocks(e, index); }}),
                         m('span', [' ','Block '+parseInt(index+1)])
                     ]),
-                    m('.col-md-3.col-lg-2.space',
+                    m('.col-md-3.col-lg-2',
                         m('input[type=number].form-control',{onchange: m.withAttr('value', ctrl.set('trialsInBlock', index)), value: ctrl.get('trialsInBlock', index), min:0})
                     )
                 ]);
@@ -22918,10 +22927,7 @@
             'fixationStimulus', 'maskStimulus', 'base_url'
         ];
         parameters.forEach(function (parameter) {settings.parameters[parameter] = input[parameter];});
-        settings.parameters.leftkey = input.leftKey;
-        settings.parameters.rightkey = input.rightKey;
 
-        //settings.parameters.exampleBlock = input.trialsInExample !== 0;
         if(settings.parameters.exampleBlock){
             var exampleBlock = [
                 'exampleTargetStimulus', 'exampleFixationStimulus',
@@ -22950,6 +22956,8 @@
                 'middleBlockInst', 'lastBlockInst', 'endText'
             ];
             textParams.forEach(function (param) {settings.text[param] = input[param];});
+            settings.parameters.leftkey = input.leftKey;
+            settings.parameters.rightkey = input.rightKey;
         }
         else {
             textParams = ['exampleBlockInst7', 'firstBlockInst7',
@@ -22967,18 +22975,17 @@
     var parametersDesc = [
         {name: 'isQualtrics',options:['Regular','Qualtrics'], label:'Regular script or Qualtrics?', desc: ['If you want this IAT to run from Qualtrics, read ', m('a',{href: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/'}, 'this blog post '),'to see how.']},
         {name: 'exampleBlock', label:'Example Block', desc: ['Should the task start with an example block?']},
-        {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating'},
+        {name: 'responses', label: 'Number of responses options', options:[2,7], desc: 'Change to 7 for a 1-7 rating.'},
         {name: 'leftkey', label: 'Left Key'},
         {name: 'rightkey', label: 'Right Key'},
         {name: 'sortingLabel1', label: 'First Sorting Label',desc: 'Response is coded as 0.'},
-        {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1. '},
-        {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then label1 is on the left, and label2 is on the right.'},
-        {name: 'maskStimulus', label: 'Mask Stimulus', desc: 'The mask stimulus '},
-        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'No fixation by default'},
-        {name: 'fixationStimulus', label: 'Fixation Stimulus', desc: 'Change the fixation stimulus here'},
+        {name: 'sortingLabel2', label: 'Second Sorting Label', desc: 'Response is coded as 1.'},
+        {name: 'randomizeLabelSides',label:'Randomize Label Sides', desc: 'If false, then the first label is on the left, and the second is on the right.'},
+        {name: 'maskStimulus', label: 'Mask Stimulus'},
+        {name: 'fixationDuration', label: 'Fixation Duration', desc: 'Value of 0 means no fixation presentation.'},
+        {name: 'fixationStimulus', label: 'Fixation Stimulus'},
         {name: 'showRatingDuration', label: 'Show Rating Duration ', desc: 'In the 7-responses option, for how long to show the selected rating.'},
-        {name: 'base_url', label: 'Image\'s URL', desc: 'If your task has any images, enter here the path to that images folder. ' +
-                'It can be a full url, or a relative URL to the folder that will host this script'},
+        {name: 'base_url', label: 'Image\'s URL'},
         //Clearing Object
         {
             leftkey: '', rightkey: '',
@@ -22992,23 +22999,23 @@
     ];
 
     var textDesc=[
-        {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'s Instructions', desc:'Example Block\'s Instructions'},
-        {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'s Instructions', desc:'First Block\'s Instructions'},
-        {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'s Instructions', desc: 'Middle Block\'s Instructions'},
-        {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'s Instructions', desc: 'Last Block\'s Instructions'},
-        {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions', desc: 'End Block\'s Instructions'},
+        {name: 'exampleBlockInst', nameSeven:'exampleBlockInst7', label:'Example Block\'s Instructions'},
+        {name: 'firstBlockInst', nameSeven:'firstBlockInst7', label:'First Block\'s Instructions'},
+        {name: 'middleBlockInst', nameSeven:'middleBlockInst7', label:'Middle Block\'s Instructions'},
+        {name: 'lastBlockInst', nameSeven:'lastBlockInst7', label:'Last Block\'s Instructions'},
+        {name: 'endText', nameSeven:'endText', label:'End Block\'s Instructions'},
         {exampleBlockInst: '', firstBlockInst: '', middleBlockInst:'', lastBlockInst:'', endText:''},
         {exampleBlockInst7: '', firstBlockInst7: '', middleBlockInst7:'', lastBlockInst7:'', endText:''}
     ];
 
     var blocksDesc = [
-        {name: 'trialsInExample', label: 'Number of trials in example block', desc: 'Change to 0 if you don\'t want an example block'},
-        {name: 'trialsInBlock', label: 'Number of trials in a block', desc: 'Number of trials in each block'},
+        {name: 'trialsInExample', label: 'Number of trials in example block', desc: 'Change to 0 if you don\'t want an example block.'},
+        {name: 'trialsInBlock', label: 'Number of trials in a block'},
         {trialsInExample: 0, trialsInBlock: [0,0,0]}
     ];
 
     var exampleBlock = [
-        {name: 'exampleBlock_fixationDuration', label: 'Fixation Duration'},
+        {name: 'exampleBlock_fixationDuration', label: 'Fixation Duration', desc: 'Value of -1 means no fixation presentation.'},
         {name: 'exampleBlock_primeDuration', label: 'Prime Duration'},
         {name: 'exampleBlock_postPrimeDuration', label: 'Post Prime Duration'},
         {name: 'exampleBlock_targetDuration', label: 'Target Duration'},
@@ -23086,7 +23093,7 @@
         'text':{text: 'Texts', component: textComponent, rowsDesc: textDesc},
         'output':{text: 'Complete', component: iatOutputComponent, rowsDesc: blocksDesc},
         'import':{text: 'Import', component: importComponent},
-        'help':{text: 'Help', component: helpComponent, rowsDesc:'AMP'}
+        'about': {text: 'About', component: aboutComponent, rowsDesc:'AMP'}
     };
 
     var amp = function (args, external) { return m.component(ampComponent, args, external); };

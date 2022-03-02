@@ -6,15 +6,15 @@ let links = {IAT: 'https://minnojs.github.io/minnojs-blog/qualtrics-iat/',
 	EP: 'https://minnojs.github.io/minnojs-blog/qualtrics-priming/'
 };
 
-let helpComponent = {
+let aboutComponent = {
 	view: function(ctrl, settings, defaultSettings, type){
 		let extension = '.'+type.toLowerCase();
 		return m('.space',
 			m('.alert.alert-info',
 				!settings.external ? //only show this text if we are in the dashboard
-				['This will create a script for our '+type+' extension.' +
+				['This feature of the dashboard will create a script that uses Project Implicit\'s '+type+' extension. ' +
 					'After you save your work here, it will be updated into a file with the same name but a different file extension (.js instead of '+extension+'). ' +
-					'You can edit that file further. However, everything you Save changes you made to this wizard, it will override your .js file. '
+					'You can edit that .js file further. However, note that every time you make (and save) changes to the .'+type.toLowerCase()+' file (this wizard),  these changes override your .js file. '
 				]:
 				['This tool creates a script for running an '+type+' in your online study. ' +
 					'The script uses Project Implicit’s '+type+ ' extension, which runs on MinnoJS, a JavaScript player for online studies. ',
@@ -30,4 +30,4 @@ let helpComponent = {
 				]));}
 };
 
-export default helpComponent;
+export default aboutComponent;

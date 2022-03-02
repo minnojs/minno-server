@@ -106,7 +106,7 @@ function view(ctrl) {
                 m('.row',
                     m('.col-md-6',
                         m('p.h4','Stimuli: ', m('i.fa.fa-info-circle.text-muted',{
-                            title:'Enter text (word) or image name (image). Set the path to the folder of images in the General Parameters page'})
+                            title:'Enter text (word) or image name with its file extension (image).\nSet the path to the folder of images in the General Parameters page.'})
                         ))
                 ),
                 m('.row',

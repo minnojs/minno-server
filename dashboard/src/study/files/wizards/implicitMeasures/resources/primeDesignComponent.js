@@ -47,12 +47,13 @@ function view(ctrl, taskType){
         ]),
         m('.row.space',[
             m('.col-sm-3',[
-                m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display duration:'))),
+                m('.row.space', m('.col-sm-12', m('span', ctrl.elementType()+' category\'s display presentation:'))),
+
                 m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get(ctrl.durationFieldName()), onchange:m.withAttr('value', ctrl.set(ctrl.durationFieldName()))})))
             ]),
             ctrl.elementType() === 'Prime' && taskType === 'AMP' ?
                 m('.col-sm-3',[
-                    m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display duration:'))),
+                    m('.row.space', m('.col-sm-12', m('span', 'Post prime category\'s display presentation:'))),
                     m('.row.space', m('.col-sm-6', m('input[type=number].form-control',{placeholder:'0', min:0, value:ctrl.get('postPrimeDuration'), onchange:m.withAttr('value', ctrl.set('postPrimeDuration'))})))
                 ])
                 : ''

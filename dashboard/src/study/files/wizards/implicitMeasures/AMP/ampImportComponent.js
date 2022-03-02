@@ -52,10 +52,7 @@ export function updateSettings(settings, input) {
         'fixationStimulus', 'maskStimulus', 'base_url'
     ];
     parameters.forEach(parameter => {settings.parameters[parameter] = input[parameter];});
-    settings.parameters.leftkey = input.leftKey;
-    settings.parameters.rightkey = input.rightKey;
 
-    //settings.parameters.exampleBlock = input.trialsInExample !== 0;
     if(settings.parameters.exampleBlock){
         let exampleBlock = [
             'exampleTargetStimulus', 'exampleFixationStimulus',
@@ -84,6 +81,8 @@ export function updateSettings(settings, input) {
             'middleBlockInst', 'lastBlockInst', 'endText'
         ];
         textParams.forEach(param => {settings.text[param] = input[param];});
+        settings.parameters.leftkey = input.leftKey;
+        settings.parameters.rightkey = input.rightKey;
     }
     else{
         textParams = ['exampleBlockInst7', 'firstBlockInst7',
