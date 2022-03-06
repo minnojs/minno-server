@@ -10,24 +10,8 @@
             background: none
         }
     </style>
-    <script type="text/javascript">
-        function addButtons(tasksNames){
-            let p = document.getElementsByTagName('p')[2];
-            //p.className = 'lead'
-            tasksNames.forEach(function(task){
-                let btn = document.createElement("a");
-                btn.innerText  = 'Create my '+task.toUpperCase()
-                btn.className = "btn btn-info btn-lg";
-                btn.role = 'button';
-                btn.href = "./view/implicit.html?type="+task;
-                p.appendChild(btn);
-            });
-            document.getElementsByTagName('body')[0].append(p);
-        }
-    </script>
 </head>
 <body>
-<!--<body onload="addButtons(['iat','biat','stiat', 'spf', 'ep']);">-->
 <div class="jumbotron">
     <h1 class="display-4">Welcome to MinnoJS Implicit Measures Wizard</h1>
     <p class="lead">This website helps you create scripts for implicit measures implemented in <a href='https://minnojs.github.io/'>MinnoJS.</a> MinnoJS is a JavaScript player for online studies,
