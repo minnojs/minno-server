@@ -95,7 +95,7 @@ basePathRouter.use('/dashboard', (req,res) => {
     return res.render('dashboard', config);});
 
 basePathRouter.use('/static', express.static(config.static_path));
-
+basePathRouter.use('/.well-known', express.static('.well-known'));
 
 basePathRouter.route('/download').get(
     function(req, res){

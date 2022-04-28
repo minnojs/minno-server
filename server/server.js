@@ -155,6 +155,7 @@ exports.startupHttp = async function(app) {
     await exports.shutdownHttp();
     httpServer = await app.listen(config.port, function() {
         logger.info({message:'Minno-server Started on PORT ' + config.port});
+        console.log({message:'Minno-server Started on PORT ' + config.port});
     });
     httpServer.keepAliveTimeout = keepAliveTimeout;
 };
@@ -184,24 +185,27 @@ exports.startupHttps = async function(app, server_data) {
         trustProxy: true // default is false
     }));
     const https = require('https');
-    if (server_data == null)
-        server_data = {
-            privateKey: config.keyFile,
-            certificate: config.certFile,
-            port: config.sslport
-        };
-    const credentials = {
-        key: server_data.privateKey,
-        cert: server_data.certificate
-    };
-
     try {
+
+        if (server_data == null){
+            server_data = {
+                privateKey: fs.readFileSync(config.privateKey, 'utf8'),
+                certificate: fs.readFileSync(config.certificate, 'utf8')
+            };
+        }
+        const credentials = {
+            key: server_data.privateKey,
+            cert: server_data.certificate
+        };
+
         httpsServer = await https.createServer(credentials, app);
         httpsServer.listen(config.sslport);
         httpsServer.keepAliveTimeout = keepAliveTimeout;
-        logger.info({message:'Minno-server Started on PORT ' + config.sslport});
+        console.log({message:'Minno-server Started secured on PORT ' + config.sslport});
+        logger.info({message:'Minno-server Started secured on PORT ' + config.sslport});
     } catch (e) {
         logger.error({message:e});
+        console.log({e});
         throw e;
     }
 };
