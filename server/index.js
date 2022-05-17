@@ -2,9 +2,6 @@ const express     = require('express');
 const session     = require('express-session');
 const config      = require('../config');
 const files       = require('./files');
-
-
-
 const launch_router         = require('./routes/launch_router');
 const connections_router    = require('./routes/connections_router');
 const lock_router           = require('./routes/lock_router');

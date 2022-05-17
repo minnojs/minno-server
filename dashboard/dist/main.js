@@ -26885,6 +26885,7 @@
                     updated: m.prop(false),
                     error:m.prop('')
                 },
+                usage: m.prop(''),
                 dbx: {
                     enable: m.prop(false),
                     app_key:m.prop(''),
@@ -26916,7 +26917,11 @@
             };
 
             function set_values(response){
+                console.log(response);
+                ctrl.usage(response.config.usage);
+
                 ctrl.given_conf(response.config);
+
                 ctrl.fingerprint.enable(!!(response.config.fingerprint && response.config.fingerprint.use_fingerprint));
                 if(response.config.gmail)
                     ctrl.gmail.enable(true) && ctrl.gmail.email(response.config.gmail.email) && ctrl.gmail.password(response.config.gmail.password);
@@ -27100,6 +27105,33 @@
                         ])
                     ]),
                     m('.row', [
+                        m('.col-sm-3', [ m('strong', 'Disk usage:')]),
+                            m('.col-sm-8',[
+                                m('table.table', [
+                                    m('tr', [
+                                        m('th', 'Filesystem'),
+                                        m('th', 'Type'),
+                                        m('th', 'Size'),
+                                        m('th', 'Used'),
+                                        m('th', 'Avail'),
+                                        m('th', 'Use%'),
+                                        m('th', 'Mounted on')
+                                    ]),
+                                    m('tr', [
+                                        m('td', ctrl.usage().Filesystem),
+                                        m('td', ctrl.usage().Type),
+                                        m('td', ctrl.usage().Size),
+                                        m('td', ctrl.usage().Used),
+                                        m('td', ctrl.usage().Avail),
+                                        m('td', ctrl.usage().Use),
+                                        m('td', ctrl.usage().MountedOn)
+                                    ])
+                                ])
+                            ])
+                        ]),
+                        m('hr'),
+
+                        m('.row', [
                         m('.col-sm-3', [ m('strong', 'Fingerprint:'),
 
                             m('.text-muted', ['Configuring your fingerprint preferences ', m('i.fa.fa-info-circle')]),
