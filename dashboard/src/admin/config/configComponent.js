@@ -56,7 +56,6 @@ let configComponent = {
         };
 
         function set_values(response){
-            console.log(response);
             ctrl.usage(response.config.usage);
 
             ctrl.given_conf(response.config);
