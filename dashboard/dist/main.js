@@ -14095,6 +14095,12 @@
         body: {exp_id: exp_id, version_id: version_id, file_format: file_format, file_split: file_split, start_date: start_date, end_date: end_date}
     }); };
 
+    var delete_data = function (study_id, exp_id, version_id, start_date, end_date) { return fetchJson(get_exps_url(study_id), {
+        method: 'delete',
+        body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date}
+    }); };
+
+
     var get_stat = function (study_id, exp_id, version_id, start_date, end_date, date_size) { return fetchJson(get_stat_url(study_id), {
         method: 'post',
         body: {exp_id: exp_id, version_id: version_id, start_date: start_date, end_date: end_date, date_size: date_size}
@@ -14128,7 +14134,9 @@
         method: 'post'
     }); };
 
-    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
+    var send2archive = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete'}); };
+    var restore_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete', body: {restore:true}}); };
+    var delete_study = function (study_id) { return fetchJson(get_url(study_id), {method: 'delete', body: {permanently:true}}); };
 
     var change_version_availability = function (study_id, version_id, availability) { return fetchJson(get_version_url(study_id, version_id), {
         method: 'put',
@@ -14171,7 +14179,7 @@
             m('select.form-control', {value:new_study_id(), onchange: function (e) { return update_study_details(e, new_study_id, new_study_name); }}, [
                 m('option',{value:'', disabled: true}, 'Select Study'),
                 studies()
-                    .filter(function (study) { return study.permission!=='deleted' && !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
+                    .filter(function (study) { return study.permission!=='archive' && !study.is_locked && !study.is_public && !study.isReadonly && study.permission!=='read only' && study.id!=study_id(); })
                     .map(function (study) { return m('option',{value:study.id, selected: new_study_id() === study.id}, study.name); })
             ])
         ]);
@@ -25640,7 +25648,8 @@
             var study_id = ref.study_id;
             var versions = ref.versions;
             var close = ref.close;
-
+            var delete_data = ref.delete_data;
+            var notifications = ref.notifications;
 
             function update_experiment(exp_id){
                 ctrl.exp_id(Array.isArray(exp_id) ?  exp_id : exp_id.split(',') );
@@ -25658,6 +25667,8 @@
                 study_id:m.prop(parseInt(study_id)),
                 exps: exps,
                 versions: versions,
+                delete_data: delete_data,
+                notifications: notifications,
                 ask_delete_request: ask_delete_request,
                 update_version: update_version,
                 update_experiment: update_experiment,
@@ -25699,7 +25710,7 @@
 
                 m('.input-group', [m('strong', 'Study name'),
                     m('select.c-select.form-control',{onchange: function (e) { return select_study$1(ctrl, e.target.value); }}, [
-                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
+                        ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id===ctrl.study_id()} , ((study.name) + " " + (study.permission!=='archive' ? '' : '(archive study)'))); })
                     ])
                 ]),
                 m('.row', [
@@ -25721,7 +25732,7 @@
                             ])
                         ])
                     ]),
-                    m('.col-sm-3', [
+                    ctrl.delete_data ? '' : m('.col-sm-3', [
                         m('.input-group', [m('strong', 'Output type'),
                             m('select.c-select.form-control',{onchange: function (e) { return ctrl.file_format(e.target.value); }}, [
                                 m('option', {value:'csv'}, 'csv'),
@@ -25731,7 +25742,7 @@
                         ])
                     ])
                 ]),
-                m('.row.space', [
+                ctrl.delete_data ? '' : m('.row.space', [
                     m('.col-sm-9', [
                         m('span', 'Split to files by (clear text to download in one file):'),
                         m('input.form-control', {
@@ -25757,15 +25768,15 @@
                 ])
             ]),
             ctrl.loaded() ? '' : m('.loader'),
-            show_requests(ctrl),
+            ctrl.delete_data ? '' : show_requests(ctrl),
             ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
             ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
-
 
             ctrl.downloaded() ? '' : m('.loader'),
             m('.text-xs-right.btn-toolbar',[
                 m('button.btn.btn-secondary.btn-sm', {onclick:function (){close(null);}}, 'Close'),
-                m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length, onclick:function (){ask_get_data(ctrl);}}, 'Download')
+                ctrl.delete_data ? '' :m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length, onclick:function (){ask_get_data(ctrl);}}, 'Download'),
+                !ctrl.delete_data ? '' : m('button.btn.btn-danger.btn-sm',  {onclick:function (){ask_delete_data(ctrl);}}, 'Delete')
             ])
         ]);
     }
@@ -25798,6 +25809,54 @@
             .then(m.redraw);
     }
 
+
+
+    function ask_delete_data(ctrl){
+        var close = messages.close;
+        var error = m.prop('');
+        var confirmation = m.prop('');
+        var ok2remove = false;
+        return messages.custom({
+            content: {
+                view: function view(){
+                    return m('div', [
+                        m('h3', 'Delete study data'),
+                        m('strong', 'Are you sure? This will delete the study data permanently.'),
+                        m('p', 'Please wrote below "delete" to confirm the deletion'),
+                        m('input.form-control',  {  value: confirmation(), onkeyup: m.withAttr('value', confirmation)}),
+                        !error() ? '' : m('p.alert.alert-danger', error()),
+                        m('.text-xs-right.btn-toolbar.space',[
+                            m('button.btn.btn-secondary.btn-sm', {onclick:function (){ return close(null); }}, 'Cancel'),
+                            m('button.btn.btn-danger.btn-sm', {onclick:function (){ok2remove = true; close();}, disabled:confirmation()!=='delete'}, 'Delete')
+                        ])
+
+                    ]);
+                }
+            }
+        })
+            .then(function (response) {
+                if (ok2remove) {
+                    ctrl.error('');
+                    if (ctrl.exp_id() === '')
+                        { return ctrl.error('Please select experiment id'); }
+
+                    ctrl.downloaded(false);
+
+                    var correct_start_date = new Date(ctrl.dates.startDate());
+                    correct_start_date.setHours(0, 0, 0, 0);
+
+                    var correct_end_date = new Date(ctrl.dates.endDate());
+                    correct_end_date.setHours(23, 59, 59, 999);
+
+                    return delete_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), correct_start_date, correct_end_date)
+                        .catch(function (err) { return ctrl.error(err.message); })
+                        .then(function () { return ctrl.downloaded(true); })
+                        .then(function () { return load_requests(ctrl); })
+                        .then(function (){ return ctrl.notifications.show_success('Study data were successfully deleted'); })
+                        .then(m.redraw);
+                }
+            })
+    }
     function ask_delete_request(study_id, request_id, ctrl){
         return delete_request(study_id, request_id)
             .then(function (){ return load_requests(ctrl); })
@@ -25868,7 +25927,7 @@
             .then(function (response) { return ctrl.requests(response.requests); })
             .then(function (){
                 if (ctrl.requests().filter(function (request){ return request.status==='in progress'; }).length)
-                    { setTimeout(function (){ return load_requests(ctrl); }, 5000); }
+                    { setTimeout(function (){ return load_requests(ctrl); }, 1000); }
             })
             .catch(ctrl.error)
             .then(ctrl.loaded.bind(null, true))
@@ -26059,7 +26118,7 @@
                     m('.col-sm-12', [
                         m('.input-group', [m('strong', 'Study name'),
                             m('select.c-select.form-control',{onchange: function (e) { return select_study(ctrl, e.target.value); }}, [
-                                ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , ((study.name) + " " + (study.permission!=='deleted' ? '' : '(deleted study)'))); })
+                                ctrl.studies().map(function (study){ return m('option', {value:study.id, selected:study.id==ctrl.study_id()} , ((study.name) + " " + (study.permission!=='archive' ? '' : '(archive study)'))); })
                             ])
                         ]) ])
                 ]),
@@ -26738,6 +26797,7 @@
                                 m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                                 m('option', {value:'public'}, 'Show public studies'),
                                 m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
+                                m('option', {value:'archive'}, 'Show archive studies'),
                                 studies()
                                     .filter(typeFilter('bank-cognitive')).length===0 ? '' :
                                     m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
@@ -26765,14 +26825,12 @@
                                 m('input.form-control', {placeholder: 'Search...', config: focus_it$3, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                             ])
                         ]),
-
                         studies()
-                            .filter(function (study){ return study.permission!=='deleted'; })
                             .filter(typeFilter(type()))
                             .filter(tagFilter(tags().filter(uesedFilter()).map(function (tag){ return tag.text; })))
                             .filter(permissionFilter(permissionChoice()))
                             .filter(searchFilter(globalSearch()))
-                            .filter(function (study){ return !study.deleted; })
+                            // .filter(study=>!study.archive)
                             .map(function (study) { return m('a', {href: m.route() != '/studies' ? ("/translate/" + (study.id)) : ("/properties/" + (study.id)),config:routeConfig, key: study.id}, [
                                 m('.row.study-row', [
                                     m('.col-sm-5', [
@@ -26821,12 +26879,14 @@
     }; };
 
     var permissionFilter = function (permission) { return function (study) {
-        if(permission === 'all') { return study.accessible; }
-        if(permission === 'public') { return study.is_public && !study.is_bank; }
-        if(permission === 'collaboration') { return study.permission !== 'owner' && study.accessible; }
-        if(permission === 'template') { return study.is_template; }
-        if(permission === 'bank-iat') { return study.is_bank && study.bank_type==='iat'; }
-        if(permission === 'bank-cognitive') { return study.is_bank && study.bank_type==='cognitive'; }
+        if(permission === 'archive') { return study.permission==='archive'; }
+        if(permission === 'all') { return study.accessible && study.permission!=='archive'; }
+        if(permission === 'public') { return study.is_public && !study.is_bank && study.permission!=='archive'; }
+        if(permission === 'collaboration') { return study.permission !== 'owner' && study.accessible  && study.permission!=='archive'; }
+        if(permission === 'template') { return study.is_template  && study.permission!=='archive'; }
+        if(permission === 'bank-iat') { return study.is_bank && study.bank_type==='iat'  && study.permission!=='archive'; }
+        if(permission === 'bank-cognitive') { return study.is_bank && study.bank_type==='cognitive'  && study.permission!=='archive'; }
+
 
         return study.permission === permission;
     }; }; 
@@ -27835,6 +27895,7 @@
                     error:m.prop('')
                 },
                 usage: m.prop(''),
+                show_data_per_user: m.prop(false),
                 dbx: {
                     enable: m.prop(false),
                     app_key:m.prop(''),
@@ -27858,6 +27919,7 @@
                 },
 
                 toggle_visibility: toggle_visibility,
+                toggle_data_per_user: toggle_data_per_user,
                 update_gmail_fields: update_gmail_fields,
                 show_gmail_password: show_gmail_password,
                 update_dbx_fields: update_dbx_fields,
@@ -27901,7 +27963,9 @@
                 ctrl[varable].enable(state);
                 ctrl[varable].updated(true);
             }
-
+            function toggle_data_per_user(){
+                ctrl.show_data_per_user(!ctrl.show_data_per_user());
+            }
 
             function show_gmail_password(ctrl){
                 ctrl.gmail.show_password(true);
@@ -28053,38 +28117,52 @@
                         ])
                     ]),
                     m('.row', [
-                        m('.col-sm-3', [ m('strong', 'Disk usage:')]),
-                            m('.col-sm-8',[
-                                m('table.table', [
-                                    m('tr', [
-                                        m('th', 'Filesystem'),
-                                        m('th', 'Type'),
-                                        m('th', 'Size'),
-                                        m('th', 'Used'),
-                                        m('th', 'Avail'),
-                                        m('th', 'Use%'),
-                                        m('th', 'Mounted on')
-                                    ]),
-                                    m('tr', [
-                                        m('td', ctrl.usage().Filesystem),
-                                        m('td', ctrl.usage().Type),
-                                        m('td', ctrl.usage().Size),
-                                        m('td', ctrl.usage().Used),
-                                        m('td', ctrl.usage().Avail),
-                                        m('td', ctrl.usage().Use),
-                                        m('td', ctrl.usage().MountedOn)
-                                    ])
+                        m('.col-sm-3', m('strong', 'Disk usage:')),
+                        m('.col-sm-8',[
+                            m('table.table', [
+                                m('tr', [
+                                    m('th', 'Filesystem'),
+                                    m('th', 'Type'),
+                                    m('th', 'Size'),
+                                    m('th', 'Used'),
+                                    m('th', 'Avail'),
+                                    m('th', 'Use%'),
+                                    m('th', 'Mounted on')
+                                ]),
+                                m('tr', [
+                                    m('td', ctrl.usage().Filesystem),
+                                    m('td', ctrl.usage().Type),
+                                    m('td', ctrl.usage().Size),
+                                    m('td', ctrl.usage().Used),
+                                    m('td', ctrl.usage().Avail),
+                                    m('td', ctrl.usage().Use),
+                                    m('td', ctrl.usage().MountedOn)
                                 ])
+                            ]),
+                            m('a', {href:'javascript:void(0)', onclick: function (){ return ctrl.toggle_data_per_user(); }},[
+                                'Data per user ',
+                                ctrl.show_data_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
+                            ]),
+                            !ctrl.show_data_per_user() ? '' :
+                                m('table.table', [
+                                m('tr.tr', [
+                                    m('th', 'Username'),
+                                    m('th', 'Size')
+                                ]),
+                                ctrl.usage().data_per_user.map(function (user){ return m('tr', [
+                                        m('td', user.user),
+                                        m('td', user.size)
+                                    ]); })
                             ])
-                        ]),
-                        m('hr'),
+                        ]) ]),
 
-                        m('.row', [
+
+                    m('hr'),
+                    m('.row', [
                         m('.col-sm-3', [ m('strong', 'Fingerprint:'),
-
                             m('.text-muted', ['Configuring your fingerprint preferences ', m('i.fa.fa-info-circle')]),
                             m('.card.info-box.card-header', ['Fingerprint is a method of identifying unique browsers and tracking online activity ', m('a', {href:'#'}, 'Read more here'), '.']) ]),
-                        m('.col-sm-8',[
+                        m('.col-sm-6',[
                             m('div', m('label.c-input.c-radio', [
                                 m('input[type=radio]', {
                                     onclick: function (){ return ctrl.toggle_visibility('fingerprint', false); },
@@ -29238,9 +29316,7 @@
                 permission:m.prop('can edit'),
                 data_permission:m.prop('visible'),
                 loaded:m.prop(false),
-                col_error:m.prop(''),
-                pub_error:m.prop(''),
-                share_error:m.prop(''),
+                err:m.prop(''),
                 study: study,
                 update_presented_version: update_presented_version,
                 save: save,
@@ -29253,10 +29329,15 @@
                 show_publish: show_publish,
                 show_create_version: show_create_version,
                 show_delete: show_delete,
-                show_change_availability: show_change_availability
+                show_restore: show_restore,
+                show_delete_data: show_delete_data,
+                show_change_availability: show_change_availability,
+                show_archive: show_archive
             };
 
             function show_change_availability(study, version_id, availability){
+                if (study.isReadonly)
+                    { return false; }
                 if (study.versions.find(function (version) { return version.hash === version_id && version.availability === availability; }))
                     { return false; }
 
@@ -29293,17 +29374,53 @@
                     .then(m.redraw);
             }
 
+            function show_restore(){
+                return messages.confirm({header:'Restore study', content:
+                        m('strong', 'Are you sure? This will make your study available again.')})
+                    .then(function (response) {
+                        if (response) { restore_study(ctrl.study.id)
+                            .then(function (){ return ctrl.study.archive=false; })
+                            .catch(function (error) { return messages.alert({header: 'Restore study', content: m('p.alert.alert-danger', error.message)}); })
+                            .then(function (){ return window.location.reload(true); })
+                            // .then(m.route('./'))
+                        ; }
+                    });
+            }
+            function show_archive(){
+                return messages.confirm({header:'Send study to archive', content:
+                        m('strong', 'Are you sure? This will make the study unavailable. Note: you will still have an access to the study’s data')})
+                    .then(function (response) {
+                        if (response) { send2archive(ctrl.study.id)
+                            .then(function (){ return ctrl.study.archive=true; })
+                            .catch(function (error) { return messages.alert({header: 'Send study to archive', content: m('p.alert.alert-danger', error.message)}); })
+                            .then(function (){ return window.location.reload(true); })
+                            // .then(m.route('./'))
+                        ; }
+                    });
+            }
             function show_delete(){
                 return messages.confirm({header:'Delete study', content:
                         m('strong', 'Are you sure? This will delete the study and all its files permanently. You will no longer have access to the study’s data')})
                     .then(function (response) {
                         if (response) { delete_study(ctrl.study.id)
-                            .then(function (){ return ctrl.study.deleted=true; })
+                            .then(function (){ return ctrl.study.archive=true; })
                             .catch(function (error) { return messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}); })
                             .then(m.redraw)
                             .then(m.route('./'))
                         ; }
                     });
+            }
+
+
+            function show_delete_data(){
+                var study_id = ctrl.study.id;
+                var versions = ctrl.study.versions;
+                var exps  = m.prop([]);
+
+                var close = messages.close;
+                return messages.custom({header:'Data download', content: data_dialog({exps: exps, study_id: study_id, versions: versions, close: close, delete_data:true, notifications:ctrl.notifications})})
+                    .then(m.redraw);
+
             }
 
             function show_sharing() {
@@ -29328,14 +29445,6 @@
                         }
                     })
                     .then(m.redraw);
-                //
-                // let study_id = ctrl.study.id;
-                // let versions = ctrl.study.versions;
-                // let exps  = m.prop([]);
-                //
-                // let close = messages.close;
-                // messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
-                //     .then(m.redraw);
             }
 
             function show_data() {
@@ -29445,6 +29554,7 @@
 
             var study;
             function load() {
+
                 ctrl.study = studyFactory$1(m.route.param('studyId'));
                 return ctrl.study.get()
                     .then(function (){
@@ -29455,8 +29565,10 @@
                         ctrl.presented_version(ctrl.study.versions[ctrl.study.versions.length-1]);
                         if(ctrl.study.invisible)
                             { ctrl.study.isReadonly = true; }
-                        ctrl.loaded(true);
+
                     })
+                    .catch(function (err){ return ctrl.err(err.message); })
+                    .then(function (){ return ctrl.loaded(true); })
                     .then(m.redraw);
             }
             load();
@@ -29470,15 +29582,18 @@
                 ?
                 m('.loader')
                 :
+                ctrl.err() ? m('p.alert.alert-danger', ctrl.err()) :
                 m('.container.sharing-page', [
                     m('div', ctrl.notifications.view()),
                     m('.row',[
                         m('.col-sm-12', [
-                            m('h3', [ctrl.study_name(), ': Properties'])
+
+                            m('h3', {class:ctrl.study.permission!=='archive' ? '' : 'text-danger'}, [ctrl.study_name(), ctrl.study.permission!=='archive' ? '' : ' (archive)', ': Properties'])
                         ])
                     ]),
                     m('.row.space',[
                         m('.col-sm-12', [
+
                             m('h4', 'Study details')
                         ])
                     ]),
@@ -29523,21 +29638,21 @@
                             ),
 
 
-                            ctrl.presented_version().state!=='Develop' ? '' :
+                            ctrl.presented_version().state!=='Develop' || ctrl.study.isReadonly? '' :
                                 m('.col-sm-2',
                                     m('button.btn.btn-primary.btn-md.btn-block.space', {onclick:ctrl.show_publish}, 'Publish')
                             ),
                             m('.col-sm-2',
                                 dropdown({toggleSelector:'button.btn.btn-md.btn-block.btn-secondary.dropdown-toggle', toggleContent: [ctrl.presented_version().availability ? m('i.fa.fa-check') : m('i.fa.fa-ban'), ctrl.presented_version().availability ? ' Active' : ' Inactive'], elements:[
                                         m('h2.dropdown-header', 'Activate / Inactivate this version'),
-                                        m('button.dropdown-item.dropdown-onclick', {class: ctrl.presented_version().availability ? 'disabled' : ''},[
+                                        m('button.dropdown-item.dropdown-onclick', {class: ctrl.study.isReadonly || ctrl.presented_version().availability ? 'disabled' : ''},[
                                             m('', { onclick: function (){ return ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, true); }}, [
                                                 m('strong', 'Active'),
                                                 m('strong.pull-right', m('i.fa.fa-check', {style: {color:'green'}})),
                                                 m('.small', 'Activate the launch link')
                                             ])
                                         ]),
-                                        m('button.dropdown-item.dropdown-onclick', {class: !ctrl.presented_version().availability ? 'disabled' : ''},[
+                                        m('button.dropdown-item.dropdown-onclick', {class: ctrl.study.isReadonly || !ctrl.presented_version().availability ? 'disabled' : ''},[
                                             m('', {onclick: function (){ return ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, false); }}, [
                                                 m('strong', 'Inactive'),
                                                 m('strong.pull-right', m('i.fa.fa-ban', {style: {color:'red'}})),
@@ -29549,44 +29664,6 @@
                         )
                     ],
 
-
-    /* Yoav
-                    m('.row.space',
-                        m('.col-sm-2.space',  m('h4', 'Study actions'))
-                    ),
-
-                    m('.row.space',
-                        m('.col-sm-12', [
-                            m('.row.', [
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
-                                    ),
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-success.btn-sm', {title: 'Share the study with other users, or make the study public', onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
-                                    ),
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-success.btn-sm', {title: 'Add tags to identify the study', onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
-                                    ),
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-success.btn-sm', {title: 'Download the study data', onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
-                                    ),
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-success.btn-sm', {title: 'Get information about study completion', onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
-                                    ),
-                                    ctrl.study.isReadonly || ctrl.under_develop() ? '' :
-                                        m('.col-sm-1.space',
-                                            m('button.btn.btn-danger.btn-sm', {title: 'Create a new version, to allow editing the study further', onclick:ctrl.show_create_version}, 'New Version')
-                                        ),
-                                    m('.col-sm-1.space',
-                                        ctrl.study.isReadonly ? '' :
-                                            m('button.btn.btn-danger.btn-sm', {title: 'Delete the study permanently', onclick:ctrl.show_delete}, 'Delete')
-                                    )
-                                ]
-                            ),
-                        ])
-                    ),
-    */
-                    /* TEST */
                     m('.row.space',
                         m('.col-sm-2.space',  m('h4', 'Study Actions'))
                     ),
@@ -29644,12 +29721,57 @@
                                 )
                             ) ])
                     ),
+
+                    ctrl.study.permission!=='archive' ? '' : [
+                        m('.row.space',
+                            m('.col-sm-12',  m('h4', 'Danger zone'))
+                        ),
+                        m('.row.danger_zone.space',
+                            m('.col-sm-12', [
+                                m('.row',
+                                    m('.col-sm-2.space',
+                                        m('button.btn.btn-md.btn-block', {onclick:ctrl.show_restore}, 'Restore study')
+                                    )
+                                ),
+
+                                m('.row',
+                                    m('.col-sm-10',
+                                        m('.small', 'Make the study available again')
+                                    )
+                                ),
+                                m('.row',
+                                    m('.col-sm-2.space',
+                                        m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete}, 'Delete study')
+                                    )
+                                ),
+
+                                m('.row',
+                                    m('.col-sm-10',
+                                        m('.small', 'Delete the study and the study data permanently')
+                                    )
+                                )
+
+                            ])
+                        )
+                    ],
+
                     ctrl.study.isReadonly ? '' : [
                         m('.row.space',
                             m('.col-sm-12',  m('h4', 'Danger zone'))
                         ),
                         m('.row.danger_zone.space',
                             m('.col-sm-12', [
+                                m('.row',
+                                    m('.col-sm-2.space',
+                                        m('button.btn.btn-md.btn-block', {onclick:ctrl.show_archive}, 'Send to archive')
+                                    )
+                                ),
+
+                                m('.row',
+                                    m('.col-sm-10',
+                                        m('.small', 'Make the study unavailable')
+                                    )
+                                ),
                                 ctrl.under_develop() ? '' :
                                     [
                                         m('.row.',
@@ -29664,12 +29786,12 @@
                                         ) ],
                                 m('.row',
                                     m('.col-sm-2.space',
-                                        m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete}, 'Delete study')
+                                        m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete_data}, 'Delete data')
                                     )
                                 ),
                                 m('.row',
                                     m('.col-sm-10',
-                                        m('.small', 'Delete the study permanently')
+                                        m('.small', 'Delete study data permanently')
                                     )
                                 )
                             ])

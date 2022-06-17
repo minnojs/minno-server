@@ -113,6 +113,7 @@ const mainComponent = {
                             m('option', {value:'collaboration'}, 'Show only studies shared with me'),
                             m('option', {value:'public'}, 'Show public studies'),
                             m('option', {value:'bank-iat'}, 'Show IAT bank studies'),
+                            m('option', {value:'archive'}, 'Show archive studies'),
                             studies()
                                 .filter(typeFilter('bank-cognitive')).length===0 ? '' :
                                 m('option', {value:'bank-cognitive'}, 'Show cognitive bank studies')
@@ -140,14 +141,12 @@ const mainComponent = {
                             m('input.form-control', {placeholder: 'Search...', config: focus_it, value: globalSearch(), oninput: m.withAttr('value', globalSearch)})
                         ])
                     ]),
-
                     studies()
-                        .filter(study=>study.permission!=='deleted')
                         .filter(typeFilter(type()))
                         .filter(tagFilter(tags().filter(uesedFilter()).map(tag=>tag.text)))
                         .filter(permissionFilter(permissionChoice()))
                         .filter(searchFilter(globalSearch()))
-                        .filter(study=>!study.deleted)
+                        // .filter(study=>!study.archive)
                         .map(study => m('a', {href: m.route() != '/studies' ? `/translate/${study.id}` : `/properties/${study.id}`,config:routeConfig, key: study.id}, [
                             m('.row.study-row', [
                                 m('.col-sm-5', [
@@ -196,12 +195,14 @@ const typeFilter = type => study => {
 };
 
 const permissionFilter = permission => study => {
-    if(permission === 'all') return study.accessible;
-    if(permission === 'public') return study.is_public && !study.is_bank;
-    if(permission === 'collaboration') return study.permission !== 'owner' && study.accessible;
-    if(permission === 'template') return study.is_template;
-    if(permission === 'bank-iat') return study.is_bank && study.bank_type==='iat';
-    if(permission === 'bank-cognitive') return study.is_bank && study.bank_type==='cognitive';
+    if(permission === 'archive') return study.permission==='archive';
+    if(permission === 'all') return study.accessible && study.permission!=='archive';
+    if(permission === 'public') return study.is_public && !study.is_bank && study.permission!=='archive';
+    if(permission === 'collaboration') return study.permission !== 'owner' && study.accessible  && study.permission!=='archive';
+    if(permission === 'template') return study.is_template  && study.permission!=='archive';
+    if(permission === 'bank-iat') return study.is_bank && study.bank_type==='iat'  && study.permission!=='archive';
+    if(permission === 'bank-cognitive') return study.is_bank && study.bank_type==='cognitive'  && study.permission!=='archive';
+
 
     return study.permission === permission;
 }; 

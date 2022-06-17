@@ -110,7 +110,7 @@ function create_bank_studies(){
                 return studies
                 .find({ _id: { $in: study_ids } })
                 .toArray()
-                .then(studies => [user_result, studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).deleted)]);
+                .then(studies => [user_result, studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).archive)]);
             });
         }
 

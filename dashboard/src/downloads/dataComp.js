@@ -2,13 +2,13 @@ import formatDate_str from '../utils/formatDate_str';
 
 export default args => m.component(data_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
-import {get_data, load_studies, get_requests, delete_request} from '../study/studyModel';
+import {get_data, delete_data, load_studies, get_requests, delete_request} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
 import formatDate from 'utils/formatDate';
+import messages from 'utils/messagesComponent';
 
 let data_dialog = {
-    controller({exps, study_id, versions, close}){
-
+    controller({exps, study_id, versions, close, delete_data, notifications}){
         function update_experiment(exp_id){
             ctrl.exp_id(Array.isArray(exp_id) ?  exp_id : exp_id.split(',') );
         }
@@ -25,6 +25,8 @@ let data_dialog = {
             study_id:m.prop(parseInt(study_id)),
             exps,
             versions,
+            delete_data,
+            notifications,
             ask_delete_request,
             update_version,
             update_experiment,
@@ -63,7 +65,7 @@ let data_dialog = {
 
             m('.input-group', [m('strong', 'Study name'),
                 m('select.c-select.form-control',{onchange: e => select_study(ctrl, e.target.value)}, [
-                    ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id===ctrl.study_id()} , `${study.name} ${study.permission!=='deleted' ? '' : '(deleted study)' }`))
+                    ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id===ctrl.study_id()} , `${study.name} ${study.permission!=='archive' ? '' : '(archive study)' }`))
                 ])
             ]),
             m('.row', [
@@ -85,7 +87,7 @@ let data_dialog = {
                         ])
                     ])
                 ]),
-                m('.col-sm-3', [
+                ctrl.delete_data ? '' : m('.col-sm-3', [
                     m('.input-group', [m('strong', 'Output type'),
                         m('select.c-select.form-control',{onchange: e => ctrl.file_format(e.target.value)}, [
                             m('option', {value:'csv'}, 'csv'),
@@ -95,7 +97,7 @@ let data_dialog = {
                     ])
                 ])
             ]),
-            m('.row.space', [
+            ctrl.delete_data ? '' : m('.row.space', [
                 m('.col-sm-9', [
                     m('span', 'Split to files by (clear text to download in one file):'),
                     m('input.form-control', {
@@ -121,15 +123,15 @@ let data_dialog = {
             ])
         ]),
         ctrl.loaded() ? '' : m('.loader'),
-        show_requests(ctrl),
+        ctrl.delete_data ? '' : show_requests(ctrl),
         ctrl.error() ? m('.alert.alert-warning', ctrl.error()): '',
         ctrl.loaded() && ctrl.exps().length<1 ? m('.alert.alert-info', 'You have no experiments yet') : '',
-
 
         ctrl.downloaded() ? '' : m('.loader'),
         m('.text-xs-right.btn-toolbar',[
             m('button.btn.btn-secondary.btn-sm', {onclick:()=>{close(null);}}, 'Close'),
-            m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ask_get_data(ctrl);}}, 'Download')
+            ctrl.delete_data ? '' :m('button.btn.btn-primary.btn-sm',  {disabled: ctrl.requests().filter(request=>request.status==='in progress').length, onclick:()=>{ask_get_data(ctrl);}}, 'Download'),
+            !ctrl.delete_data ? '' : m('button.btn.btn-danger.btn-sm',  {onclick:()=>{ask_delete_data(ctrl);}}, 'Delete')
         ])
     ])
 };
@@ -161,6 +163,54 @@ function ask_get_data(ctrl){
         .then(m.redraw);
 }
 
+
+
+function ask_delete_data(ctrl){
+    let close = messages.close;
+    let error = m.prop('');
+    let confirmation = m.prop('');
+    let ok2remove = false;
+    return messages.custom({
+        content: {
+            view(){
+                return m('div', [
+                    m('h3', 'Delete study data'),
+                    m('strong', 'Are you sure? This will delete the study data permanently.'),
+                    m('p', 'Please wrote below "delete" to confirm the deletion'),
+                    m('input.form-control',  {  value: confirmation(), onkeyup: m.withAttr('value', confirmation)}),
+                    !error() ? '' : m('p.alert.alert-danger', error()),
+                    m('.text-xs-right.btn-toolbar.space',[
+                        m('button.btn.btn-secondary.btn-sm', {onclick:()=>close(null)}, 'Cancel'),
+                        m('button.btn.btn-danger.btn-sm', {onclick:()=>{ok2remove = true; close();}, disabled:confirmation()!=='delete'}, 'Delete')
+                    ])
+
+                ]);
+            }
+        }
+    })
+        .then(response => {
+            if (ok2remove) {
+                ctrl.error('');
+                if (ctrl.exp_id() === '')
+                    return ctrl.error('Please select experiment id');
+
+                ctrl.downloaded(false);
+
+                let correct_start_date = new Date(ctrl.dates.startDate());
+                correct_start_date.setHours(0, 0, 0, 0);
+
+                let correct_end_date = new Date(ctrl.dates.endDate());
+                correct_end_date.setHours(23, 59, 59, 999);
+
+                return delete_data(ctrl.study_id(), ctrl.exp_id(), ctrl.version_id(), correct_start_date, correct_end_date)
+                    .catch(err => ctrl.error(err.message))
+                    .then(() => ctrl.downloaded(true))
+                    .then(() => load_requests(ctrl))
+                    .then(()=>ctrl.notifications.show_success('Study data were successfully deleted'))
+                    .then(m.redraw);
+            }
+        })
+}
 function ask_delete_request(study_id, request_id, ctrl){
     return delete_request(study_id, request_id)
         .then(()=>load_requests(ctrl))
@@ -226,7 +276,7 @@ function load_requests(ctrl){
         .then(response => ctrl.requests(response.requests))
         .then(()=>{
             if (ctrl.requests().filter(request=>request.status==='in progress').length)
-                setTimeout(()=>load_requests(ctrl), 5000);
+                setTimeout(()=>load_requests(ctrl), 1000);
         })
         .catch(ctrl.error)
         .then(ctrl.loaded.bind(null, true))

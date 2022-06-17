@@ -9,7 +9,8 @@ const config = require.main.require('../config'),
     experimentSessionSchema2=require('../models/experimentSessionSchema'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
-const logger = require('../../logger');	
+const logger = require('../../logger');
+const connection    = Promise.resolve(require('mongoose').connection);
 
 let fs = require('fs-extra');
 // var convert = require('mongoose_schema-json');
@@ -353,6 +354,46 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
 
 };
+
+exports.deleteData = async function(studyId, startDate, endDate, versionId) {
+    if (typeof studyId == 'undefined' || !studyId)
+        throw new Error('Error: studyId must be specified');
+    let findObject = {};
+    findObject.studyId = studyId;
+    if(Array.isArray(studyId))
+    {
+        findObject.studyId ={};
+        findObject.studyId.$in=studyId;
+    }
+    if (typeof startDate !== 'undefined' && startDate) {
+        findObject.createdDate = {};
+        findObject.createdDate.$gt = new Date(startDate);
+    }
+    if (typeof endDate !== 'undefined' && endDate) {
+        if (typeof findObject.createdDate == 'undefined' || !findObject.createdDate) {
+            findObject.createdDate = {};
+        }
+        findObject.createdDate.$lt = new Date(endDate);
+    }
+    if(typeof versionId !== 'undefined' && versionId)
+    {
+        if(Array.isArray(versionId))
+        {
+            versionId.forEach(function(vId,index,versionId) {
+                versionId[index]=vId.toString();
+            });
+            findObject.versionId={};
+            findObject.versionId.$in=versionId;
+        }
+        else
+            findObject.versionId==versionId.toString();
+    }
+
+    return Data.deleteMany(findObject);
+
+
+};
+
 let mapToRow = function(dataMap, newMap) {
 	
     let row = new Array(Object.keys(dataMap).length);

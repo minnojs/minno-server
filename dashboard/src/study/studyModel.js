@@ -72,6 +72,12 @@ export let get_data = (study_id, exp_id, version_id, file_format, file_split, st
     body: {exp_id, version_id, file_format, file_split, start_date, end_date}
 });
 
+export let delete_data = (study_id, exp_id, version_id, start_date, end_date) => fetchJson(get_exps_url(study_id), {
+    method: 'delete',
+    body: {exp_id, version_id, start_date, end_date}
+});
+
+
 export let get_stat = (study_id, exp_id, version_id, start_date, end_date, date_size) => fetchJson(get_stat_url(study_id), {
     method: 'post',
     body: {exp_id, version_id, start_date, end_date, date_size}
@@ -110,7 +116,9 @@ export let create_version = (study_id) => fetchJson(get_new_version(study_id), {
     method: 'post'
 });
 
-export let delete_study = (study_id) => fetchJson(get_url(study_id), {method: 'delete'});
+export let send2archive = (study_id) => fetchJson(get_url(study_id), {method: 'delete'});
+export let restore_study = (study_id) => fetchJson(get_url(study_id), {method: 'delete', body: {restore:true}});
+export let delete_study = (study_id) => fetchJson(get_url(study_id), {method: 'delete', body: {permanently:true}});
 
 export let change_version_availability = (study_id, version_id, availability) => fetchJson(get_version_url(study_id, version_id), {
     method: 'put',

@@ -64,7 +64,7 @@ let stat_dialog = {
                 m('.col-sm-12', [
                     m('.input-group', [m('strong', 'Study name'),
                         m('select.c-select.form-control',{onchange: e => select_study(ctrl, e.target.value)}, [
-                            ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , `${study.name} ${study.permission!=='deleted' ? '' : '(deleted study)' }`))
+                            ctrl.studies().map(study=> m('option', {value:study.id, selected:study.id==ctrl.study_id()} , `${study.name} ${study.permission!=='archive' ? '' : '(archive study)' }`))
                         ])
                     ]),
                 ])

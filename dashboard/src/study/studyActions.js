@@ -145,7 +145,7 @@ export let do_delete = (study) => e => {
     return messages.confirm({header:'Delete study', content:'Are you sure?'})
         .then(response => {
             if (response) delete_study(study.id)
-                .then(()=>study.deleted=true)
+                .then(()=>study.archive=true)
                 .catch(error => messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}))
                 .then(m.redraw)
                 .then(m.route('./'))

@@ -44,10 +44,10 @@ function get_experiment_url (req, test=false) {
         return studies.findOne({versions: { $elemMatch: {hash: req.params.version_id} }})
             .then(function(study_data){
 
-                if(!study_data)
+                if(!study_data || study_data.archive)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t exist.'});
                 const version_data = study_data.versions.filter(version=>version.hash === req.params.version_id)[0];
-                if(!test && !version_data.availability)
+                if(!version_data.availability)
                     return Promise.reject({status:400, message:'Error: Experiment doesn\'t available.'});
 
                 const exp_data = version_data.experiments.filter(exp=>exp.id === req.params.exp_id)[0];
@@ -114,6 +114,7 @@ function add_data_request(user_id, study_id, exp_id, file_format, file_split, st
         })
         .then(() => data_requests.deleteMany({creation_date: {$lt: Date.now()-week_ms}}))
         .then(() => data_requests.deleteMany({status:'No data'}))
+
         .then(() => data_requests.insertOne({
             user_id,
             study_id,
@@ -162,6 +163,7 @@ function get_data_requests(user_id, study_id) {
         const two_days_ms = 1000*60*60*24*2;
 
         const data_requests = db.collection('data_requests');
+
         return data_requests.find({user_id, study_id, creation_date: {$gt: Date.now()-two_days_ms}})
             .toArray();
     });
@@ -203,6 +205,14 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
                  .catch(()=>cancel_data_request(request_id));
                 return {request_id};
             }))
+        .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
+}
+
+
+function delete_data(user_id, study_id, exp_id, start_date, end_date, version_id) {
+    return has_write_permission(user_id, study_id)
+        .then(()=>
+            data_server.deleteData(exp_id, start_date, end_date, version_id))
         .catch(err=>Promise.reject({status:err.status || 500, message: err.message}));
 }
 
@@ -313,4 +323,4 @@ function update_file_id(user_id, study_id, file_id, new_file_id) {
         });
 }
 
-module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_data_requests, delete_data_request, get_stat};
+module.exports = {get_play_url, get_experiment_url, get_experiments, get_data, delete_data, update_descriptive_id, update_file_id, delete_experiment, insert_new_experiment, get_data_requests, delete_data_request, get_stat};

@@ -1,6 +1,16 @@
 import messages from 'utils/messagesComponent';
 import studyFactory from '../files/fileCollectionModel';
-import {delete_study, publish_study, create_version, update_study, rename_study, lock_study, duplicate_study, change_version_availability} from '../studyModel';
+import {
+    delete_study,
+    restore_study,
+    publish_study,
+    create_version,
+    update_study,
+    rename_study,
+    lock_study,
+    duplicate_study,
+    change_version_availability, send2archive
+} from '../studyModel';
 import formatDate from 'utils/formatDate_str';
 
 
@@ -30,9 +40,7 @@ let propertiesComponent = {
             permission:m.prop('can edit'),
             data_permission:m.prop('visible'),
             loaded:m.prop(false),
-            col_error:m.prop(''),
-            pub_error:m.prop(''),
-            share_error:m.prop(''),
+            err:m.prop(''),
             study,
             update_presented_version,
             save,
@@ -45,10 +53,15 @@ let propertiesComponent = {
             show_publish,
             show_create_version,
             show_delete,
-            show_change_availability
+            show_restore,
+            show_delete_data,
+            show_change_availability,
+            show_archive
         };
 
         function show_change_availability(study, version_id, availability){
+            if (study.isReadonly)
+                return false;
             if (study.versions.find(version =>  version.hash === version_id && version.availability === availability))
                 return false;
 
@@ -85,17 +98,53 @@ let propertiesComponent = {
                 .then(m.redraw);
         }
 
+        function show_restore(){
+            return messages.confirm({header:'Restore study', content:
+                    m('strong', 'Are you sure? This will make your study available again.')})
+                .then(response => {
+                    if (response) restore_study(ctrl.study.id)
+                        .then(()=>ctrl.study.archive=false)
+                        .catch(error => messages.alert({header: 'Restore study', content: m('p.alert.alert-danger', error.message)}))
+                        .then(()=> window.location.reload(true))
+                        // .then(m.route('./'))
+                    ;
+                });
+        }
+        function show_archive(){
+            return messages.confirm({header:'Send study to archive', content:
+                    m('strong', 'Are you sure? This will make the study unavailable. Note: you will still have an access to the study’s data')})
+                .then(response => {
+                    if (response) send2archive(ctrl.study.id)
+                        .then(()=>ctrl.study.archive=true)
+                        .catch(error => messages.alert({header: 'Send study to archive', content: m('p.alert.alert-danger', error.message)}))
+                        .then(()=> window.location.reload(true))
+                        // .then(m.route('./'))
+                    ;
+                });
+        }
         function show_delete(){
             return messages.confirm({header:'Delete study', content:
                     m('strong', 'Are you sure? This will delete the study and all its files permanently. You will no longer have access to the study’s data')})
                 .then(response => {
                     if (response) delete_study(ctrl.study.id)
-                        .then(()=>ctrl.study.deleted=true)
+                        .then(()=>ctrl.study.archive=true)
                         .catch(error => messages.alert({header: 'Delete study', content: m('p.alert.alert-danger', error.message)}))
                         .then(m.redraw)
                         .then(m.route('./'))
                     ;
                 });
+        }
+
+
+        function show_delete_data(){
+            let study_id = ctrl.study.id;
+            let versions = ctrl.study.versions;
+            let exps  = m.prop([]);
+
+            let close = messages.close;
+            return messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close, delete_data:true, notifications:ctrl.notifications})})
+                .then(m.redraw);
+
         }
 
         function show_sharing() {
@@ -120,14 +169,6 @@ let propertiesComponent = {
                     }
                 })
                 .then(m.redraw);
-            //
-            // let study_id = ctrl.study.id;
-            // let versions = ctrl.study.versions;
-            // let exps  = m.prop([]);
-            //
-            // let close = messages.close;
-            // messages.custom({header:'Data download', content: data_dialog({exps, study_id, versions, close})})
-            //     .then(m.redraw);
         }
 
         function show_data() {
@@ -237,6 +278,7 @@ let propertiesComponent = {
 
         let study;
         function load() {
+
             ctrl.study = studyFactory(m.route.param('studyId'));
             return ctrl.study.get()
                 .then(()=>{
@@ -247,8 +289,10 @@ let propertiesComponent = {
                     ctrl.presented_version(ctrl.study.versions[ctrl.study.versions.length-1]);
                     if(ctrl.study.invisible)
                         ctrl.study.isReadonly = true;
-                    ctrl.loaded(true);
+
                 })
+                .catch(err=>ctrl.err(err.message))
+                .then(()=>ctrl.loaded(true))
                 .then(m.redraw);
         }
         load();
@@ -262,15 +306,18 @@ let propertiesComponent = {
             ?
             m('.loader')
             :
+            ctrl.err() ? m('p.alert.alert-danger', ctrl.err()) :
             m('.container.sharing-page', [
                 m('div', ctrl.notifications.view()),
                 m('.row',[
                     m('.col-sm-12', [
-                        m('h3', [ctrl.study_name(), ': Properties'])
+
+                        m('h3', {class:ctrl.study.permission!=='archive' ? '' : 'text-danger'}, [ctrl.study_name(), ctrl.study.permission!=='archive' ? '' : ' (archive)', ': Properties'])
                     ])
                 ]),
                 m('.row.space',[
                     m('.col-sm-12', [
+
                         m('h4', 'Study details')
                     ])
                 ]),
@@ -316,21 +363,21 @@ let propertiesComponent = {
                         ),
 
 
-                        ctrl.presented_version().state!=='Develop' ? '' :
+                        ctrl.presented_version().state!=='Develop' || ctrl.study.isReadonly? '' :
                             m('.col-sm-2',
                                 m('button.btn.btn-primary.btn-md.btn-block.space', {onclick:ctrl.show_publish}, 'Publish')
                         ),
                         m('.col-sm-2',
                             dropdown({toggleSelector:'button.btn.btn-md.btn-block.btn-secondary.dropdown-toggle', toggleContent: [ctrl.presented_version().availability ? m('i.fa.fa-check') : m('i.fa.fa-ban'), ctrl.presented_version().availability ? ' Active' : ' Inactive'], elements:[
                                     m('h2.dropdown-header', 'Activate / Inactivate this version'),
-                                    m('button.dropdown-item.dropdown-onclick', {class: ctrl.presented_version().availability ? 'disabled' : ''},[
+                                    m('button.dropdown-item.dropdown-onclick', {class: ctrl.study.isReadonly || ctrl.presented_version().availability ? 'disabled' : ''},[
                                         m('', { onclick: ()=>ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, true)}, [
                                             m('strong', 'Active'),
                                             m('strong.pull-right', m('i.fa.fa-check', {style: {color:'green'}})),
                                             m('.small', 'Activate the launch link')
                                         ])
                                     ]),
-                                    m('button.dropdown-item.dropdown-onclick', {class: !ctrl.presented_version().availability ? 'disabled' : ''},[
+                                    m('button.dropdown-item.dropdown-onclick', {class: ctrl.study.isReadonly || !ctrl.presented_version().availability ? 'disabled' : ''},[
                                         m('', {onclick: ()=>ctrl.show_change_availability(ctrl.study, ctrl.presented_version().hash, false)}, [
                                             m('strong', 'Inactive'),
                                             m('strong.pull-right', m('i.fa.fa-ban', {style: {color:'red'}})),
@@ -342,44 +389,6 @@ let propertiesComponent = {
                     )
                 ],
 
-
-/* Yoav
-                m('.row.space',
-                    m('.col-sm-2.space',  m('h4', 'Study actions'))
-                ),
-
-                m('.row.space',
-                    m('.col-sm-12', [
-                        m('.row.', [
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-success.btn-sm', {title:'Duplicate the files and folder of the most recent version to create a new study', onclick:ctrl.show_duplicate, disabled: ctrl.study.invisible}, 'Duplicate')
-                                ),
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-success.btn-sm', {title: 'Share the study with other users, or make the study public', onclick:ctrl.show_sharing, disabled:ctrl.study.isReadonly}, 'Sharing')
-                                ),
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-success.btn-sm', {title: 'Add tags to identify the study', onclick:ctrl.show_tags, disabled:ctrl.study.isReadonly}, 'Tags')
-                                ),
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-success.btn-sm', {title: 'Download the study data', onclick:ctrl.show_data, disabled:!ctrl.study.has_data_permission}, 'Data')
-                                ),
-                                m('.col-sm-1.space',
-                                    m('button.btn.btn-success.btn-sm', {title: 'Get information about study completion', onclick:ctrl.show_statistics, disabled:!ctrl.study.has_data_permission}, 'Statistics')
-                                ),
-                                ctrl.study.isReadonly || ctrl.under_develop() ? '' :
-                                    m('.col-sm-1.space',
-                                        m('button.btn.btn-danger.btn-sm', {title: 'Create a new version, to allow editing the study further', onclick:ctrl.show_create_version}, 'New Version')
-                                    ),
-                                m('.col-sm-1.space',
-                                    ctrl.study.isReadonly ? '' :
-                                        m('button.btn.btn-danger.btn-sm', {title: 'Delete the study permanently', onclick:ctrl.show_delete}, 'Delete')
-                                )
-                            ]
-                        ),
-                    ])
-                ),
-*/
-                /* TEST */
                 m('.row.space',
                     m('.col-sm-2.space',  m('h4', 'Study Actions'))
                 ),
@@ -438,12 +447,57 @@ let propertiesComponent = {
                         ),
                     ])
                 ),
+
+                ctrl.study.permission!=='archive' ? '' : [
+                    m('.row.space',
+                        m('.col-sm-12',  m('h4', 'Danger zone'))
+                    ),
+                    m('.row.danger_zone.space',
+                        m('.col-sm-12', [
+                            m('.row',
+                                m('.col-sm-2.space',
+                                    m('button.btn.btn-md.btn-block', {onclick:ctrl.show_restore}, 'Restore study')
+                                )
+                            ),
+
+                            m('.row',
+                                m('.col-sm-10',
+                                    m('.small', 'Make the study available again')
+                                )
+                            ),
+                            m('.row',
+                                m('.col-sm-2.space',
+                                    m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete}, 'Delete study')
+                                )
+                            ),
+
+                            m('.row',
+                                m('.col-sm-10',
+                                    m('.small', 'Delete the study and the study data permanently')
+                                )
+                            )
+
+                        ])
+                    )
+                ],
+
                 ctrl.study.isReadonly ? '' : [
                     m('.row.space',
                         m('.col-sm-12',  m('h4', 'Danger zone'))
                     ),
                     m('.row.danger_zone.space',
                         m('.col-sm-12', [
+                            m('.row',
+                                m('.col-sm-2.space',
+                                    m('button.btn.btn-md.btn-block', {onclick:ctrl.show_archive}, 'Send to archive')
+                                )
+                            ),
+
+                            m('.row',
+                                m('.col-sm-10',
+                                    m('.small', 'Make the study unavailable')
+                                )
+                            ),
                             ctrl.under_develop() ? '' :
                                 [
                                     m('.row.',
@@ -459,12 +513,12 @@ let propertiesComponent = {
                             ],
                             m('.row',
                                 m('.col-sm-2.space',
-                                    m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete}, 'Delete study')
+                                    m('button.btn.btn-danger.btn-md.btn-block', {onclick:ctrl.show_delete_data}, 'Delete data')
                                 )
                             ),
                             m('.row',
                                 m('.col-sm-10',
-                                    m('.small', 'Delete the study permanently')
+                                    m('.small', 'Delete study data permanently')
                                 )
                             )
                         ])

@@ -25,6 +25,7 @@ let configComponent = {
                 error:m.prop('')
             },
             usage: m.prop(''),
+            show_data_per_user: m.prop(false),
             dbx: {
                 enable: m.prop(false),
                 app_key:m.prop(''),
@@ -48,6 +49,7 @@ let configComponent = {
             },
 
             toggle_visibility,
+            toggle_data_per_user,
             update_gmail_fields,
             show_gmail_password,
             update_dbx_fields,
@@ -91,7 +93,9 @@ let configComponent = {
             ctrl[varable].enable(state);
             ctrl[varable].updated(true);
         }
-
+        function toggle_data_per_user(){
+            ctrl.show_data_per_user(!ctrl.show_data_per_user());
+        }
 
         function show_gmail_password(ctrl){
             ctrl.gmail.show_password(true);
@@ -243,41 +247,56 @@ let configComponent = {
                     ])
                 ]),
                 m('.row', [
-                    m('.col-sm-3', [ m('strong', 'Disk usage:')]),
-                        m('.col-sm-8',[
-                            m('table.table', [
-                                m('tr', [
-                                    m('th', 'Filesystem'),
-                                    m('th', 'Type'),
-                                    m('th', 'Size'),
-                                    m('th', 'Used'),
-                                    m('th', 'Avail'),
-                                    m('th', 'Use%'),
-                                    m('th', 'Mounted on')
-                                ]),
-                                m('tr', [
-                                    m('td', ctrl.usage().Filesystem),
-                                    m('td', ctrl.usage().Type),
-                                    m('td', ctrl.usage().Size),
-                                    m('td', ctrl.usage().Used),
-                                    m('td', ctrl.usage().Avail),
-                                    m('td', ctrl.usage().Use),
-                                    m('td', ctrl.usage().MountedOn)
-                                ])
+                    m('.col-sm-3', m('strong', 'Disk usage:')),
+                    m('.col-sm-8',[
+                        m('table.table', [
+                            m('tr', [
+                                m('th', 'Filesystem'),
+                                m('th', 'Type'),
+                                m('th', 'Size'),
+                                m('th', 'Used'),
+                                m('th', 'Avail'),
+                                m('th', 'Use%'),
+                                m('th', 'Mounted on')
+                            ]),
+                            m('tr', [
+                                m('td', ctrl.usage().Filesystem),
+                                m('td', ctrl.usage().Type),
+                                m('td', ctrl.usage().Size),
+                                m('td', ctrl.usage().Used),
+                                m('td', ctrl.usage().Avail),
+                                m('td', ctrl.usage().Use),
+                                m('td', ctrl.usage().MountedOn)
                             ])
+                        ]),
+                        m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.toggle_data_per_user()},[
+                            'Data per user ',
+                            ctrl.show_data_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
+                        ]),
+                        !ctrl.show_data_per_user() ? '' :
+                            m('table.table', [
+                            m('tr.tr', [
+                                m('th', 'Username'),
+                                m('th', 'Size')
+                            ]),
+                            ctrl.usage().data_per_user.map(user=>
+
+                                m('tr', [
+                                    m('td', user.user),
+                                    m('td', user.size)
+                                ]))
                         ])
                     ]),
-                    m('hr'),
+                ]),
 
-                    m('.row', [
+
+                m('hr'),
+                m('.row', [
                     m('.col-sm-3', [ m('strong', 'Fingerprint:'),
-
                         m('.text-muted', ['Configuring your fingerprint preferences ', m('i.fa.fa-info-circle')]),
                         m('.card.info-box.card-header', ['Fingerprint is a method of identifying unique browsers and tracking online activity ', m('a', {href:'#'}, 'Read more here'), '.']),
-
-
                     ]),
-                    m('.col-sm-8',[
+                    m('.col-sm-6',[
                         m('div', m('label.c-input.c-radio', [
                             m('input[type=radio]', {
                                 onclick: ()=>ctrl.toggle_visibility('fingerprint', false),

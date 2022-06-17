@@ -40,7 +40,16 @@ studiesRouter.route('/pending')
 studiesRouter.route('/:study_id')
     .delete(
         function(req, res){
-            return studies.delete_study(req.user_id, parseInt(req.params.study_id))
+            if (req.body.restore)
+                return studies.restore_study(req.user_id, parseInt(req.params.study_id))
+                    .then(()=>res.json({}))
+                    .catch(err=> res.status(err.status || 500).json({message:err.message}));
+            if (req.body.permanently)
+                return studies.delete_study(req.user_id, parseInt(req.params.study_id))
+                    .then(()=>res.json({}))
+                    .catch(err=> res.status(err.status || 500).json({message:err.message}));
+
+            return studies.send2archive(req.user_id, parseInt(req.params.study_id))
                 .then(()=>res.json({}))
                 .catch(err=> res.status(err.status || 500).json({message:err.message}));
         })
@@ -120,6 +129,7 @@ studiesRouter.route('/:study_id/experiments')
         function(req, res){
             experiments.get_experiments(req.user_id, parseInt(req.params.study_id))
                 .then(function (experiments) {
+                    console.log({experiments});
                     res.json({experiments});
                 })
                 .catch(err=> {
@@ -136,6 +146,17 @@ studiesRouter.route('/:study_id/experiments')
             .catch(err=> {
                 res.status(err.status || 500).json({message: err.message});
             });
+        })
+    .delete(
+        function(req, res){
+            experiments.delete_data(req.user_id, parseInt(req.params.study_id), req.body.exp_id,
+                                    req.body.start_date, req.body.end_date, req.body.version_id)
+                .then(function(data){
+                    res.json({data_file:data});
+                })
+                .catch(err=> {
+                    res.status(err.status || 500).json({message: err.message});
+                });
         });
 
 

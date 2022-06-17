@@ -6,6 +6,7 @@ const utils         = require('./utils');
 const sender        = require('./sender');
 const sanitize      = require('sanitize-filename');
 const connection    = Promise.resolve(require('mongoose').connection);
+const data_server   = require('./data_server/controllers/controller');
 
 const {user_info, user_info_by_name}   = require('./users');
 
@@ -50,14 +51,12 @@ function get_studies(user_id) {
             .then(user_result => {
 
                 const study_ids = user_result.studies.map(study => study.id);
-                return studies
-                .find({ _id: { $in: study_ids } })
-                .toArray()
+                return studies.find({ _id: { $in: study_ids }}).toArray()
 
                 .then(user_studies =>  user_studies.map(study =>{
                     const user_data = study.users.find(user=>user.user_id===user_id);
                     return composeStudy(study, {
-                        permission: user_data.deleted ? 'deleted' : user_data.permission,
+                        permission: user_data.archive ? 'archive' : user_data.permission,
                         has_data_permission: user_data.permission === 'owner' || user_data.data_permission === 'visible',
                         accessible: true,
                         study_type:'regular',
@@ -76,7 +75,7 @@ function get_studies(user_id) {
                 return studies
                 .find({ _id: { $in: study_ids } })
                 .toArray()
-                .then(studies => studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).deleted))
+                .then(studies => studies.filter(study=>!study.users.find(user=>user.user_id===user_result._id).archive))
                 .then(studies => studies.map(study => composeStudy(study, {
                     is_bank: true,
                     bank_type: study.bank_type,
@@ -335,15 +334,36 @@ function duplicate_experiments(study_data, experiments) {
         );
     });
 }
+function send2archive(user_id, study_id) {
+    return has_write_permission(user_id, study_id)
+        .then((data)=>{
+            return Promise.all(data.study_data.users.map(user =>send2archive_by_id(user.user_id,study_id)));
+        });
+}
 
 function delete_study(user_id, study_id) {
     return has_write_permission(user_id, study_id)
         .then((data)=>{
-        return Promise.all(data.study_data.users.map(user => 
-                delete_by_id(user.user_id,study_id)));    
+            const delPath = path.join(config.user_folder, data.study_data.folder_name);
+
+
+            return Promise.all([
+                // fs.remove(delPath),
+                // data.study_data.users.map(user =>
+                //     delete_by_id(user.user_id,study_id)),
+                    data_server.deleteData(data.study_data.versions.map(version=> version.experiments.map(exp=>exp.id)).flatMap(item => item).filter((v, i, a) => a.indexOf(v) === i))
+
+            ]);
         });
 }
 
+function restore_study(user_id, study_id) {
+    return has_write_permission(user_id, study_id)
+        .then((data)=>{
+            return Promise.all(data.study_data.users.map(user =>
+                restore_by_id(user.user_id,study_id)));
+        });
+}
 
 
 function has_read_data_permission(user_id, study_id){
@@ -467,12 +487,30 @@ function update_obj(study_id, study_obj) {
     });
 }
 
+function restore_by_id(user_id, study_id) {
+    return connection.then(function (db) {
+        const studies   = db.collection('studies');
+        return studies.updateOne({_id: study_id}, {$unset: {'archive': false}});
+        // .then(()=>studies.updateOne({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
+        //     {$set: {'users.$.archive': false}}
+        // ));
+    });
+}
+
 function delete_by_id(user_id, study_id) {
     return connection.then(function (db) {
         const studies   = db.collection('studies');
-        return studies.updateOne({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
-            {$set: {'users.$.deleted': true}}
-        );
+        return studies.deleteMany({_id: study_id, users: {$elemMatch: {user_id: user_id}}});
+    });
+}
+
+function send2archive_by_id(user_id, study_id) {
+    return connection.then(function (db) {
+        const studies   = db.collection('studies');
+        return studies.updateOne({_id: study_id}, {$set: {'archive': true}});
+            // .then(()=>studies.updateOne({_id: study_id, users: {$elemMatch: {user_id: user_id}}},
+            //     {$set: {'users.$.archive': true}}
+            // ));
     });
 }
 
@@ -571,4 +609,4 @@ function delete_link(user_id, study_id) {
 }
 
 
-module.exports = {update_study, make_public, make_link, delete_link, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission, get_id_with_link};
+module.exports = {update_study, make_public, make_link, delete_link, set_lock_status, update_modify, get_studies, get_pending_studies, create_new_study, delete_study, send2archive, restore_study, rename_study, get_collaborations, add_collaboration, remove_collaboration, update_collaboration, make_collaboration, duplicate_study, has_read_permission, has_write_permission, has_read_data_permission, get_id_with_link};

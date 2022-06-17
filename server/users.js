@@ -307,12 +307,6 @@ function reset_password(reset_code, password, confirm) {
 
 function connect(user_name, pass) {
 
-    // sslCertificate.get('http://www.chicitio.co.il/').then(function (certificate) {
-    //     console.log(certificate.subjectaltname);
-    //     console.log(certificate);
-    //
-    // });
-
     if (!user_name || !pass)
         return Promise.reject({status:400, message: 'missing parameters!'});
 
