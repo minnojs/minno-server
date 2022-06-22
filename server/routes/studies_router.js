@@ -202,7 +202,7 @@ studiesRouter.route('/:study_id/collaboration')
         function(req, res){
             studies.get_collaborations(req.user_id, parseInt(req.params.study_id))
                 .then(function ({users, study_name, is_public, link}) {
-                    const link_str = config.server_url+ '/dashboard/?/view/'+ link;
+                    const link_str = !link ? '' : config.server_url+ '/dashboard/?/view/'+ link;
                     res.json({users, is_public, link:link_str, study_name
                     });
                 })

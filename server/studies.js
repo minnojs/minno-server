@@ -56,7 +56,7 @@ function get_studies(user_id) {
                 .then(user_studies =>  user_studies.map(study =>{
                     const user_data = study.users.find(user=>user.user_id===user_id);
                     return composeStudy(study, {
-                        permission: user_data.archive ? 'archive' : user_data.permission,
+                        permission: study.archive ? 'archive' : user_data.permission,
                         has_data_permission: user_data.permission === 'owner' || user_data.data_permission === 'visible',
                         accessible: true,
                         study_type:'regular',
@@ -348,9 +348,9 @@ function delete_study(user_id, study_id) {
 
 
             return Promise.all([
-                // fs.remove(delPath),
-                // data.study_data.users.map(user =>
-                //     delete_by_id(user.user_id,study_id)),
+                fs.remove(delPath),
+                data.study_data.users.map(user =>
+                    delete_by_id(user.user_id,study_id)),
                     data_server.deleteData(data.study_data.versions.map(version=> version.experiments.map(exp=>exp.id)).flatMap(item => item).filter((v, i, a) => a.indexOf(v) === i))
 
             ]);

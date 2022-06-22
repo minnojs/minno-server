@@ -1,6 +1,3 @@
-const path         = require('path');
-const walk         = require('walkdir');
-
 const {execSync} = require('child_process');
 const fs = require('fs-extra');
 const config_file = require.main.require('../config');
