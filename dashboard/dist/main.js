@@ -27895,7 +27895,9 @@
                     error:m.prop('')
                 },
                 usage: m.prop(''),
-                show_data_per_user: m.prop(false),
+                show_storage_per_user: m.prop(false),
+                show_storage_per_study: m.prop([]),
+
                 dbx: {
                     enable: m.prop(false),
                     app_key:m.prop(''),
@@ -27919,7 +27921,8 @@
                 },
 
                 toggle_visibility: toggle_visibility,
-                toggle_data_per_user: toggle_data_per_user,
+                toggle_storage_per_user: toggle_storage_per_user,
+                toggle_storage_per_study: toggle_storage_per_study,
                 update_gmail_fields: update_gmail_fields,
                 show_gmail_password: show_gmail_password,
                 update_dbx_fields: update_dbx_fields,
@@ -27963,8 +27966,13 @@
                 ctrl[varable].enable(state);
                 ctrl[varable].updated(true);
             }
-            function toggle_data_per_user(){
-                ctrl.show_data_per_user(!ctrl.show_data_per_user());
+            function toggle_storage_per_user(){
+                ctrl.show_storage_per_user(!ctrl.show_storage_per_user());
+            }
+            function toggle_storage_per_study(user){
+                console.log(ctrl.show_storage_per_study());
+                ctrl.show_storage_per_study()[user] = !ctrl.show_storage_per_study()[user];
+                console.log(ctrl.show_storage_per_study());
             }
 
             function show_gmail_password(ctrl){
@@ -28139,20 +28147,34 @@
                                     m('td', ctrl.usage().MountedOn)
                                 ])
                             ]),
-                            m('a', {href:'javascript:void(0)', onclick: function (){ return ctrl.toggle_data_per_user(); }},[
-                                'Data per user ',
-                                ctrl.show_data_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
+                            m('a', {href:'javascript:void(0)', onclick: function (){ return ctrl.toggle_storage_per_user(); }},[
+                                'Storage per user ',
+                                ctrl.show_storage_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
                             ]),
-                            !ctrl.show_data_per_user() ? '' :
+                            !ctrl.show_storage_per_user() ? '' :
                                 m('table.table', [
                                 m('tr.tr', [
-                                    m('th', 'Username'),
-                                    m('th', 'Size')
+                                    m('th.th', 'User name'),
+                                    m('th.th', 'Total size')
                                 ]),
-                                ctrl.usage().data_per_user.map(function (user){ return m('tr', [
-                                        m('td', user.user),
-                                        m('td', user.size)
-                                    ]); })
+                                ctrl.usage().storage_per_user.map(function (user){ return [m('tr.tr', [
+                                        m('td.td', m('a', {href:'javascript:void(0)', onclick: function (){ return ctrl.toggle_storage_per_study(user[0].user); }},
+                                            user[0].user
+                                        )),
+                                        m('td.td', user[0].total_size)
+                                    ]),
+                                    !ctrl.show_storage_per_study()[user[0].user] || user[1].length===0 ? '' :
+                                    m('tr.tr',
+                                        m('td.td', m('table',
+                                            m('tr.tr', [
+                                                m('th.th', 'Study name'),
+                                                m('th.th', 'Total size')
+                                            ]),
+                                            user[1].map(function (study){ return m('tr.tr', [m('td.td', study.study), m('td.td', study.study_size)]
+                                                ); }))
+                                        )
+                                    )]; }
+                                )
                             ])
                         ]) ]),
 
