@@ -1,7 +1,7 @@
 import {save} from '../sidebar/fileActions';
 import ace from './ace/aceComponent';
 import observerFactory from 'utils/observer';
-import marked from 'marked';
+// import marked from 'marked';
 import fullheight from 'utils/fullHeight';
 
 import jshintOptions from './jshintOptions';
@@ -62,7 +62,7 @@ const textContent = (ctrl, {file, study, observer}) => {
 
 
         case 'view': return m('.markdown', {config: fullheight},[
-            m.trust(marked(file.content()))
+            file.content() //m.trust(marked(file.content()))
         ]);
 
         case 'syntax': return syntaxComponent({file});

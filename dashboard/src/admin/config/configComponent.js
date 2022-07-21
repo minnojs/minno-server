@@ -100,9 +100,7 @@ let configComponent = {
             ctrl.show_storage_per_user(!ctrl.show_storage_per_user());
         }
         function toggle_storage_per_study(user){
-            console.log(ctrl.show_storage_per_study());
             ctrl.show_storage_per_study()[user] = !ctrl.show_storage_per_study()[user];
-            console.log(ctrl.show_storage_per_study());
         }
 
         function show_gmail_password(ctrl){
@@ -257,57 +255,76 @@ let configComponent = {
                 m('.row', [
                     m('.col-sm-3', m('strong', 'Disk usage:')),
                     m('.col-sm-8',[
-                        m('table.table', [
-                            m('tr', [
-                                m('th', 'Filesystem'),
-                                m('th', 'Type'),
-                                m('th', 'Size'),
-                                m('th', 'Used'),
-                                m('th', 'Avail'),
-                                m('th', 'Use%'),
-                                m('th', 'Mounted on')
+                        m('.container', [
+                            m('.row', [
+                                m('.col-sm-2', m('strong', 'Filesystem')),
+                                m('.col-sm-1', m('strong', 'Type')),
+                                m('.col-sm-1', m('strong', 'Size')),
+                                m('.col-sm-1', m('strong', 'Used')),
+                                m('.col-sm-1', m('strong', 'Avail')),
+                                m('.col-sm-1', m('strong', 'Use%')),
+                                m('.col-sm-3', m('strong', 'Mounted on'))
                             ]),
-                            m('tr', [
-                                m('td', ctrl.usage().Filesystem),
-                                m('td', ctrl.usage().Type),
-                                m('td', ctrl.usage().Size),
-                                m('td', ctrl.usage().Used),
-                                m('td', ctrl.usage().Avail),
-                                m('td', ctrl.usage().Use),
-                                m('td', ctrl.usage().MountedOn)
+                            m('.row', [
+                                m('.col-sm-2', ctrl.usage().Filesystem),
+                                m('.col-sm-1', ctrl.usage().Type),
+                                m('.col-sm-1', ctrl.usage().Size),
+                                m('.col-sm-1', ctrl.usage().Used),
+                                m('.col-sm-1', ctrl.usage().Avail),
+                                m('.col-sm-1', ctrl.usage().Use),
+                                m('.col-sm-3', ctrl.usage().MountedOn)
+                            ]),
+                            m('.row', [
+                                m('.col-sm-12',
+                                    m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.toggle_storage_per_user()},[
+                                        'Storage per user ',
+                                        ctrl.show_storage_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
+                                    ]))
                             ])
                         ]),
-                        m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.toggle_storage_per_user()},[
-                            'Storage per user ',
-                            ctrl.show_storage_per_user() ? m('i.fa.fa-folder-open') : m('i.fa.fa-folder')
-                        ]),
+
                         !ctrl.show_storage_per_user() ? '' :
-                            m('table.table', [
-                            m('tr.tr', [
-                                m('th.th', 'User name'),
-                                m('th.th', 'Total size')
-                            ]),
-                            ctrl.usage().storage_per_user.map(user=>
-                                [m('tr.tr', [
-                                    m('td.td', m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.toggle_storage_per_study(user[0].user)},
-                                        user[0].user
-                                    )),
-                                    m('td.td', user[0].total_size)
+                            m('.container', [
+                                m('.row', [
+                                    m('.col-sm-2', m('strong', 'User name')),
+                                    m('.col-sm-3', m('strong', 'Storage size')),
+                                    m('.col-sm-3', m('strong', 'Data size'))
+
                                 ]),
-                                !ctrl.show_storage_per_study()[user[0].user] || user[1].length===0 ? '' :
-                                m('tr.tr',
-                                    m('td.td', m('table',
-                                        m('tr.tr', [
-                                            m('th.th', 'Study name'),
-                                            m('th.th', 'Total size')
-                                        ]),
-                                        user[1].map(study=>
-                                            m('tr.tr', [m('td.td', study.study), m('td.td', study.study_size)]
-                                            )))
-                                    )
-                                )]
-                            )
-                        ])
+                                ctrl.usage().storage_per_user.map(user=>
+                                    [m('.row', [
+                                        m('.col-sm-2', user[1].length===0 ? user[0].user : m('a', {href:'javascript:void(0)', onclick: ()=>ctrl.toggle_storage_per_study(user[0].user)},
+                                            user[0].user
+                                        )) ,
+                                        m('.col-sm-3', user[0].total_size),
+
+                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)), m('a', {href:'javascript:void(0)', onclick: ()=>{
+                                                ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>console.log({date: day.date, total_data: size_format(day.studies.map(study=>study.total_data).reduce((acc, val) => acc + val, 0))}))
+                                        }}, '(daily)')])
+                                    ]),
+                                    !ctrl.show_storage_per_study()[user[0].user] || user[1].length===0 ? '' :
+                                        m('.row',
+                                            m('.col-sm-12.text-right',
+                                                m('.row', [
+                                                    // m('.col-sm-1', ''),
+                                                    m('.col-sm-3', m('strong', 'Study name')),
+                                                    m('.col-sm-3', m('strong', 'Storage size')),
+                                                    m('.col-sm-3', m('strong', 'Data size'))
+
+                                                ]),
+                                                user[1].map(study=>
+                                                    m('.row', [
+                                                        m('.col-sm-3', study.study),
+                                                        m('.col-sm-3', study.study_size),
+                                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).filter(study_data=>study_data.id === study.study_id).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)), m('a', {href:'javascript:void(0)', onclick: ()=>{
+                                                                ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>console.log({date: day.date, studies: day.studies.map(study=>({study_id:study.id, total_data: study.total_data}))}))
+                                                            }}, ' (daily)')])
+                                                    ])
+                                                )
+                                            )
+                                        )]
+                                )
+                            ])
                     ]),
                 ]),
 
@@ -556,3 +573,19 @@ let configComponent = {
             ]);
     }
 };
+
+function size_format(bytes){
+    if (!bytes || bytes<10)
+        return '0B ';
+
+    const thresh = 1024;
+
+    const units =  ['B', 'KB','MB','GB','TB','PB','EB','ZB','YB'];
+    let u = 0;
+    while(Math.abs(bytes) >= thresh)
+    {
+        bytes /= thresh;
+        u = u+1;
+    }
+    return bytes.toFixed(u>0?1:0)+units[u] + ' ';
+}

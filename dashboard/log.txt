@@ -1,0 +1,12 @@
+
+> pi-validator@1.0.0 watch
+> npm-run-all --parallel watch:*
+
+
+> pi-validator@1.0.0 watch:js
+> rollup --config --sourcemap --watch
+
+
+> pi-validator@1.0.0 watch:css
+> node-sass -w dashboard/src/style --output dashboard/dist --source-map=true
+

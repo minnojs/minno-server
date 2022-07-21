@@ -177,9 +177,11 @@ exports.getStatistics = async function(studyId, versionId,  startDate, endDate, 
 
 };
 
+
 exports.getData2 = function(req, res) {
     res.send(exports.getData(req.get('studyId')));
 };
+
 exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate,versionId) {
     if (typeof studyId == 'undefined' || !studyId)
         throw new Error('Error: studyId must be specified');
@@ -353,6 +355,38 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     return zipFiles(fileConfig);
 
 
+};
+
+
+exports.getStudyDailyData = async function(study, end_date) {
+    return Promise.all(study.versions.map(version=>this.getDailyData(version.hash, end_date)))
+        .then(versions=>Object.values(versions).reduce((acc, val) => acc + val, 0))
+        .then(total_data=>({id:study._id, total_data }));
+};
+
+exports.getDailyData = async function(version_id, date) {
+    let findObject = {};
+    findObject.versionId = version_id;
+    let start_date     = new Date();
+    start_date.setDate(date.getDate() - 1); // Yesterday!
+    start_date.setHours(0, 0, 0, 0);
+
+    let end_date     = new Date();
+    end_date.setDate(date.getDate()); // Yesterday!
+    end_date.setHours(0, 0, 0, 0);
+
+    findObject.createdDate = {};
+    findObject.createdDate.$gt = start_date;
+    findObject.createdDate.$lt = end_date;
+    return Data.find(findObject).then(
+        docs=>Buffer.byteLength(JSON.stringify(docs), "utf-8")
+    );
+};
+
+
+exports.getFirstDate = async function() {
+    return Data.findOne( {sessionId:1})
+        .then(data=>data.createdDate);
 };
 
 exports.deleteData = async function(studyId, startDate, endDate, versionId) {

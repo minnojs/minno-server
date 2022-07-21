@@ -30,11 +30,15 @@ const urljoin    = require('url-join');
 const bodyParser = require('body-parser');
 const app        = express();
 
+const cron = require('node-cron');
+const cron_manager = require('./cron_manager.js');
 
+cron.schedule('10 0 * * *', () => {
+    return cron_manager.get_daily_data();
+});
 
 
 module.exports = {app};
-
 const cors = require('cors');
 require('./config_validation');
 

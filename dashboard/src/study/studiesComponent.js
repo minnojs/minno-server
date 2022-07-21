@@ -184,7 +184,6 @@ const mainComponent = {
                         ]))
                 ])
             ])
-
         ]);
     }
 };

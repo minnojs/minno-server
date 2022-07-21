@@ -1,0 +1,9 @@
+
+> pi-validator@1.0.0 start
+> nodemon server/index --watch server
+
+[33m[nodemon] 2.0.4[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): server/**/*[39m
+[33m[nodemon] watching extensions: js,mjs,json[39m
+[32m[nodemon] starting `node server/index.js`[39m
