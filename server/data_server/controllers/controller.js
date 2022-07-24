@@ -379,10 +379,9 @@ exports.getDailyData = async function(version_id, date) {
     findObject.createdDate.$gt = start_date;
     findObject.createdDate.$lt = end_date;
     return Data.find(findObject).then(
-        docs=>Buffer.byteLength(JSON.stringify(docs), "utf-8")
+        docs=> !docs.length ? 0 : Buffer.byteLength(JSON.stringify(docs), "utf-8")
     );
 };
-
 
 exports.getFirstDate = async function() {
     return Data.findOne( {sessionId:1})
