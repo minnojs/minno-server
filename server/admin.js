@@ -13,7 +13,7 @@ exports.get_data_usage = function () {
         const users = db.collection('users');
         return data_usage.find({}).toArray().then(all_data_usage=>{
             return users.find({}).toArray().then(users=>users.flatMap(user=>{
-                const study_ids = user.studies.flatMap(study=>study.id);
+                const study_ids = user.studies.filter(study=>!study.permission).flatMap(study=>study.id);
                 return ({user_id: user._id, user_name: user.user_name, studies_per_day: all_data_usage.flatMap(daily_data_usage=>
                     ({date: daily_data_usage.date, studies: daily_data_usage.studies.filter(study=>study_ids.includes(study.id))})
                 )});
