@@ -2,6 +2,7 @@
 const connection    = Promise.resolve(require('mongoose').connection);
 const data_server   = require('./data_server/controllers/controller');
 
+
 function add_from_date(last_update) {
     return connection.then(function (db) {
         const studies = db.collection('studies');
@@ -13,7 +14,8 @@ function add_from_date(last_update) {
 
         let dates2add = [];
         for (let i = 0; i < days2add; i++)
-            dates2add.push(new Date(last_date.setDate(last_date.getDate() + 1)));
+            dates2add.push(new Date(last_date.setTime(last_date.getTime() + 24*3600000)));
+
         return Promise.all(
             dates2add.map(end_date =>
                 studies.find({})

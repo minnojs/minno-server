@@ -368,18 +368,18 @@ exports.getDailyData = async function(version_id, date) {
     let findObject = {};
     findObject.versionId = version_id;
     let start_date     = new Date();
-    start_date.setDate(date.getDate() - 1); // Yesterday!
+    start_date.setTime(date.getTime() - 24*3600000); // Yesterday!
     start_date.setHours(0, 0, 0, 0);
 
     let end_date     = new Date();
-    end_date.setDate(date.getDate()); // Yesterday!
+    end_date.setTime(start_date.getTime() + 24*3600000); // Yesterday!
     end_date.setHours(0, 0, 0, 0);
 
     findObject.createdDate = {};
     findObject.createdDate.$gt = start_date;
     findObject.createdDate.$lt = end_date;
     return Data.find(findObject).then(
-        docs=> !docs.length ? 0 : Buffer.byteLength(JSON.stringify(docs), "utf-8")
+        docs=> !docs || !docs.length ? 0 :Buffer.byteLength(JSON.stringify(docs), "utf-8")
     );
 };
 
