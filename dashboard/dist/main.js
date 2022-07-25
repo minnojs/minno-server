@@ -25909,9 +25909,13 @@
                                             )) ,
                                             m('.col-sm-3', user[0].total_size),
 
-                                            m('.col-sm-3', [!ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }) ? '0B ' : size_format(ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.flatMap(function (day){ return day.studies; }).map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0)), m('a', {href:'javascript:void(0)', onclick: function (){
-                                                    ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.map(function (day){ return console.log({date: day.date, total_data: size_format(day.studies.map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0))}); });
-                                            }}, '(daily)')])
+                                            m('.col-sm-3', [!ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }) ? '0B ' : size_format(ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.flatMap(function (day){ return day.studies; }).map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0)),
+                                                m('a', {href:'javascript:void(0)', onclick: function (){
+                                                    var csv_data = ['date, total data'];
+                                                        ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.map(function (day){ return csv_data.push(day.date+', ' + day.studies.map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0)); });
+                                                            download_csv(csv_data.join('\n'), user[0].user+'.csv');
+                                                    }}, '(daily)'
+                                                )])
                                         ]),
                                         !ctrl.show_storage_per_study()[user[0].user] || user[1].length===0 ? '' :
                                             m('.row',
@@ -25926,16 +25930,20 @@
                                                     user[1].map(function (study){ return m('.row', [
                                                             m('.col-sm-3', study.study),
                                                             m('.col-sm-3', study.study_size),
-                                                            m('.col-sm-3', [!ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }) ? '0B ' : size_format(ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.flatMap(function (day){ return day.studies; }).filter(function (study_data){ return study_data.id === study.study_id; }).map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0)), m('a', {href:'javascript:void(0)', onclick: function (){
-                                                                    ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.map(function (day){ return console.log({date: day.date, studies: day.studies.map(function (study){ return ({study_id:study.id, total_data: study.total_data}); })}); });
-                                                                }}, ' (daily)')])
+                                                            m('.col-sm-3', [!ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }) ? '0B ' : size_format(ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.flatMap(function (day){ return day.studies; }).filter(function (study_data){ return study_data.id === study.study_id; }).map(function (study){ return study.total_data; }).reduce(function (acc, val) { return acc + val; }, 0)),
+                                                                m('a', {href:'javascript:void(0)', onclick: function (){
+                                                                    var csv_data = ['date, total data'];
+                                                                    ctrl.usage().data_usage.find(function (usera){ return usera.user_name===user[0].user; }).studies_per_day.map(function (day){ return csv_data.push(day.date + ', ' + day.studies.filter(function (study_data){ return study_data.id === study.study_id; })[0].total_data); });
+                                                                        download_csv(csv_data.join('\n'), user[0].user+ '_'+study.study + '.csv');
+                                                                    }}, ' (daily)')])
                                                         ]); }
                                                     )
                                                 )
                                             )]; }
                                     )
                                 ])
-                        ]) ]),
+                        ])
+                    ]),
 
 
                     m('hr'),
@@ -26183,6 +26191,17 @@
             u = u+1;
         }
         return bytes.toFixed(u>0?1:0)+units[u] + ' ';
+    }
+
+    function download_csv(csv, filename) {
+        var csvFile = new Blob([csv], {type: "text/csv"});
+
+        var downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
     }
 
     function homepage_url()

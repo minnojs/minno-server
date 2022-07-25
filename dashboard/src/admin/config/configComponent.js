@@ -298,9 +298,14 @@ let configComponent = {
                                         )) ,
                                         m('.col-sm-3', user[0].total_size),
 
-                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)), m('a', {href:'javascript:void(0)', onclick: ()=>{
-                                                ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>console.log({date: day.date, total_data: size_format(day.studies.map(study=>study.total_data).reduce((acc, val) => acc + val, 0))}))
-                                        }}, '(daily)')])
+                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)),
+                                            m('a', {href:'javascript:void(0)', onclick: ()=>{
+                                                let csv_data = ['date, total data'];
+                                                    ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>
+                                                        csv_data.push(day.date+', ' + day.studies.map(study=>study.total_data).reduce((acc, val) => acc + val, 0)));
+                                                        download_csv(csv_data.join('\n'), user[0].user+'.csv');
+                                                }}, '(daily)'
+                                            )])
                                     ]),
                                     !ctrl.show_storage_per_study()[user[0].user] || user[1].length===0 ? '' :
                                         m('.row',
@@ -316,16 +321,20 @@ let configComponent = {
                                                     m('.row', [
                                                         m('.col-sm-3', study.study),
                                                         m('.col-sm-3', study.study_size),
-                                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).filter(study_data=>study_data.id === study.study_id).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)), m('a', {href:'javascript:void(0)', onclick: ()=>{
-                                                                ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>console.log({date: day.date, studies: day.studies.map(study=>({study_id:study.id, total_data: study.total_data}))}))
-                                                            }}, ' (daily)')])
+                                                        m('.col-sm-3', [!ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user) ? '0B ' : size_format(ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.flatMap(day=>day.studies).filter(study_data=>study_data.id === study.study_id).map(study=>study.total_data).reduce((acc, val) => acc + val, 0)),
+                                                            m('a', {href:'javascript:void(0)', onclick: ()=>{
+                                                                let csv_data = ['date, total data'];
+                                                                ctrl.usage().data_usage.find(usera=>usera.user_name===user[0].user).studies_per_day.map(day=>
+                                                                    csv_data.push(day.date + ', ' + day.studies.filter(study_data=>study_data.id === study.study_id)[0].total_data));
+                                                                    download_csv(csv_data.join('\n'), user[0].user+ '_'+study.study + '.csv');
+                                                                }}, ' (daily)')])
                                                     ])
                                                 )
                                             )
                                         )]
                                 )
                             ])
-                    ]),
+                    ])
                 ]),
 
 
@@ -588,4 +597,15 @@ function size_format(bytes){
         u = u+1;
     }
     return bytes.toFixed(u>0?1:0)+units[u] + ' ';
+}
+
+function download_csv(csv, filename) {
+    const csvFile = new Blob([csv], {type: "text/csv"});
+
+    let downloadLink = document.createElement("a");
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
 }
