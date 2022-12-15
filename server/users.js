@@ -6,7 +6,7 @@ const utils       = require('./utils');
 const config_db = require('./config_db');
 
 const connection    = Promise.resolve(require('mongoose').connection);
-const Validator = require('node-input-validator');
+const {Validator} = require('node-input-validator');
 
 function user_info (user_id) {
     return connection.then(function (db) {
