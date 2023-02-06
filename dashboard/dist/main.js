@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2022)
+ * @license Apache-2.0 (2023)
  */
 
 (function () {
