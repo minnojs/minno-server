@@ -43,7 +43,7 @@ exports.get_usage = function () {
                                     user,
                                     study,
                                     study_id: parseInt(study.match(/[0-9]+$/g)[0]),
-                                    study_size: execSync('du -sh  ' + config_file.user_folder + user + '/' + study).toString().split('\n')[0].split('\t')[0]
+                                    study_size: execSync('du -sh  ' + config_file.user_folder + user + '/"' + study + '"').toString().split('\n')[0].split('\t')[0]
                                 };
                             }))
                     ]);

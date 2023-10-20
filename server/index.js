@@ -3,6 +3,7 @@ const session     = require('express-session');
 const config      = require('../config');
 const files       = require('./files');
 const launch_router         = require('./routes/launch_router');
+const datapipe_router         = require('./routes/datapipe_router');
 const connections_router    = require('./routes/connections_router');
 const lock_router           = require('./routes/lock_router');
 const publish_router        = require('./routes/publish_router');
@@ -94,6 +95,7 @@ basePathRouter.use('/dashboard', (req,res) => {
     if(req._parsedUrl.pathname!=='/dashboard/')
         return res.redirect(urljoin(config.relative_path, 'dashboard/'));
     return res.render('dashboard', config);});
+basePathRouter.use('/datapipe', datapipe_router);
 
 basePathRouter.use('/static', express.static(config.static_path));
 basePathRouter.use('/.well-known', express.static('.well-known'));
