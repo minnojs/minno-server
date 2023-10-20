@@ -25,8 +25,8 @@ datapipe.route('/:token')
 datapipe.route('')
     .get(
         function(req, res){
-            // if (!req.session || !req.session.user || req.session.user.role!=='su')
-            //     return res.status(403).json({});
+            if (!req.session || !req.session.user || req.session.user.role!=='su')
+                return res.status(403).json({});
             return connection.then(function (db) {
                 const datapipe   = db.collection('datapipe');
                 return datapipe.find({}).toArray()
