@@ -2,13 +2,14 @@ const express     = require('express');
 const datapipe  = express.Router();
 const connection    = Promise.resolve(require('mongoose').connection);
 const config_file = require.main.require('../config');
+const utils         = require('../utils');
 
 module.exports = datapipe;
 
 datapipe.route('/:token')
     .get(
         function(req, res){
-            const token = config_file.datapipe_salt.concat(req.params.token).split('').map(v=>v.charCodeAt(0)).reduce((a,v)=>a+((a<<7)+(a<<3))^v).toString(16);
+            const token =  utils.sha1(config_file.datapipe_salt + req.params.token);
             return connection.then(function (db) {
                 const datapipe   = db.collection('datapipe');
                 return datapipe.findOne({_id:token})
