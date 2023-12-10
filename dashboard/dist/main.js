@@ -25658,8 +25658,8 @@
                             m('tr', [
                                 m('th', 'Token'),
                                 m('th',  'Uses'),
-                                m('th',  'First_use'),
-                                m('th',  'Last_use'),
+                                m('th',  'First use'),
+                                m('th',  'Last use'),
                                 m('th',  'Debug'),
                                 m('th',  'Remove')
                             ])
