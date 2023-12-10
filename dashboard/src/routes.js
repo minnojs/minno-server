@@ -24,6 +24,8 @@ import studyChangeRequestComponent from './deploy/studyChangeRequestComponent';
 
 import addUserComponent from './addUser/addUserComponent';
 import usersComponent from './admin/users/usersComponent';
+import datapipeComponent from './admin/datapipe/datapipeComponent';
+
 import configComponent from './admin/config/configComponent';
 import homepageComponent from './admin/homepage/homepageComponent';
 import settingsComponent from './settings/settingsComponent';
@@ -62,6 +64,7 @@ let routes = {
     '/changeRequestList': changeRequestListComponent,
     '/addUser':  addUserComponent,
     '/users':  usersComponent,
+    '/datapipe':  datapipeComponent,
     '/config':  configComponent,
     '/homepage':  homepageComponent,
     '/massMail':  massMailComponent,

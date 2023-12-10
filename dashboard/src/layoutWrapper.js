@@ -96,7 +96,7 @@ let layout = route => {
                 // 'data':['downloads', 'downloadsAccess', 'statistics'],
                 // 'pool':[],
                 'tags':[]
-                ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage'/*, 'massMail'*/]
+                ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage', 'datapipe'/*, 'massMail'*/]
             };
 
 
@@ -119,7 +119,8 @@ let layout = route => {
                         'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
                         'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                         'massMail': {text: 'Send MassMail', href: '/massMail'},
-                        'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
+                        'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
+                        'datapipe': {text: m('i.fa.fa-cloud-upload', ' DataPipe'), href: '/datapipe'},
                     }}
 
             };

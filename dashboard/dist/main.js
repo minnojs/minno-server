@@ -25595,6 +25595,89 @@
         }
     };
 
+    function datapipe_url()
+    {
+        return (baseUrl + "/datapipe");
+    }
+
+
+    var get_tokens = function () { return fetchJson(datapipe_url(), {
+        method: 'get'
+    }); };
+
+    var remove_token = function (token_id) { return fetchJson(datapipe_url()+'/'+token_id, {
+        method: 'delete'
+    }); };
+
+    var datapipeComponent = {
+        controller: function controller(){
+            var ctrl = {
+                tokens:m.prop(),
+                loaded:false,
+                col_error:m.prop(''),
+                remove: remove};
+
+            function remove(token_id){
+                messages.confirm({header:'Delete token ' + token_id, content:'Are you sure?'})
+                    .then(function (response) {
+                        if (response)
+                            { remove_token(token_id)
+                                .then(function (){ return load(); })
+                                .catch(function (error) {
+                                    ctrl.col_error(error.message);
+                                })
+                                .then(m.redraw); }
+                    });
+            }
+
+            function load() {
+                get_tokens()
+                    .then(function (response) { return ctrl.tokens(response.tokens); })
+                    // .then(()=>console.log(tokens()))
+                    .then(function (){ return ctrl.loaded = true; })
+                    .catch(function (error) {
+                        ctrl.col_error(error.message);
+                    }).then(m.redraw);
+            }
+            load();
+            return ctrl;
+        },
+        view: function view(ctrl){
+            return  !ctrl.loaded
+                ?
+                m('.loader')
+                :
+                m('.container.sharing-page', [
+                    m('.row',[
+                        m('.col-sm-12', [
+                            m('h3', 'DataPipe')
+                        ])
+                    ]),
+                    m('table', {class:'table table-striped table-hover'}, [
+                        m('thead', [
+                            m('tr', [
+                                m('th', 'Token'),
+                                m('th',  'Uses'),
+                                m('th',  'First_use'),
+                                m('th',  'Last_use'),
+                                m('th',  'Debug'),
+                                m('th',  'Remove')
+                            ])
+                        ]),
+                        m('tbody', [
+                            ctrl.tokens().map(function (token) { return m('tr', [
+                                m('td', token._id),
+                                m('td', token.uses),
+                                m('td', token.first_use),
+                                m('td', token.last_use),
+                                m('td', token.debug ? 'Debug' : ''),
+                                m('td', m('button.btn.btn-danger', {onclick:function (){ return ctrl.remove(token._id); }}, 'Remove'))
+                            ]); })
+                        ]) ])
+                ]);
+        }
+    };
+
     function config_url()
     {
         return (baseUrl + "/config");
@@ -28083,6 +28166,7 @@
         '/changeRequestList': changeRequestListComponent,
         '/addUser':  addComponent,
         '/users':  usersComponent,
+        '/datapipe':  datapipeComponent,
         '/config':  configComponent,
         '/homepage':  homepageComponent,
         '/massMail':  massMailComponent,
@@ -28208,7 +28292,7 @@
                     // 'data':['downloads', 'downloadsAccess', 'statistics'],
                     // 'pool':[],
                     'tags':[]
-                    ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage' ]
+                    ,'admin':[/*'deployList', 'removalList', 'changeRequestList', 'addUser', */'users', 'config', 'homepage', 'datapipe' ]
                 };
 
 
@@ -28231,7 +28315,8 @@
                             'config': {text: m('i.fa.fa-gear', ' Edit Configuration') , href: '/config'},
                             'homepage': {text: m('i.fa.fa-home', ' Edit Homepage'), href: '/homepage'},
                             'massMail': {text: 'Send MassMail', href: '/massMail'},
-                            'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'}
+                            'users': {text: m('i.fa.fa-users', ' Users Management'), href: '/users'},
+                            'datapipe': {text: m('i.fa.fa-cloud-upload', ' DataPipe'), href: '/datapipe'},
                         }}
 
                 };
