@@ -1,6 +1,6 @@
 /**
  * @preserve minno-dashboard v1.0.0
- * @license Apache-2.0 (2023)
+ * @license Apache-2.0 (2024)
  */
 
 (function () {
@@ -25633,7 +25633,6 @@
             function load() {
                 get_tokens()
                     .then(function (response) { return ctrl.tokens(response.tokens); })
-                    // .then(()=>console.log(tokens()))
                     .then(function (){ return ctrl.loaded = true; })
                     .catch(function (error) {
                         ctrl.col_error(error.message);
@@ -25657,6 +25656,7 @@
                         m('thead', [
                             m('tr', [
                                 m('th', 'Token'),
+                                m('th', 'Domain'),
                                 m('th',  'Uses'),
                                 m('th',  'First use'),
                                 m('th',  'Last use'),
@@ -25667,6 +25667,7 @@
                         m('tbody', [
                             ctrl.tokens().map(function (token) { return m('tr', [
                                 m('td', token._id),
+                                m('td', token.domain),
                                 m('td', token.uses),
                                 m('td', token.first_use),
                                 m('td', token.last_use),
