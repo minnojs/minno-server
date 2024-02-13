@@ -15,7 +15,7 @@ function get_auth_link(user_id, server_url){
     return config_db.get_dbx().then(function (dbx_details) {
         if (!dbx_details)
             return Promise.resolve({});
-        const back_path = urljoin(server_url + 'dropbox/set');
+        const back_path = urljoin(server_url + '/dropbox/set');
         const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=' + dbx_details.client_id + '&redirect_uri=' + back_path;
 
         return get_user_token(user_id)
@@ -51,7 +51,7 @@ function get_access_token(code, server_url){
         const body = {
             code: code,
             grant_type: 'authorization_code',
-            redirect_uri: urljoin(server_url, 'dropbox/set'),
+            redirect_uri: urljoin(server_url, '/dropbox/set'),
             client_id: dbx_details.client_id,
             client_secret: dbx_details.client_secret
         };

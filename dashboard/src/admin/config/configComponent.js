@@ -140,13 +140,14 @@ let configComponent = {
                 ctrl.dbx.app_key(fields.app_key);
             if(fields.hasOwnProperty('app_secret'))
                 ctrl.dbx.app_secret(fields.app_secret);
-            ctrl.dbx.enable(!!ctrl.dbx.app_key() || !!ctrl.dbx.app_secret());
 
+            ctrl.dbx.enable(!!ctrl.dbx.app_key() || !!ctrl.dbx.app_secret());
             let updated = (ctrl.given_conf().hasOwnProperty('dbx') && !ctrl.dbx.enable()) ||
-                (!ctrl.given_conf().hasOwnProperty('dbx') && ctrl.dbx.app_key() && ctrl.dbx.app_secret()) ||
+                (!ctrl.given_conf().hasOwnProperty('dbx') && ctrl.dbx.app_key() && ctrl.dbx.app_secret() ) ||
                 ctrl.given_conf().hasOwnProperty('dbx') &&
                 ((ctrl.dbx.app_key() !== ctrl.given_conf().dbx.client_id) ||
-                    (ctrl.dbx.app_secret() !== ctrl.given_conf().dbx.client_secret));
+                    (ctrl.dbx.app_secret() !== ctrl.given_conf().dbx.client_secret)
+                );
             ctrl.dbx.updated(updated);
             return m.redraw();
         }
@@ -465,7 +466,7 @@ let configComponent = {
                                     onchange: (e)=> ctrl.update_dbx_fields(ctrl, {app_secret: e.target.value})
                                 })
                             ])
-                        ]),
+                        ])
                     ])
                 ]),
                 m('hr'),
