@@ -1,6 +1,6 @@
 export default args => m.component(sharing_dialog, args);
 
-import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link} from './sharingModel';
+import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link, get_all_users} from './sharingModel';
 import messages from 'utils/messagesComponent';
 
 // export default collaborationComponent;
@@ -9,6 +9,8 @@ let sharing_dialog = {
     controller({study_id, close}){
         let ctrl = {
             users:m.prop(),
+            all_users:m.prop(),
+
             is_public:m.prop(),
 
             link:m.prop(''),
@@ -29,15 +31,18 @@ let sharing_dialog = {
         };
 
         function load() {
-            get_collaborations(study_id)
+            get_all_users()
+                .then(response =>{ctrl.all_users(response.users)})
+                .then(()=>get_collaborations(study_id)
                 .then(response =>{ctrl.users(response.users);
                     ctrl.is_public(response.is_public);
                     ctrl.study_name(response.study_name);
                     ctrl.link(response.link);
-                    ctrl.loaded = true;})
+                    ctrl.loaded = true;}))
                 .catch(error => {
                     ctrl.col_error(error.message);
                 }).then(m.redraw);
+
 
         }
         function remove(user_id){
@@ -69,16 +74,21 @@ let sharing_dialog = {
         {
             messages.confirm({
                 header:'Add a Collaborator',
-                content: m.component({view: () => m('p', [
-                    m('p', 'Enter collaborator\'s user name:'),
-                    m('input.form-control', {placeholder: 'User name', config: focus_it, value: ctrl.user_name(), onchange: m.withAttr('value', ctrl.user_name)}),
+                content:
 
+                    m.component({view: () => m('p', [
+                    m('p', 'Select collaborator:'),
+                    m('select.form-control', {value:ctrl.user_name(), onchange: m.withAttr('value',ctrl.user_name)},
+                        [m('option', {selected:true, value:'', disabled: true}, 'Select collaborator'),
+
+                        ctrl.all_users().filter(user=> !ctrl.users().map(user=>user.user_name).includes(user.user_name)).map(user=> m('option', {value:user.user_name,} , `${user.first_name} ${user.last_name} - ${user.user_name}`))
+                        ]
+                    ),
                     m('p.space', 'Select user\'s study file access:'),
                     m('select.form-control', {value:ctrl.permission(), onchange: m.withAttr('value',ctrl.permission)}, [
                         m('option',{value:'can edit', selected: ctrl.permission() === 'can edit'}, 'Edit'),
                         m('option',{value:'read only', selected: ctrl.permission() === 'read only'}, 'Read only'),
                         m('option',{value:'invisible', selected: ctrl.permission() === 'invisible'}, 'No access'),
-
                     ]),
                     m('p.space', 'Select data visibility:'),
                     m('select.form-control', {value:check_permission(ctrl), onchange: m.withAttr('value',ctrl.data_permission)}, [
@@ -162,7 +172,7 @@ let sharing_dialog = {
                         m('h3', [ctrl.study_name(), ' (Sharing Settings)'])
                     ]),
                     m('.col-sm-5', [
-                        m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_collaboration}, [
+                        m('button.btn.btn-secondary.btn-sm.m-r-1', {onclick:ctrl.do_add_collaboration, title: ctrl.users().length<ctrl.all_users().length? '' :  'There are no available users', disabled: ctrl.users().length===ctrl.all_users().length}, [
                             m('i.fa.fa-plus'), '  Add a new collaborator'
                         ]),
                         m('button.btn.btn-secondary.btn-sm', {onclick:function() {ctrl.do_make_public(!ctrl.is_public());}}, ['Make ', ctrl.is_public() ? 'Private' : 'Public'])

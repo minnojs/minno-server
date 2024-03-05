@@ -72,11 +72,18 @@ function publish_version(user_id, study_id, update_url) {
             const last_version = versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
             let version_hash = generate_id(study_id, Math.floor(Date.now() / 1000), 'Published');
-            if (update_url!=='keep')
-                last_version.hash = version_hash;
+
+            last_version.hash = version_hash;
+
+            if(!!published_versions.length) {
+                const last_public_version = published_versions.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+                if (update_url === 'keep') {
+                    last_version.hash = last_public_version.hash;
+                    last_public_version.hash = version_hash;
+                }
+            }
 
             last_version.state = 'Published';
-
             return connection.then(function (db) {
                 const studies = db.collection('studies');
 
@@ -101,8 +108,6 @@ function restore_version(user_id, study_id, version_id) {
         const data_files_path = path.join(config.history_folder, study_data.folder_name, version);
         fs.copy(path.join(config.user_folder, study_data.folder_name), path.join(config.history_folder, study_data.folder_name, version));
         return data_files_path;
-
-
     });
 }
 

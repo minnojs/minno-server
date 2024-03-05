@@ -292,13 +292,13 @@ export let do_publish = (study, notifications) => e => {
                     m('p', 'Although it is strongly not recommended, you can also unlock the study after it is published by using Unlock Study in the Study menu.'),
                     m('p', 'After you publish the study, you can obtain the new launch URL by right clicking on the experiment file and choosing Experiment options->Copy Launch URL')
 
-                    ,m('.input-group', [
-                        m('select.c-select.form-control',{onchange: e => update_url(e.target.value)}, [
-                            m('option', {value:'update', selected:true}, 'Update the launch URL'),
-                            m('option', {value:'keep'}, 'Keep the launch URL'),
-                            study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
-                        ])
-                    ])
+                    // ,m('.input-group', [
+                    //     m('select.c-select.form-control',{onchange: e => update_url(e.target.value)}, [
+                    //         m('option', {value:'update', selected:true}, 'Update the launch URL'),
+                    //         m('option', {value:'keep'}, 'Keep the launch URL'),
+                    //         study.versions.length<2 ? '' : m('option', {value:'reuse'}, 'Use the launch URL from the previous published version')
+                    //     ])
+                    // ])
                 ]),
             !error() ? '' : m('p.alert.alert-danger', error())])
     })

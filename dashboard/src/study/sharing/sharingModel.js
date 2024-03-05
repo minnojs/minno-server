@@ -1,10 +1,16 @@
 import {fetchJson} from 'utils/modelHelpers';
 import {studyUrl} from 'modelUrls';
+import {baseUrl} from 'modelUrls';
 
 
 function collaboration_url(study_id)
 {
     return `${studyUrl}/${encodeURIComponent(study_id)}/collaboration`;
+}
+
+function users_url()
+{
+    return `${baseUrl}/users`;
 }
 
 function link_url(study_id)
@@ -20,6 +26,10 @@ function public_url(study_id)
 }
 
 export let get_collaborations = (study_id) => fetchJson(collaboration_url(study_id), {
+    method: 'get'
+});
+
+export let get_all_users = () => fetchJson(users_url(), {
     method: 'get'
 });
 
