@@ -10,7 +10,7 @@ function collaboration_url(study_id)
 
 function users_url()
 {
-    return `${baseUrl}/users`;
+    return `${baseUrl}/collaboration`;
 }
 
 function link_url(study_id)

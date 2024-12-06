@@ -24074,7 +24074,7 @@
 
     function users_url$1()
     {
-        return (baseUrl + "/users");
+        return (baseUrl + "/collaboration");
     }
 
     function link_url(study_id)
