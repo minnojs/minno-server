@@ -2,7 +2,6 @@ import folderComponent from './folderComponent';
 import classNames from 'utils/classNames';
 import {uploadConfig} from 'utils/uploader';
 import {uploadFiles} from './fileActions';
-export default filesList;
 
 let filesList = ({study}, notifications) => {
     let folderHash = parseFiles(study.files());
@@ -53,3 +52,6 @@ function getCurrentState(study){
     const chosenCount = study.files().reduce((result, file) => vm(file.id).isChosen() ? result + 1 : result, 0);
     return !chosenCount ? 0 : filesCount === chosenCount ? 1 : -1;
 }
+
+export default filesList;
+

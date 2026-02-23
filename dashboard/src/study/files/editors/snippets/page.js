@@ -1,6 +1,5 @@
 import {formFactory, textInput, checkboxInput, maybeInput} from 'utils/formHelpers';
 import inheritInput from './inheritInput';
-export default pageComponent;
 
 let pageComponent = {
     controller({output,close}){
@@ -35,3 +34,5 @@ let pageComponent = {
     }
 };
 
+
+export default pageComponent;

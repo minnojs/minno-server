@@ -1,7 +1,6 @@
 import {formFactory, textInput, checkboxInput, maybeInput, arrayInput} from 'utils/formHelpers';
 import {createFile} from './sidebar/fileActions';
 import ratingWizard from './wizards/ratingWizard';
-export default wizardComponent;
 
 let wizardComponent = {
     controller({study}){
@@ -107,3 +106,6 @@ let wizardComponent = {
         ]); 
     } 
 };
+
+
+export default wizardComponent;

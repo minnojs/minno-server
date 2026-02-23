@@ -1,4 +1,3 @@
-export default args => m.component(sharing_dialog, args);
 
 import {get_collaborations, remove_collaboration, add_collaboration, update_permission, make_pulic, add_link, revoke_link, get_all_users} from './sharingModel';
 import messages from 'utils/messagesComponent';
@@ -264,3 +263,5 @@ function copy(text){
         input.parentNode.removeChild(input);
     });
 }
+
+export default args => m.component(sharing_dialog, args);

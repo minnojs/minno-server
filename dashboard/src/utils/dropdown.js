@@ -1,5 +1,4 @@
 import classNames from './classNames';
-export default dropdown;
 
 /**
  * VirtualElement dropdown(Object {String toggleSelector, Element toggleContent, Element elements})
@@ -57,3 +56,5 @@ const dropdownComponent = {
         }
     }
 };
+
+export default dropdown;

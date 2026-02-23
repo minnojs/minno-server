@@ -3,7 +3,6 @@ import {play, remove, create, grant, revoke} from './downloadsAccessActions';
 import {getAuth} from 'login/authModel';
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
-export default downloadsAccessComponent;
 
 const TABLE_WIDTH = 6;
 
@@ -146,3 +145,6 @@ function dataRequestFilter(ctrl){
         return typeof val === 'string' && val.includes(search);
     }
 }
+
+
+export default downloadsAccessComponent;

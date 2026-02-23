@@ -3,7 +3,6 @@ import stimuli_sets_view from './stimuliSetsGeneratorComponent';
 
 let conditions_view = args => m.component(conditionsGeneratorComponent, args);
 
-export default conditions_view;
 
 let conditionsGeneratorComponent = {
     controller({is_locked, mode, possible_conditions, possible_stimuli, possible_responses, imgs}){
@@ -82,3 +81,5 @@ let conditionsGeneratorComponent = {
     }
 };
 
+
+export default conditions_view;

@@ -7,7 +7,6 @@ import {createNotifications} from '../../../../../utils/notifyComponent.js';
 import {toString, validityCheck} from './stiatOutputComponent.js';
 import messages from '../../../../../utils/messagesComponent';
 
-export default stiat;
 
 const stiat = (args, external) => m.component(stiatComponent, args, external);
 
@@ -112,3 +111,4 @@ function view(ctrl){
 
 
 }
+export default stiat;

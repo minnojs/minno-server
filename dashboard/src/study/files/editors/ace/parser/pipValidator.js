@@ -1,7 +1,6 @@
 import {warn, error, row} from './messages';
 import {pipElements} from './parser';
 
-export default pipValidator;
 
 function pipValidator(script, url){
     let errors = [];
@@ -116,3 +115,6 @@ function trialTest(trial) {
         ];
     }
 }
+
+
+export default pipValidator;

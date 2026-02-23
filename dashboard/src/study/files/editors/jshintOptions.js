@@ -1,4 +1,3 @@
-export default jshintOptions;
 let jshintOptions = {
     // JSHint Default Configuration File (as on JSHint website)
     // See http://jshint.com/docs/ for more details
@@ -17,3 +16,6 @@ let jshintOptions = {
     // Custom Globals
     predef: ['piGlobal','define','require','requirejs','angular']
 };
+
+
+export default jshintOptions;

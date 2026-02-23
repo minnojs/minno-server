@@ -2,16 +2,7 @@ import pipValidate from './pipValidator';
 import questValidate from './questValidator';
 import managerValidate from './managerValidator';
 
-export default function validate(script){
-    let type = script.type && script.type.toLowerCase();
-    switch (type){
-        case 'pip' : return pipValidate.apply(null, arguments);
-        case 'quest' : return questValidate.apply(null, arguments);
-        case 'manager' : return managerValidate.apply(null, arguments);
-        default:
-            throw new Error('Unknown script.type: ' + type);
-    }
-}
+
 
 export function dd(){
     return [
@@ -39,4 +30,16 @@ export function dd(){
         }
 
     ];
+}
+
+
+export default function validate(script){
+    let type = script.type && script.type.toLowerCase();
+    switch (type){
+        case 'pip' : return pipValidate.apply(null, arguments);
+        case 'quest' : return questValidate.apply(null, arguments);
+        case 'manager' : return managerValidate.apply(null, arguments);
+        default:
+            throw new Error('Unknown script.type: ' + type);
+    }
 }

@@ -1,4 +1,3 @@
-export default editorLayoutComponent;
 import studyFactory from './fileCollectionModel';
 import editorComponent from './editorComponent';
 import wizardComponent from './wizardComponent';
@@ -76,3 +75,5 @@ function leftWidth(val){
     if (arguments.length) localStorage.fileSidebarWidth = val;
     return localStorage.fileSidebarWidth;
 }
+
+export default editorLayoutComponent;

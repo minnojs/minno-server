@@ -2,7 +2,6 @@ import {deploy, get_study_prop} from './deployModel';
 import classNames from 'utils/classNames';
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import rulesEditor from './rulesComponent';
-export default deployComponent;
 
 const ASTERIX = m('span.text-danger', '*');
 
@@ -192,3 +191,6 @@ let checkbox = args => m.component({
             !help ? '' : m('small.text-muted', help)
         ])
 }, args);
+
+
+export default deployComponent;

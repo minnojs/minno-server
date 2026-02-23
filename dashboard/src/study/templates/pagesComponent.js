@@ -5,7 +5,6 @@ import {getStrings, saveStrings} from './translateModel';
 import classNames from 'utils/classNames';
 import textareaAutoresize from 'utils/textareaAutoresize';
 
-export default pagesComponent;
 
 let pagesComponent = {
     controller(){
@@ -184,3 +183,6 @@ const select = (templateId, page) => e => {
     e.preventDefault();
     m.route(`/translate/${templateId}/${page.pageName}`);
 };
+
+
+export default pagesComponent;

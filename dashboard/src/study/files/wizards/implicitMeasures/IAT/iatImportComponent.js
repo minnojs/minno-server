@@ -9,7 +9,6 @@ function view(ctrl){
     return viewImport(ctrl);
 }
 
-export default iatImportComponent;
 
 function controller(settings) {
     return {handleFile, updateSettings};
@@ -80,3 +79,6 @@ export function updateSettings(settings, input) {
     }
     return settings;
 }
+
+
+export default iatImportComponent;

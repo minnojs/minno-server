@@ -3,7 +3,6 @@ import fileContext from './fileContext';
 import {uploadFiles} from './fileActions';
 import {uploadonchange} from 'utils/uploader';
 
-export default sidebarButtons;
 
 const sidebarButtons = ({study}, notifications) => {
     const readonly = study.isReadonly || study.is_published;
@@ -36,3 +35,6 @@ const sidebarButtons = ({study}, notifications) => {
         ])
     ]);
 };
+
+
+export default sidebarButtons;

@@ -8,7 +8,6 @@ import {
 } from './fileActions';
 
 import {copyUrl} from 'utils/copyUrl';
-export default fileContext;
 
 
 const fileContext = (file, study, notifications) => {
@@ -110,3 +109,6 @@ const fileContext = (file, study, notifications) => {
         }
     } // end delete file
 };
+
+
+export default fileContext;

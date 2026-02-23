@@ -7,7 +7,6 @@ import {createNotifications} from '../../../../../utils/notifyComponent.js';
 import {toString, validityCheck} from './iatOutputComponent.js';
 import messages from '../../../../../utils/messagesComponent';
 
-export default iat;
 
 const iat = (args, external) => m.component(iatComponent, args, external);
 
@@ -110,3 +109,6 @@ function view(ctrl){
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 }
+
+
+export default iat;

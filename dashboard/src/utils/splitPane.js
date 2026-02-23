@@ -1,4 +1,3 @@
-export default splitPane;
 
 const splitPane = args => m.component(splitComponent, args);
 
@@ -49,3 +48,5 @@ const onmousedown = (parentOffset, leftWidth) => () => {
         m.redraw();
     }
 };
+
+export default splitPane;

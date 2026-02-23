@@ -1,7 +1,6 @@
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
 
-export default statisticsTable;
 
 let statisticsTable = args => m.component(statisticsTableComponent, args);
 
@@ -58,3 +57,5 @@ let th_option = (sortBy, sortByTxt, text) => m('th', {
     'data-sort-by':sortByTxt, class: sortBy() === sortByTxt ? 'active' : ''
 }, text);
 
+
+export default statisticsTable;

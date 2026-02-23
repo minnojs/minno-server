@@ -1,6 +1,5 @@
 import formatDate_str from '../utils/formatDate_str';
 
-export default args => m.component(data_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
 import {get_data, delete_data, load_studies, get_requests, delete_request} from '../study/studyModel';
 import {baseUrl} from 'modelUrls';
@@ -393,3 +392,5 @@ function size_format(bytes){
     }
     return bytes.toFixed(1)+' '+units[u];
 }
+
+export default args => m.component(data_dialog, args);

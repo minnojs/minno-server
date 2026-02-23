@@ -1,4 +1,3 @@
-export default constants_view;
 
 let constants_view = args => m.component(constantsGeneratorComponent, args);
 
@@ -96,3 +95,4 @@ let constantsGeneratorComponent = {
     }
 };
 
+export default constants_view;

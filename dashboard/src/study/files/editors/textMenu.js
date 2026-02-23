@@ -3,7 +3,6 @@ import {copyUrl} from 'utils/copyUrl';
 import {play, save, resetFile} from '../sidebar/fileActions';
 import {pageSnippet, questSnippet, taskSnippet} from './snippetActions';
 
-export default textMenuView;
 
 const amdReg = /(?:define\(\[['"])(.*?)(?=['"])/;
 
@@ -140,3 +139,6 @@ const textMenuView = ({mode, file, study, observer}) => {
     ]);
 };
 
+
+
+export default textMenuView;

@@ -1,5 +1,4 @@
 import inputWrapper from './inputWrapper';
-export default maybeInputComponent;
 
 let  maybeInputComponent = {
     controller({prop, form, required, dflt}){
@@ -47,3 +46,5 @@ let  maybeInputComponent = {
         ]);
     })
 };
+
+export default maybeInputComponent;

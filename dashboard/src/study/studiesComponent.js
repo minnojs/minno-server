@@ -1,4 +1,3 @@
-export default mainComponent;
 import {load_studies} from './studyModel';
 import {get_tags} from 'tags/tagsModel';
 import {createNotifications} from 'utils/notifyComponent';
@@ -237,3 +236,6 @@ function routeConfig(el, isInit, ctx, vdom) {
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+
+
+export default mainComponent;

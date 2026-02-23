@@ -1,4 +1,3 @@
-export default stimuli_view;
 
 let stimuli_view = args => m.component(stimuliGeneratorComponent, args);
 
@@ -267,3 +266,4 @@ let stimuliGeneratorComponent = {
     }
 };
 
+export default stimuli_view;

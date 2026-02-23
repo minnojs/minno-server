@@ -1,5 +1,4 @@
 import messages from 'utils/messagesComponent';
-export default args => m.component(rulesComponent, args);
 
 let rulesComponent = {
     controller({visual, value, comments, exist_rule_file}){
@@ -49,3 +48,5 @@ let getInputs = (visual, value) => (element, isInit) => {
     element.ruleGeneratorValue = value;
 };
 
+
+export default args => m.component(rulesComponent, args);

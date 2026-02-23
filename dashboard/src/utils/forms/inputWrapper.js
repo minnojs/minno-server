@@ -1,4 +1,3 @@
-export default inputWrapper;
 let inputWrapper = (view) => (ctrl, args) => {
     let isValid = !ctrl.validity || ctrl.validity();
     let groupClass;
@@ -33,3 +32,4 @@ let inputWrapper = (view) => (ctrl, args) => {
             ]
     ]);
 };
+export default inputWrapper;

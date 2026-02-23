@@ -43,7 +43,6 @@ import propertiesComponent from 'study/properties/propertiesComponent';
 import tagsComponent from 'tags/tagsComponent';
 import translateComponent from 'study/templates/pagesComponent';
 
-export default routes;
 
 let routes = {
     '/tags':  tagsComponent,
@@ -99,3 +98,5 @@ let routes = {
 
 };
 
+
+export default routes;

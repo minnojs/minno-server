@@ -1,7 +1,6 @@
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import {study_removal, get_study_prop} from 'deploy/deployModel';
 
-export default StudyRemovalComponent;
 const ASTERIX = m('span.text-danger', '*');
 
 let StudyRemovalComponent = {
@@ -90,3 +89,6 @@ let StudyRemovalComponent = {
             ]);
     }
 };
+
+
+export default StudyRemovalComponent;

@@ -1,5 +1,4 @@
 import {add_tag, get_tags_for_study} from './tagsModel';
-export default args => m.component(studyTagsComponent, args);
 
 let studyTagsComponent = {
     controller({tags, study_id}){
@@ -65,3 +64,6 @@ function create_tag(study_id, tagName, tags, error){
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+
+
+export default args => m.component(studyTagsComponent, args);

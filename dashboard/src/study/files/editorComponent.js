@@ -11,7 +11,6 @@ import stiatEditor from './wizards/implicitMeasures/STIAT/stiat.js';
 import epEditor from './wizards/implicitMeasures/EP/ep.js';
 import ampEditor from './wizards/implicitMeasures/AMP/amp.js';
 
-export default fileEditorComponent;
 
 let editors = {
     js: textEditor,
@@ -70,3 +69,6 @@ let fileEditorComponent = {
         ]);
     }
 };
+
+
+export default fileEditorComponent;

@@ -1,7 +1,6 @@
 // download support according to modernizer
 const downloadSupport = !window.externalHost && 'download' in document.createElement('a');
 
-export default downloadLink;
 
 const downloadLink = (url, name) => {
     if (downloadSupport){
@@ -17,3 +16,5 @@ const downloadLink = (url, name) => {
         win.focus();
     }
 };
+
+export default downloadLink;

@@ -2,7 +2,6 @@ import {get_pending_studies, use_code} from './messagesModel';
 
 import sharingRequestComponent from './sharingRequestsComponent';
 
-export default messagesComponent;
 
 let messagesComponent = {
     controller(){
@@ -53,3 +52,6 @@ let messagesComponent = {
                 ]);
     }
 };
+
+
+export default messagesComponent;

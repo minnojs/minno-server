@@ -6,7 +6,6 @@ import stimuli_view from '../../generator/stimuliGeneratorComponent';
 import conditions_view from '../../generator/conditionsGeneratorComponent';
 import {createNotifications} from 'utils/notifyComponent';
 
-export default propEditor;
 
 const propEditor = args => m.component(propEditorComponent, args);
 
@@ -136,3 +135,6 @@ const propEditorComponent = {
             ]);
     }
 };
+
+
+export default propEditor;

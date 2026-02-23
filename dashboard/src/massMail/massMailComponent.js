@@ -1,6 +1,5 @@
 import {send} from './massMailModel';
 import fullHeight from 'utils/fullHeight';
-export default massMailComponent;
 
 let massMailComponent = {
     controller(){
@@ -109,3 +108,6 @@ function getStartValue(prop){
         if (!isInit) setTimeout(()=>prop(element.value), 30);
     };
 }
+
+
+export default massMailComponent;

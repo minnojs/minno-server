@@ -1,6 +1,5 @@
 let stimuli_sets_view = args => m.component(stimuliSetsGeneratorComponent, args);
 
-export default stimuli_sets_view;
 
 let stimuliSetsGeneratorComponent = {
     controller({is_locked, condition, possible_stimuli, possible_responses, imgs}){
@@ -147,3 +146,5 @@ let stimuliSetsGeneratorComponent = {
     }
 };
 
+
+export default stimuli_sets_view;

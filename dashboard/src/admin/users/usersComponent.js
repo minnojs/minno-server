@@ -6,7 +6,6 @@ import {copyUrlContent} from 'utils/copyUrl';
 import addComponent from '../../addUser/addUserComponent';
 
 
-export default usersComponent;
 
 let usersComponent = {
     controller(){
@@ -128,3 +127,5 @@ let usersComponent = {
     }
 };
 
+
+export default usersComponent;

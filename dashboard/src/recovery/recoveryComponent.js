@@ -1,6 +1,5 @@
 import {recovery} from './recoveryModel';
 import fullHeight from 'utils/fullHeight';
-export default recoveryComponent;
 
 let recoveryComponent = {
     controller(){
@@ -61,3 +60,7 @@ function getStartValue(prop){
         if (!isInit) setTimeout(()=>prop(element.value), 30);
     };
 }
+
+
+
+export default recoveryComponent;

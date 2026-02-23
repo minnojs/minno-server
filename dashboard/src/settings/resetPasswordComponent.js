@@ -3,7 +3,6 @@ import {set_password, is_recovery_code} from './settingsModel';
 import fullHeight from 'utils/fullHeight';
 import {password_body} from './changePasswordView';
 
-export default resetPasswordComponent;
 
 let resetPasswordComponent = {
     controller(){
@@ -63,3 +62,7 @@ let resetPasswordComponent = {
             ]);
     }
 };
+
+
+
+export default resetPasswordComponent;

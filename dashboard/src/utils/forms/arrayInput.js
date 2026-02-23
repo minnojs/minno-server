@@ -1,6 +1,5 @@
 import textInputComponent from './textInput';
 import transformProp from 'utils/transformProp';
-export default arrayInput;
 
 let arrayInput = args => {
     let identity = arg => arg;
@@ -14,3 +13,5 @@ let arrayInput = args => {
     return m.component(textInputComponent, fixedArgs);
 };
 
+
+export default arrayInput;

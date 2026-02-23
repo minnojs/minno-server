@@ -1,7 +1,6 @@
 import {add} from './addUserModel';
 import {copyUrlContent} from 'utils/copyUrl';
 
-export default addComponent;
 
 let addComponent = {
     controller(){
@@ -118,3 +117,6 @@ function getStartValue(prop){
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+
+
+export default addComponent;

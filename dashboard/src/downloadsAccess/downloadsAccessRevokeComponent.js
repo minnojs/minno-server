@@ -1,6 +1,5 @@
 import messages from 'utils/messagesComponent';
 import classNames from 'utils/classNames';
-export default revokeMessage;
 
 let revokeMessage = args => messages.custom({
     content: m.component(revokeComponent, Object.assign({close:messages.close}, args)),
@@ -93,3 +92,4 @@ let focusConfig = (element, isInitialized) => {
     if (!isInitialized) element.focus();
 };
 
+export default revokeMessage;

@@ -1,4 +1,3 @@
-export default sharingRequestComponent;
 
 let sharingRequestComponent = {
     controller({ctrl}){
@@ -55,3 +54,5 @@ let sharingRequestComponent = {
         ]);
     }
 };
+
+export default sharingRequestComponent;

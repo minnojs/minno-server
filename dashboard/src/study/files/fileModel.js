@@ -1,7 +1,6 @@
 import jshintOptions from './editors/jshintOptions';
 import {fetchVoid, fetchJson} from 'utils/modelHelpers';
 import {baseUrl} from 'modelUrls';
-export default fileFactory;
 
 const filePrototype = {
     apiUrl(){
@@ -151,3 +150,7 @@ const fileFactory = fileObj => {
         return prop;
     }
 };
+
+
+
+export default fileFactory;

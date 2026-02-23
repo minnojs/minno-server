@@ -1,4 +1,3 @@
-export default statisticsInstructions;
 
 let statisticsInstructions = () => m('.text-muted', [
     m('p', 'Choose whether you want participation data from demo studies, research pool, all research studies (including lab studies), or all studies (demo and research).'),
@@ -8,3 +7,6 @@ let statisticsInstructions = () => m('.text-muted', [
     m('p', 'You can define how completion rate is calculated by entering text to "First task" and "Last task". Only sessions that visited those tasks would be used for the calculation.'),
     m('p', 'When you choose to show the results by date, you will see all the studies that have at least one session in the requested date range, separated by day, week, month or year. This will also show dates with zero sessions. If you want to hide rows with zero sessions, select the "Hide empty" option.')
 ]);
+
+
+export default statisticsInstructions;

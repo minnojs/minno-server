@@ -2,7 +2,6 @@ import {getLast100PoolUpdates} from './poolModel';
 import {dateRangePicker} from 'utils/dateRange';
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
-export default poolComponent;
 
 const PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
 let poolComponent = {
@@ -147,3 +146,7 @@ let dayButtonView = (ctrl, name, days) => m('button.btn.btn-secondary.btn-sm', {
     ctrl.startDate(d);
     ctrl.endDate(new Date());
 }}, name);
+
+
+
+export default poolComponent;

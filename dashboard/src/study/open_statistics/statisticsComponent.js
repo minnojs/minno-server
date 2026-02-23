@@ -2,7 +2,6 @@ import {getStatistics} from './statisticsModel';
 import statisticsForm from './statisticsFormComponent';
 import statisticsTable from './statisticsTableComponent';
 import statisticsInstructions from './instructions';
-export default statisticsComponent;
 
 let statisticsComponent = {
     controller(){
@@ -91,3 +90,5 @@ let downloadFile = (filename, text, query) => element => {
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv.join('\r\n') ));
     element.setAttribute('download', filename);
 };
+
+export default statisticsComponent;

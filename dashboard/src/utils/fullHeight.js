@@ -1,4 +1,3 @@
-export default fullHeight;
 let fullHeight = (element, isInitialized, ctx) => {
     if (!isInitialized){
         onResize();
@@ -15,3 +14,4 @@ let fullHeight = (element, isInitialized, ctx) => {
         element.style.height = document.documentElement.clientHeight - element.getBoundingClientRect().top + 'px';
     }
 };
+export default fullHeight;

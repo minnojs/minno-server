@@ -1,6 +1,5 @@
 import {get_change_request_list} from './changeRequestListModel';
 import sortTable from 'utils/sortTable';
-export default changeRequestListComponent;
 let thConfig = (prop, current) => ({'data-sort-by':prop, class: current() === prop ? 'active' : ''});
 let changeRequestListComponent = {
     controller(){
@@ -56,3 +55,6 @@ let changeRequestListComponent = {
             ]);
     }
 };
+
+
+export default changeRequestListComponent;

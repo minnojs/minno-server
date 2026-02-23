@@ -1,4 +1,3 @@
-export default hash;
 
 const hash = {};
 
@@ -37,3 +36,6 @@ hash.piManager = {
     'Empty': '/implicit/user/yba/wizards/emptymgr.js',
     'Typical': '/implicit/user/yba/wizards/typicalmgr.js'
 };
+
+
+export default hash;

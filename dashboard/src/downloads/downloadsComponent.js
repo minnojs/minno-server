@@ -2,7 +2,6 @@ import {STATUS_RUNNING, STATUS_COMPLETE, STATUS_ERROR} from './downloadsModel';
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
 import {getAll, remove, create} from './downloadsActions';
-export default downloadsComponent;
 
 const TABLE_WIDTH = 7;
 const statusLabelsMap = {}; // defined at the bottom of this file
@@ -159,3 +158,5 @@ function studyFilter(ctrl){
 statusLabelsMap[STATUS_COMPLETE] = m('span.label.label-success', 'Complete');
 statusLabelsMap[STATUS_RUNNING] = m('span.label.label-info', 'Running');
 statusLabelsMap[STATUS_ERROR] = m('span.label.label-danger', 'Error');
+
+export default downloadsComponent;

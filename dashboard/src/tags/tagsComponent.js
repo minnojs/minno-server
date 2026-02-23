@@ -2,7 +2,6 @@ import {get_tags, remove_tag, add_tag, edit_tag} from './tagsModel';
 import {editTag} from './tagsActions';
 import messages from 'utils/messagesComponent';
 
-export default tagsComponent;
 
 let tagsComponent = {
     controller(){
@@ -137,3 +136,6 @@ let tagsComponent = {
         ]);
     }
 };
+
+
+export default tagsComponent;

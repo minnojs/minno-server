@@ -1,4 +1,3 @@
-export default responses_view;
 
 let responses_view = args => m.component(responsesGeneratorComponent, args);
 
@@ -59,3 +58,5 @@ let responsesGeneratorComponent = {
     }
 };
 
+
+export default responses_view;

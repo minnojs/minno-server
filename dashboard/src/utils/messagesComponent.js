@@ -1,4 +1,3 @@
-export default messages;
 
 let noop = ()=>{};
 
@@ -142,3 +141,5 @@ let maxHeight = (element, isInitialized, ctx) => {
         element.style.maxHeight = document.documentElement.clientHeight * 0.9 + 'px';
     }
 };
+
+export default messages;

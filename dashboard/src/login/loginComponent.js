@@ -1,6 +1,5 @@
 import {login, getAuth} from './authModel';
 import fullHeight from 'utils/fullHeight';
-export default loginComponent;
 
 let loginComponent = {
     controller(){
@@ -100,3 +99,6 @@ function getStartValue(prop){
         if (!isInit) setTimeout(()=>prop(element.value), 30);
     };
 }
+
+
+export default loginComponent;

@@ -1,6 +1,5 @@
 import classNames from 'utils/classNames';
 import messages from 'utils/messagesComponent';
-export default createMessage;
 
 /**
  * Create edit component
@@ -78,3 +77,6 @@ let createComponent = {
 let focusConfig = (element, isInitialized) => {
     if (!isInitialized) element.focus();
 };
+
+
+export default createMessage;

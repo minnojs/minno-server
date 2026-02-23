@@ -1,6 +1,5 @@
 import {load_studies} from 'study/studyModel';
 
-export default args => m.component(copyFileComponent, args);
 
 let copyFileComponent = {
     controller({new_study_id, new_study_name, study_id}){
@@ -44,3 +43,6 @@ function sort_studies_by_name2(study1, study2){
 let template_filter = () => study => {
     return study.study_type === 'regular' && !study.is_template;
 };
+
+
+export default args => m.component(copyFileComponent, args);

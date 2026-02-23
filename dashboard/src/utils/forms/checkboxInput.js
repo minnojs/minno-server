@@ -1,5 +1,4 @@
 import inputWrapper from './inputWrapper';
-export default checkboxInputComponent;
 
 let  checkboxInputComponent = {
     controller({prop, form, required}){
@@ -23,3 +22,6 @@ let  checkboxInputComponent = {
         ]);
     })
 };
+
+
+export default checkboxInputComponent;

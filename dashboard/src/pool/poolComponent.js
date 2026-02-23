@@ -3,7 +3,6 @@ import {play, pause, remove, edit, create, reset} from './poolActions';
 import {getAuth} from 'login/authModel';
 import sortTable from 'utils/sortTable';
 import formatDate from 'utils/formatDate';
-export default poolComponent;
 
 const PRODUCTION_URL = 'https://implicit.harvard.edu/implicit/';
 const TABLE_WIDTH = 8;
@@ -177,3 +176,5 @@ function studyFilter(ctrl){
         return typeof val === 'string' && val.includes(search);
     }
 }
+
+export default poolComponent;

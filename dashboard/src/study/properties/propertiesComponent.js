@@ -22,7 +22,6 @@ import studyTagsComponent from '../../tags/studyTagsComponent';
 import {update_tags_in_study} from '../../tags/tagsModel';
 import dropdown from 'utils/dropdown';
 
-export default propertiesComponent;
 const notifications= createNotifications();
 
 let propertiesComponent = {
@@ -535,3 +534,6 @@ let propertiesComponent = {
 
 const focus_it = (element, isInitialized) => {
     if (!isInitialized) setTimeout(() => element.focus());};
+
+
+export default propertiesComponent;

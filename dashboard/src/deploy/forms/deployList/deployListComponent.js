@@ -2,7 +2,6 @@ import {get_study_list} from './deployListModel';
 import sortTable from 'utils/sortTable';
 
 
-export default deployComponent;
 let thConfig = (prop, current) => ({'data-sort-by':prop, class: current() === prop ? 'active' : ''});
 
 let deployComponent = {
@@ -58,3 +57,6 @@ let deployComponent = {
             ]);
     }
 };
+
+
+export default deployComponent;

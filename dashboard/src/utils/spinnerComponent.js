@@ -1,4 +1,3 @@
-export default spinner;
 
 const spinner = {
     display: m.prop(false),
@@ -19,3 +18,5 @@ const spinner = {
         );
     }
 };
+
+export default spinner;

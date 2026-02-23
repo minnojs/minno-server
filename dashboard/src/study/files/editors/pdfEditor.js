@@ -1,4 +1,3 @@
-export default pdfEditor;
 
 let pdfEditor = ({file}) => m('object', {
     data: file.url,
@@ -9,3 +8,4 @@ let pdfEditor = ({file}) => m('object', {
     m('embed', {src: file.url, type: 'application/pdf'}, 'Your browser does not support PDF')
 ]);
 
+export default pdfEditor;

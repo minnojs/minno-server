@@ -1,6 +1,5 @@
 import messages from 'utils/messagesComponent';
 import classNames from 'utils/classNames';
-export default grantMessage;
 
 let grantMessage = args => messages.custom({
     content: m.component(grantComponent, Object.assign({close:messages.close}, args)),
@@ -93,3 +92,6 @@ let focusConfig = (element, isInitialized) => {
     if (!isInitialized) element.focus();
 };
 
+
+
+export default grantMessage;

@@ -10,7 +10,6 @@ import validatorComponent from './ace/validatorComponent';
 
 import textMenu from './textMenu';
 
-export default textEditor;
 
 const textEditor = args => m.component(textEditorComponent, args);
 
@@ -88,3 +87,6 @@ let modeMap = {
     xml: 'xml',
     md: 'markdown'
 };
+
+
+export default textEditor;

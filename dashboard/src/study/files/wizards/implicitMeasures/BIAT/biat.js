@@ -7,7 +7,6 @@ import {createNotifications} from '../../../../../utils/notifyComponent.js';
 import {toString, validityCheck, removeIndexFromCategories} from './biatOutputComponent.js';
 import messages from '../../../../../utils/messagesComponent';
 
-export default biat;
 
 const biat = (args, external) => m.component(biatComponent, args, external);
 
@@ -115,3 +114,6 @@ function view(ctrl){
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     ]);
 }
+
+
+export default biat;

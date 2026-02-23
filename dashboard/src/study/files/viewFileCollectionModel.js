@@ -1,6 +1,5 @@
 import {fetchFullJson, fetchJson} from 'utils/modelHelpers';
 import fileFactory from './fileModel';
-export default studyFactory;
 import {baseUrl} from 'modelUrls';
 
 
@@ -251,3 +250,6 @@ let viewModelMap = function(signature) {
         return map[key];
     };
 };
+
+
+export default studyFactory;

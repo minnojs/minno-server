@@ -1,5 +1,4 @@
 import node from './nodeComponent';
-export default folder;
 
 let folder = args => {
     args.key = args.path;
@@ -15,3 +14,6 @@ let folderComponent = {
         ]);
     }
 };
+
+
+export default folder;

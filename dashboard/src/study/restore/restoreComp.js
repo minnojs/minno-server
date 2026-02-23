@@ -1,4 +1,3 @@
-export default args => m.component(restore_dialog, args);
 
 import {restore2version} from '../studyModel';
 
@@ -51,3 +50,5 @@ function do_restore(ctrl){
         .catch(err=>ctrl.error(err.message))
         .then(m.redraw);
 }
+export default args => m.component(restore_dialog, args);
+

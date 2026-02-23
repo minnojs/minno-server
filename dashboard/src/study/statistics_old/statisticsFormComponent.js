@@ -1,6 +1,5 @@
 import {dateRangePicker} from 'utils/dateRange';
 import {formFactory, textInput, selectInput} from 'utils/formHelpers';
-export default statisticsForm;
 
 let statisticsForm = args => m.component(statisticsFormComponent, args);
 const colWidth = 3;
@@ -92,3 +91,7 @@ let radioButton = (prop, text) => m('label.c-input.c-radio', [
     m('span.c-indicator'),
     text
 ]);
+
+
+
+export default statisticsForm;

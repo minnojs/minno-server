@@ -1,5 +1,4 @@
 import fullHeight from 'utils/fullHeight';
-export default ace;
 
 let ace = args => m.component(aceComponent, args);
 
@@ -122,3 +121,6 @@ let aceComponent = {
         };
     }
 };
+
+
+export default ace;

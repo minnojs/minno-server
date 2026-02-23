@@ -3,7 +3,6 @@ import messages from 'utils/messagesComponent';
 import spinner from 'utils/spinnerComponent';
 import {getAuth, logout} from 'login/authModel';
 
-export default layout;
 
 let timer = 0;
 let countdown = 0;
@@ -189,3 +188,5 @@ let layout = route => {
     };
 
 };
+
+export default layout;

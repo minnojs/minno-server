@@ -1,6 +1,5 @@
 import {fetchJson, fetchVoid, fetchUpload} from 'utils/modelHelpers';
 import fileFactory from './fileModel';
-export default studyFactory;
 import {baseUrl} from 'modelUrls';
 
 const studyPrototype = {
@@ -322,3 +321,5 @@ const viewModelMap = function(signature) {
         return map[key];
     };
 };
+
+export default studyFactory;

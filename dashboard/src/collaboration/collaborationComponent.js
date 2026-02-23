@@ -1,7 +1,6 @@
 import {is_collaboration_code} from './collaborationModel';
 import fullHeight from 'utils/fullHeight';
 
-export default collaborationComponent;
 
 let collaborationComponent = {
     controller(){
@@ -19,3 +18,6 @@ let collaborationComponent = {
             m('h5', 'There is a problem! please check your code...')]);
     }
 };
+
+
+export default collaborationComponent;

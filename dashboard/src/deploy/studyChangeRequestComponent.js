@@ -1,7 +1,6 @@
 import {formFactory, textInput, radioInput} from 'utils/formHelpers';
 import {Study_change_request, get_study_prop} from 'deploy/deployModel';
 
-export default studyChangeRequestComponent;
 const ASTERIX = m('span.text-danger', '*');
 
 let studyChangeRequestComponent = {
@@ -96,3 +95,5 @@ let studyChangeRequestComponent = {
         ]);
     }
 };
+
+export default studyChangeRequestComponent;

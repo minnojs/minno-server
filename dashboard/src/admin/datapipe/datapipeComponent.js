@@ -3,7 +3,6 @@ import {get_tokens, remove_token} from './datapipeModel';
 import messages from 'utils/messagesComponent';
 
 
-export default datapipeComponent;
 
 let datapipeComponent = {
     controller(){
@@ -201,3 +200,4 @@ let datapipeComponent = {
     }
 };
 
+export default datapipeComponent;

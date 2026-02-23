@@ -1,5 +1,4 @@
 import classNames from './classNames';
-export default contextMenuComponent;
 
 /**
  * Set this component into your layout then use any mouse event to open the context menu:
@@ -76,3 +75,6 @@ let menuNode = (node, key) => {
         win.focus();
     }
 };
+
+
+export default contextMenuComponent;

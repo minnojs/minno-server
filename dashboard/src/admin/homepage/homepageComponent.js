@@ -2,7 +2,6 @@ import {get_homepage, update_homepage} from './homepageModel';
 import {createNotifications} from 'utils/notifyComponent';
 
 
-export default homepageComponent;
 
 let homepageComponent = {
     controller(){
@@ -124,3 +123,5 @@ let homepageComponent = {
             ]);
     }
 };
+
+export default homepageComponent;

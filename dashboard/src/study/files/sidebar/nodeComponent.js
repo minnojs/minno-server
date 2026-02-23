@@ -4,7 +4,6 @@ import fileContext from './fileContext';
 import {uploadConfig} from 'utils/uploader';
 import {uploadFiles} from './fileActions';
 
-export default node;
 
 let node = (args) => m.component(nodeComponent, args);
 
@@ -130,3 +129,6 @@ const choose = ({file, study}) => e => {
         return study.vm(file.id).isChosen;
     }
 };
+
+
+export default node;

@@ -1,4 +1,3 @@
-export default fab;
 
 let fab = args => m.component(fabComponent, args);
 
@@ -13,3 +12,6 @@ let fabComponent = {
         m('.fab-button.fab-main', {tooltip:'Actions'}, m('i.fa.fa-lg.fa-bolt'))
     ])
 };
+
+
+export default fab;

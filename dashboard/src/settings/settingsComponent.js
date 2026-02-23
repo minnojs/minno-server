@@ -5,7 +5,6 @@ import fullHeight from 'utils/fullHeight';
 import {draw_menu} from './settingsMenu';
 // import {gdrive_body} from './connect2GdriveView';
 
-export default changePasswordComponent;
 
 let changePasswordComponent = {
     controller(){
@@ -151,3 +150,6 @@ let changePasswordComponent = {
         ]);
     }
 };
+
+
+export default changePasswordComponent;

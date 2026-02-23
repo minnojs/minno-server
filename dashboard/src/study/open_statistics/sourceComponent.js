@@ -1,5 +1,4 @@
 import inputWrapper from 'utils/forms/inputWrapper';
-export default source;
 
 const STUDYTYPES = ['Research', 'Demo', 'Both'];
 const STUDYDBS = ['Any', 'Current', 'History'];
@@ -20,3 +19,6 @@ let sourceComponent = {
         ]);
     })
 };
+
+
+export default source;

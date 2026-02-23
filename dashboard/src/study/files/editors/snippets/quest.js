@@ -1,6 +1,5 @@
 import {formFactory, textInput, checkboxInput, arrayInput, selectInput, maybeInput} from 'utils/formHelpers';
 import inheritInput from './inheritInput';
-export default questComponent;
 
 let questComponent = {
     controller({output,close}){
@@ -163,3 +162,5 @@ let sliderComponent = {
         ]); 
     }
 };
+
+export default questComponent;

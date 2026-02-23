@@ -1,4 +1,3 @@
-export default args => m.component(stat_dialog, args);
 import {dateRangePicker} from 'utils/dateRange';
 import {get_stat, load_studies} from '../studyModel';
 import formatDate from 'utils/formatDate';
@@ -273,3 +272,5 @@ function show_stat(ctrl){
                 )])
         ];
 }
+
+export default args => m.component(stat_dialog, args);

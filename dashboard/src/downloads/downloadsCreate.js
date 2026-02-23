@@ -2,10 +2,6 @@ import messages from 'utils/messagesComponent';
 import {dateRangePicker} from 'utils/dateRange';
 import classNames from 'utils/classNames';
 
-export default args => messages.custom({
-    content: m.component(createComponent, Object.assign({close:messages.close}, args)),
-    wide: true
-});
 
 
 let createComponent = {
@@ -132,3 +128,9 @@ let dayButtonView = (download, name, days) => m('button.btn.btn-secondary.btn-sm
         download.endDate(new Date());
     }
 }, name);
+
+
+export default args => messages.custom({
+    content: m.component(createComponent, Object.assign({close:messages.close}, args)),
+    wide: true
+});

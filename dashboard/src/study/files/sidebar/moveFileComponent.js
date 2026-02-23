@@ -1,5 +1,4 @@
 import classNames from 'utils/classNames';
-export default moveFileComponent;
 
 const moveFileComponent = args => m.component(component, args);
 
@@ -57,3 +56,6 @@ function dirNode(dir, dirs, newPath){
 function dirName(name){
     return name === '/' ? m('span.text-muted', 'Root Directory') : name;
 }
+
+
+export default moveFileComponent;

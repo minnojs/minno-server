@@ -1,6 +1,5 @@
 import messages from 'utils/messagesComponent';
 import classNames from 'utils/classNames';
-export default createMessage;
 
 let createMessage = args => messages.custom({
     content: m.component(createComponent, Object.assign({close:messages.close}, args)),
@@ -82,3 +81,6 @@ let createComponent = {
 let focusConfig = (element, isInitialized) => {
     if (!isInitialized) element.focus();
 };
+
+
+export default createMessage;

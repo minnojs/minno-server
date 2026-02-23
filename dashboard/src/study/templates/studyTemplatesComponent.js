@@ -1,5 +1,4 @@
 import {} from '../studyModel';
-export default args => m.component(studyTemplatesComponent, args);
 
 let studyTemplatesComponent = {
     controller({load_templates, studies, reuse_id, templates, template_id}){
@@ -37,3 +36,7 @@ function sort_studies(study_1, study_2){return study_1.name.toLowerCase() === st
 let ownerFilter = () => study => {
     return study.permission == 'owner';
 };
+
+
+export default args => m.component(studyTemplatesComponent, args);
+

@@ -1,6 +1,5 @@
 import {formFactory, textInput, selectInput} from 'utils/formHelpers';
 import inheritInput from './inheritInput';
-export default taskComponent;
 
 const taskComponent = {
     controller({output,close}){
@@ -120,3 +119,5 @@ const questComponent = {
         ]); 
     }
 };
+
+export default taskComponent;

@@ -2,7 +2,6 @@ import {get_config, update_config} from './configModel';
 import {createNotifications} from 'utils/notifyComponent';
 
 
-export default configComponent;
 
 let configComponent = {
     controller(){
@@ -610,3 +609,5 @@ function download_csv(csv, filename) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
 }
+
+export default configComponent;

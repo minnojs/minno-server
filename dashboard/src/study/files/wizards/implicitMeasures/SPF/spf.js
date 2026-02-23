@@ -7,7 +7,6 @@ import {createNotifications} from '../../../../../utils/notifyComponent.js';
 import {toString, validityCheck} from './spfOutputComponent.js';
 import messages from '../../../../../utils/messagesComponent';
 
-export default spf;
 
 const spf = (args, external) => m.component(spfComponent, args, external);
 
@@ -111,3 +110,5 @@ function view(ctrl){
         m.component(tabsComponent, tabs, ctrl.settings, ctrl.defaultSettings, ctrl.external)
     );
 }
+
+export default spf;

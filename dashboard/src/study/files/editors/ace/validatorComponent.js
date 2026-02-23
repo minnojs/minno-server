@@ -1,5 +1,4 @@
 import validator from './parser/validator';
-export default validate;
 
 let validate = args => m.component(validateComponent, args);
 
@@ -118,3 +117,5 @@ function syntaxHighlight(json) {
         return '<span class="' + cls + '">' + match + '</span>';
     });
 }
+
+export default validate;

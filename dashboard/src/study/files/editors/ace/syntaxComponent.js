@@ -1,4 +1,3 @@
-export default syntax;
 
 let syntax = args => m.component(syntaxComponent, args);
 
@@ -94,3 +93,6 @@ let syntaxComponent = {
         ]);
     }
 };
+
+
+export default syntax;

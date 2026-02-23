@@ -1,5 +1,4 @@
 import inputWrapper from './inputWrapper';
-export default selectInputComponent;
 
 let selectInputComponent = {
     controller({prop, form, required}){
@@ -23,3 +22,6 @@ let selectInputComponent = {
     })
 };
 
+
+
+export default selectInputComponent;

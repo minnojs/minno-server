@@ -1,5 +1,4 @@
 import inputWrapper from 'utils/forms/inputWrapper';
-export default inheritInput;
 
 let inheritInput = args => m.component(inheritInputComponent, args);
 
@@ -54,3 +53,6 @@ let inheritInputComponent = {
 };
 
 const TYPES = ['random', 'exRandom', 'sequential'];
+
+
+export default inheritInput;

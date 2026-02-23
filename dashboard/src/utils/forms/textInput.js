@@ -1,5 +1,4 @@
 import inputWrapper from './inputWrapper';
-export default textInputComponent;
 
 const textInputComponent  = {
     controller({prop, form, required = false}) {
@@ -27,3 +26,5 @@ const textInputComponent  = {
             } , [prop()]);
     })
 };
+
+export default textInputComponent;

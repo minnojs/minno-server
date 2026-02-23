@@ -1,5 +1,4 @@
 import sortTable from 'utils/sortTable';
-export default statisticsTable;
 
 let statisticsTable = args => m.component(statisticsTableComponent, args);
 
@@ -26,3 +25,6 @@ let statisticsTableComponent = {
         ]);
     }
 };
+
+
+export default statisticsTable;

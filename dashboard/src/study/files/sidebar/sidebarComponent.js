@@ -2,7 +2,6 @@ import fileListComponent from './fileListComponent';
 import sidebarButtons from './sidebarButtons';
 import {createNotifications} from 'utils/notifyComponent';
 
-export default sidebarComponent;
 const notifications= createNotifications();
 
 const sidebarComponent = {
@@ -24,3 +23,6 @@ function config(el, isInitialized, ctx){
         ctx.scrollTop = el.scrollTop;
     }
 }
+
+
+export default sidebarComponent;
