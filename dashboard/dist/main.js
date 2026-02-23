@@ -126,6 +126,96 @@
       );
     }
 
+    function allSettled(arr) {
+      var P = this;
+      return new P(function(resolve, reject) {
+        if (!(arr && typeof arr.length !== 'undefined')) {
+          return reject(
+            new TypeError(
+              typeof arr +
+                ' ' +
+                arr +
+                ' is not iterable(cannot read property Symbol(Symbol.iterator))'
+            )
+          );
+        }
+        var args = Array.prototype.slice.call(arr);
+        if (args.length === 0) { return resolve([]); }
+        var remaining = args.length;
+
+        function res(i, val) {
+          if (val && (typeof val === 'object' || typeof val === 'function')) {
+            var then = val.then;
+            if (typeof then === 'function') {
+              then.call(
+                val,
+                function(val) {
+                  res(i, val);
+                },
+                function(e) {
+                  args[i] = { status: 'rejected', reason: e };
+                  if (--remaining === 0) {
+                    resolve(args);
+                  }
+                }
+              );
+              return;
+            }
+          }
+          args[i] = { status: 'fulfilled', value: val };
+          if (--remaining === 0) {
+            resolve(args);
+          }
+        }
+
+        for (var i = 0; i < args.length; i++) {
+          res(i, args[i]);
+        }
+      });
+    }
+
+    /**
+     * @constructor
+     */
+    function AggregateError(errors, message) {
+      (this.name = 'AggregateError'), (this.errors = errors);
+      this.message = message || '';
+    }
+    AggregateError.prototype = Error.prototype;
+
+    function any(arr) {
+      var P = this;
+      return new P(function(resolve, reject) {
+        if (!(arr && typeof arr.length !== 'undefined')) {
+          return reject(new TypeError('Promise.any accepts an array'));
+        }
+
+        var args = Array.prototype.slice.call(arr);
+        if (args.length === 0) { return reject(); }
+
+        var rejectionReasons = [];
+        for (var i = 0; i < args.length; i++) {
+          try {
+            P.resolve(args[i])
+              .then(resolve)
+              .catch(function(error) {
+                rejectionReasons.push(error);
+                if (rejectionReasons.length === args.length) {
+                  reject(
+                    new AggregateError(
+                      rejectionReasons,
+                      'All promises were rejected'
+                    )
+                  );
+                }
+              });
+          } catch (ex) {
+            reject(ex);
+          }
+        }
+      });
+    }
+
     // Store setTimeout reference so promise-polyfill will be unaffected by
     // other code modifying setTimeout (like sinon.useFakeTimers())
     var setTimeoutFunc = setTimeout;
@@ -329,6 +419,10 @@
       });
     };
 
+    Promise$1.any = any;
+
+    Promise$1.allSettled = allSettled;
+
     Promise$1.resolve = function(value) {
       if (value && typeof value === 'object' && value.constructor === Promise$1) {
         return value;
@@ -392,18 +486,38 @@
       throw new Error('unable to locate global object');
     })();
 
-    if (!('Promise' in globalNS)) {
+    // Expose the polyfill if Promise is undefined or set to a
+    // non-function value. The latter can be due to a named HTMLElement
+    // being exposed by browsers for legacy reasons.
+    // https://github.com/taylorhakes/promise-polyfill/issues/114
+    if (typeof globalNS['Promise'] !== 'function') {
       globalNS['Promise'] = Promise$1;
-    } else if (!globalNS.Promise.prototype['finally']) {
-      globalNS.Promise.prototype['finally'] = finallyConstructor;
+    } else {
+      if (!globalNS.Promise.prototype['finally']) {
+        globalNS.Promise.prototype['finally'] = finallyConstructor;
+      }
+      if (!globalNS.Promise.allSettled) {
+        globalNS.Promise.allSettled = allSettled;
+      }
+      if (!globalNS.Promise.any) {
+        globalNS.Promise.any = any;
+      }
     }
 
+    /* eslint-disable no-prototype-builtins */
+    var g =
+      (typeof globalThis !== 'undefined' && globalThis) ||
+      (typeof self !== 'undefined' && self) ||
+      // eslint-disable-next-line no-undef
+      (typeof global !== 'undefined' && global) ||
+      {};
+
     var support = {
-      searchParams: 'URLSearchParams' in self,
-      iterable: 'Symbol' in self && 'iterator' in Symbol,
+      searchParams: 'URLSearchParams' in g,
+      iterable: 'Symbol' in g && 'iterator' in Symbol,
       blob:
-        'FileReader' in self &&
-        'Blob' in self &&
+        'FileReader' in g &&
+        'Blob' in g &&
         (function() {
           try {
             new Blob();
@@ -412,8 +526,8 @@
             return false
           }
         })(),
-      formData: 'FormData' in self,
-      arrayBuffer: 'ArrayBuffer' in self
+      formData: 'FormData' in g,
+      arrayBuffer: 'ArrayBuffer' in g
     };
 
     function isDataView(obj) {
@@ -444,8 +558,8 @@
       if (typeof name !== 'string') {
         name = String(name);
       }
-      if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
-        throw new TypeError('Invalid character in header field name')
+      if (/[^a-z0-9\-#$%&'*+.^_`|~!]/i.test(name) || name === '') {
+        throw new TypeError('Invalid character in header field name: "' + name + '"')
       }
       return name.toLowerCase()
     }
@@ -484,6 +598,9 @@
         }, this);
       } else if (Array.isArray(headers)) {
         headers.forEach(function(header) {
+          if (header.length != 2) {
+            throw new TypeError('Headers constructor: expected name/value pair to be length 2, found' + header.length)
+          }
           this.append(header[0], header[1]);
         }, this);
       } else if (headers) {
@@ -554,6 +671,7 @@
     }
 
     function consumed(body) {
+      if (body._noBody) { return }
       if (body.bodyUsed) {
         return Promise.reject(new TypeError('Already read'))
       }
@@ -581,7 +699,9 @@
     function readBlobAsText(blob) {
       var reader = new FileReader();
       var promise = fileReaderReady(reader);
-      reader.readAsText(blob);
+      var match = /charset=([A-Za-z0-9_-]+)/.exec(blob.type);
+      var encoding = match ? match[1] : 'utf-8';
+      reader.readAsText(blob, encoding);
       return promise
     }
 
@@ -609,8 +729,21 @@
       this.bodyUsed = false;
 
       this._initBody = function(body) {
+        /*
+          fetch-mock wraps the Response object in an ES6 Proxy to
+          provide useful test harness features such as flush. However, on
+          ES5 browsers without fetch or Proxy support pollyfills must be used;
+          the proxy-pollyfill is unable to proxy an attribute unless it exists
+          on the object before the Proxy is created. This change ensures
+          Response.bodyUsed exists on the instance, while maintaining the
+          semantic of setting Request.bodyUsed in the constructor before
+          _initBody is called.
+        */
+        // eslint-disable-next-line no-self-assign
+        this.bodyUsed = this.bodyUsed;
         this._bodyInit = body;
         if (!body) {
+          this._noBody = true;
           this._bodyText = '';
         } else if (typeof body === 'string') {
           this._bodyText = body;
@@ -658,15 +791,29 @@
             return Promise.resolve(new Blob([this._bodyText]))
           }
         };
-
-        this.arrayBuffer = function() {
-          if (this._bodyArrayBuffer) {
-            return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
-          } else {
-            return this.blob().then(readBlobAsArrayBuffer)
-          }
-        };
       }
+
+      this.arrayBuffer = function() {
+        if (this._bodyArrayBuffer) {
+          var isConsumed = consumed(this);
+          if (isConsumed) {
+            return isConsumed
+          } else if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
+            return Promise.resolve(
+              this._bodyArrayBuffer.buffer.slice(
+                this._bodyArrayBuffer.byteOffset,
+                this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
+              )
+            )
+          } else {
+            return Promise.resolve(this._bodyArrayBuffer)
+          }
+        } else if (support.blob) {
+          return this.blob().then(readBlobAsArrayBuffer)
+        } else {
+          throw new Error('could not read as ArrayBuffer')
+        }
+      };
 
       this.text = function() {
         var rejected = consumed(this);
@@ -699,7 +846,7 @@
     }
 
     // HTTP methods whose capitalization should be normalized
-    var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
+    var methods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'];
 
     function normalizeMethod(method) {
       var upcased = method.toUpperCase();
@@ -707,6 +854,10 @@
     }
 
     function Request(input, options) {
+      if (!(this instanceof Request)) {
+        throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+      }
+
       options = options || {};
       var body = options.body;
 
@@ -736,13 +887,33 @@
       }
       this.method = normalizeMethod(options.method || this.method || 'GET');
       this.mode = options.mode || this.mode || null;
-      this.signal = options.signal || this.signal;
+      this.signal = options.signal || this.signal || (function () {
+        if ('AbortController' in g) {
+          var ctrl = new AbortController();
+          return ctrl.signal;
+        }
+      }());
       this.referrer = null;
 
       if ((this.method === 'GET' || this.method === 'HEAD') && body) {
         throw new TypeError('Body not allowed for GET or HEAD requests')
       }
       this._initBody(body);
+
+      if (this.method === 'GET' || this.method === 'HEAD') {
+        if (options.cache === 'no-store' || options.cache === 'no-cache') {
+          // Search for a '_' parameter in the query string
+          var reParamSearch = /([?&])_=[^&]*/;
+          if (reParamSearch.test(this.url)) {
+            // If it already exists then set the value with the current time
+            this.url = this.url.replace(reParamSearch, '$1_=' + new Date().getTime());
+          } else {
+            // Otherwise add a new '_' parameter to the end with the current time
+            var reQueryString = /\?/;
+            this.url += (reQueryString.test(this.url) ? '&' : '?') + '_=' + new Date().getTime();
+          }
+        }
+      }
     }
 
     Request.prototype.clone = function() {
@@ -770,28 +941,46 @@
       // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
       // https://tools.ietf.org/html/rfc7230#section-3.2
       var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-      preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
-        var parts = line.split(':');
-        var key = parts.shift().trim();
-        if (key) {
-          var value = parts.join(':').trim();
-          headers.append(key, value);
-        }
-      });
+      // Avoiding split via regex to work around a common IE11 bug with the core-js 3.6.0 regex polyfill
+      // https://github.com/github/fetch/issues/748
+      // https://github.com/zloirock/core-js/issues/751
+      preProcessedHeaders
+        .split('\r')
+        .map(function(header) {
+          return header.indexOf('\n') === 0 ? header.substr(1, header.length) : header
+        })
+        .forEach(function(line) {
+          var parts = line.split(':');
+          var key = parts.shift().trim();
+          if (key) {
+            var value = parts.join(':').trim();
+            try {
+              headers.append(key, value);
+            } catch (error) {
+              console.warn('Response ' + error.message);
+            }
+          }
+        });
       return headers
     }
 
     Body.call(Request.prototype);
 
     function Response(bodyInit, options) {
+      if (!(this instanceof Response)) {
+        throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+      }
       if (!options) {
         options = {};
       }
 
       this.type = 'default';
       this.status = options.status === undefined ? 200 : options.status;
+      if (this.status < 200 || this.status > 599) {
+        throw new RangeError("Failed to construct 'Response': The status provided (0) is outside the range [200, 599].")
+      }
       this.ok = this.status >= 200 && this.status < 300;
-      this.statusText = 'statusText' in options ? options.statusText : 'OK';
+      this.statusText = options.statusText === undefined ? '' : '' + options.statusText;
       this.headers = new Headers(options.headers);
       this.url = options.url || '';
       this._initBody(bodyInit);
@@ -809,7 +998,9 @@
     };
 
     Response.error = function() {
-      var response = new Response(null, {status: 0, statusText: ''});
+      var response = new Response(null, {status: 200, statusText: ''});
+      response.ok = false;
+      response.status = 0;
       response.type = 'error';
       return response
     };
@@ -824,7 +1015,7 @@
       return new Response(null, {status: status, headers: {location: url}})
     };
 
-    var DOMException = self.DOMException;
+    var DOMException = g.DOMException;
     try {
       new DOMException();
     } catch (err) {
@@ -854,28 +1045,50 @@
 
         xhr.onload = function() {
           var options = {
-            status: xhr.status,
             statusText: xhr.statusText,
             headers: parseHeaders(xhr.getAllResponseHeaders() || '')
           };
+          // This check if specifically for when a user fetches a file locally from the file system
+          // Only if the status is out of a normal range
+          if (request.url.indexOf('file://') === 0 && (xhr.status < 200 || xhr.status > 599)) {
+            options.status = 200;
+          } else {
+            options.status = xhr.status;
+          }
           options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
           var body = 'response' in xhr ? xhr.response : xhr.responseText;
-          resolve(new Response(body, options));
+          setTimeout(function() {
+            resolve(new Response(body, options));
+          }, 0);
         };
 
         xhr.onerror = function() {
-          reject(new TypeError('Network request failed'));
+          setTimeout(function() {
+            reject(new TypeError('Network request failed'));
+          }, 0);
         };
 
         xhr.ontimeout = function() {
-          reject(new TypeError('Network request failed'));
+          setTimeout(function() {
+            reject(new TypeError('Network request timed out'));
+          }, 0);
         };
 
         xhr.onabort = function() {
-          reject(new DOMException('Aborted', 'AbortError'));
+          setTimeout(function() {
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, 0);
         };
 
-        xhr.open(request.method, request.url, true);
+        function fixUrl(url) {
+          try {
+            return url === '' && g.location.href ? g.location.href : url
+          } catch (e) {
+            return url
+          }
+        }
+
+        xhr.open(request.method, fixUrl(request.url), true);
 
         if (request.credentials === 'include') {
           xhr.withCredentials = true;
@@ -883,13 +1096,32 @@
           xhr.withCredentials = false;
         }
 
-        if ('responseType' in xhr && support.blob) {
-          xhr.responseType = 'blob';
+        if ('responseType' in xhr) {
+          if (support.blob) {
+            xhr.responseType = 'blob';
+          } else if (
+            support.arrayBuffer
+          ) {
+            xhr.responseType = 'arraybuffer';
+          }
         }
 
-        request.headers.forEach(function(value, name) {
-          xhr.setRequestHeader(name, value);
-        });
+        if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers || (g.Headers && init.headers instanceof g.Headers))) {
+          var names = [];
+          Object.getOwnPropertyNames(init.headers).forEach(function(name) {
+            names.push(normalizeName(name));
+            xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
+          });
+          request.headers.forEach(function(value, name) {
+            if (names.indexOf(name) === -1) {
+              xhr.setRequestHeader(name, value);
+            }
+          });
+        } else {
+          request.headers.forEach(function(value, name) {
+            xhr.setRequestHeader(name, value);
+          });
+        }
 
         if (request.signal) {
           request.signal.addEventListener('abort', abortXhr);
@@ -908,11 +1140,11 @@
 
     fetch$1.polyfill = true;
 
-    if (!self.fetch) {
-      self.fetch = fetch$1;
-      self.Headers = Headers;
-      self.Request = Request;
-      self.Response = Response;
+    if (!g.fetch) {
+      g.fetch = fetch$1;
+      g.Headers = Headers;
+      g.Request = Request;
+      g.Response = Response;
     }
 
     function getDefaultExportFromCjs (x) {
@@ -1083,24 +1315,25 @@
     		    }
 
     		    function isValid(m) {
-    		        if (m._isValid == null) {
-    		            var flags = getParsingFlags(m),
-    		                parsedParts = some.call(flags.parsedDateParts, function (i) {
-    		                    return i != null;
-    		                }),
-    		                isNowValid =
-    		                    !isNaN(m._d.getTime()) &&
-    		                    flags.overflow < 0 &&
-    		                    !flags.empty &&
-    		                    !flags.invalidEra &&
-    		                    !flags.invalidMonth &&
-    		                    !flags.invalidWeekday &&
-    		                    !flags.weekdayMismatch &&
-    		                    !flags.nullInput &&
-    		                    !flags.invalidFormat &&
-    		                    !flags.userInvalidated &&
-    		                    (!flags.meridiem || (flags.meridiem && parsedParts));
-
+    		        var flags = null,
+    		            parsedParts = false,
+    		            isNowValid = m._d && !isNaN(m._d.getTime());
+    		        if (isNowValid) {
+    		            flags = getParsingFlags(m);
+    		            parsedParts = some.call(flags.parsedDateParts, function (i) {
+    		                return i != null;
+    		            });
+    		            isNowValid =
+    		                flags.overflow < 0 &&
+    		                !flags.empty &&
+    		                !flags.invalidEra &&
+    		                !flags.invalidMonth &&
+    		                !flags.invalidWeekday &&
+    		                !flags.weekdayMismatch &&
+    		                !flags.nullInput &&
+    		                !flags.invalidFormat &&
+    		                !flags.userInvalidated &&
+    		                (!flags.meridiem || (flags.meridiem && parsedParts));
     		            if (m._strict) {
     		                isNowValid =
     		                    isNowValid &&
@@ -1108,12 +1341,11 @@
     		                    flags.unusedTokens.length === 0 &&
     		                    flags.bigHour === undefined;
     		            }
-
-    		            if (Object.isFrozen == null || !Object.isFrozen(m)) {
-    		                m._isValid = isNowValid;
-    		            } else {
-    		                return isNowValid;
-    		            }
+    		        }
+    		        if (Object.isFrozen == null || !Object.isFrozen(m)) {
+    		            m._isValid = isNowValid;
+    		        } else {
+    		            return isNowValid;
     		        }
     		        return m._isValid;
     		    }
@@ -1560,12 +1792,56 @@
     		        return isFunction(format) ? format(output) : format.replace(/%s/i, output);
     		    }
 
-    		    var aliases = {};
-
-    		    function addUnitAlias(unit, shorthand) {
-    		        var lowerCase = unit.toLowerCase();
-    		        aliases[lowerCase] = aliases[lowerCase + 's'] = aliases[shorthand] = unit;
-    		    }
+    		    var aliases = {
+    		        D: 'date',
+    		        dates: 'date',
+    		        date: 'date',
+    		        d: 'day',
+    		        days: 'day',
+    		        day: 'day',
+    		        e: 'weekday',
+    		        weekdays: 'weekday',
+    		        weekday: 'weekday',
+    		        E: 'isoWeekday',
+    		        isoweekdays: 'isoWeekday',
+    		        isoweekday: 'isoWeekday',
+    		        DDD: 'dayOfYear',
+    		        dayofyears: 'dayOfYear',
+    		        dayofyear: 'dayOfYear',
+    		        h: 'hour',
+    		        hours: 'hour',
+    		        hour: 'hour',
+    		        ms: 'millisecond',
+    		        milliseconds: 'millisecond',
+    		        millisecond: 'millisecond',
+    		        m: 'minute',
+    		        minutes: 'minute',
+    		        minute: 'minute',
+    		        M: 'month',
+    		        months: 'month',
+    		        month: 'month',
+    		        Q: 'quarter',
+    		        quarters: 'quarter',
+    		        quarter: 'quarter',
+    		        s: 'second',
+    		        seconds: 'second',
+    		        second: 'second',
+    		        gg: 'weekYear',
+    		        weekyears: 'weekYear',
+    		        weekyear: 'weekYear',
+    		        GG: 'isoWeekYear',
+    		        isoweekyears: 'isoWeekYear',
+    		        isoweekyear: 'isoWeekYear',
+    		        w: 'week',
+    		        weeks: 'week',
+    		        week: 'week',
+    		        W: 'isoWeek',
+    		        isoweeks: 'isoWeek',
+    		        isoweek: 'isoWeek',
+    		        y: 'year',
+    		        years: 'year',
+    		        year: 'year',
+    		    };
 
     		    function normalizeUnits(units) {
     		        return typeof units === 'string'
@@ -1590,11 +1866,24 @@
     		        return normalizedInput;
     		    }
 
-    		    var priorities = {};
-
-    		    function addUnitPriority(unit, priority) {
-    		        priorities[unit] = priority;
-    		    }
+    		    var priorities = {
+    		        date: 9,
+    		        day: 11,
+    		        weekday: 11,
+    		        isoWeekday: 11,
+    		        dayOfYear: 4,
+    		        hour: 13,
+    		        millisecond: 16,
+    		        minute: 14,
+    		        month: 8,
+    		        quarter: 7,
+    		        second: 15,
+    		        weekYear: 1,
+    		        isoWeekYear: 1,
+    		        week: 5,
+    		        isoWeek: 5,
+    		        year: 1,
+    		    };
 
     		    function getPrioritizedUnits(unitsObj) {
     		        var units = [],
@@ -1608,96 +1897,6 @@
     		            return a.priority - b.priority;
     		        });
     		        return units;
-    		    }
-
-    		    function isLeapYear(year) {
-    		        return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    		    }
-
-    		    function absFloor(number) {
-    		        if (number < 0) {
-    		            // -0 -> 0
-    		            return Math.ceil(number) || 0;
-    		        } else {
-    		            return Math.floor(number);
-    		        }
-    		    }
-
-    		    function toInt(argumentForCoercion) {
-    		        var coercedNumber = +argumentForCoercion,
-    		            value = 0;
-
-    		        if (coercedNumber !== 0 && isFinite(coercedNumber)) {
-    		            value = absFloor(coercedNumber);
-    		        }
-
-    		        return value;
-    		    }
-
-    		    function makeGetSet(unit, keepTime) {
-    		        return function (value) {
-    		            if (value != null) {
-    		                set$1(this, unit, value);
-    		                hooks.updateOffset(this, keepTime);
-    		                return this;
-    		            } else {
-    		                return get(this, unit);
-    		            }
-    		        };
-    		    }
-
-    		    function get(mom, unit) {
-    		        return mom.isValid()
-    		            ? mom._d['get' + (mom._isUTC ? 'UTC' : '') + unit]()
-    		            : NaN;
-    		    }
-
-    		    function set$1(mom, unit, value) {
-    		        if (mom.isValid() && !isNaN(value)) {
-    		            if (
-    		                unit === 'FullYear' &&
-    		                isLeapYear(mom.year()) &&
-    		                mom.month() === 1 &&
-    		                mom.date() === 29
-    		            ) {
-    		                value = toInt(value);
-    		                mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](
-    		                    value,
-    		                    mom.month(),
-    		                    daysInMonth(value, mom.month())
-    		                );
-    		            } else {
-    		                mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value);
-    		            }
-    		        }
-    		    }
-
-    		    // MOMENTS
-
-    		    function stringGet(units) {
-    		        units = normalizeUnits(units);
-    		        if (isFunction(this[units])) {
-    		            return this[units]();
-    		        }
-    		        return this;
-    		    }
-
-    		    function stringSet(units, value) {
-    		        if (typeof units === 'object') {
-    		            units = normalizeObjectUnits(units);
-    		            var prioritized = getPrioritizedUnits(units),
-    		                i,
-    		                prioritizedLen = prioritized.length;
-    		            for (i = 0; i < prioritizedLen; i++) {
-    		                this[prioritized[i].unit](units[prioritized[i].unit]);
-    		            }
-    		        } else {
-    		            units = normalizeUnits(units);
-    		            if (isFunction(this[units])) {
-    		                return this[units](value);
-    		            }
-    		        }
-    		        return this;
     		    }
 
     		    var match1 = /\d/, //       0 - 9
@@ -1720,6 +1919,8 @@
     		        // includes scottish gaelic two word and hyphenated months
     		        matchWord =
     		            /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i,
+    		        match1to2NoLeadingZero = /^[1-9]\d?/, //         1-99
+    		        match1to2HasZero = /^([1-9]\d|\d)/, //           0-99
     		        regexes;
 
     		    regexes = {};
@@ -1758,6 +1959,26 @@
     		        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     		    }
 
+    		    function absFloor(number) {
+    		        if (number < 0) {
+    		            // -0 -> 0
+    		            return Math.ceil(number) || 0;
+    		        } else {
+    		            return Math.floor(number);
+    		        }
+    		    }
+
+    		    function toInt(argumentForCoercion) {
+    		        var coercedNumber = +argumentForCoercion,
+    		            value = 0;
+
+    		        if (coercedNumber !== 0 && isFinite(coercedNumber)) {
+    		            value = absFloor(coercedNumber);
+    		        }
+
+    		        return value;
+    		    }
+
     		    var tokens = {};
 
     		    function addParseToken(token, callback) {
@@ -1791,6 +2012,10 @@
     		        }
     		    }
 
+    		    function isLeapYear(year) {
+    		        return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    		    }
+
     		    var YEAR = 0,
     		        MONTH = 1,
     		        DATE = 2,
@@ -1800,6 +2025,173 @@
     		        MILLISECOND = 6,
     		        WEEK = 7,
     		        WEEKDAY = 8;
+
+    		    // FORMATTING
+
+    		    addFormatToken('Y', 0, 0, function () {
+    		        var y = this.year();
+    		        return y <= 9999 ? zeroFill(y, 4) : '+' + y;
+    		    });
+
+    		    addFormatToken(0, ['YY', 2], 0, function () {
+    		        return this.year() % 100;
+    		    });
+
+    		    addFormatToken(0, ['YYYY', 4], 0, 'year');
+    		    addFormatToken(0, ['YYYYY', 5], 0, 'year');
+    		    addFormatToken(0, ['YYYYYY', 6, true], 0, 'year');
+
+    		    // PARSING
+
+    		    addRegexToken('Y', matchSigned);
+    		    addRegexToken('YY', match1to2, match2);
+    		    addRegexToken('YYYY', match1to4, match4);
+    		    addRegexToken('YYYYY', match1to6, match6);
+    		    addRegexToken('YYYYYY', match1to6, match6);
+
+    		    addParseToken(['YYYYY', 'YYYYYY'], YEAR);
+    		    addParseToken('YYYY', function (input, array) {
+    		        array[YEAR] =
+    		            input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
+    		    });
+    		    addParseToken('YY', function (input, array) {
+    		        array[YEAR] = hooks.parseTwoDigitYear(input);
+    		    });
+    		    addParseToken('Y', function (input, array) {
+    		        array[YEAR] = parseInt(input, 10);
+    		    });
+
+    		    // HELPERS
+
+    		    function daysInYear(year) {
+    		        return isLeapYear(year) ? 366 : 365;
+    		    }
+
+    		    // HOOKS
+
+    		    hooks.parseTwoDigitYear = function (input) {
+    		        return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
+    		    };
+
+    		    // MOMENTS
+
+    		    var getSetYear = makeGetSet('FullYear', true);
+
+    		    function getIsLeapYear() {
+    		        return isLeapYear(this.year());
+    		    }
+
+    		    function makeGetSet(unit, keepTime) {
+    		        return function (value) {
+    		            if (value != null) {
+    		                set$1(this, unit, value);
+    		                hooks.updateOffset(this, keepTime);
+    		                return this;
+    		            } else {
+    		                return get(this, unit);
+    		            }
+    		        };
+    		    }
+
+    		    function get(mom, unit) {
+    		        if (!mom.isValid()) {
+    		            return NaN;
+    		        }
+
+    		        var d = mom._d,
+    		            isUTC = mom._isUTC;
+
+    		        switch (unit) {
+    		            case 'Milliseconds':
+    		                return isUTC ? d.getUTCMilliseconds() : d.getMilliseconds();
+    		            case 'Seconds':
+    		                return isUTC ? d.getUTCSeconds() : d.getSeconds();
+    		            case 'Minutes':
+    		                return isUTC ? d.getUTCMinutes() : d.getMinutes();
+    		            case 'Hours':
+    		                return isUTC ? d.getUTCHours() : d.getHours();
+    		            case 'Date':
+    		                return isUTC ? d.getUTCDate() : d.getDate();
+    		            case 'Day':
+    		                return isUTC ? d.getUTCDay() : d.getDay();
+    		            case 'Month':
+    		                return isUTC ? d.getUTCMonth() : d.getMonth();
+    		            case 'FullYear':
+    		                return isUTC ? d.getUTCFullYear() : d.getFullYear();
+    		            default:
+    		                return NaN; // Just in case
+    		        }
+    		    }
+
+    		    function set$1(mom, unit, value) {
+    		        var d, isUTC, year, month, date;
+
+    		        if (!mom.isValid() || isNaN(value)) {
+    		            return;
+    		        }
+
+    		        d = mom._d;
+    		        isUTC = mom._isUTC;
+
+    		        switch (unit) {
+    		            case 'Milliseconds':
+    		                return void (isUTC
+    		                    ? d.setUTCMilliseconds(value)
+    		                    : d.setMilliseconds(value));
+    		            case 'Seconds':
+    		                return void (isUTC ? d.setUTCSeconds(value) : d.setSeconds(value));
+    		            case 'Minutes':
+    		                return void (isUTC ? d.setUTCMinutes(value) : d.setMinutes(value));
+    		            case 'Hours':
+    		                return void (isUTC ? d.setUTCHours(value) : d.setHours(value));
+    		            case 'Date':
+    		                return void (isUTC ? d.setUTCDate(value) : d.setDate(value));
+    		            // case 'Day': // Not real
+    		            //    return void (isUTC ? d.setUTCDay(value) : d.setDay(value));
+    		            // case 'Month': // Not used because we need to pass two variables
+    		            //     return void (isUTC ? d.setUTCMonth(value) : d.setMonth(value));
+    		            case 'FullYear':
+    		                break; // See below ...
+    		            default:
+    		                return; // Just in case
+    		        }
+
+    		        year = value;
+    		        month = mom.month();
+    		        date = mom.date();
+    		        date = date === 29 && month === 1 && !isLeapYear(year) ? 28 : date;
+    		        void (isUTC
+    		            ? d.setUTCFullYear(year, month, date)
+    		            : d.setFullYear(year, month, date));
+    		    }
+
+    		    // MOMENTS
+
+    		    function stringGet(units) {
+    		        units = normalizeUnits(units);
+    		        if (isFunction(this[units])) {
+    		            return this[units]();
+    		        }
+    		        return this;
+    		    }
+
+    		    function stringSet(units, value) {
+    		        if (typeof units === 'object') {
+    		            units = normalizeObjectUnits(units);
+    		            var prioritized = getPrioritizedUnits(units),
+    		                i,
+    		                prioritizedLen = prioritized.length;
+    		            for (i = 0; i < prioritizedLen; i++) {
+    		                this[prioritized[i].unit](units[prioritized[i].unit]);
+    		            }
+    		        } else {
+    		            units = normalizeUnits(units);
+    		            if (isFunction(this[units])) {
+    		                return this[units](value);
+    		            }
+    		        }
+    		        return this;
+    		    }
 
     		    function mod(n, x) {
     		        return ((n % x) + x) % x;
@@ -1849,17 +2241,9 @@
     		        return this.localeData().months(this, format);
     		    });
 
-    		    // ALIASES
-
-    		    addUnitAlias('month', 'M');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('month', 8);
-
     		    // PARSING
 
-    		    addRegexToken('M', match1to2);
+    		    addRegexToken('M', match1to2, match1to2NoLeadingZero);
     		    addRegexToken('MM', match1to2, match2);
     		    addRegexToken('MMM', function (isStrict, locale) {
     		        return locale.monthsShortRegex(isStrict);
@@ -2025,8 +2409,6 @@
     		    // MOMENTS
 
     		    function setMonth(mom, value) {
-    		        var dayOfMonth;
-
     		        if (!mom.isValid()) {
     		            // No op
     		            return mom;
@@ -2044,8 +2426,13 @@
     		            }
     		        }
 
-    		        dayOfMonth = Math.min(mom.date(), daysInMonth(mom.year(), value));
-    		        mom._d['set' + (mom._isUTC ? 'UTC' : '') + 'Month'](value, dayOfMonth);
+    		        var month = value,
+    		            date = mom.date();
+
+    		        date = date < 29 ? date : Math.min(date, daysInMonth(mom.year(), month));
+    		        void (mom._isUTC
+    		            ? mom._d.setUTCMonth(month, date)
+    		            : mom._d.setMonth(month, date));
     		        return mom;
     		    }
 
@@ -2112,27 +2499,24 @@
     		            longPieces = [],
     		            mixedPieces = [],
     		            i,
-    		            mom;
+    		            mom,
+    		            shortP,
+    		            longP;
     		        for (i = 0; i < 12; i++) {
     		            // make the regex if we don't have it already
     		            mom = createUTC([2000, i]);
-    		            shortPieces.push(this.monthsShort(mom, ''));
-    		            longPieces.push(this.months(mom, ''));
-    		            mixedPieces.push(this.months(mom, ''));
-    		            mixedPieces.push(this.monthsShort(mom, ''));
+    		            shortP = regexEscape(this.monthsShort(mom, ''));
+    		            longP = regexEscape(this.months(mom, ''));
+    		            shortPieces.push(shortP);
+    		            longPieces.push(longP);
+    		            mixedPieces.push(longP);
+    		            mixedPieces.push(shortP);
     		        }
     		        // Sorting makes sure if one month (or abbr) is a prefix of another it
     		        // will match the longer piece.
     		        shortPieces.sort(cmpLenRev);
     		        longPieces.sort(cmpLenRev);
     		        mixedPieces.sort(cmpLenRev);
-    		        for (i = 0; i < 12; i++) {
-    		            shortPieces[i] = regexEscape(shortPieces[i]);
-    		            longPieces[i] = regexEscape(longPieces[i]);
-    		        }
-    		        for (i = 0; i < 24; i++) {
-    		            mixedPieces[i] = regexEscape(mixedPieces[i]);
-    		        }
 
     		        this._monthsRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
     		        this._monthsShortRegex = this._monthsRegex;
@@ -2144,69 +2528,6 @@
     		            '^(' + shortPieces.join('|') + ')',
     		            'i'
     		        );
-    		    }
-
-    		    // FORMATTING
-
-    		    addFormatToken('Y', 0, 0, function () {
-    		        var y = this.year();
-    		        return y <= 9999 ? zeroFill(y, 4) : '+' + y;
-    		    });
-
-    		    addFormatToken(0, ['YY', 2], 0, function () {
-    		        return this.year() % 100;
-    		    });
-
-    		    addFormatToken(0, ['YYYY', 4], 0, 'year');
-    		    addFormatToken(0, ['YYYYY', 5], 0, 'year');
-    		    addFormatToken(0, ['YYYYYY', 6, true], 0, 'year');
-
-    		    // ALIASES
-
-    		    addUnitAlias('year', 'y');
-
-    		    // PRIORITIES
-
-    		    addUnitPriority('year', 1);
-
-    		    // PARSING
-
-    		    addRegexToken('Y', matchSigned);
-    		    addRegexToken('YY', match1to2, match2);
-    		    addRegexToken('YYYY', match1to4, match4);
-    		    addRegexToken('YYYYY', match1to6, match6);
-    		    addRegexToken('YYYYYY', match1to6, match6);
-
-    		    addParseToken(['YYYYY', 'YYYYYY'], YEAR);
-    		    addParseToken('YYYY', function (input, array) {
-    		        array[YEAR] =
-    		            input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
-    		    });
-    		    addParseToken('YY', function (input, array) {
-    		        array[YEAR] = hooks.parseTwoDigitYear(input);
-    		    });
-    		    addParseToken('Y', function (input, array) {
-    		        array[YEAR] = parseInt(input, 10);
-    		    });
-
-    		    // HELPERS
-
-    		    function daysInYear(year) {
-    		        return isLeapYear(year) ? 366 : 365;
-    		    }
-
-    		    // HOOKS
-
-    		    hooks.parseTwoDigitYear = function (input) {
-    		        return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
-    		    };
-
-    		    // MOMENTS
-
-    		    var getSetYear = makeGetSet('FullYear', true);
-
-    		    function getIsLeapYear() {
-    		        return isLeapYear(this.year());
     		    }
 
     		    function createDate(y, m, d, h, M, s, ms) {
@@ -2314,21 +2635,11 @@
     		    addFormatToken('w', ['ww', 2], 'wo', 'week');
     		    addFormatToken('W', ['WW', 2], 'Wo', 'isoWeek');
 
-    		    // ALIASES
-
-    		    addUnitAlias('week', 'w');
-    		    addUnitAlias('isoWeek', 'W');
-
-    		    // PRIORITIES
-
-    		    addUnitPriority('week', 5);
-    		    addUnitPriority('isoWeek', 5);
-
     		    // PARSING
 
-    		    addRegexToken('w', match1to2);
+    		    addRegexToken('w', match1to2, match1to2NoLeadingZero);
     		    addRegexToken('ww', match1to2, match2);
-    		    addRegexToken('W', match1to2);
+    		    addRegexToken('W', match1to2, match1to2NoLeadingZero);
     		    addRegexToken('WW', match1to2, match2);
 
     		    addWeekParseToken(
@@ -2389,17 +2700,6 @@
 
     		    addFormatToken('e', 0, 0, 'weekday');
     		    addFormatToken('E', 0, 0, 'isoWeekday');
-
-    		    // ALIASES
-
-    		    addUnitAlias('day', 'd');
-    		    addUnitAlias('weekday', 'e');
-    		    addUnitAlias('isoWeekday', 'E');
-
-    		    // PRIORITY
-    		    addUnitPriority('day', 11);
-    		    addUnitPriority('weekday', 11);
-    		    addUnitPriority('isoWeekday', 11);
 
     		    // PARSING
 
@@ -2480,24 +2780,24 @@
     		        return m === true
     		            ? shiftWeekdays(weekdays, this._week.dow)
     		            : m
-    		            ? weekdays[m.day()]
-    		            : weekdays;
+    		              ? weekdays[m.day()]
+    		              : weekdays;
     		    }
 
     		    function localeWeekdaysShort(m) {
     		        return m === true
     		            ? shiftWeekdays(this._weekdaysShort, this._week.dow)
     		            : m
-    		            ? this._weekdaysShort[m.day()]
-    		            : this._weekdaysShort;
+    		              ? this._weekdaysShort[m.day()]
+    		              : this._weekdaysShort;
     		    }
 
     		    function localeWeekdaysMin(m) {
     		        return m === true
     		            ? shiftWeekdays(this._weekdaysMin, this._week.dow)
     		            : m
-    		            ? this._weekdaysMin[m.day()]
-    		            : this._weekdaysMin;
+    		              ? this._weekdaysMin[m.day()]
+    		              : this._weekdaysMin;
     		    }
 
     		    function handleStrictParse$1(weekdayName, format, strict) {
@@ -2646,7 +2946,8 @@
     		        if (!this.isValid()) {
     		            return input != null ? this : NaN;
     		        }
-    		        var day = this._isUTC ? this._d.getUTCDay() : this._d.getDay();
+
+    		        var day = get(this, 'Day');
     		        if (input != null) {
     		            input = parseWeekday(input, this.localeData());
     		            return this.add(input - day, 'd');
@@ -2845,13 +3146,6 @@
     		    meridiem('a', true);
     		    meridiem('A', false);
 
-    		    // ALIASES
-
-    		    addUnitAlias('hour', 'h');
-
-    		    // PRIORITY
-    		    addUnitPriority('hour', 13);
-
     		    // PARSING
 
     		    function matchMeridiem(isStrict, locale) {
@@ -2860,9 +3154,9 @@
 
     		    addRegexToken('a', matchMeridiem);
     		    addRegexToken('A', matchMeridiem);
-    		    addRegexToken('H', match1to2);
-    		    addRegexToken('h', match1to2);
-    		    addRegexToken('k', match1to2);
+    		    addRegexToken('H', match1to2, match1to2HasZero);
+    		    addRegexToken('h', match1to2, match1to2NoLeadingZero);
+    		    addRegexToken('k', match1to2, match1to2NoLeadingZero);
     		    addRegexToken('HH', match1to2, match2);
     		    addRegexToken('hh', match1to2, match2);
     		    addRegexToken('kk', match1to2, match2);
@@ -3012,7 +3306,8 @@
 
     		    function isLocaleNameSane(name) {
     		        // Prevent names that look like filesystem paths, i.e contain '/' or '\'
-    		        return name.match('^[^/\\\\]*$') != null;
+    		        // Ensure name is available and function returns boolean
+    		        return !!(name && name.match('^[^/\\\\]*$'));
     		    }
 
     		    function loadLocale(name) {
@@ -3204,21 +3499,21 @@
     		                a[MONTH] < 0 || a[MONTH] > 11
     		                    ? MONTH
     		                    : a[DATE] < 1 || a[DATE] > daysInMonth(a[YEAR], a[MONTH])
-    		                    ? DATE
-    		                    : a[HOUR] < 0 ||
-    		                      a[HOUR] > 24 ||
-    		                      (a[HOUR] === 24 &&
-    		                          (a[MINUTE] !== 0 ||
-    		                              a[SECOND] !== 0 ||
-    		                              a[MILLISECOND] !== 0))
-    		                    ? HOUR
-    		                    : a[MINUTE] < 0 || a[MINUTE] > 59
-    		                    ? MINUTE
-    		                    : a[SECOND] < 0 || a[SECOND] > 59
-    		                    ? SECOND
-    		                    : a[MILLISECOND] < 0 || a[MILLISECOND] > 999
-    		                    ? MILLISECOND
-    		                    : -1;
+    		                      ? DATE
+    		                      : a[HOUR] < 0 ||
+    		                          a[HOUR] > 24 ||
+    		                          (a[HOUR] === 24 &&
+    		                              (a[MINUTE] !== 0 ||
+    		                                  a[SECOND] !== 0 ||
+    		                                  a[MILLISECOND] !== 0))
+    		                        ? HOUR
+    		                        : a[MINUTE] < 0 || a[MINUTE] > 59
+    		                          ? MINUTE
+    		                          : a[SECOND] < 0 || a[SECOND] > 59
+    		                            ? SECOND
+    		                            : a[MILLISECOND] < 0 || a[MILLISECOND] > 999
+    		                              ? MILLISECOND
+    		                              : -1;
 
     		            if (
     		                getParsingFlags(m)._overflowDayOfYear &&
@@ -4652,16 +4947,16 @@
     		        return diff < -6
     		            ? 'sameElse'
     		            : diff < -1
-    		            ? 'lastWeek'
-    		            : diff < 0
-    		            ? 'lastDay'
-    		            : diff < 1
-    		            ? 'sameDay'
-    		            : diff < 2
-    		            ? 'nextDay'
-    		            : diff < 7
-    		            ? 'nextWeek'
-    		            : 'sameElse';
+    		              ? 'lastWeek'
+    		              : diff < 0
+    		                ? 'lastDay'
+    		                : diff < 1
+    		                  ? 'sameDay'
+    		                  : diff < 2
+    		                    ? 'nextDay'
+    		                    : diff < 7
+    		                      ? 'nextWeek'
+    		                      : 'sameElse';
     		    }
 
     		    function calendar$1(time, formats) {
@@ -5468,16 +5763,22 @@
     		            mixedPieces = [],
     		            i,
     		            l,
+    		            erasName,
+    		            erasAbbr,
+    		            erasNarrow,
     		            eras = this.eras();
 
     		        for (i = 0, l = eras.length; i < l; ++i) {
-    		            namePieces.push(regexEscape(eras[i].name));
-    		            abbrPieces.push(regexEscape(eras[i].abbr));
-    		            narrowPieces.push(regexEscape(eras[i].narrow));
+    		            erasName = regexEscape(eras[i].name);
+    		            erasAbbr = regexEscape(eras[i].abbr);
+    		            erasNarrow = regexEscape(eras[i].narrow);
 
-    		            mixedPieces.push(regexEscape(eras[i].name));
-    		            mixedPieces.push(regexEscape(eras[i].abbr));
-    		            mixedPieces.push(regexEscape(eras[i].narrow));
+    		            namePieces.push(erasName);
+    		            abbrPieces.push(erasAbbr);
+    		            narrowPieces.push(erasNarrow);
+    		            mixedPieces.push(erasName);
+    		            mixedPieces.push(erasAbbr);
+    		            mixedPieces.push(erasNarrow);
     		        }
 
     		        this._erasRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
@@ -5510,14 +5811,6 @@
 
     		    // ALIASES
 
-    		    addUnitAlias('weekYear', 'gg');
-    		    addUnitAlias('isoWeekYear', 'GG');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('weekYear', 1);
-    		    addUnitPriority('isoWeekYear', 1);
-
     		    // PARSING
 
     		    addRegexToken('G', matchSigned);
@@ -5547,7 +5840,7 @@
     		            this,
     		            input,
     		            this.week(),
-    		            this.weekday(),
+    		            this.weekday() + this.localeData()._week.dow,
     		            this.localeData()._week.dow,
     		            this.localeData()._week.doy
     		        );
@@ -5609,14 +5902,6 @@
 
     		    addFormatToken('Q', 0, 'Qo', 'quarter');
 
-    		    // ALIASES
-
-    		    addUnitAlias('quarter', 'Q');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('quarter', 7);
-
     		    // PARSING
 
     		    addRegexToken('Q', match1);
@@ -5636,16 +5921,9 @@
 
     		    addFormatToken('D', ['DD', 2], 'Do', 'date');
 
-    		    // ALIASES
-
-    		    addUnitAlias('date', 'D');
-
-    		    // PRIORITY
-    		    addUnitPriority('date', 9);
-
     		    // PARSING
 
-    		    addRegexToken('D', match1to2);
+    		    addRegexToken('D', match1to2, match1to2NoLeadingZero);
     		    addRegexToken('DD', match1to2, match2);
     		    addRegexToken('Do', function (isStrict, locale) {
     		        // TODO: Remove "ordinalParse" fallback in next major release.
@@ -5666,13 +5944,6 @@
     		    // FORMATTING
 
     		    addFormatToken('DDD', ['DDDD', 3], 'DDDo', 'dayOfYear');
-
-    		    // ALIASES
-
-    		    addUnitAlias('dayOfYear', 'DDD');
-
-    		    // PRIORITY
-    		    addUnitPriority('dayOfYear', 4);
 
     		    // PARSING
 
@@ -5698,17 +5969,9 @@
 
     		    addFormatToken('m', ['mm', 2], 0, 'minute');
 
-    		    // ALIASES
-
-    		    addUnitAlias('minute', 'm');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('minute', 14);
-
     		    // PARSING
 
-    		    addRegexToken('m', match1to2);
+    		    addRegexToken('m', match1to2, match1to2HasZero);
     		    addRegexToken('mm', match1to2, match2);
     		    addParseToken(['m', 'mm'], MINUTE);
 
@@ -5720,17 +5983,9 @@
 
     		    addFormatToken('s', ['ss', 2], 0, 'second');
 
-    		    // ALIASES
-
-    		    addUnitAlias('second', 's');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('second', 15);
-
     		    // PARSING
 
-    		    addRegexToken('s', match1to2);
+    		    addRegexToken('s', match1to2, match1to2HasZero);
     		    addRegexToken('ss', match1to2, match2);
     		    addParseToken(['s', 'ss'], SECOND);
 
@@ -5767,14 +6022,6 @@
     		    addFormatToken(0, ['SSSSSSSSS', 9], 0, function () {
     		        return this.millisecond() * 1000000;
     		    });
-
-    		    // ALIASES
-
-    		    addUnitAlias('millisecond', 'ms');
-
-    		    // PRIORITY
-
-    		    addUnitPriority('millisecond', 16);
 
     		    // PARSING
 
@@ -6082,12 +6329,12 @@
     		                    toInt((number % 100) / 10) === 1
     		                        ? 'th'
     		                        : b === 1
-    		                        ? 'st'
-    		                        : b === 2
-    		                        ? 'nd'
-    		                        : b === 3
-    		                        ? 'rd'
-    		                        : 'th';
+    		                          ? 'st'
+    		                          : b === 2
+    		                            ? 'nd'
+    		                            : b === 3
+    		                              ? 'rd'
+    		                              : 'th';
     		            return number + output;
     		        },
     		    });
@@ -6260,19 +6507,6 @@
     		        }
     		    }
 
-    		    // TODO: Use this.as('ms')?
-    		    function valueOf$1() {
-    		        if (!this.isValid()) {
-    		            return NaN;
-    		        }
-    		        return (
-    		            this._milliseconds +
-    		            this._days * 864e5 +
-    		            (this._months % 12) * 2592e6 +
-    		            toInt(this._months / 12) * 31536e6
-    		        );
-    		    }
-
     		    function makeAs(alias) {
     		        return function () {
     		            return this.as(alias);
@@ -6287,7 +6521,8 @@
     		        asWeeks = makeAs('w'),
     		        asMonths = makeAs('M'),
     		        asQuarters = makeAs('Q'),
-    		        asYears = makeAs('y');
+    		        asYears = makeAs('y'),
+    		        valueOf$1 = asMilliseconds;
 
     		    function clone$1() {
     		        return createDuration(this);
@@ -6556,7 +6791,7 @@
 
     		    //! moment.js
 
-    		    hooks.version = '2.29.4';
+    		    hooks.version = '2.30.1';
 
     		    setHookCallback(createLocal);
 
@@ -6703,8 +6938,8 @@
 
     		    isLeapYear = function(year)
     		    {
-    		        // solution by Matti Virkkunen: http://stackoverflow.com/a/4881951
-    		        return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
+    		        // solution lifted from date.js (MIT license): https://github.com/datejs/Datejs
+    		        return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0);
     		    },
 
     		    getDaysInMonth = function(year, month)
@@ -6787,7 +7022,7 @@
     		        // automatically show/hide the picker on `field` focus (default `true` if `field` is set)
     		        bound: undefined,
 
-    		        // data-attribute on the input field with an aria assistance tekst (only applied when `bound` is set)
+    		        // data-attribute on the input field with an aria assistance text (only applied when `bound` is set)
     		        ariaLabel: 'Use the arrow keys to pick a date',
 
     		        // position of the datepicker, relative to the field (default to bottom & left)
@@ -6815,6 +7050,10 @@
 
     		        // first day of week (0: Sunday, 1: Monday etc)
     		        firstDay: 0,
+
+    		        // minimum number of days in the week that gets week number one
+    		        // default ISO 8601, week 01 is the week with the first Thursday (4)
+    		        firstWeekOfYearMinDays: 4,
 
     		        // the default flag for moment's strict date parsing
     		        formatStrict: false,
@@ -6953,11 +7192,35 @@
     		               '</td>';
     		    },
 
-    		    renderWeek = function (d, m, y) {
-    		        // Lifted from http://javascript.about.com/library/blweekyear.htm, lightly modified.
-    		        var onejan = new Date(y, 0, 1),
-    		            weekNum = Math.ceil((((new Date(y, m, d) - onejan) / 86400000) + onejan.getDay()+1)/7);
-    		        return '<td class="pika-week">' + weekNum + '</td>';
+    		    isoWeek = function(date, firstWeekOfYearMinDays) {
+    		        // Ensure we're at the start of the day.
+    		        date.setHours(0, 0, 0, 0);
+
+    		        // Thursday in current week decides the year because January 4th
+    		        // is always in the first week according to ISO8601.
+    		        var yearDay        = date.getDate(),
+    		            weekDay        = date.getDay(),
+    		            dayInFirstWeek = firstWeekOfYearMinDays,
+    		            dayShift       = dayInFirstWeek - 1, // counting starts at 0
+    		            daysPerWeek    = 7,
+    		            prevWeekDay    = function(day) { return (day + daysPerWeek - 1) % daysPerWeek; };
+
+    		        // Adjust to Thursday in week 1 and count number of weeks from date to week 1.
+    		        date.setDate(yearDay + dayShift - prevWeekDay(weekDay));
+
+    		        var jan4th      = new Date(date.getFullYear(), 0, dayInFirstWeek),
+    		            msPerDay    = 24 * 60 * 60 * 1000,
+    		            daysBetween = (date.getTime() - jan4th.getTime()) / msPerDay,
+    		            weekNum     = 1 + Math.round((daysBetween - dayShift + prevWeekDay(jan4th.getDay())) / daysPerWeek);
+
+    		        return weekNum;
+    		    },
+
+    		    renderWeek = function (d, m, y, firstWeekOfYearMinDays) {
+    		        var date = new Date(y, m, d),
+    		            week = hasMoment ? moment(date).isoWeek() : isoWeek(date, firstWeekOfYearMinDays);
+
+    		        return '<td class="pika-week">' + week + '</td>';
     		    },
 
     		    renderRow = function(days, isRTL, pickWholeWeek, isRowSelected)
@@ -6997,7 +7260,7 @@
     		        for (arr = [], i = 0; i < 12; i++) {
     		            arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' +
     		                (i === month ? ' selected="selected"': '') +
-    		                ((isMinYear && i < opts.minMonth) || (isMaxYear && i > opts.maxMonth) ? 'disabled="disabled"' : '') + '>' +
+    		                ((isMinYear && i < opts.minMonth) || (isMaxYear && i > opts.maxMonth) ? ' disabled="disabled"' : '') + '>' +
     		                opts.i18n.months[i] + '</option>');
     		        }
 
@@ -7128,7 +7391,6 @@
     		                        }
     		                        break;
     		                    case 37:
-    		                        e.preventDefault();
     		                        self.adjustDate('subtract', 1);
     		                        break;
     		                    case 38:
@@ -7140,7 +7402,23 @@
     		                    case 40:
     		                        self.adjustDate('add', 7);
     		                        break;
+    		                    case 8:
+    		                    case 46:
+    		                        self.setDate(null);
+    		                        break;
     		                }
+    		            }
+    		        };
+
+    		        self._parseFieldValue = function()
+    		        {
+    		            if (opts.parse) {
+    		                return opts.parse(opts.field.value, opts.format);
+    		            } else if (hasMoment) {
+    		                var date = moment(opts.field.value, opts.format, opts.formatStrict);
+    		                return (date && date.isValid()) ? date.toDate() : null;
+    		            } else {
+    		                return new Date(Date.parse(opts.field.value));
     		            }
     		        };
 
@@ -7151,15 +7429,7 @@
     		            if (e.firedBy === self) {
     		                return;
     		            }
-    		            if (opts.parse) {
-    		                date = opts.parse(opts.field.value, opts.format);
-    		            } else if (hasMoment) {
-    		                date = moment(opts.field.value, opts.format, opts.formatStrict);
-    		                date = (date && date.isValid()) ? date.toDate() : null;
-    		            }
-    		            else {
-    		                date = new Date(Date.parse(opts.field.value));
-    		            }
+    		            date = self._parseFieldValue();
     		            if (isDate(date)) {
     		              self.setDate(date);
     		            }
@@ -7244,11 +7514,7 @@
     		            addEvent(opts.field, 'change', self._onInputChange);
 
     		            if (!opts.defaultDate) {
-    		                if (hasMoment && opts.field.value) {
-    		                    opts.defaultDate = moment(opts.field.value, opts.format).toDate();
-    		                } else {
-    		                    opts.defaultDate = new Date(Date.parse(opts.field.value));
-    		                }
+    		                opts.defaultDate = self._parseFieldValue();
     		                opts.setDefaultDate = true;
     		            }
     		        }
@@ -7430,6 +7696,14 @@
     		        },
 
     		        /**
+    		         * clear and reset the date
+    		         */
+    		        clear: function()
+    		        {
+    		            this.setDate(null);
+    		        },
+
+    		        /**
     		         * change view to a specific date
     		         */
     		        gotoDate: function(date)
@@ -7608,9 +7882,8 @@
     		                }
     		            }
 
-    		            randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
-
     		            for (var c = 0; c < opts.numberOfMonths; c++) {
+    		                randId = 'pika-title-' + Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 2);
     		                html += '<div class="pika-lendar">' + renderTitle(this, c, this.calendars[c].year, this.calendars[c].month, this.calendars[0].year, randId) + this.render(this.calendars[c].year, this.calendars[c].month, randId) + '</div>';
     		            }
 
@@ -7778,7 +8051,7 @@
 
     		                if (++r === 7) {
     		                    if (opts.showWeekNumber) {
-    		                        row.unshift(renderWeek(i - before, month, year));
+    		                        row.unshift(renderWeek(i - before, month, year, opts.firstWeekOfYearMinDays));
     		                    }
     		                    data.push(renderRow(row, opts.isRTL, opts.pickWholeWeek, isWeekSelected));
     		                    row = [];
@@ -7817,9 +8090,12 @@
     		                if (this._o.bound) {
     		                    removeEvent(document, 'click', this._onClick);
     		                }
-    		                this.el.style.position = 'static'; // reset
-    		                this.el.style.left = 'auto';
-    		                this.el.style.top = 'auto';
+
+    		                if (!this._o.container) {
+    		                    this.el.style.position = 'static'; // reset
+    		                    this.el.style.left = 'auto';
+    		                    this.el.style.top = 'auto';
+    		                }
     		                addClass(this.el, 'is-hidden');
     		                this._v = false;
     		                if (v !== undefined && typeof this._o.onClose === 'function') {
@@ -10947,7 +11223,7 @@
             ]),
             m('.row', [
                 m('.col-sm-12',[
-                    m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return displayHelp(!displayHelp()); }}, ['Toggle help ', m('i.fa.fa-question-circle')]),
+                    m('button.btn.btn-secondary.btn-sm', {onclick: function (){ return displayHelp(!displayHelp()); }}, ['Toggle help a', m('i.fa.fa-question-circle')]),
                     m('a.btn.btn-primary.pull-right', {onclick:submit}, 'Submit'),
                     !tableContent()  ? '' : m('a.btn.btn-secondary.pull-right.m-r-1', {config:downloadFile$2(query.study() ? ((query.study()) + ".csv") : 'stats.csv', tableContent(), query)}, 'Download CSV')
                 ])

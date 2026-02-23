@@ -486,7 +486,7 @@ html, body, .dasboard-root {
 .navbar .dropdown-menu {
   border-radius: 0;
   border-color: #2882b5;
-  background: #b9dcf0;
+  background: rgb(185.3846153846, 220, 239.6153846154);
   border-top-width: 8px;
   border-top-color: #2882b5;
   margin-top: 0;
@@ -496,11 +496,11 @@ html, body, .dasboard-root {
   margin-right: -0.5rem;
 }
 .navbar .dropdown-item:hover {
-  background: #a5d2eb;
+  background: rgb(164.5, 209.5, 235);
 }
 
 .nav-item.active {
-  background: #1f648b;
+  background: rgb(30.7692307692, 100, 139.2307692308);
 }
 
 .main-content {
@@ -848,14 +848,14 @@ select.c-select {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.studies .study-row:hover {
-  background: #4C93BE;
-}
 .studies .study-row:hover .study-text {
   color: #fff;
 }
 .studies .study-row:hover .study-description {
   color: #D2EAF9;
+}
+.studies .study-row:hover {
+  background: #4C93BE;
 }
 
 .study .col-md-10, .study .col-md-2 {
@@ -980,8 +980,7 @@ select.c-select {
   padding: 0.5em 0.8em;
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
-  pointer-events: none;
-  /* This prevents the box from apearing when hovered. */
+  pointer-events: none; /* This prevents the box from apearing when hovered. */
   z-index: 2;
 }
 .study-description:hover .study-tip::before {
@@ -998,7 +997,7 @@ select.c-select {
 }
 
 th[data-sort-by]:before {
-  content: "";
+  content: "\f0dc";
   font-family: FontAwesome;
   font-weight: normal;
   font-style: normal;
@@ -1058,9 +1057,6 @@ th[data-sort-by].active:before {
   box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.5);
 }
 
-.pika-single {
-  *zoom: 1;
-}
 .pika-single:before, .pika-single:after {
   content: " ";
   display: table;
@@ -1086,13 +1082,11 @@ th[data-sort-by].active:before {
   margin: 0;
   left: 0;
   top: 5px;
-  filter: alpha(opacity=0);
   opacity: 0;
 }
 
 .pika-label {
   display: inline-block;
-  *display: inline;
   position: relative;
   z-index: 9999;
   overflow: hidden;
@@ -1123,8 +1117,6 @@ th[data-sort-by].active:before {
   background-repeat: no-repeat;
   background-size: 75% 75%;
   opacity: 0.5;
-  *position: absolute;
-  *top: 0;
 }
 .pika-prev:hover,
 .pika-next:hover {
@@ -1140,19 +1132,16 @@ th[data-sort-by].active:before {
 .is-rtl .pika-next {
   float: left;
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAUklEQVR42u3VMQoAIBADQf8Pgj+OD9hG2CtONJB2ymQkKe0HbwAP0xucDiQWARITIDEBEnMgMQ8S8+AqBIl6kKgHiXqQqAeJepBo/z38J/U0uAHlaBkBl9I4GwAAAABJRU5ErkJggg==");
-  *left: 0;
 }
 
 .pika-next,
 .is-rtl .pika-prev {
   float: right;
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAAU0lEQVR42u3VOwoAMAgE0dwfAnNjU26bYkBCFGwfiL9VVWoO+BJ4Gf3gtsEKKoFBNTCoCAYVwaAiGNQGMUHMkjGbgjk2mIONuXo0nC8XnCf1JXgArVIZAQh5TKYAAAAASUVORK5CYII=");
-  *right: 0;
 }
 
 .pika-select {
   display: inline-block;
-  *display: inline;
 }
 
 .pika-table {
@@ -1193,6 +1182,11 @@ th[data-sort-by].active:before {
   line-height: 15px;
   text-align: right;
   background: #f5f5f5;
+  height: initial;
+}
+.has-event .pika-button {
+  color: #fff;
+  background: #33aaff;
 }
 .is-today .pika-button {
   color: #33aaff;
@@ -1230,6 +1224,7 @@ th[data-sort-by].active:before {
 }
 
 .is-inrange .pika-button {
+  color: #666;
   background: #D5E9F7;
 }
 
@@ -1267,8 +1262,7 @@ th[data-sort-by].active:before {
 }
 
 .upload {
-  font-size: 1rem;
-  /* 20 */
+  font-size: 1rem; /* 20 */
   position: relative;
   padding: 15px;
   outline: 2px dashed #c8dadf;
@@ -1314,8 +1308,7 @@ th[data-sort-by].active:before {
   outline: -webkit-focus-ring-color auto 5px;
 }
 .upload input + label * {
-  /* pointer-events: none; */
-  /* in case of FastClick lib use */
+  /* pointer-events: none; */ /* in case of FastClick lib use */
 }
 
 /*# sourceMappingURL=style.css.map */
