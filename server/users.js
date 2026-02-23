@@ -120,7 +120,6 @@ function get_email(user_id) {
 
 
 function get_users(server_url) {
-    console.log('ccc');
     return connection.then(function (db) {
         const users = db.collection('users');
         return users.find({})

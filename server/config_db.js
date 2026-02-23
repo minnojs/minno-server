@@ -1,5 +1,5 @@
 const connection    = Promise.resolve(require('mongoose').connection);
-const Validator = require('node-input-validator');
+const { Validator } = require('node-input-validator');
 const Server				= require('./server.js');
 const url = require('url');
 const config = require('../config');

@@ -1,211 +1,214 @@
-const config        = require('../config');
-const config_db     = require('./config_db');
-
-const studies_comp  = require('./studies');
+const { Dropbox } = require('dropbox');
+const fs = require('fs-extra');
+const path = require('path');
+const urljoin = require('url-join');
+const config = require('../config');
+const config_db = require('./config_db');
+const studies_comp = require('./studies');
 const users_comp = require('./users');
+const fetch = require('node-fetch'); // Only needed if Node <18
 
-const request_promise = require('request-promise');
-const path         = require('path');
-const urljoin       = require('url-join');
+// Create a Dropbox instance
+const dbx = new Dropbox({ accessToken: config.dropbox_token, fetch });
 
-const fs           = require('fs-extra');
-const walk         = require('walkdir');
+// --------------------------- Helper Functions ---------------------------
 
-function get_auth_link(user_id, server_url){
-    return config_db.get_dbx().then(function (dbx_details) {
-        if (!dbx_details)
-            return Promise.resolve({});
-        const back_path = urljoin(server_url + '/dropbox/set');
-        const auth_link = 'https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=' + dbx_details.client_id + '&redirect_uri=' + back_path;
-
-        return get_user_token(user_id)
-            .then(access_token => access_token ? {auth_link: '', is_synchronized: true} : {
-                auth_link,
-                is_synchronized: false
-            });
-    });
+/**
+ * Get Dropbox access token for a user
+ */
+async function get_user_token(user_id){
+    const dbx_details = await config_db.get_dbx();
+    if(!dbx_details) return false;
+    const info = await users_comp.user_info(user_id);
+    return info.dbx_token;
 }
 
-function revoke_user(user_id){
-    return get_user_token(user_id)
-        .then(function(access_token) {
-            return users_comp.revoke_dbx_token(user_id)
-            .then(function(){
-                if(!access_token)
-                    return;
-                const options = {
-                    url: 'https://api.dropboxapi.com/2/auth/token/revoke',
-                    headers: {
-                        'Authorization': 'Bearer ' + access_token
-                    }
-                };
-                return request_promise.post(options);
-            });
+// --------------------------- OAuth Functions ---------------------------
 
+/**
+ * Get authorization link for a user
+ */
+async function get_auth_link(user_id, server_url){
+    const dbx_details = await config_db.get_dbx();
+    if(!dbx_details) return {};
+    const back_path = urljoin(server_url, '/dropbox/set');
+    const auth_link = `https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=${dbx_details.client_id}&redirect_uri=${back_path}`;
+    const access_token = await get_user_token(user_id);
+    return access_token ? {auth_link: '', is_synchronized: true} : {auth_link, is_synchronized: false};
+}
+
+/**
+ * Revoke Dropbox token for a user
+ */
+async function revoke_user(user_id){
+    const access_token = await get_user_token(user_id);
+    await users_comp.revoke_dbx_token(user_id);
+    if(!access_token) return;
+    await dbx.authTokenRevoke({ token: access_token });
+}
+
+/**
+ * Exchange OAuth code for access token
+ */
+async function get_access_token(code, server_url){
+    const dbx_details = await config_db.get_dbx();
+    if(!dbx_details) throw new Error('Dropbox config missing');
+    const back_path = urljoin(server_url, '/dropbox/set');
+    const result = await dbx.auth.getAccessTokenFromCode('authorization_code', code, back_path, dbx_details.client_id, dbx_details.client_secret);
+    return result.result.access_token;
+}
+
+// --------------------------- File Upload ---------------------------
+
+/**
+ * Upload a single file to Dropbox
+ */
+async function upload_file(access_token, local_path){
+    const rel_path = local_path.slice(config.base_folder.length);
+    const contents = fs.readFileSync(local_path);
+    const dropbox_path = `/${rel_path.replace(/\\/g, '/')}`;
+    const temp_dbx = new Dropbox({ accessToken: access_token, fetch });
+
+    try {
+        await temp_dbx.filesUpload({
+            path: dropbox_path,
+            contents,
+            mode: 'overwrite',
+            autorename: true,
+            mute: false
         });
+        return { path: dropbox_path };
+    } catch(err){
+        if(err.status === 429) return upload_file(access_token, local_path); // retry on rate limit
+        throw err;
+    }
 }
 
-function get_access_token(code, server_url){
-    const url = 'https://api.dropbox.com/1/oauth2/token';
-    return config_db.get_dbx().then(function (dbx_details) {
-        const body = {
-            code: code,
-            grant_type: 'authorization_code',
-            redirect_uri: urljoin(server_url, '/dropbox/set'),
-            client_id: dbx_details.client_id,
-            client_secret: dbx_details.client_secret
-        };
-        return request_promise.post(url, {form: body, json: true});
-    });
+/**
+ * Upload a file for a single user
+ */
+async function upload_user_file(user_id, local_path){
+    const access_token = await get_user_token(user_id);
+    if(!access_token) return;
+    return upload_file(access_token, local_path);
 }
 
-function add_user_folder(user_id, access_token){
-    return users_comp.set_dbx_token(user_id, access_token)
-        .then(()=>users_comp.user_info(user_id)
-            .then(function(info){
-                const user_name = info.user_name;
-                return walk(config.user_folder+'/'+user_name, function(path) {
-                    return fs.stat(path).then(data=>{
-                        if(!data.isDirectory())
-                            return upload_file(access_token, path);
-                    });
-                });
-            }));
+/**
+ * Upload a file for all users in a study
+ */
+async function upload_users_file(user_id, study_id, local_path){
+    const data = await studies_comp.has_read_permission(user_id, study_id);
+    const users = data.study_data.users.filter(u=>!u.status);
+    return Promise.all(users.map(u => upload_user_file(u.user_id, local_path)));
 }
 
-function get_user_token(user_id){
-    return config_db.get_dbx().then(function (dbx_details) {
-        if (!dbx_details)
-            return false;
-    })
-    .then(()=> users_comp.user_info(user_id)
-            .then(function(info){
-                return info.dbx_token;
-            })
-    );
+/**
+ * Upload all files in a user's folder to Dropbox
+ */
+async function add_user_folder(user_id, local_path){
+    const access_token = await get_user_token(user_id);
+    if(!access_token) return;
+    await users_comp.set_dbx_token(user_id, access_token);
+    const info = await users_comp.user_info(user_id);
+    const user_name = info.user_name;
+    const files = await fs.readdir(path.join(config.user_folder, user_name));
+    return Promise.all(files.map(file => {
+        const full_path = path.join(config.user_folder, user_name, file);
+        return fs.stat(full_path).then(stat => !stat.isDirectory() ? upload_file(access_token, full_path) : null);
+    }));
 }
 
-function upload_users_file(user_id, study_id, path){
-    return studies_comp.has_read_permission(user_id, study_id)
-        .then(data=>
-        {
-            const users = data.study_data.users.filter(user=>!user.status);
-            return users.map(user=>upload_user_file(user.user_id, path));
+// --------------------------- Rename Files ---------------------------
+
+/**
+ * Rename a file on Dropbox
+ */
+async function rename_file(access_token, path2rename, new_name){
+    const from_path = path2rename.slice(config.base_folder.length).replace(/\\/g,'/');
+    const to_path = new_name.slice(config.base_folder.length).replace(/\\/g,'/');
+    const temp_dbx = new Dropbox({ accessToken: access_token, fetch });
+
+    try {
+        await temp_dbx.filesMoveV2({
+            from_path,
+            to_path,
+            autorename: true
         });
+        return { from: from_path, to: to_path };
+    } catch(err){
+        if(err.status === 429) return rename_file(access_token, path2rename, new_name); // retry on rate limit
+        throw err;
+    }
 }
 
-function upload_user_file(user_id, path){
-    return get_user_token(user_id)
-        .then(function(access_token) {
-            if (!access_token)
-                return;
-            return upload_file(access_token, path);
-        });
+/**
+ * Rename a file for a single user
+ */
+async function rename_user_file(user_id, path2rename, new_name){
+    const access_token = await get_user_token(user_id);
+    if(!access_token) return;
+    return rename_file(access_token, path2rename, new_name);
 }
 
-function upload_file(access_token, path){
-    const rel_path = path.slice(config.base_folder.length);
-    const readStream = fs.createReadStream(path);
-    const params = {path: rel_path,
-        mode: 'overwrite',
-        autorename: true,
-        mute: false};
-    const options={
-        url: 'https://content.dropboxapi.com/2/files/upload',
-        headers: {
-            'Authorization': 'Bearer ' + access_token,
-            'Content-Type': 'application/octet-stream',
-            'Dropbox-API-Arg': JSON.stringify(params)
-        },
-        body: readStream
-    };
-
-    return request_promise.post(options)
-        .catch(err=>{
-            if(err.statusCode==429)
-                return upload_file(access_token, path);
-            // console.log({path:path, err: err.message});
-        });
+/**
+ * Rename a file for all users in a study
+ */
+async function rename_users_file(user_id, study_id, path2rename, new_name){
+    const data = await studies_comp.has_read_permission(user_id, study_id);
+    const users = data.study_data.users.filter(u=>!u.status);
+    return Promise.all(users.map(u => rename_user_file(u.user_id, path2rename, new_name)));
 }
 
-function rename_users_file(user_id, study_id, path2rename, new_name){
-    return studies_comp.has_read_permission(user_id, study_id)
-        .then(data=>
-        {
-            const users = data.study_data.users.filter(user=>!user.status);
-            return users.map(user=>rename_user_file(user.user_id, path2rename, new_name));
-        });
+// --------------------------- Delete Files ---------------------------
+
+/**
+ * Delete a file on Dropbox
+ */
+async function delete_file(access_token, path2delete){
+    const dropbox_path = path2delete.slice(config.base_folder.length).replace(/\\/g,'/');
+    const temp_dbx = new Dropbox({ accessToken: access_token, fetch });
+
+    try {
+        await temp_dbx.filesDeleteV2({ path: dropbox_path });
+        return { path: dropbox_path };
+    } catch(err){
+        if(err.status === 429) return delete_file(access_token, path2delete); // retry on rate limit
+        throw err;
+    }
 }
 
-function rename_user_file(user_id, path2rename, new_name){
-    return get_user_token(user_id)
-        .then(function(access_token) {
-            if (!access_token)
-                return;
-            return rename_file(access_token, path2rename, new_name);
-        });
+/**
+ * Delete a file for a single user
+ */
+async function delete_user_file(user_id, path2delete){
+    const access_token = await get_user_token(user_id);
+    if(!access_token) return;
+    return delete_file(access_token, path2delete);
 }
 
-
-function rename_file(access_token, path2rename, new_name){
-    path2rename = path.resolve(path2rename).slice(config.base_folder.length);
-    new_name = path.resolve(new_name).slice(config.base_folder.length);
-
-    const data = {from_path: path2rename, to_path:new_name};
-    const options={
-        url: 'https://api.dropboxapi.com/2/files/move_v2',
-        headers: {
-            'Authorization': 'Bearer ' + access_token,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    };
-    return request_promise.post(options)
-        .catch(err=>{
-            if(err.statusCode==429)
-                return rename_file(access_token, path2rename);
-            // console.log({path:path2rename, err: err.message});
-        });
+/**
+ * Delete a file for all users in a study
+ */
+async function delete_users_file(user_id, study_id, path2delete){
+    const data = await studies_comp.has_read_permission(user_id, study_id);
+    const users = data.study_data.users.filter(u=>!u.status);
+    return Promise.all(users.map(u => delete_user_file(u.user_id, path2delete)));
 }
 
+// --------------------------- Exports ---------------------------
 
-function delete_users_file(user_id, study_id, path){
-    return studies_comp.has_read_permission(user_id, study_id)
-        .then(data=>
-        {
-            const users = data.study_data.users.filter(user=>!user.status);
-            return users.map(user=>delete_user_file(user.user_id, path));
-        });
-}
-function delete_user_file(user_id, path){
-    return get_user_token(user_id)
-        .then(function(access_token) {
-            if (!access_token)
-                return;
-            return delete_file(access_token, path);
-        });
-}
-
-function delete_file(access_token, path2delete){
-    path2delete = path.resolve(path2delete).slice(config.base_folder.length);
-    const rel_path = {path: path2delete};
-    const options={
-        url: 'https://api.dropboxapi.com/2/files/delete_v2',
-
-        headers: {
-            'Authorization': 'Bearer ' + access_token,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(rel_path)
-
-    };
-
-    return request_promise.post(options)
-        .catch(err=>{
-            if(err.statusCode==429)
-                return delete_file(access_token, path2delete);
-            // console.log({path:path2delete, err: err.message});
-        });
-}
-
-module.exports = {get_auth_link, rename_users_file, rename_user_file, rename_file, delete_users_file, delete_user_file, delete_file, upload_user_file, upload_users_file, upload_file, get_access_token, revoke_user, add_user_folder};
+module.exports = {
+    get_auth_link,
+    revoke_user,
+    get_access_token,
+    add_user_folder,
+    upload_file,
+    upload_user_file,
+    upload_users_file,
+    rename_file,
+    rename_user_file,
+    rename_users_file,
+    delete_file,
+    delete_user_file,
+    delete_users_file
+};
