@@ -9,6 +9,8 @@ const {create_new_study, delete_study} = require('./studies');
 const path = require('path');
 // const study_list = require('./bank/studyList');
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url, {useNewUrlParser:true});
 const connection    = Promise.resolve(mongoose.connection);

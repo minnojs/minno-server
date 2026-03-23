@@ -5,7 +5,10 @@ const path        = require('path');
 const utils       = require('./utils');
 const config_db = require('./config_db');
 
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
+
 const {Validator} = require('node-input-validator');
 
 function user_info (user_id) {

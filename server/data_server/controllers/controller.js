@@ -9,8 +9,8 @@ const config = require.main.require('../config'),
     experimentSessionSchema2=require('../models/experimentSessionSchema'),
     experimentSessionSchema = mongoose.model('ExperimentSession'),
     sanitize = require('sanitize-filename');
+mongoose.set('strictQuery', true);
 const logger = require('../../logger');
-const connection    = Promise.resolve(require('mongoose').connection);
 
 let fs = require('fs-extra');
 // var convert = require('mongoose_schema-json');

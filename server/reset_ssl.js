@@ -1,6 +1,7 @@
 /* eslint no-console:0 */
 const config        = require('../config');
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url, {useNewUrlParser:true});

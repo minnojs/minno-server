@@ -27,6 +27,7 @@ const logger = require('./logger');
 
 
 const mongoose   = require('mongoose');
+mongoose.set('strictQuery', true);
 const urljoin    = require('url-join');
 const bodyParser = require('body-parser');
 const app        = express();

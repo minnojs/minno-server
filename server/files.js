@@ -12,7 +12,9 @@ const utils        = require('./utils');
 const {has_read_permission, has_write_permission, has_read_data_permission} = studies_comp;
 const urljoin       = require('url-join');
 const url = require('url');
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 
 function walk(server_url, folder_path, exps, base_path = folder_path){
     const full_path = path.join(config.user_folder,folder_path);

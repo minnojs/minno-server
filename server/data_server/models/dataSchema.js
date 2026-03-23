@@ -1,5 +1,7 @@
 'use strict';
 let mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+
 let Schema = mongoose.Schema;
 
 let dataSchema = new Schema({

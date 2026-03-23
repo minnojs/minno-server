@@ -5,7 +5,9 @@ const path          = require('path');
 const utils         = require('./utils');
 const sender        = require('./sender');
 const sanitize      = require('sanitize-filename');
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 const data_server   = require('./data_server/controllers/controller');
 
 const {user_info, user_info_by_name}   = require('./users');

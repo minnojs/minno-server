@@ -1,6 +1,8 @@
 const express     = require('express');
 const datapipe  = express.Router();
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 const config_file = require.main.require('../config');
 const utils         = require('../utils');
 const dateFormat = require('dateformat');

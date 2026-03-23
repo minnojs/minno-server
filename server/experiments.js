@@ -4,7 +4,9 @@ const studies_comp  = require('./studies');
 const join          = require('path').join;
 const utils         = require('./utils');
 const data_server   = require('./data_server/controllers/controller');
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 const fs            = require('fs-extra');
 const path          = require('path');
 

@@ -1,5 +1,6 @@
-
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 const data_server   = require('./data_server/controllers/controller');
 
 

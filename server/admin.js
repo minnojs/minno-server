@@ -3,8 +3,9 @@ const fs = require('fs-extra');
 const config_file = require.main.require('../config');
 const studies_comp  = require('./studies');
 const users_comp  = require('./users');
-
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 
 exports.get_data_usage = function () {
     return connection.then(function (db) {

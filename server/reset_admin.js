@@ -3,6 +3,7 @@ require('./config_validation');
 const config        = require('../config');
 const {set_password, update_role} = require('./users');
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongo_url, {useNewUrlParser:true});
 const connection    = Promise.resolve(mongoose.connection);

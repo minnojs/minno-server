@@ -1,7 +1,9 @@
 const config = require('../config');
 const utils         = require('./utils');
 const {has_read_permission, has_write_permission} = require('./studies');
-const connection    = Promise.resolve(require('mongoose').connection);
+const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
+const connection    = Promise.resolve(mongoose.connection);
 const path          = require('path');
 const fs            = require('fs-extra');
 
