@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 mongoose.set('strictQuery', true);
 const connection    = Promise.resolve(mongoose.connection);
 
-const {Validator} = require('node-input-validator');
+const { z: zod_validator } = require('zod');
 
 function user_info (user_id) {
     return connection.then(function (db) {
@@ -66,29 +66,70 @@ function update_details(user_id, params) {
 
 }
 
+
+
 function set_email(user_id, email) {
 
+    // 1. Define the email validation schema
+    const emailSchema = zod_validator.object({
+        email: zod_validator.string().email("Invalid email address!")
+    });
 
-    if (!email)
-        return Promise.reject({status: 400, message: 'Missing email'});
+    // 2. Initial check for missing email (matches your original logic)
+    if (!email) {
+        return Promise.reject({ status: 400, message: 'Missing email' });
+    }
 
+    // 3. Run Zod validation
+    const validation = emailSchema.safeParse({ email });
 
-    let validator = new Validator({email},
-        {email: 'required|email'});
+    if (!validation.success) {
+        // Safe error extraction using flatten()
+        const formattedErrors = validation.error.flatten().fieldErrors;
+        const errorMessage = formattedErrors.email ? formattedErrors.email[0] : "Invalid email";
 
-    return validator.check()
-        .then(function () {
-            if (!Object.keys(validator.errors).length == 0)
-                return Promise.reject({status: 400, message: validator.errors.email.message});
-            return connection.then(function (db) {
-                const users = db.collection('users');
-                return users.findOneAndUpdate({_id: user_id},
-                    {$set: {email: email}})
-                    .then(() => ({}));
+        return Promise.reject({ status: 400, message: errorMessage });
+    }
 
-            });
-        });
+    // 4. Database logic - Returning the promise chain
+    return connection.then(function (db) {
+        const users = db.collection('users');
+
+        // Using findOneAndUpdate as in your original code
+        return users.findOneAndUpdate(
+            { _id: user_id },
+            { $set: { email: email } }
+        ).then(() => ({})); // Returns an empty object on success
+    }).catch(function (err) {
+        // Handle database or connection errors
+        console.error("Database error in set_email:", err);
+        return Promise.reject({ status: 500, message: err.message || "Internal Server Error" });
+    });
 }
+
+// function set_email(user_id, email) {
+//
+//
+//     if (!email)
+//         return Promise.reject({status: 400, message: 'Missing email'});
+//
+//
+//     let validator = new Validator({email},
+//         {email: 'required|email'});
+//
+//     return validator.check()
+//         .then(function () {
+//             if (!Object.keys(validator.errors).length == 0)
+//                 return Promise.reject({status: 400, message: validator.errors.email.message});
+//             return connection.then(function (db) {
+//                 const users = db.collection('users');
+//                 return users.findOneAndUpdate({_id: user_id},
+//                     {$set: {email: email}})
+//                     .then(() => ({}));
+//
+//             });
+//         });
+// }
 
 
 function set_dbx_token(user_id, access_token) {
@@ -161,65 +202,166 @@ function remove_user(user_id) {
     });
 }
 
+
+
 function insert_new_user({username, first_name, last_name, email, role, password, confirm}, server_url) {
-    let validator = new Validator(
-        {username, email, first_name, last_name},
-        {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'}
-    );
+    // 1. Define the registration schema
+    // alphaDash equivalent in Regex: letters, numbers, dashes, and underscores
+    const alphaDashRegex = /^[a-zA-Z0-9_-]+$/;
 
-    return validator.check()
-    .then(function () {
-        if (!Object.keys(validator.errors).length==0)
-        {
-            let error = '';
-            if(validator.errors.username)
-                error = validator.errors.username.message;
-            else if(validator.errors.first_name)
-                error = validator.errors.first_name.message;
-            else if(validator.errors.last_name)
-                error = validator.errors.last_name.message;
-            else
-                error = validator.errors.email.message;
-            return Promise.reject({status:400, message: error});
-        }
-        const user_name  = username.toLowerCase();
-
-
-        const userFolder = path.join(config.user_folder, user_name);
-        const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
-
-
-        return connection.then(function (db) {
-            const users   = db.collection('users');
-            const counters   = db.collection('counters');
-            return users.findOne({$or: [{user_name}, {email}]})
-                .then(function(user_data){
-                    if (user_data) return Promise.reject({status:400, message: 'User already exists'});
-                })
-                .then(() => fs.ensureDir(userFolder))
-
-                .then(() => counters.findOneAndUpdate(
-                    {_id: 'user_id'},
-                    {$inc: {'seq': 1}},
-                    {update: true, new: true, returnOriginal:false}
-                ))
-                .then(function (counter_data) {
-                    const user_id = counter_data.value.seq;
-                    const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
-                    return users.insertOne(user_obj)
-                        .then(response => {
-                            if(password && confirm){
-                                set_password(response.ops[0]._id, password, confirm, true);
-                            }
-
-                        });
-                })
-                .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}) : ({}))
-                .then(sent=>sent ? ({}) : ({activation_code:utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}));
-        });
+    const newUserSchema = zod_validator.object({
+        username: zod_validator.string()
+            .min(4, 'Username must be at least 4 characters')
+            .regex(alphaDashRegex, 'Username can only contain letters, numbers, dashes and underscores'),
+        first_name: zod_validator.string()
+            .min(3, 'First name must be at least 3 characters')
+            .regex(alphaDashRegex, 'First name can only contain letters, numbers, dashes and underscores'),
+        last_name: zod_validator.string()
+            .min(3, 'Last name must be at least 3 characters')
+            .regex(alphaDashRegex, 'Last name can only contain letters, numbers, dashes and underscores'),
+        email: zod_validator.string().email('Invalid email address')
     });
+    // 2. Validate inputs
+    const validation = newUserSchema.safeParse({username, email, first_name, last_name});
 
+    if (!validation.success) {
+        const formattedErrors = validation.error.flatten().fieldErrors;
+
+        // Priority-based error message (matching your original if/else logic)
+        const error = (formattedErrors.username ? formattedErrors.username[0] : null) ||
+            (formattedErrors.first_name ? formattedErrors.first_name[0] : null) ||
+            (formattedErrors.last_name ? formattedErrors.last_name[0] : null) ||
+            (formattedErrors.email ? formattedErrors.email[0] : null) ||
+            "Validation error";
+
+        return Promise.reject({status: 400, message: error});
+    }
+
+    // 3. Prepare data
+    const user_name = username.toLowerCase();
+    const userFolder = path.join(config.user_folder, user_name);
+    const activation_code = utils.sha1(user_name + Math.floor(Date.now() / 1000));
+
+    // 4. Database logic chain
+    return connection.then(function (db) {
+        const users = db.collection('users');
+        const counters = db.collection('counters');
+
+        // Check if user or email already exists
+        return users.findOne({$or: [{user_name}, {email}]})
+            .then(function(user_data){
+                if (user_data) return Promise.reject({status: 400, message: 'User already exists'});
+            })
+            // Ensure user directory exists
+            .then(() => fs.ensureDir(userFolder))
+            // Increment user ID counter
+            .then(() => counters.findOneAndUpdate(
+                {_id: 'user_id'},
+                {$inc: {'seq': 1}},
+                {update: true, new: true, returnOriginal: false}
+            ))
+            .then(function (counter_data) {
+                const user_id = counter_data.value.seq;
+                const user_obj = {
+                    _id: user_id,
+                    activation_code,
+                    user_name,
+                    first_name,
+                    last_name,
+                    email,
+                    role: role ? role : 'u',
+                    studies: [],
+                    tags: []
+                };
+
+                return users.insertOne(user_obj)
+                    .then(response => {
+                        // If password provided, set it (ops[0] is standard for MongoDB insert result)
+                        if(password && confirm){
+                            set_password(response.ops[0]._id, password, confirm, true);
+                        }
+                    });
+            })
+            // Handle Welcome Email or Activation Link
+            .then(() => {
+                const activationUrl = utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`);
+
+                if (!password) {
+                    return sender.send_mail(email, 'Welcome', 'activation.ejs', {
+                        email,
+                        user_name,
+                        url: activationUrl
+                    });
+                }
+                return {};
+            })
+            .then(sent => sent ? ({}) : ({
+                activation_code: utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)
+            }));
+    });
 }
+
+
+
+// function insert_new_user({username, first_name, last_name, email, role, password, confirm}, server_url) {
+//     let validator = new Validator(
+//         {username, email, first_name, last_name},
+//         {username:'required|alphaDash|minLength:4', first_name: 'required|alphaDash|minLength:3', last_name: 'required|alphaDash|minLength:3', email:'required|email'}
+//     );
+//
+//     return validator.check()
+//     .then(function () {
+//         if (!Object.keys(validator.errors).length==0)
+//         {
+//             let error = '';
+//             if(validator.errors.username)
+//                 error = validator.errors.username.message;
+//             else if(validator.errors.first_name)
+//                 error = validator.errors.first_name.message;
+//             else if(validator.errors.last_name)
+//                 error = validator.errors.last_name.message;
+//             else
+//                 error = validator.errors.email.message;
+//             return Promise.reject({status:400, message: error});
+//         }
+//         const user_name  = username.toLowerCase();
+//
+//
+//         const userFolder = path.join(config.user_folder, user_name);
+//         const activation_code = utils.sha1(user_name+Math.floor(Date.now() / 1000));
+//
+//
+//         return connection.then(function (db) {
+//             const users   = db.collection('users');
+//             const counters   = db.collection('counters');
+//             return users.findOne({$or: [{user_name}, {email}]})
+//                 .then(function(user_data){
+//                     if (user_data) return Promise.reject({status:400, message: 'User already exists'});
+//                 })
+//                 .then(() => fs.ensureDir(userFolder))
+//
+//                 .then(() => counters.findOneAndUpdate(
+//                     {_id: 'user_id'},
+//                     {$inc: {'seq': 1}},
+//                     {update: true, new: true, returnOriginal:false}
+//                 ))
+//                 .then(function (counter_data) {
+//                     const user_id = counter_data.value.seq;
+//                     const user_obj = {_id:user_id, activation_code, user_name, first_name, last_name, email, role:role ? role : 'u', studies:[],tags:[]};
+//                     return users.insertOne(user_obj)
+//                         .then(response => {
+//                             if(password && confirm){
+//                                 set_password(response.ops[0]._id, password, confirm, true);
+//                             }
+//
+//                         });
+//                 })
+//                 .then(()=>!password ? sender.send_mail(email, 'Welcome', 'activation.ejs', {email, user_name, url: utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}) : ({}))
+//                 .then(sent=>sent ? ({}) : ({activation_code:utils.clean_url(`${server_url}/dashboard/?/activation/${activation_code}`)}));
+//         });
+//     });
+//
+// }
 
 function check_activation_code(code) {
     return connection.then(function (db) {

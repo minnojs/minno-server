@@ -4,7 +4,6 @@ const studies     = require('../studies');
 const config      = require('../../config');
 const viewRouter  = express.Router();
 const utils       = require('../utils');
-const {messages} = require('node-input-validator');
 
 module.exports = viewRouter;
 

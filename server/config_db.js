@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', true);
 const connection    = Promise.resolve(mongoose.connection);
-const { Validator } = require('node-input-validator');
+const { z: zod_validator } = require('zod');
 const Server				= require('./server.js');
 const url = require('url');
 const config = require('../config');
@@ -112,59 +112,65 @@ async function update_server(server_data, app) {
 		}
 	}
 
-    if (server_data.type==='greenlock') {
-        const email = server_data.greenlock.owner_email;
-        let validator = new Validator({email},
-            {email: 'required|email'});
-        return validator.check()
-            .then(function (){
-                if (Object.keys(validator.errors).length !== 0)
-                    return Promise.reject({server:{status: 400, message: validator.errors.email.message}});
-                return Promise.all(
-                    server_data.greenlock.domains.map(function (domain) {
-                        let url_validator = new Validator({domain}, {domain: 'required|url'});
-                        return url_validator.check()
-                            .then(function () {
-                                if (Object.keys(url_validator.errors).length !== 0)
-                                    return Promise.reject({server:{status: 400, message: url_validator.errors.domain.message}});
-                            });
-                        })
-                    )
-                    .then(async ()=>
-                    {
-						try{
-							Server.greenlockError=false;
-                        server_data_obj = {greenlock: server_data.greenlock};
-					    await Server.startupGreenlock(app,server_data.greenlock);
-						try{
-							await Server.testSSL(server_data.greenlock.domains[0]);
-							return update_config_db(server_data_obj);
-						
-						}
-							catch(err)
-							{
-								console.log(err);
-								Server.greenlockError=true;
-								await Server.shutdownGreenlock();
-								await Server.shutdownHttps(app);
-								curConfig=await get_config();
-								await Server.startServer(app,curConfig);
-								return Promise.reject({status: 400, message: "Error updating to Greenlock: "+err})
-							}
-					}
-					catch(e)
-					{
-						console.log(e);
-						Server.greenlockError=true;
-						await Server.shutdownGreenlock();
-						await Server.shutdownHttps(app);
-						//await server.startupHttp(app);
-						curConfig=await get_config();
-						await Server.startServer(app,curConfig);
-						return Promise.reject({status: 400, message: e});
-					}
-                    })
-            });
+    // 1. Define the Greenlock validation schema
+// This replaces the nested 'Validator' calls for both email and the domains array
+    const greenlockSchema = zod_validator.object({
+        owner_email: zod_validator.string().email("ERROR: Invalid owner email address"),
+        domains: zod_validator.array(zod_validator.string().url("ERROR: Invalid domain URL"))
+            .min(1, "ERROR: At least one domain is required")
+    });
+
+    if (server_data.type === 'greenlock') {
+        // 2. Run validation on the entire greenlock object
+        const validation = greenlockSchema.safeParse(server_data.greenlock);
+
+        if (!validation.success) {
+            // Safe error extraction using flatten() to avoid "Cannot read properties of undefined"
+            const formattedErrors = validation.error.flatten().fieldErrors;
+
+            // Pick the first available error message from either email or domains
+            const errorMessage = (formattedErrors.owner_email ? formattedErrors.owner_email[0] : null) ||
+                (formattedErrors.domains ? formattedErrors.domains[0] : null) ||
+                "Validation error";
+
+            return Promise.reject({ server: { status: 400, message: errorMessage } });
+        }
+
+        // 3. If validation passes, proceed with server logic
+        // We return the entire async block to ensure the promise chain stays intact
+        return (async () => {
+            try {
+                Server.greenlockError = false;
+                const server_data_obj = { greenlock: server_data.greenlock };
+
+                // Attempt to start Greenlock
+                await Server.startupGreenlock(app, server_data.greenlock);
+
+                try {
+                    // Test SSL on the first domain in the list
+                    await Server.testSSL(server_data.greenlock.domains[0]);
+                    return update_config_db(server_data_obj);
+                } catch (err) {
+                    // Handle SSL testing failure: Rollback to previous state
+                    console.log("SSL Test Error:", err);
+                    Server.greenlockError = true;
+                    await Server.shutdownGreenlock();
+                    await Server.shutdownHttps(app);
+                    const curConfig = await get_config();
+                    await Server.startServer(app, curConfig);
+                    return Promise.reject({ status: 400, message: "Error updating to Greenlock: " + err });
+                }
+            } catch (e) {
+                // Handle Startup failure: Rollback to previous state
+                console.log("Greenlock Startup Error:", e);
+                Server.greenlockError = true;
+                await Server.shutdownGreenlock();
+                await Server.shutdownHttps(app);
+                const curConfig = await get_config();
+                await Server.startServer(app, curConfig);
+                return Promise.reject({ status: 400, message: e });
+            }
+        })();
     }
     //return update_config_db(server_data_obj);
 }
@@ -180,23 +186,43 @@ function update_config_db(server_data_obj){
 
 }
 
-function set_gmail (email, password) {
-    if(!password)
-        return Promise.reject({gmail:{status:400, message: 'ERROR: Missing Gmail password'}});
-    let validator = new Validator({email},
-        {email: 'required|email'});
-    return validator.check()
-        .then(function () {
-            if (Object.keys(validator.errors).length !== 0)
-                return Promise.reject({gmail:{status: 400, message: 'ERROR: Invalid Gmail email address'}});
 
-            return connection.then(function (db) {
-                const config_data = db.collection('config');
-                return config_data.updateOne({var: 'gmail'},
-                    {$set: {email: email, password: password}}, {upsert: true})
-                    .then(() => ('Gmail successfully updated'));
-            });
+
+function set_gmail(email, password) {
+    const gmailSchema = zod_validator.object({
+        email: zod_validator.string().email("ERROR: Invalid Gmail email address"),
+        password: zod_validator.string().min(1, "ERROR: Missing Gmail password")
+    });
+
+    // 1. Validation step
+    const validation = gmailSchema.safeParse({ email, password });
+
+    if (!validation.success) {
+        const errorMessage = validation.error && validation.error.issues && validation.error.issues.length > 0
+            ? validation.error.issues[0].message
+            : "Validation error";        // Return a rejected promise immediately
+        return Promise.reject({ gmail: { status: 400, message: errorMessage } });
+    }
+
+    // 2. Database step - important to RETURN the whole chain
+    return connection.then(function (db) {
+        const config_data = db.collection('config');
+
+        return config_data.updateOne(
+            { var: 'gmail' },
+            { $set: { email: email, password: password } },
+            { upsert: true }
+        ).then(() => {
+            return 'Gmail successfully updated';
         });
+    }).catch(function (err) {
+        // If it's our validation error, pass it through
+        if (err.gmail) return Promise.reject(err);
+
+        // If it's a DB error, format it
+        console.error("DB Error:", err);
+        return Promise.reject({ gmail: { status: 500, message: 'Internal Server Error' } });
+    });
 }
 
 
