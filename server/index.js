@@ -20,7 +20,8 @@ const config_router         = require('./routes/config_router');
 const dropbox_router        = require('./routes/dropbox_router');
 const collaboration_router  = require('./routes/collaboration_router');
 const Server				= require('./server.js');
-const Fingerprint 			= require('express-fingerprint');
+const useragent = require('express-useragent');
+const crypto = require('crypto');
 const configDb = require('./config_db');
 const logger = require('./logger');
 
@@ -52,14 +53,19 @@ app.use(cors({
     'optionsSuccessStatus': 204
 }));
 
-app.use(Fingerprint({
-    parameters:[
-        // Defaults
-        Fingerprint.useragent,
-        Fingerprint.acceptHeaders,
-        Fingerprint.geoip
-    ]
-}));
+
+
+
+app.use(useragent.express());
+app.use((req, res, next) => {
+    const data = req.useragent.source + (req.headers['accept'] || '');
+    req.fingerprint = {
+        hash: crypto.createHash('sha1').update(data).digest('hex')
+    };
+    next();
+});
+
+
 
 app.use(session({secret: config.session_secret,
     resave: true,
