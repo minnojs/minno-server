@@ -102,8 +102,20 @@ function get_experiments(user_id, study_id) {
 // Later, it will put the new request with the current timestamp into the DB.
 function add_data_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id) {
     return connection.then(function (db) {
-
         const week_ms = 1000*60*60*24*7;
+        const hour_ms = 1000 * 60 * 60;
+        const now = Date.now();
+        const deleteQuery = {
+            $or: [
+                { creation_date: { $lt: now - week_ms } },
+                {
+                    status: 'in progress',
+                    creation_date: { $lt: now - hour_ms }
+                },
+                { status: 'No data' }
+            ]
+        };
+
         const data_requests = db.collection('data_requests');
         return data_requests.find({creation_date: {$lt: Date.now()-week_ms}})
         .toArray()
@@ -114,8 +126,7 @@ function add_data_request(user_id, study_id, exp_id, file_format, file_split, st
             fs.remove(delPath);
         }));
         })
-        .then(() => data_requests.deleteMany({creation_date: {$lt: Date.now()-week_ms}}))
-        .then(() => data_requests.deleteMany({status:'No data'}))
+        .then(() => data_requests.deleteMany(deleteQuery))
 
         .then(() => data_requests.insertOne({
             user_id,
@@ -200,8 +211,7 @@ function get_data(user_id, study_id, exp_id, file_format, file_split, start_date
         .then(()=>
             add_data_request(user_id, study_id, exp_id, file_format, file_split, start_date, end_date, version_id)
             .then((record)=>{
-
-                const request_id=record.ops[0]._id;
+                const request_id = record.insertedId;
                 data_server.getData(exp_id, file_format, file_split, start_date, end_date, version_id)
                 .then(path2file=>update_data_request(request_id, path2file))
                  .catch(()=>cancel_data_request(request_id));
