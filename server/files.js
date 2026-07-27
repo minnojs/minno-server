@@ -1,5 +1,5 @@
 const config = require('../config');
-const zipFolder = require('zip-a-folder');
+const { zip } = require('zip-a-folder');
 
 const fs           = require('fs-extra');
 const formidable   = require('formidable');
@@ -246,28 +246,31 @@ function download_data(user_id, pth, res) {
 }
 
 function download_files(user_id, study_id, version_id, files) {
-    const zip_name = utils.sha1(user_id+'*'+Math.floor(Date.now() / 1000));
+    const zip_name = utils.sha1(user_id + '*' + Math.floor(Date.now() / 1000));
     const zip_path = config.base_folder + config.zip_folder + zip_name;
-    const zip_file = zip_path+'.zip';
+    const zip_file = zip_path + '.zip';
+
     return has_read_permission(user_id, study_id)
-        .then(function({study_data}){
-            if (version_id==='latest')
+        .then(function({ study_data }) {
+            if (version_id === 'latest') {
                 version_id = study_data.versions.reduce((prev, current) => (prev.id > current.id) ? prev : current).id;
+            }
             return Promise.all(files.map(function(file) {
-                const path2copy = path.join(config.user_folder, study_data.folder_name, 'v'+version_id, file);
+                const path2copy = path.join(config.user_folder, study_data.folder_name, 'v' + version_id, file);
                 return fs.copy(path2copy, zip_path + '/' + file);
             }));
         })
-        .then(() => new Promise(function(resolve, reject) {
-            zipFolder.zipFolder(zip_path, zip_file, function (err) {
-                if (err)
-                    return reject(err);
-                resolve();
-            });
-        }))
-        .then(function(){
-            // fs.remove(zip_path);
-            return ({zip_file: zip_name + '.zip'});
+        .then(function() {
+            // FIX: Modern versions of 'zip-a-folder' export a `zip` function that natively returns a Promise.
+            // No need to wrap it in `new Promise((resolve, reject) => ...)` or use callbacks anymore.
+            return zip(zip_path, zip_file);
+        })
+        .then(function() {
+            // Optional: Clean up the temporary unzipped directory after archiving
+            // return fs.remove(zip_path);
+        })
+        .then(function() {
+            return { zip_file: zip_name + '.zip' };
         });
 }
 
