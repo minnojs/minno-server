@@ -486,7 +486,7 @@ html, body, .dasboard-root {
 .navbar .dropdown-menu {
   border-radius: 0;
   border-color: #2882b5;
-  background: rgb(185.3846153846, 220, 239.6153846154);
+  background: #b9dcf0;
   border-top-width: 8px;
   border-top-color: #2882b5;
   margin-top: 0;
@@ -496,11 +496,11 @@ html, body, .dasboard-root {
   margin-right: -0.5rem;
 }
 .navbar .dropdown-item:hover {
-  background: rgb(164.5, 209.5, 235);
+  background: #a5d2eb;
 }
 
 .nav-item.active {
-  background: rgb(30.7692307692, 100, 139.2307692308);
+  background: #1f648b;
 }
 
 .main-content {
@@ -848,14 +848,14 @@ select.c-select {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.studies .study-row:hover {
+  background: #4C93BE;
+}
 .studies .study-row:hover .study-text {
   color: #fff;
 }
 .studies .study-row:hover .study-description {
   color: #D2EAF9;
-}
-.studies .study-row:hover {
-  background: #4C93BE;
 }
 
 .study .col-md-10, .study .col-md-2 {
@@ -980,7 +980,8 @@ select.c-select {
   padding: 0.5em 0.8em;
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
-  pointer-events: none; /* This prevents the box from apearing when hovered. */
+  pointer-events: none;
+  /* This prevents the box from apearing when hovered. */
   z-index: 2;
 }
 .study-description:hover .study-tip::before {
@@ -997,7 +998,7 @@ select.c-select {
 }
 
 th[data-sort-by]:before {
-  content: "\f0dc";
+  content: "";
   font-family: FontAwesome;
   font-weight: normal;
   font-style: normal;
@@ -1262,7 +1263,8 @@ th[data-sort-by].active:before {
 }
 
 .upload {
-  font-size: 1rem; /* 20 */
+  font-size: 1rem;
+  /* 20 */
   position: relative;
   padding: 15px;
   outline: 2px dashed #c8dadf;
@@ -1308,7 +1310,8 @@ th[data-sort-by].active:before {
   outline: -webkit-focus-ring-color auto 5px;
 }
 .upload input + label * {
-  /* pointer-events: none; */ /* in case of FastClick lib use */
+  /* pointer-events: none; */
+  /* in case of FastClick lib use */
 }
 
 /*# sourceMappingURL=style.css.map */
