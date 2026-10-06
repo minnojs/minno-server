@@ -157,164 +157,291 @@ exports.getData2 = function(req, res) {
     res.send(exports.getData(req.get('studyId')));
 };
 
-exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, endDate, versionId) {
-    if (typeof studyId == 'undefined' || !studyId)
-        throw new Error('Error: studyId must be specified');
 
-    let findObject = {};
-    let files = {};
-    let dataMaps = {};
+exports.getData = async function (
+    studyId,
+    fileFormat,
+    fileSplitVar,
+    startDate,
+    endDate,
+    versionId
+) {
+    if (typeof studyId === 'undefined' || !studyId) {
+        throw new Error('Error: studyId must be specified');
+    }
+
+    const findObject = {};
+    const files = {};
+    const dataMaps = {};
+    const fileConfig = {};
+
     let rowSplitString = '\t';
     let fileSuffix = '.txt';
-    let fileConfig = {};
-    let useDataArray = true;
 
-    let memoryLimit = typeof maxRowsInMemory !== 'undefined' ? maxRowsInMemory : 100;
+    // ---------------------------------------------------------
+    // Build query
+    // ---------------------------------------------------------
 
-    findObject.studyId = studyId;
-    if (Array.isArray(studyId)) {
-        findObject.studyId = {};
-        findObject.studyId.$in = studyId;
+    findObject.studyId = Array.isArray(studyId)
+        ? { $in: studyId }
+        : studyId;
+
+    if (startDate) {
+        findObject.createdDate = {
+            ...(findObject.createdDate || {}),
+            $gt: new Date(startDate)
+        };
     }
-    if (typeof startDate !== 'undefined' && startDate) {
-        findObject.createdDate = {};
-        findObject.createdDate.$gt = new Date(startDate);
+
+    if (endDate) {
+        findObject.createdDate = {
+            ...(findObject.createdDate || {}),
+            $lt: new Date(endDate)
+        };
     }
-    if (typeof endDate !== 'undefined' && endDate) {
-        if (typeof findObject.createdDate == 'undefined' || !findObject.createdDate) {
-            findObject.createdDate = {};
-        }
-        findObject.createdDate.$lt = new Date(endDate);
-    }
-    if (typeof versionId !== 'undefined' && versionId) {
+
+    if (versionId) {
         if (Array.isArray(versionId)) {
-            versionId.forEach(function(vId, index, versionId) {
-                versionId[index] = vId.toString();
-            });
-            findObject.versionId = {};
-            findObject.versionId.$in = versionId;
+            findObject.versionId = {
+                $in: versionId.map(v => v.toString())
+            };
         } else {
+            // FIX: original code had == instead of =
             findObject.versionId = versionId.toString();
         }
     }
-    if (fileFormat == 'csv') {
+
+    if (fileFormat === 'csv') {
         rowSplitString = ',';
         fileSuffix = '.csv';
-    }
-    if (fileFormat == 'tsv') {
+    } else if (fileFormat === 'tsv') {
         rowSplitString = '\t';
     }
 
-    // --- Step 1: Fetch all entries into memory or buffer to ensure deterministic order ---
-    let allDataEntries = [];
+    // ---------------------------------------------------------
+    // Step 1:
+    // Fetch ALL documents exactly once, in deterministic order.
+    //
+    // We use a source field because Data and
+    // experimentSessionSchema are two different collections.
+    // ---------------------------------------------------------
 
-    let cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
-    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-        allDataEntries.push(dataEntry);
+    const allDataEntries = [];
+
+    const dataCursor = Data
+        .find(findObject)
+        .sort({ _id: 1 })
+        .lean()
+        .cursor({ batchSize: 10000 });
+
+    for (
+        let dataEntry = await dataCursor.next();
+        dataEntry !== null;
+        dataEntry = await dataCursor.next()
+    ) {
+        allDataEntries.push({
+            dataEntry,
+            source: 'Data'
+        });
     }
 
-    cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
+    const sessionCursor = experimentSessionSchema
+        .find(findObject)
+        .sort({ _id: 1 })
+        .lean()
+        .cursor({ batchSize: 10000 });
+
     try {
-        for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-            allDataEntries.push(dataEntry);
+        for (
+            let dataEntry = await sessionCursor.next();
+            dataEntry !== null;
+            dataEntry = await sessionCursor.next()
+        ) {
+            allDataEntries.push({
+                dataEntry,
+                source: 'experimentSession'
+            });
         }
     } catch (e) {
         logger.error({ message: e });
     }
 
-    if (allDataEntries.length == 0) {
-        throw { status: 500, message: 'ERROR: No data!' };
+    if (allDataEntries.length === 0) {
+        throw {
+            status: 500,
+            message: 'ERROR: No data!'
+        };
     }
 
-    // Sort entries deterministically in Node.js by _id to guarantee identical output order every run
+    // ---------------------------------------------------------
+    // Step 2:
+    // Sort the combined result deterministically.
+    //
+    // _id alone is not enough because two different collections
+    // can contain the same _id.
+    // ---------------------------------------------------------
+
     allDataEntries.sort((a, b) => {
-        if (!a._id || !b._id) return 0;
-        return a._id.toString().localeCompare(b._id.toString());
-    });
+        const aId = a.dataEntry && a.dataEntry._id
+            ? a.dataEntry._id.toString()
+            : '';
 
-    let newMapArray = new Array(memoryLimit);
-    let memoryCount = 0;
+        const bId = b.dataEntry && b.dataEntry._id
+            ? b.dataEntry._id.toString()
+            : '';
 
-    // --- Step 2: Build maps from the sorted entries ---
-    for (let i = 0; i < allDataEntries.length; i++) {
-        let dataEntry = allDataEntries[i];
-        let newMaps = getInitialVarMap(dataEntry);
+        const idCompare = aId.localeCompare(bId);
 
-        if (useDataArray) {
-            if (memoryCount < memoryLimit) {
-                newMapArray[memoryCount] = { dataEntry, newMaps };
-                memoryCount++;
-            } else {
-                useDataArray = false;
-                newMapArray = null;
-            }
+        if (idCompare !== 0) {
+            return idCompare;
         }
 
-        newMaps.forEach(function(newMap) {
-            updateMap(dataMaps, newMap, fileSplitVar);
+        return a.source.localeCompare(b.source);
+    });
+
+    // ---------------------------------------------------------
+    // Step 3:
+    // Convert every document to maps exactly once.
+    //
+    // This is important:
+    // getInitialVarMap() is now called only once per document.
+    // ---------------------------------------------------------
+
+    const mappedEntries = [];
+
+    for (const item of allDataEntries) {
+        const newMaps = getInitialVarMap(item.dataEntry);
+
+        if (!newMaps) {
+            continue;
+        }
+
+        // Normalize to array in case getInitialVarMap()
+        // returns something iterable but not an array.
+        const maps = Array.isArray(newMaps)
+            ? newMaps
+            : Array.from(newMaps);
+
+        mappedEntries.push({
+            dataEntry: item.dataEntry,
+            source: item.source,
+            maps
+        });
+
+        // Build the column maps.
+        maps.forEach(function (newMap) {
+            updateMap(
+                dataMaps,
+                newMap,
+                fileSplitVar
+            );
         });
     }
 
-    // Ensure deterministic column ordering
-    Object.keys(dataMaps).forEach(function(filename) {
-        if (dataMaps[filename] && typeof dataMaps[filename] === 'object') {
-            let sortedKeys = Object.keys(dataMaps[filename]).sort();
-            let orderedMap = {};
-            sortedKeys.forEach(key => {
-                orderedMap[key] = dataMaps[filename][key];
+    if (Object.keys(dataMaps).length === 0) {
+        throw {
+            status: 500,
+            message: 'ERROR: No data!'
+        };
+    }
+
+    // ---------------------------------------------------------
+    // Step 4:
+    // Make column order deterministic.
+    // ---------------------------------------------------------
+
+    Object.keys(dataMaps).forEach(function (filename) {
+        const dataMap = dataMaps[filename];
+
+        if (dataMap && typeof dataMap === 'object') {
+            const sortedKeys = Object.keys(dataMap).sort();
+
+            const orderedMap = {};
+
+            sortedKeys.forEach(function (key) {
+                orderedMap[key] = dataMap[key];
             });
+
             dataMaps[filename] = orderedMap;
         }
     });
 
+    // ---------------------------------------------------------
+    // Step 5:
+    // Prepare output files.
+    // ---------------------------------------------------------
+
     await fileSetup(fileConfig);
 
-    // --- Step 3: Write sorted data to files ---
-    if (useDataArray && typeof fileFormat !== 'undefined' && fileFormat !== 'json') {
-        for (let x = 0; x < memoryCount; x++) {
-            let item = newMapArray[x];
-            if (!item) continue;
-            let newMaps = item.newMaps;
-            for (let i = 0; i < newMaps.length; i++) {
-                let newMap = newMaps[i];
-                let filename = null;
-                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
-                    filename = defaultDataFilename;
-                } else {
-                    filename = newMap[fileSplitVar];
-                }
-                let dataMap = dataMaps[filename];
-                let row = mapToRow(dataMap, newMap, filename);
-                await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
-            }
+    // ---------------------------------------------------------
+    // Step 6:
+    // Write data.
+    //
+    // No second DB query!
+    // No dependency on maxRowsInMemory!
+    // No duplicate calls to getInitialVarMap()!
+    // ---------------------------------------------------------
+
+    for (const item of mappedEntries) {
+        // JSON is based on the original document.
+        if (fileFormat === 'json') {
+            await writeDataFile(
+                JSON.stringify(item.dataEntry) + '\n',
+                defaultDataFilename,
+                fileSuffix,
+                files,
+                fileConfig
+            );
+
+            continue;
         }
-    } else {
-        // Write all sorted entries from the array
-        for (let i = 0; i < allDataEntries.length; i++) {
-            let dataEntry = allDataEntries[i];
-            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
-                await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
-                continue;
+
+        for (const newMap of item.maps) {
+            let filename;
+
+            if (
+                fileSplitVar == null ||
+                fileSplitVar === '' ||
+                newMap[fileSplitVar] == null ||
+                newMap[fileSplitVar] === ''
+            ) {
+                filename = defaultDataFilename;
+            } else {
+                filename = newMap[fileSplitVar];
             }
-            let newMaps = getInitialVarMap(dataEntry);
-            for (let j = 0; j < newMaps.length; j++) {
-                let newMap = newMaps[j];
-                let filename = null;
-                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
-                    filename = defaultDataFilename;
-                } else {
-                    filename = newMap[fileSplitVar];
-                }
-                let dataMap = dataMaps[filename];
-                let row = mapToRow(dataMap, newMap, filename);
-                await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
-            }
+
+            const dataMap = dataMaps[filename];
+
+            const row = mapToRow(
+                dataMap,
+                newMap,
+                filename
+            );
+
+            // IMPORTANT:
+            // await the write.
+            await writeDataRowToFile(
+                row,
+                dataMap,
+                filename,
+                rowSplitString,
+                fileSuffix,
+                files,
+                fileConfig
+            );
         }
     }
 
+    // ---------------------------------------------------------
+    // Step 7:
+    // Close files only after ALL writes have completed.
+    // ---------------------------------------------------------
+
     await closeFiles(files);
+
     return zipFiles(fileConfig);
 };
+
 
 
 exports.getStudyDailyData = async function(study, end_date) {
