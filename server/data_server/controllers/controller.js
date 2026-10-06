@@ -209,8 +209,8 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let newMapArray = new Array(memoryLimit);
     let memoryCount = 0;
 
-    // --- Step 1: Initial pass with deterministic sorting (.sort({ _id: 1 })) ---
-    let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+    // --- Step 1: Initial fast pass (No .sort() to prevent hanging) ---
+    let cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
         totalEntriesProcessed++;
         let newMaps = getInitialVarMap(dataEntry);
@@ -230,7 +230,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         });
     }
 
-    cursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+    cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
     try {
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             totalEntriesProcessed++;
@@ -258,9 +258,22 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         throw { status: 500, message: 'ERROR: No data!' };
     }
 
+    // Ensure deterministic column ordering across runs to guarantee constant file size
+    Object.keys(dataMaps).forEach(function(filename) {
+        if (dataMaps[filename] && typeof dataMaps[filename] === 'object') {
+            // Sort keys of dataMap to maintain consistent column order
+            let sortedKeys = Object.keys(dataMaps[filename]).sort();
+            let orderedMap = {};
+            sortedKeys.forEach(key => {
+                orderedMap[key] = dataMaps[filename][key];
+            });
+            dataMaps[filename] = orderedMap;
+        }
+    });
+
     await fileSetup(fileConfig);
 
-    // --- Step 2: Write data to files with deterministic sorting ---
+    // --- Step 2: Write data to files ---
     if (useDataArray && typeof fileFormat !== 'undefined' && fileFormat !== 'json') {
         for (let x = 0; x < memoryCount; x++) {
             let item = newMapArray[x];
@@ -280,8 +293,8 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
             }
         }
     } else {
-        // Stream Data collection with deterministic sorting
-        cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+        // Stream Data collection for writing
+        cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
                 await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
@@ -302,8 +315,8 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
             }
         }
 
-        // Stream ExperimentSession collection with deterministic sorting
-        cursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+        // Stream ExperimentSession collection for writing
+        cursor = experimentSessionSchema.find(findObject).lean().cursor({ batchSize: 10000 });
         try {
             for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
                 if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
