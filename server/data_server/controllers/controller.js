@@ -210,7 +210,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let newMapArray = new Array(memoryLimit);
 
     // --- Step 1: Initial pass using stable async iterator (for await) ---
-    let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+    let cursor = Data.find(findObject).lean().cursor({ batchSize: 10000 });
     for await (let dataEntry of cursor) {
         let newMaps = getInitialVarMap(dataEntry);
         if (useDataArray) {
