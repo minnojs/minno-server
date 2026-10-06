@@ -209,9 +209,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
     let newMapArray = new Array(memoryLimit);
 
-    // --- Step 1: Initial pass to build field maps and buffer data in memory if small ---
+    // --- Step 1: Initial pass using stable async iterator (for await) ---
     let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
-    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+    for await (let dataEntry of cursor) {
         let newMaps = getInitialVarMap(dataEntry);
         if (useDataArray) {
             newMapArray[dataCount] = { dataEntry, newMaps };
@@ -230,7 +230,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
     let sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
     try {
-        for (let dataEntry = await sessionCursor.next(); dataEntry != null; dataEntry = await sessionCursor.next()) {
+        for await (let dataEntry of sessionCursor) {
             let newMaps = getInitialVarMap(dataEntry);
             if (useDataArray) {
                 newMapArray[dataCount] = { dataEntry, newMaps };
@@ -275,9 +275,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
             }
         }
     } else {
-        // Fallback to streaming if data size exceeded 100 rows
+        // Fallback to streaming if data size exceeded 100 rows using for await
         cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
-        for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+        for await (let dataEntry of cursor) {
             if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
                 await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
                 continue;
@@ -299,7 +299,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
         sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
         try {
-            for (let dataEntry = await sessionCursor.next(); dataEntry != null; dataEntry = await sessionCursor.next()) {
+            for await (let dataEntry of sessionCursor) {
                 if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
                     await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
                     continue;
