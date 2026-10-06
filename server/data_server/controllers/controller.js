@@ -715,7 +715,7 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      * WRITE DATA
      * ----------------------------------------------------------------------
-     */
+ */
 
     let rowsWrittenAttempted = 0;
 
@@ -1837,10 +1837,8 @@ let writeDataFile = function(
         fileSuffix;
 
     if (!files[filename]) {
-        let wstream =
-            fs.createWriteStream(
-                filename
-            );
+        const wstream =
+            fs.createWriteStream(filename);
 
         wstream.on(
             'error',
@@ -1896,7 +1894,7 @@ let writeDataRowToFile = function(
     if (!files[filename]) {
         let initialRow = '';
 
-        let reverseMap =
+        const reverseMap =
             new Array(
                 Object.keys(map).length
             );
@@ -1923,10 +1921,8 @@ let writeDataRowToFile = function(
 
         initialRow += '\n';
 
-        let wstream =
-            fs.createWriteStream(
-                filename
-            );
+        const wstream =
+            fs.createWriteStream(filename);
 
         wstream.on(
             'error',
@@ -1952,7 +1948,7 @@ let writeDataRowToFile = function(
         );
     }
 
-    let csvRow =
+    const csvRow =
         arrayToCsvString(
             row,
             rowSplitString
@@ -1970,77 +1966,64 @@ let writeDataRowToFile = function(
  * --------------------------------------------------------------------------
  */
 
-let closeFiles = async function(
-    files
-) {
+let closeFiles = async function(files) {
     const closePromises = [];
 
-    for (
-        let key in files
-        ) {
-        const stream =
-            files[key];
+    for (let key in files) {
+        const stream = files[key];
 
         closePromises.push(
-            new Promise(
-                function(resolve, reject) {
-                    let settled = false;
+            new Promise(function(resolve, reject) {
+                let settled = false;
 
-                    function cleanup() {
-                        stream.removeListener(
-                            'finish',
-                            onFinish
-                        );
-
-                        stream.removeListener(
-                            'error',
-                            onError
-                        );
-                    }
-
-                    function onFinish() {
-                        if (settled) {
-                            return;
-                        }
-
-                        settled = true;
-
-                        cleanup();
-
-                        resolve();
-                    }
-
-                    function onError(err) {
-                        if (settled) {
-                            return;
-                        }
-
-                        settled = true;
-
-                        cleanup();
-
-                        reject(err);
-                    }
-
-                    stream.once(
+                function cleanup() {
+                    stream.removeListener(
                         'finish',
                         onFinish
                     );
 
-                    stream.once(
+                    stream.removeListener(
                         'error',
                         onError
                     );
-
-                    stream.end();
                 }
-            )
+
+                function onFinish() {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+                    cleanup();
+                    resolve();
+                }
+
+                function onError(err) {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+                    cleanup();
+                    reject(err);
+                }
+
+                stream.once(
+                    'finish',
+                    onFinish
+                );
+
+                stream.once(
+                    'error',
+                    onError
+                );
+
+                stream.end();
+            })
         );
     }
 
-    await Promise.all(
-        closePromises
-    );
+    await Promise.all(closePromises);
 };
 
 
@@ -2050,9 +2033,7 @@ let closeFiles = async function(
  * --------------------------------------------------------------------------
  */
 
-let zipFiles = async function(
-    fileConfig
-) {
+let zipFiles = async function(fileConfig) {
     await zipFolder(
         fileConfig.zipPath,
         fileConfig.filePrefix
@@ -2072,9 +2053,7 @@ let zipFiles = async function(
  * --------------------------------------------------------------------------
  */
 
-let csvEscape = function(
-    theString
-) {
+let csvEscape = function(theString) {
     if (
         typeof theString !== 'undefined' &&
         theString !== null
