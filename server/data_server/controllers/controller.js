@@ -169,6 +169,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let dataCount = 0;
     let useDataArray = true;
 
+    // Force max rows in memory to 100 as requested
+    let memoryLimit = 100;
+
     findObject.studyId = studyId;
     if (Array.isArray(studyId)) {
         findObject.studyId = {};
@@ -203,9 +206,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         rowSplitString = '\t';
     }
 
-    let newMapArray = new Array(maxRowsInMemory);
+    let newMapArray = new Array(memoryLimit);
 
-    // --- שלב 1: סריקה ראשונית מהירה עם batchSize: 10000 ומיון _id ---
+    // --- Step 1: Initial pass to build field maps and buffer data in memory if small ---
     let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
     for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
         let newMaps = getInitialVarMap(dataEntry);
@@ -213,8 +216,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
             newMapArray[dataCount] = { dataEntry, newMaps };
             dataCount++;
         }
-        if (dataCount >= maxRowsInMemory) {
-            useDataArray = false; // אם עברנו את המכסה, עוברים למצב סטרימינג טהור
+        // If dataset exceeds the 100 rows limit, switch off memory array to prevent bloat
+        if (dataCount >= memoryLimit) {
+            useDataArray = false;
             dataCount = 0;
             newMapArray = null;
         }
@@ -231,7 +235,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
                 newMapArray[dataCount] = { dataEntry, newMaps };
                 dataCount++;
             }
-            if (dataCount >= maxRowsInMemory) {
+            if (dataCount >= memoryLimit) {
                 useDataArray = false;
                 dataCount = 0;
                 newMapArray = null;
@@ -250,7 +254,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
     await fileSetup(fileConfig);
 
-    // --- שלב 2: כתיבה מהירה (מהזיכרון אם נכנס, או סטרימינג יעיל אם חרגנו) ---
+    // --- Step 2: Write data to files (from memory array if under limit, or via streaming if exceeded) ---
     if (useDataArray && dataCount > 0) {
         for (let x = 0; x < dataCount; x++) {
             let item = newMapArray[x];
@@ -270,7 +274,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
             }
         }
     } else {
-        // במקרה שהנתונים עצומים וחורגים מהזיכרון - נבצע סריקה שנייה וממוקדת עם batchSize גדול
+        // Fallback to streaming if data size exceeded 100 rows
         cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
         for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
             if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
@@ -319,10 +323,6 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     }
 
     await closeFiles(files);
-
-    if (dataCount == 0 && !useDataArray) {
-        // וידוא שהורדנו מידע גם אם היינו במצב סטרימינג מלא
-    }
     return zipFiles(fileConfig);
 };
 
