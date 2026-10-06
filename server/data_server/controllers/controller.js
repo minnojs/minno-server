@@ -272,29 +272,6 @@ exports.getData = async function(
     endDate,
     versionId
 ) {
-    const startTime = Date.now();
-
-    function elapsed() {
-        return (
-            (Date.now() - startTime) / 1000
-        ).toFixed(2) + 's';
-    }
-
-    function log(message, data) {
-        if (typeof data !== 'undefined') {
-            console.log(
-                `[GETDATA ${elapsed()}] ${message}`,
-                data
-            );
-        } else {
-            console.log(
-                `[GETDATA ${elapsed()}] ${message}`
-            );
-        }
-    }
-
-    log('========== START ==========');
-
     if (typeof studyId === 'undefined' || !studyId) {
         throw new Error(
             'Error: studyId must be specified'
@@ -369,14 +346,6 @@ exports.getData = async function(
         rowSplitString = '\t';
     }
 
-    log('findObject', findObject);
-    log('fileFormat', fileFormat);
-    log('fileSplitVar', fileSplitVar);
-    log('startDate', startDate);
-    log('endDate', endDate);
-    log('versionId', versionId);
-    log('maxRowsInMemory', maxRowsInMemory);
-
 
     /*
      * ----------------------------------------------------------------------
@@ -384,38 +353,17 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      */
 
-    log('COUNT: starting Data.countDocuments()');
-
     const dataDocumentsCount =
         await Data.countDocuments(findObject);
-
-    log(
-        'COUNT: Data',
-        dataDocumentsCount
-    );
-
-    log(
-        'COUNT: starting experimentSessionSchema.countDocuments()'
-    );
 
     const experimentDocumentsCount =
         await experimentSessionSchema.countDocuments(
             findObject
         );
 
-    log(
-        'COUNT: experimentSessionSchema',
-        experimentDocumentsCount
-    );
-
     const expectedTotal =
         dataDocumentsCount +
         experimentDocumentsCount;
-
-    log(
-        'COUNT: TOTAL',
-        expectedTotal
-    );
 
 
     /*
@@ -434,16 +382,12 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      */
 
-    log('DATA: creating cursor');
-
     let cursor = Data
         .find(findObject)
         .lean()
         .cursor({
             batchSize: 10000
         });
-
-    log('DATA: cursor created');
 
     let dataDocumentsRead = 0;
     let dataMapsCreated = 0;
@@ -454,15 +398,6 @@ exports.getData = async function(
         dataEntry = await cursor.next()
     ) {
         dataDocumentsRead++;
-
-        if (dataDocumentsRead === 1) {
-            log(
-                'DATA: first document received',
-                {
-                    id: dataEntry._id
-                }
-            );
-        }
 
         const newMaps =
             getInitialVarMap(dataEntry);
@@ -495,43 +430,12 @@ exports.getData = async function(
         });
     }
 
-    log(
-        'DATA: cursor finished',
-        {
-            documentsRead:
-            dataDocumentsRead,
-
-            expectedDocuments:
-            dataDocumentsCount,
-
-            difference:
-                dataDocumentsCount -
-                dataDocumentsRead,
-
-            dataMapsCreated:
-            dataMapsCreated,
-
-            dataMapsKeys:
-            Object.keys(dataMaps).length,
-
-            useDataArray:
-            useDataArray,
-
-            dataCount:
-            dataCount
-        }
-    );
-
 
     /*
      * ----------------------------------------------------------------------
      * EXPERIMENT SESSION COLLECTION
      * ----------------------------------------------------------------------
      */
-
-    log(
-        'EXPERIMENT: creating cursor'
-    );
 
     cursor =
         experimentSessionSchema
@@ -540,10 +444,6 @@ exports.getData = async function(
             .cursor({
                 batchSize: 10000
             });
-
-    log(
-        'EXPERIMENT: cursor created'
-    );
 
     let experimentDocumentsRead = 0;
     let experimentMapsCreated = 0;
@@ -554,17 +454,6 @@ exports.getData = async function(
         dataEntry = await cursor.next()
     ) {
         experimentDocumentsRead++;
-
-        if (
-            experimentDocumentsRead === 1
-        ) {
-            log(
-                'EXPERIMENT: first document received',
-                {
-                    id: dataEntry._id
-                }
-            );
-        }
 
         const newMaps =
             getInitialVarMap(dataEntry);
@@ -598,95 +487,12 @@ exports.getData = async function(
         });
     }
 
-    log(
-        'EXPERIMENT: cursor finished',
-        {
-            documentsRead:
-            experimentDocumentsRead,
-
-            expectedDocuments:
-            experimentDocumentsCount,
-
-            difference:
-                experimentDocumentsCount -
-                experimentDocumentsRead,
-
-            experimentMapsCreated:
-            experimentMapsCreated,
-
-            dataMapsKeys:
-            Object.keys(dataMaps).length,
-
-            useDataArray:
-            useDataArray,
-
-            dataCount:
-            dataCount
-        }
-    );
-
 
     /*
      * ----------------------------------------------------------------------
      * VERIFICATION
      * ----------------------------------------------------------------------
      */
-
-    log(
-        'VERIFY: document counts',
-        {
-            Data: {
-                expected:
-                dataDocumentsCount,
-
-                read:
-                dataDocumentsRead,
-
-                difference:
-                    dataDocumentsCount -
-                    dataDocumentsRead
-            },
-
-            experimentSessionSchema: {
-                expected:
-                experimentDocumentsCount,
-
-                read:
-                experimentDocumentsRead,
-
-                difference:
-                    experimentDocumentsCount -
-                    experimentDocumentsRead
-            },
-
-            total: {
-                expected:
-                expectedTotal,
-
-                read:
-                    dataDocumentsRead +
-                    experimentDocumentsRead,
-
-                difference:
-                    expectedTotal -
-                    (
-                        dataDocumentsRead +
-                        experimentDocumentsRead
-                    )
-            }
-        }
-    );
-
-    log(
-        'DATA MAPS:',
-        {
-            count:
-            Object.keys(dataMaps).length,
-
-            keys:
-                Object.keys(dataMaps)
-        }
-    );
 
     if (
         Object.keys(dataMaps).length === 0
@@ -704,34 +510,16 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      */
 
-    log('FILE SETUP: START');
-
     await fileSetup(fileConfig);
-
-    log('FILE SETUP: DONE');
 
 
     /*
      * ----------------------------------------------------------------------
      * WRITE DATA
      * ----------------------------------------------------------------------
- */
+     */
 
     let rowsWrittenAttempted = 0;
-
-    log(
-        'WRITE: START',
-        {
-            useDataArray:
-            useDataArray,
-
-            dataCount:
-            dataCount,
-
-            format:
-            fileFormat
-        }
-    );
 
 
     /*
@@ -745,10 +533,6 @@ exports.getData = async function(
         typeof fileFormat !== 'undefined' &&
         fileFormat !== 'json'
     ) {
-        log(
-            'WRITE: using memory array'
-        );
-
         for (
             let x = 0;
             x < dataCount;
@@ -814,19 +598,6 @@ exports.getData = async function(
                 );
 
                 rowsWrittenAttempted++;
-
-                if (
-                    rowsWrittenAttempted %
-                    1000 === 0
-                ) {
-                    log(
-                        'WRITE: progress',
-                        {
-                            rowsWrittenAttempted:
-                            rowsWrittenAttempted
-                        }
-                    );
-                }
             }
         }
     } else {
@@ -836,15 +607,6 @@ exports.getData = async function(
          * ------------------------------------------------------------------
          * SECOND PASS
          * ------------------------------------------------------------------
-         */
-
-        log(
-            'WRITE: using second database pass'
-        );
-
-
-        /*
-         * DATA
          */
 
         cursor = Data
@@ -938,29 +700,8 @@ exports.getData = async function(
                 );
 
                 rowsWrittenAttempted++;
-
-                if (
-                    rowsWrittenAttempted %
-                    1000 === 0
-                ) {
-                    log(
-                        'WRITE: progress',
-                        {
-                            rowsWrittenAttempted:
-                            rowsWrittenAttempted
-                        }
-                    );
-                }
             }
         }
-
-        log(
-            'WRITE: second Data pass finished',
-            {
-                documentsRead:
-                secondPassDataDocumentsRead
-            }
-        );
 
 
         /*
@@ -1059,45 +800,9 @@ exports.getData = async function(
                 );
 
                 rowsWrittenAttempted++;
-
-                if (
-                    rowsWrittenAttempted %
-                    1000 === 0
-                ) {
-                    log(
-                        'WRITE: progress',
-                        {
-                            rowsWrittenAttempted:
-                            rowsWrittenAttempted
-                        }
-                    );
-                }
             }
         }
-
-        log(
-            'WRITE: second experiment pass finished',
-            {
-                documentsRead:
-                secondPassExperimentDocumentsRead
-            }
-        );
     }
-
-
-    log(
-        'WRITE: FINISHED',
-        {
-            rowsWrittenAttempted:
-            rowsWrittenAttempted,
-
-            filesOpened:
-            Object.keys(files).length,
-
-            files:
-                Object.keys(files)
-        }
-    );
 
 
     /*
@@ -1106,19 +811,7 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      */
 
-    log(
-        'CLOSE FILES: START',
-        {
-            files:
-            Object.keys(files).length
-        }
-    );
-
     await closeFiles(files);
-
-    log(
-        'CLOSE FILES: DONE'
-    );
 
 
     /*
@@ -1130,38 +823,6 @@ exports.getData = async function(
     const totalDocumentsRead =
         dataDocumentsRead +
         experimentDocumentsRead;
-
-    log(
-        'FINAL:',
-        {
-            dataDocumentsCount:
-            dataDocumentsCount,
-
-            experimentDocumentsCount:
-            experimentDocumentsCount,
-
-            expectedTotal:
-            expectedTotal,
-
-            dataDocumentsRead:
-            dataDocumentsRead,
-
-            experimentDocumentsRead:
-            experimentDocumentsRead,
-
-            totalDocumentsRead:
-            totalDocumentsRead,
-
-            rowsWrittenAttempted:
-            rowsWrittenAttempted,
-
-            filesCreated:
-            Object.keys(files).length,
-
-            dataMaps:
-            Object.keys(dataMaps).length
-        }
-    );
 
     if (totalDocumentsRead === 0) {
         throw {
@@ -1177,14 +838,8 @@ exports.getData = async function(
      * ----------------------------------------------------------------------
      */
 
-    log('ZIP: START');
-
     const zipResult =
         await zipFiles(fileConfig);
-
-    log('ZIP: DONE');
-
-    log('========== END ==========');
 
     return zipResult;
 };
@@ -1800,21 +1455,6 @@ let makeid = function(length) {
  * --------------------------------------------------------------------------
  * FILE WRITING
  * --------------------------------------------------------------------------
- *
- * IMPORTANT:
- *
- * stream.write() does not return a Promise.
- * stream.end() does not return a Promise.
- *
- * Therefore we do not use:
- *
- *     await stream.write(...)
- *
- * or:
- *
- *     await stream.end()
- *
- * Instead, closeFiles waits for the "finish" event.
  */
 
 let writeDataFile = function(
@@ -1960,12 +1600,6 @@ let writeDataRowToFile = function(
 };
 
 
-/*
- * --------------------------------------------------------------------------
- * CLOSE FILES
- * --------------------------------------------------------------------------
- */
-
 let closeFiles = async function(files) {
     const closePromises = [];
 
@@ -2026,12 +1660,6 @@ let closeFiles = async function(files) {
     await Promise.all(closePromises);
 };
 
-
-/*
- * --------------------------------------------------------------------------
- * ZIP
- * --------------------------------------------------------------------------
- */
 
 let zipFiles = async function(fileConfig) {
     await zipFolder(
