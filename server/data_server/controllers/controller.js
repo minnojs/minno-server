@@ -202,18 +202,18 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         rowSplitString = '\t';
     }
 
-    // --- שלב 1: מעבר ראשוני לבניית מפת השדות (DataMaps) בצורה דטרמיניסטית ---
-    let cursor = Data.find(findObject).sort({ createdDate: 1, _id: 1 }).lean().cursor({ batchSize: 10000 });
-    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+    // --- שלב 1: בניית מפת השדות (DataMaps) עם מיון בטוח לפי _id ---
+    let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor();
+    for await (let dataEntry of cursor) {
         let newMaps = getInitialVarMap(dataEntry);
         newMaps.forEach(function(newMap) {
             updateMap(dataMaps, newMap, fileSplitVar);
         });
     }
 
-    cursor = experimentSessionSchema.find(findObject).sort({ createdDate: 1, _id: 1 }).lean().cursor({ batchSize: 10000 });
+    let sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor();
     try {
-        for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+        for await (let dataEntry of sessionCursor) {
             let newMaps = getInitialVarMap(dataEntry);
             newMaps.forEach(function(newMap) {
                 updateMap(dataMaps, newMap, fileSplitVar);
@@ -229,9 +229,9 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
     await fileSetup(fileConfig);
 
-    // --- שלב 2: כתיבה עקבית לקובץ באמצעות סטרימינג ישיר מהמסד ---
-    cursor = Data.find(findObject).sort({ createdDate: 1, _id: 1 }).lean().cursor({ batchSize: 10000 });
-    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+    // --- שלב 2: כתיבה לקבצים עם אותו מיון בדיוק ---
+    cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor();
+    for await (let dataEntry of cursor) {
         dataCount++;
         if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
             await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
@@ -251,25 +251,29 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         }
     }
 
-    cursor = experimentSessionSchema.find(findObject).sort({ createdDate: 1, _id: 1 }).lean().cursor({ batchSize: 10000 });
-    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
-        dataCount++;
-        if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
-            await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
-            continue;
-        }
-        let newMaps = getInitialVarMap(dataEntry);
-        for await (let newMap of newMaps) {
-            let filename = null;
-            if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
-                filename = defaultDataFilename;
-            } else {
-                filename = newMap[fileSplitVar];
+    sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor();
+    try {
+        for await (let dataEntry of sessionCursor) {
+            dataCount++;
+            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
+                await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
+                continue;
             }
-            let dataMap = dataMaps[filename];
-            let row = mapToRow(dataMap, newMap, filename);
-            await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+            let newMaps = getInitialVarMap(dataEntry);
+            for await (let newMap of newMaps) {
+                let filename = null;
+                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+                    filename = defaultDataFilename;
+                } else {
+                    filename = newMap[fileSplitVar];
+                }
+                let dataMap = dataMaps[filename];
+                let row = mapToRow(dataMap, newMap, filename);
+                await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+            }
         }
+    } catch (e) {
+        logger.error({ message: e });
     }
 
     await closeFiles(files);
