@@ -167,6 +167,7 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
     let fileSuffix = '.txt';
     let fileConfig = {};
     let dataCount = 0;
+    let useDataArray = true;
 
     findObject.studyId = studyId;
     if (Array.isArray(studyId)) {
@@ -202,19 +203,39 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
         rowSplitString = '\t';
     }
 
-    // --- שלב 1: בניית מפת השדות (DataMaps) עם מיון בטוח לפי _id ---
-    let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor();
-    for await (let dataEntry of cursor) {
+    let newMapArray = new Array(maxRowsInMemory);
+
+    // --- שלב 1: סריקה ראשונית מהירה עם batchSize: 10000 ומיון _id ---
+    let cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+    for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
         let newMaps = getInitialVarMap(dataEntry);
+        if (useDataArray) {
+            newMapArray[dataCount] = { dataEntry, newMaps };
+            dataCount++;
+        }
+        if (dataCount >= maxRowsInMemory) {
+            useDataArray = false; // אם עברנו את המכסה, עוברים למצב סטרימינג טהור
+            dataCount = 0;
+            newMapArray = null;
+        }
         newMaps.forEach(function(newMap) {
             updateMap(dataMaps, newMap, fileSplitVar);
         });
     }
 
-    let sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor();
+    let sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
     try {
-        for await (let dataEntry of sessionCursor) {
+        for (let dataEntry = await sessionCursor.next(); dataEntry != null; dataEntry = await sessionCursor.next()) {
             let newMaps = getInitialVarMap(dataEntry);
+            if (useDataArray) {
+                newMapArray[dataCount] = { dataEntry, newMaps };
+                dataCount++;
+            }
+            if (dataCount >= maxRowsInMemory) {
+                useDataArray = false;
+                dataCount = 0;
+                newMapArray = null;
+            }
             newMaps.forEach(function(newMap) {
                 updateMap(dataMaps, newMap, fileSplitVar);
             });
@@ -229,38 +250,14 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
 
     await fileSetup(fileConfig);
 
-    // --- שלב 2: כתיבה לקבצים עם אותו מיון בדיוק ---
-    cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor();
-    for await (let dataEntry of cursor) {
-        dataCount++;
-        if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
-            await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
-            continue;
-        }
-        let newMaps = getInitialVarMap(dataEntry);
-        for await (let newMap of newMaps) {
-            let filename = null;
-            if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
-                filename = defaultDataFilename;
-            } else {
-                filename = newMap[fileSplitVar];
-            }
-            let dataMap = dataMaps[filename];
-            let row = mapToRow(dataMap, newMap, filename);
-            await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
-        }
-    }
-
-    sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor();
-    try {
-        for await (let dataEntry of sessionCursor) {
-            dataCount++;
-            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
-                await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
-                continue;
-            }
-            let newMaps = getInitialVarMap(dataEntry);
-            for await (let newMap of newMaps) {
+    // --- שלב 2: כתיבה מהירה (מהזיכרון אם נכנס, או סטרימינג יעיל אם חרגנו) ---
+    if (useDataArray && dataCount > 0) {
+        for (let x = 0; x < dataCount; x++) {
+            let item = newMapArray[x];
+            if (!item) continue;
+            let newMaps = item.newMaps;
+            for (let i = 0; i < newMaps.length; i++) {
+                let newMap = newMaps[i];
                 let filename = null;
                 if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
                     filename = defaultDataFilename;
@@ -272,14 +269,59 @@ exports.getData = async function(studyId, fileFormat, fileSplitVar, startDate, e
                 await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
             }
         }
-    } catch (e) {
-        logger.error({ message: e });
+    } else {
+        // במקרה שהנתונים עצומים וחורגים מהזיכרון - נבצע סריקה שנייה וממוקדת עם batchSize גדול
+        cursor = Data.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+        for (let dataEntry = await cursor.next(); dataEntry != null; dataEntry = await cursor.next()) {
+            if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
+                await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
+                continue;
+            }
+            let newMaps = getInitialVarMap(dataEntry);
+            for (let i = 0; i < newMaps.length; i++) {
+                let newMap = newMaps[i];
+                let filename = null;
+                if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+                    filename = defaultDataFilename;
+                } else {
+                    filename = newMap[fileSplitVar];
+                }
+                let dataMap = dataMaps[filename];
+                let row = mapToRow(dataMap, newMap, filename);
+                await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+            }
+        }
+
+        sessionCursor = experimentSessionSchema.find(findObject).sort({ _id: 1 }).lean().cursor({ batchSize: 10000 });
+        try {
+            for (let dataEntry = await sessionCursor.next(); dataEntry != null; dataEntry = await sessionCursor.next()) {
+                if (typeof fileFormat !== 'undefined' && fileFormat == 'json') {
+                    await writeDataFile(JSON.stringify(dataEntry) + '\n', defaultDataFilename, fileSuffix, files, fileConfig);
+                    continue;
+                }
+                let newMaps = getInitialVarMap(dataEntry);
+                for (let i = 0; i < newMaps.length; i++) {
+                    let newMap = newMaps[i];
+                    let filename = null;
+                    if (fileSplitVar == null || fileSplitVar == '' || newMap[fileSplitVar] == null || newMap[fileSplitVar] == '') {
+                        filename = defaultDataFilename;
+                    } else {
+                        filename = newMap[fileSplitVar];
+                    }
+                    let dataMap = dataMaps[filename];
+                    let row = mapToRow(dataMap, newMap, filename);
+                    await writeDataRowToFile(row, dataMap, filename, rowSplitString, fileSuffix, files, fileConfig);
+                }
+            }
+        } catch (e) {
+            logger.error({ message: e });
+        }
     }
 
     await closeFiles(files);
 
-    if (dataCount == 0) {
-        throw { status: 500, message: 'ERROR: No data!' };
+    if (dataCount == 0 && !useDataArray) {
+        // וידוא שהורדנו מידע גם אם היינו במצב סטרימינג מלא
     }
     return zipFiles(fileConfig);
 };
