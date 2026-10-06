@@ -157,7 +157,7 @@ exports.getData2 = function(req, res) {
     res.send(exports.getData(req.get('studyId')));
 };
 
-exports.getData = async function (
+exports.getData = async function(
     studyId,
     fileFormat,
     fileSplitVar,
@@ -165,23 +165,21 @@ exports.getData = async function (
     endDate,
     versionId
 ) {
-    const debugStart = Date.now();
+    const startTime = Date.now();
 
-    function debug(label, data) {
-        const elapsed = ((Date.now() - debugStart) / 1000).toFixed(2);
+    function elapsed() {
+        return ((Date.now() - startTime) / 1000).toFixed(2) + 's';
+    }
 
-        if (typeof data === 'undefined') {
-            console.log(`[GETDATA ${elapsed}s] ${label}`);
+    function log(message, data) {
+        if (typeof data !== 'undefined') {
+            console.log(`[GETDATA ${elapsed()}] ${message}`, data);
         } else {
-            console.log(`[GETDATA ${elapsed}s] ${label}`, data);
+            console.log(`[GETDATA ${elapsed()}] ${message}`);
         }
     }
 
-    debug('========== START ==========');
-
-    // ============================================================
-    // VALIDATION
-    // ============================================================
+    log('========== START ==========');
 
     if (typeof studyId === 'undefined' || !studyId) {
         throw new Error('Error: studyId must be specified');
@@ -195,10 +193,6 @@ exports.getData = async function (
     let fileConfig = {};
     let dataCount = 0;
     let useDataArray = true;
-
-    // ============================================================
-    // BUILD QUERY
-    // ============================================================
 
     findObject.studyId = studyId;
 
@@ -227,7 +221,7 @@ exports.getData = async function (
 
     if (typeof versionId !== 'undefined' && versionId) {
         if (Array.isArray(versionId)) {
-            versionId.forEach(function (vId, index) {
+            versionId.forEach(function(vId, index) {
                 versionId[index] = vId.toString();
             });
 
@@ -235,7 +229,6 @@ exports.getData = async function (
                 $in: versionId
             };
         } else {
-            // Fixed the original assignment bug
             findObject.versionId = versionId.toString();
         }
     }
@@ -249,33 +242,31 @@ exports.getData = async function (
         rowSplitString = '\t';
     }
 
-    debug('findObject', findObject);
-    debug('fileFormat', fileFormat);
-    debug('fileSplitVar', fileSplitVar);
-    debug('startDate', startDate);
-    debug('endDate', endDate);
-    debug('versionId', versionId);
-    debug('maxRowsInMemory', maxRowsInMemory);
+    log('findObject', findObject);
+    log('fileFormat', fileFormat);
+    log('fileSplitVar', fileSplitVar);
+    log('startDate', startDate);
+    log('endDate', endDate);
+    log('versionId', versionId);
+    log('maxRowsInMemory', maxRowsInMemory);
 
-    // ============================================================
-    // COUNT DOCUMENTS
-    // ============================================================
+    /*
+     * Count documents first.
+     * This is only for verification/debugging and does not affect the result.
+     */
 
-    debug('COUNT: starting Data.countDocuments()');
+    log('COUNT: starting Data.countDocuments()');
 
-    const dataDocumentsCount =
-        await Data.countDocuments(findObject);
+    const dataDocumentsCount = await Data.countDocuments(findObject);
 
-    debug('COUNT: Data', dataDocumentsCount);
+    log('COUNT: Data', dataDocumentsCount);
 
-    debug(
-        'COUNT: starting experimentSessionSchema.countDocuments()'
-    );
+    log('COUNT: starting experimentSessionSchema.countDocuments()');
 
     const experimentDocumentsCount =
         await experimentSessionSchema.countDocuments(findObject);
 
-    debug(
+    log(
         'COUNT: experimentSessionSchema',
         experimentDocumentsCount
     );
@@ -283,178 +274,210 @@ exports.getData = async function (
     const expectedTotal =
         dataDocumentsCount + experimentDocumentsCount;
 
-    debug('COUNT: TOTAL', expectedTotal);
-
-    // ============================================================
-    // DATA - NO CURSOR
-    // ============================================================
-
-    debug('DATA: starting find()');
-
-    const dataDocuments = await Data
-        .find(findObject)
-        .sort({ _id: 1 })
-        .lean();
-
-    debug('DATA: find() finished', {
-        expected: dataDocumentsCount,
-        received: dataDocuments.length
-    });
-
-    if (dataDocuments.length !== dataDocumentsCount) {
-        debug('WARNING: Data count mismatch', {
-            countDocuments: dataDocumentsCount,
-            find: dataDocuments.length
-        });
-    }
-
-    // ============================================================
-    // EXPERIMENT - NO CURSOR
-    // ============================================================
-
-    debug('EXPERIMENT: starting find()');
-
-    const experimentDocuments =
-        await experimentSessionSchema
-            .find(findObject)
-            .sort({ _id: 1 })
-            .lean();
-
-    debug('EXPERIMENT: find() finished', {
-        expected: experimentDocumentsCount,
-        received: experimentDocuments.length
-    });
-
-    if (
-        experimentDocuments.length !==
-        experimentDocumentsCount
-    ) {
-        debug(
-            'WARNING: experiment count mismatch',
-            {
-                countDocuments: experimentDocumentsCount,
-                find: experimentDocuments.length
-            }
-        );
-    }
-
-    // ============================================================
-    // VERIFY TOTAL DOCUMENT COUNT
-    // ============================================================
-
-    const totalDocumentsRead =
-        dataDocuments.length +
-        experimentDocuments.length;
-
-    debug('VERIFY: total documents', {
-        expected: expectedTotal,
-        received: totalDocumentsRead,
-        difference:
-            expectedTotal - totalDocumentsRead
-    });
-
-    // ============================================================
-    // BUILD DATA MAPS
-    // ============================================================
-
-    debug('MAPS: starting');
+    log('COUNT: TOTAL', expectedTotal);
 
     /*
-     * Keep the same processing order as the original code:
-     * Data documents first, followed by experiment documents.
+     * This array is used only when the total number of documents
+     * is small enough to keep in memory.
+     *
+     * The old code used:
+     *
+     *     [maxRowsInMemory]
+     *
+     * which creates an array with ONE element containing maxRowsInMemory.
+     *
+     * new Array(maxRowsInMemory) creates an array with the intended size.
      */
-    const allDocuments = dataDocuments.concat(
-        experimentDocuments
-    );
 
-    let totalMapsCreated = 0;
-    let documentIndex = 0;
+    let newMapArray = new Array(maxRowsInMemory);
 
-    for (const dataEntry of allDocuments) {
-        documentIndex++;
+    /*
+     * ------------------------------------------------------------------
+     * DATA COLLECTION
+     * ------------------------------------------------------------------
+     */
 
-        if (documentIndex === 1) {
-            debug('MAPS: first document', {
+    log('DATA: creating cursor');
+
+    let cursor = Data.find(findObject)
+        .lean()
+        .cursor({
+            batchSize: 10000
+        });
+
+    log('DATA: cursor created');
+
+    let dataDocumentsRead = 0;
+    let dataMapsCreated = 0;
+
+    for (
+        let dataEntry = await cursor.next();
+        dataEntry != null;
+        dataEntry = await cursor.next()
+    ) {
+        dataDocumentsRead++;
+
+        if (dataDocumentsRead === 1) {
+            log('DATA: first document received', {
                 id: dataEntry._id
             });
         }
 
-        if (documentIndex % 100 === 0) {
-            debug('MAPS: progress', {
-                documentIndex,
-                totalDocuments: allDocuments.length,
-                percent:
-                    allDocuments.length > 0
-                        ? (
-                            (documentIndex /
-                                allDocuments.length) *
-                            100
-                        ).toFixed(2)
-                        : 0
-            });
+        const newMaps = getInitialVarMap(dataEntry);
+
+        if (Array.isArray(newMaps)) {
+            dataMapsCreated += newMaps.length;
         }
 
-        const newMaps =
-            getInitialVarMap(dataEntry);
-
-        if (!newMaps) {
-            debug(
-                'MAPS: getInitialVarMap returned empty',
-                {
-                    id: dataEntry._id
-                }
-            );
-
-            continue;
-        }
-
-        if (typeof newMaps.length !== 'undefined') {
-            totalMapsCreated += newMaps.length;
-        }
-
-        /*
-         * Keep the original memory threshold logic.
-         * With 901 documents and maxRowsInMemory = 100000,
-         * this threshold should not be reached.
-         */
         if (useDataArray) {
+            newMapArray[dataCount] = newMaps;
             dataCount++;
         }
 
+        /*
+         * If the number of documents exceeds the memory limit,
+         * stop using the cached array.
+         */
         if (dataCount >= maxRowsInMemory) {
-            debug(
-                'MAPS: maxRowsInMemory reached',
-                {
-                    dataCount,
-                    maxRowsInMemory
-                }
-            );
-
             useDataArray = false;
             dataCount = 0;
+            newMapArray = [];
         }
 
-        for (const newMap of newMaps) {
+        newMaps.forEach(function(newMap) {
             updateMap(
                 dataMaps,
                 newMap,
                 fileSplitVar
             );
-        }
+        });
     }
 
-    debug('MAPS: finished', {
-        documentsProcessed: documentIndex,
-        totalDocuments: allDocuments.length,
-        totalMapsCreated,
-        dataMapsCount: Object.keys(dataMaps).length,
-        useDataArray,
-        dataCount
+    log('DATA: cursor finished', {
+        documentsRead: dataDocumentsRead,
+        expectedDocuments: dataDocumentsCount,
+        difference: dataDocumentsCount - dataDocumentsRead,
+        dataMapsCreated: dataMapsCreated,
+        dataMapsKeys: Object.keys(dataMaps).length,
+        useDataArray: useDataArray,
+        dataCount: dataCount
     });
 
-    // ============================================================
-    // NO DATA CHECK
-    // ============================================================
+    /*
+     * ------------------------------------------------------------------
+     * EXPERIMENT SESSION COLLECTION
+     * ------------------------------------------------------------------
+     */
+
+    log('EXPERIMENT: creating cursor');
+
+    cursor = experimentSessionSchema.find(findObject)
+        .lean()
+        .cursor({
+            batchSize: 10000
+        });
+
+    log('EXPERIMENT: cursor created');
+
+    let experimentDocumentsRead = 0;
+    let experimentMapsCreated = 0;
+
+    try {
+        for (
+            let dataEntry = await cursor.next();
+            dataEntry != null;
+            dataEntry = await cursor.next()
+        ) {
+            experimentDocumentsRead++;
+
+            if (experimentDocumentsRead === 1) {
+                log('EXPERIMENT: first document received', {
+                    id: dataEntry._id
+                });
+            }
+
+            const newMaps = getInitialVarMap(dataEntry);
+
+            if (Array.isArray(newMaps)) {
+                experimentMapsCreated += newMaps.length;
+            }
+
+            if (useDataArray) {
+                newMapArray[dataCount] = newMaps;
+                dataCount++;
+            }
+
+            if (dataCount >= maxRowsInMemory) {
+                useDataArray = false;
+                dataCount = 0;
+                newMapArray = [];
+            }
+
+            newMaps.forEach(function(newMap) {
+                updateMap(
+                    dataMaps,
+                    newMap,
+                    fileSplitVar
+                );
+            });
+        }
+    } catch (e) {
+        logger.error({
+            message: e
+        });
+
+        throw e;
+    }
+
+    log('EXPERIMENT: cursor finished', {
+        documentsRead: experimentDocumentsRead,
+        expectedDocuments: experimentDocumentsCount,
+        difference:
+            experimentDocumentsCount - experimentDocumentsRead,
+        experimentMapsCreated: experimentMapsCreated,
+        dataMapsKeys: Object.keys(dataMaps).length,
+        useDataArray: useDataArray,
+        dataCount: dataCount
+    });
+
+    /*
+     * ------------------------------------------------------------------
+     * VERIFICATION
+     * ------------------------------------------------------------------
+     */
+
+    log('VERIFY: document counts', {
+        Data: {
+            expected: dataDocumentsCount,
+            read: dataDocumentsRead,
+            difference:
+                dataDocumentsCount - dataDocumentsRead
+        },
+        experimentSessionSchema: {
+            expected: experimentDocumentsCount,
+            read: experimentDocumentsRead,
+            difference:
+                experimentDocumentsCount -
+                experimentDocumentsRead
+        },
+        total: {
+            expected: expectedTotal,
+            read:
+                dataDocumentsRead +
+                experimentDocumentsRead,
+            difference:
+                expectedTotal -
+                (
+                    dataDocumentsRead +
+                    experimentDocumentsRead
+                )
+        }
+    });
+
+    log('DATA MAPS:', {
+        count: Object.keys(dataMaps).length,
+        keys: Object.keys(dataMaps)
+    });
 
     if (Object.keys(dataMaps).length === 0) {
         throw {
@@ -463,307 +486,387 @@ exports.getData = async function (
         };
     }
 
-    // ============================================================
-    // FILE SETUP
-    // ============================================================
+    /*
+     * ------------------------------------------------------------------
+     * FILE SETUP
+     * ------------------------------------------------------------------
+     */
 
-    debug('FILE SETUP: START');
+    log('FILE SETUP: START');
 
     await fileSetup(fileConfig);
 
-    debug('FILE SETUP: DONE');
-
-    // ============================================================
-    // WRITE DATA
-    // ============================================================
-
-    debug('WRITE: START');
-
-    let rowsWrittenAttempted = 0;
-    let dataRowsGenerated = 0;
-    let experimentRowsGenerated = 0;
+    log('FILE SETUP: DONE');
 
     /*
-     * We use the documents that were already loaded above.
-     * There is no second database query and no cursor.
+     * ------------------------------------------------------------------
+     * WRITE DATA
+     * ------------------------------------------------------------------
      */
 
-    // ============================================================
-    // WRITE DATA DOCUMENTS
-    // ============================================================
+    let rowsWrittenAttempted = 0;
 
-    for (let i = 0; i < dataDocuments.length; i++) {
-        const dataEntry = dataDocuments[i];
-
-        if ((i + 1) % 100 === 0) {
-            debug('WRITE DATA: progress', {
-                document: i + 1,
-                total: dataDocuments.length,
-                rowsWrittenAttempted
-            });
-        }
-
-        // ========================================================
-        // JSON
-        // ========================================================
-
-        if (
-            typeof fileFormat !== 'undefined' &&
-            fileFormat === 'json'
-        ) {
-            rowsWrittenAttempted++;
-
-            writeDataFile(
-                JSON.stringify(dataEntry),
-                defaultDataFilename,
-                fileSuffix,
-                files,
-                fileConfig
-            );
-
-            continue;
-        }
-
-        // ========================================================
-        // CSV / TSV
-        // ========================================================
-
-        const newMaps =
-            getInitialVarMap(dataEntry);
-
-        if (!newMaps) {
-            continue;
-        }
-
-        for (const newMap of newMaps) {
-            let filename = null;
-
-            if (
-                fileSplitVar == null ||
-                fileSplitVar === '' ||
-                newMap[fileSplitVar] == null ||
-                newMap[fileSplitVar] === ''
-            ) {
-                filename = defaultDataFilename;
-            } else {
-                filename = newMap[fileSplitVar];
-            }
-
-            const dataMap = dataMaps[filename];
-
-            if (!dataMap) {
-                debug(
-                    'WRITE DATA: WARNING - dataMap not found',
-                    {
-                        filename,
-                        documentId: dataEntry._id
-                    }
-                );
-            }
-
-            const row = mapToRow(
-                dataMap,
-                newMap,
-                filename
-            );
-
-            dataRowsGenerated++;
-            rowsWrittenAttempted++;
-
-            writeDataRowToFile(
-                row,
-                dataMap,
-                filename,
-                rowSplitString,
-                fileSuffix,
-                files,
-                fileConfig
-            );
-        }
-    }
-
-    debug('WRITE DATA: finished', {
-        documents: dataDocuments.length,
-        rows: dataRowsGenerated
+    log('WRITE: START', {
+        useDataArray: useDataArray,
+        dataCount: dataCount,
+        format: fileFormat
     });
 
-    // ============================================================
-    // WRITE EXPERIMENT DOCUMENTS
-    // ============================================================
+    /*
+     * Fast path:
+     *
+     * If all documents fit in memory, use the already processed maps.
+     * This avoids querying MongoDB for the second time.
+     */
 
-    for (
-        let i = 0;
-        i < experimentDocuments.length;
-        i++
+    if (
+        useDataArray &&
+        typeof fileFormat !== 'undefined' &&
+        fileFormat !== 'json'
     ) {
-        const dataEntry =
-            experimentDocuments[i];
+        log('WRITE: using memory array');
 
-        if ((i + 1) % 100 === 0) {
-            debug(
-                'WRITE EXPERIMENT: progress',
-                {
-                    document: i + 1,
-                    total: experimentDocuments.length,
-                    rowsWrittenAttempted
+        for (let x = 0; x < dataCount; x++) {
+            const newMaps = newMapArray[x];
+
+            if (!newMaps) {
+                continue;
+            }
+
+            for (const newMap of newMaps) {
+                let filename = null;
+
+                if (
+                    fileSplitVar == null ||
+                    fileSplitVar === '' ||
+                    newMap[fileSplitVar] == null ||
+                    newMap[fileSplitVar] === ''
+                ) {
+                    filename = defaultDataFilename;
+                } else {
+                    filename = newMap[fileSplitVar];
                 }
-            );
+
+                const dataMap = dataMaps[filename];
+
+                if (!dataMap) {
+                    logger.error({
+                        message: 'Missing dataMap',
+                        filename: filename,
+                        newMap: newMap
+                    });
+
+                    continue;
+                }
+
+                const row = mapToRow(
+                    dataMap,
+                    newMap,
+                    filename
+                );
+
+                writeDataRowToFile(
+                    row,
+                    dataMap,
+                    filename,
+                    rowSplitString,
+                    fileSuffix,
+                    files,
+                    fileConfig
+                );
+
+                rowsWrittenAttempted++;
+
+                if (rowsWrittenAttempted % 1000 === 0) {
+                    log('WRITE: progress', {
+                        rowsWrittenAttempted:
+                        rowsWrittenAttempted
+                    });
+                }
+            }
         }
+    } else {
+        /*
+         * ------------------------------------------------------------------
+         * LARGE DATASET / JSON FALLBACK
+         * ------------------------------------------------------------------
+         *
+         * This path is used when the data does not fit in memory,
+         * or when JSON output is requested.
+         */
 
-        // ========================================================
-        // JSON
-        // ========================================================
+        log('WRITE: using second database pass');
 
-        if (
-            typeof fileFormat !== 'undefined' &&
-            fileFormat === 'json'
+        /*
+         * DATA
+         */
+
+        cursor = Data.find(findObject)
+            .lean()
+            .cursor({
+                batchSize: 10000
+            });
+
+        let secondPassDataDocumentsRead = 0;
+
+        for (
+            let dataEntry = await cursor.next();
+            dataEntry != null;
+            dataEntry = await cursor.next()
         ) {
-            rowsWrittenAttempted++;
-
-            writeDataFile(
-                JSON.stringify(dataEntry),
-                defaultDataFilename,
-                fileSuffix,
-                files,
-                fileConfig
-            );
-
-            continue;
-        }
-
-        // ========================================================
-        // CSV / TSV
-        // ========================================================
-
-        const newMaps =
-            getInitialVarMap(dataEntry);
-
-        if (!newMaps) {
-            continue;
-        }
-
-        for (const newMap of newMaps) {
-            let filename = null;
+            secondPassDataDocumentsRead++;
 
             if (
-                fileSplitVar == null ||
-                fileSplitVar === '' ||
-                newMap[fileSplitVar] == null ||
-                newMap[fileSplitVar] === ''
+                typeof fileFormat !== 'undefined' &&
+                fileFormat === 'json'
             ) {
-                filename = defaultDataFilename;
-            } else {
-                filename = newMap[fileSplitVar];
-            }
-
-            const dataMap = dataMaps[filename];
-
-            if (!dataMap) {
-                debug(
-                    'WRITE EXPERIMENT: WARNING - dataMap not found',
-                    {
-                        filename,
-                        documentId: dataEntry._id
-                    }
+                writeDataFile(
+                    JSON.stringify(dataEntry),
+                    defaultDataFilename,
+                    fileSuffix,
+                    files,
+                    fileConfig
                 );
+
+                rowsWrittenAttempted++;
+                continue;
             }
 
-            const row = mapToRow(
-                dataMap,
-                newMap,
-                filename
-            );
+            const newMaps = getInitialVarMap(dataEntry);
 
-            experimentRowsGenerated++;
-            rowsWrittenAttempted++;
+            for (const newMap of newMaps) {
+                let filename = null;
 
-            writeDataRowToFile(
-                row,
-                dataMap,
-                filename,
-                rowSplitString,
-                fileSuffix,
-                files,
-                fileConfig
-            );
+                if (
+                    fileSplitVar == null ||
+                    fileSplitVar === '' ||
+                    newMap[fileSplitVar] == null ||
+                    newMap[fileSplitVar] === ''
+                ) {
+                    filename = defaultDataFilename;
+                } else {
+                    filename = newMap[fileSplitVar];
+                }
+
+                const dataMap = dataMaps[filename];
+
+                if (!dataMap) {
+                    logger.error({
+                        message: 'Missing dataMap',
+                        filename: filename,
+                        newMap: newMap
+                    });
+
+                    continue;
+                }
+
+                const row = mapToRow(
+                    dataMap,
+                    newMap,
+                    filename
+                );
+
+                writeDataRowToFile(
+                    row,
+                    dataMap,
+                    filename,
+                    rowSplitString,
+                    fileSuffix,
+                    files,
+                    fileConfig
+                );
+
+                rowsWrittenAttempted++;
+
+                if (rowsWrittenAttempted % 1000 === 0) {
+                    log('WRITE: progress', {
+                        rowsWrittenAttempted:
+                        rowsWrittenAttempted
+                    });
+                }
+            }
         }
+
+        log('WRITE: second Data pass finished', {
+            documentsRead:
+            secondPassDataDocumentsRead
+        });
+
+        /*
+         * EXPERIMENT SESSION
+         */
+
+        cursor = experimentSessionSchema.find(findObject)
+            .lean()
+            .cursor({
+                batchSize: 10000
+            });
+
+        let secondPassExperimentDocumentsRead = 0;
+
+        for (
+            let dataEntry = await cursor.next();
+            dataEntry != null;
+            dataEntry = await cursor.next()
+        ) {
+            secondPassExperimentDocumentsRead++;
+
+            if (
+                typeof fileFormat !== 'undefined' &&
+                fileFormat === 'json'
+            ) {
+                writeDataFile(
+                    JSON.stringify(dataEntry),
+                    defaultDataFilename,
+                    fileSuffix,
+                    files,
+                    fileConfig
+                );
+
+                rowsWrittenAttempted++;
+                continue;
+            }
+
+            const newMaps = getInitialVarMap(dataEntry);
+
+            for (const newMap of newMaps) {
+                let filename = null;
+
+                if (
+                    fileSplitVar == null ||
+                    fileSplitVar === '' ||
+                    newMap[fileSplitVar] == null ||
+                    newMap[fileSplitVar] === ''
+                ) {
+                    filename = defaultDataFilename;
+                } else {
+                    filename = newMap[fileSplitVar];
+                }
+
+                const dataMap = dataMaps[filename];
+
+                if (!dataMap) {
+                    logger.error({
+                        message: 'Missing dataMap',
+                        filename: filename,
+                        newMap: newMap
+                    });
+
+                    continue;
+                }
+
+                const row = mapToRow(
+                    dataMap,
+                    newMap,
+                    filename
+                );
+
+                writeDataRowToFile(
+                    row,
+                    dataMap,
+                    filename,
+                    rowSplitString,
+                    fileSuffix,
+                    files,
+                    fileConfig
+                );
+
+                rowsWrittenAttempted++;
+
+                if (rowsWrittenAttempted % 1000 === 0) {
+                    log('WRITE: progress', {
+                        rowsWrittenAttempted:
+                        rowsWrittenAttempted
+                    });
+                }
+            }
+        }
+
+        log(
+            'WRITE: second experiment pass finished',
+            {
+                documentsRead:
+                secondPassExperimentDocumentsRead
+            }
+        );
     }
 
-    debug('WRITE EXPERIMENT: finished', {
-        documents: experimentDocuments.length,
-        rows: experimentRowsGenerated
-    });
-
-    // ============================================================
-    // WRITE SUMMARY
-    // ============================================================
-
-    debug('WRITE: FINISHED', {
-        dataDocuments: dataDocuments.length,
-        experimentDocuments: experimentDocuments.length,
-        dataRowsGenerated,
-        experimentRowsGenerated,
-        rowsWrittenAttempted,
+    log('WRITE: FINISHED', {
+        rowsWrittenAttempted: rowsWrittenAttempted,
+        filesOpened: Object.keys(files).length,
         files: Object.keys(files)
     });
 
-    // ============================================================
-    // CLOSE FILES
-    // ============================================================
+    /*
+     * ------------------------------------------------------------------
+     * CLOSE FILES
+     * ------------------------------------------------------------------
+     */
 
-    debug('CLOSE FILES: START', {
-        files: Object.keys(files),
-        fileCount: Object.keys(files).length
+    log('CLOSE FILES: START', {
+        files: Object.keys(files).length
     });
 
     await closeFiles(files);
 
-    debug('CLOSE FILES: DONE');
+    log('CLOSE FILES: DONE');
 
-    // ============================================================
-    // ZIP
-    // ============================================================
+    /*
+     * ------------------------------------------------------------------
+     * FINAL VERIFICATION
+     * ------------------------------------------------------------------
+     */
 
-    debug('ZIP: START');
+    const totalDocumentsRead =
+        dataDocumentsRead +
+        experimentDocumentsRead;
 
-    const zipResult = await zipFiles(fileConfig);
-
-    debug('ZIP: DONE');
-
-    // ============================================================
-    // FINAL RESULT
-    // ============================================================
-
-    debug('========== END ==========');
-
-    debug('FINAL RESULT', {
-        expectedDataDocuments:
-        dataDocumentsCount,
-
-        actualDataDocuments:
-        dataDocuments.length,
-
-        expectedExperimentDocuments:
+    log('FINAL:', {
+        dataDocumentsCount: dataDocumentsCount,
+        experimentDocumentsCount:
         experimentDocumentsCount,
+        expectedTotal: expectedTotal,
 
-        actualExperimentDocuments:
-        experimentDocuments.length,
+        dataDocumentsRead: dataDocumentsRead,
+        experimentDocumentsRead:
+        experimentDocumentsRead,
+        totalDocumentsRead: totalDocumentsRead,
 
-        expectedTotalDocuments:
-        expectedTotal,
-
-        actualTotalDocuments:
-        totalDocumentsRead,
-
-        dataRowsGenerated,
-
-        experimentRowsGenerated,
-
+        rowsWrittenAttempted:
         rowsWrittenAttempted,
 
         filesCreated:
-        Object.keys(files).length
+        Object.keys(files).length,
+
+        dataMaps:
+        Object.keys(dataMaps).length
     });
+
+    /*
+     * Do not report "no data" based only on dataCount.
+     * dataCount can be zero after the memory threshold is reached.
+     */
+
+    if (totalDocumentsRead === 0) {
+        throw {
+            status: 500,
+            message: 'ERROR: No data!'
+        };
+    }
+
+    /*
+     * ------------------------------------------------------------------
+     * ZIP
+     * ------------------------------------------------------------------
+     */
+
+    log('ZIP: START');
+
+    const zipResult = await zipFiles(fileConfig);
+
+    log('ZIP: DONE');
+
+    log('========== END ==========');
 
     return zipResult;
 };
